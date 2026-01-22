@@ -83,6 +83,223 @@ function getMediaType(mimeType: string): "photo" | "video" {
   return "photo";
 }
 
+// GPS Export format types
+type MediaWithGPS = {
+  id: number;
+  filename: string;
+  latitude: string | null;
+  longitude: string | null;
+  altitude: string | null;
+  capturedAt: Date | null;
+  mediaType: string;
+  url: string;
+};
+
+// Helper to generate KML format
+function generateKML(projectName: string, media: MediaWithGPS[]): string {
+  const gpsMedia = media.filter(m => m.latitude && m.longitude);
+  
+  const placemarks = gpsMedia.map((m, index) => {
+    const lat = parseFloat(m.latitude!);
+    const lng = parseFloat(m.longitude!);
+    const alt = m.altitude ? parseFloat(m.altitude) : 0;
+    const timestamp = m.capturedAt ? new Date(m.capturedAt).toISOString() : '';
+    
+    return `    <Placemark>
+      <name>${escapeXml(m.filename)}</name>
+      <description><![CDATA[
+        Type: ${m.mediaType}
+        ${timestamp ? `Captured: ${timestamp}` : ''}
+        Altitude: ${alt}m
+      ]]></description>
+      <Point>
+        <coordinates>${lng},${lat},${alt}</coordinates>
+      </Point>
+      ${timestamp ? `<TimeStamp><when>${timestamp}</when></TimeStamp>` : ''}
+    </Placemark>`;
+  }).join('\n');
+
+  // Generate flight path line if multiple points
+  let lineString = '';
+  if (gpsMedia.length > 1) {
+    const coordinates = gpsMedia.map(m => {
+      const lat = parseFloat(m.latitude!);
+      const lng = parseFloat(m.longitude!);
+      const alt = m.altitude ? parseFloat(m.altitude) : 0;
+      return `${lng},${lat},${alt}`;
+    }).join(' ');
+
+    lineString = `
+    <Placemark>
+      <name>Flight Path</name>
+      <Style>
+        <LineStyle>
+          <color>ff00ff00</color>
+          <width>3</width>
+        </LineStyle>
+      </Style>
+      <LineString>
+        <tessellate>1</tessellate>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>${coordinates}</coordinates>
+      </LineString>
+    </Placemark>`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${escapeXml(projectName)}</name>
+    <description>GPS data exported from SkyVee Drone Mapping</description>
+    <Style id="dronePoint">
+      <IconStyle>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/camera.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+${placemarks}
+${lineString}
+  </Document>
+</kml>`;
+}
+
+// Helper to generate CSV format
+function generateCSV(media: MediaWithGPS[]): string {
+  const headers = ['filename', 'latitude', 'longitude', 'altitude', 'captured_at', 'media_type', 'url'];
+  const rows = media
+    .filter(m => m.latitude && m.longitude)
+    .map(m => [
+      `"${m.filename.replace(/"/g, '""')}"`,
+      m.latitude,
+      m.longitude,
+      m.altitude || '',
+      m.capturedAt ? new Date(m.capturedAt).toISOString() : '',
+      m.mediaType,
+      `"${m.url}"`,
+    ].join(','));
+
+  return [headers.join(','), ...rows].join('\n');
+}
+
+// Helper to generate GeoJSON format
+function generateGeoJSON(projectName: string, media: MediaWithGPS[]): string {
+  const gpsMedia = media.filter(m => m.latitude && m.longitude);
+  
+  const features = gpsMedia.map(m => ({
+    type: 'Feature',
+    properties: {
+      name: m.filename,
+      mediaType: m.mediaType,
+      altitude: m.altitude ? parseFloat(m.altitude) : null,
+      capturedAt: m.capturedAt ? new Date(m.capturedAt).toISOString() : null,
+      url: m.url,
+    },
+    geometry: {
+      type: 'Point',
+      coordinates: [
+        parseFloat(m.longitude!),
+        parseFloat(m.latitude!),
+        m.altitude ? parseFloat(m.altitude) : 0,
+      ],
+    },
+  }));
+
+  // Add flight path as LineString if multiple points
+  if (gpsMedia.length > 1) {
+    features.push({
+      type: 'Feature',
+      properties: {
+        name: 'Flight Path',
+        mediaType: 'path',
+        altitude: null,
+        capturedAt: null,
+        url: '',
+      },
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: gpsMedia.map(m => [
+          parseFloat(m.longitude!),
+          parseFloat(m.latitude!),
+          m.altitude ? parseFloat(m.altitude) : 0,
+        ]),
+      },
+    } as any);
+  }
+
+  return JSON.stringify({
+    type: 'FeatureCollection',
+    name: projectName,
+    features,
+  }, null, 2);
+}
+
+// Helper to generate GPX format
+function generateGPX(projectName: string, media: MediaWithGPS[]): string {
+  const gpsMedia = media.filter(m => m.latitude && m.longitude);
+  
+  const waypoints = gpsMedia.map(m => {
+    const lat = parseFloat(m.latitude!);
+    const lng = parseFloat(m.longitude!);
+    const alt = m.altitude ? parseFloat(m.altitude) : 0;
+    const timestamp = m.capturedAt ? new Date(m.capturedAt).toISOString() : '';
+    
+    return `  <wpt lat="${lat}" lon="${lng}">
+    <ele>${alt}</ele>
+    <name>${escapeXml(m.filename)}</name>
+    <desc>Type: ${m.mediaType}</desc>
+    ${timestamp ? `<time>${timestamp}</time>` : ''}
+  </wpt>`;
+  }).join('\n');
+
+  // Generate track if multiple points
+  let track = '';
+  if (gpsMedia.length > 1) {
+    const trackpoints = gpsMedia.map(m => {
+      const lat = parseFloat(m.latitude!);
+      const lng = parseFloat(m.longitude!);
+      const alt = m.altitude ? parseFloat(m.altitude) : 0;
+      const timestamp = m.capturedAt ? new Date(m.capturedAt).toISOString() : '';
+      
+      return `      <trkpt lat="${lat}" lon="${lng}">
+        <ele>${alt}</ele>
+        ${timestamp ? `<time>${timestamp}</time>` : ''}
+      </trkpt>`;
+    }).join('\n');
+
+    track = `
+  <trk>
+    <name>Flight Path</name>
+    <trkseg>
+${trackpoints}
+    </trkseg>
+  </trk>`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="SkyVee Drone Mapping"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>${escapeXml(projectName)}</name>
+    <desc>GPS data exported from SkyVee Drone Mapping</desc>
+  </metadata>
+${waypoints}
+${track}
+</gpx>`;
+}
+
+// Helper to escape XML special characters
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 export const appRouter = router({
   system: systemRouter,
   
@@ -278,6 +495,97 @@ export const appRouter = router({
         }
         // Note: We're not deleting from S3 here - could add cleanup job later
         return { success: true, deleted };
+      }),
+  }),
+
+  // GPS Export procedures
+  export: router({
+    // Export GPS data as KML
+    kml: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        const media = await getProjectMedia(input.projectId, ctx.user.id);
+        const kmlContent = generateKML(project.name, media);
+        
+        return {
+          content: kmlContent,
+          filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.kml`,
+          mimeType: 'application/vnd.google-earth.kml+xml',
+        };
+      }),
+
+    // Export GPS data as CSV
+    csv: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        const media = await getProjectMedia(input.projectId, ctx.user.id);
+        const csvContent = generateCSV(media);
+        
+        return {
+          content: csvContent,
+          filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.csv`,
+          mimeType: 'text/csv',
+        };
+      }),
+
+    // Export GPS data as GeoJSON
+    geojson: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        const media = await getProjectMedia(input.projectId, ctx.user.id);
+        const geojsonContent = generateGeoJSON(project.name, media);
+        
+        return {
+          content: geojsonContent,
+          filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.geojson`,
+          mimeType: 'application/geo+json',
+        };
+      }),
+
+    // Export GPS data as GPX
+    gpx: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        const media = await getProjectMedia(input.projectId, ctx.user.id);
+        const gpxContent = generateGPX(project.name, media);
+        
+        return {
+          content: gpxContent,
+          filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.gpx`,
+          mimeType: 'application/gpx+xml',
+        };
       }),
   }),
 });

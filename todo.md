@@ -65,3 +65,11 @@
 
 ## Bug Fixes
 - [x] Fix project card click navigation not working
+
+## GPS Data Export Feature
+- [x] Backend API - Export to KML format
+- [x] Backend API - Export to CSV format
+- [x] Backend API - Export to GeoJSON format
+- [x] Backend API - Export to GPX format
+- [x] Export UI in project detail page
+- [x] Download functionality for each format

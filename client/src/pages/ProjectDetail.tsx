@@ -6,6 +6,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
+import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Calendar,
+  Download,
   FolderOpen,
   Image,
   Layers,
@@ -70,6 +72,7 @@ export default function ProjectDetail() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
@@ -357,10 +360,27 @@ export default function ProjectDetail() {
 
                 <Card
                   className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={handleComingSoon}
+                  onClick={() => setExportDialogOpen(true)}
                 >
                   <CardContent className="pt-6">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-purple-500/10 text-purple-500 border-purple-500/20 group-hover:scale-110 transition-transform mb-3">
+                      <Download className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                      Export GPS Data
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Download KML, CSV, GeoJSON, GPX
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
+                  onClick={handleComingSoon}
+                >
+                  <CardContent className="pt-6">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-orange-500/10 text-orange-500 border-orange-500/20 group-hover:scale-110 transition-transform mb-3">
                       <Layers className="h-5 w-5" />
                     </div>
                     <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
@@ -368,23 +388,6 @@ export default function ProjectDetail() {
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Add construction plans to the map
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={() => setEditDialogOpen(true)}
-                >
-                  <CardContent className="pt-6">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-orange-500/10 text-orange-500 border-orange-500/20 group-hover:scale-110 transition-transform mb-3">
-                      <Settings className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                      Project Settings
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Edit project details and status
                     </p>
                   </CardContent>
                 </Card>
@@ -460,6 +463,12 @@ export default function ProjectDetail() {
         projectId={projectId}
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
+      />
+      <ExportDataDialog
+        projectId={projectId}
+        projectName={project.name}
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
       />
     </div>
   );
