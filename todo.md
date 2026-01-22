@@ -73,3 +73,6 @@
 - [x] Backend API - Export to GPX format
 - [x] Export UI in project detail page
 - [x] Download functionality for each format
+
+## Project Detail UI Simplification
+- [x] Consolidate project action cards into single dropdown button

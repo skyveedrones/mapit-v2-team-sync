@@ -10,7 +10,14 @@ import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
@@ -18,6 +25,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Calendar,
+  ChevronDown,
   Download,
   FolderOpen,
   Image,
@@ -27,7 +35,6 @@ import {
   MapPin,
   Pencil,
   Plus,
-  Settings,
   Trash2,
   Upload,
   User,
@@ -245,22 +252,45 @@ export default function ProjectDetail() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="border-border"
-                    onClick={() => setEditDialogOpen(true)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
+                  {/* Consolidated Project Actions Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        Project Actions
+                        <ChevronDown className="h-4 w-4 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                        <Upload className="h-4 w-4 mr-2 text-emerald-500" />
+                        Upload Media
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation(`/project/${projectId}/map`)}>
+                        <Map className="h-4 w-4 mr-2 text-blue-500" />
+                        View Map
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setExportDialogOpen(true)}>
+                        <Download className="h-4 w-4 mr-2 text-purple-500" />
+                        Export GPS Data
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleComingSoon}>
+                        <Layers className="h-4 w-4 mr-2 text-orange-500" />
+                        PDF Overlay
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Project
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Project
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </motion.div>
@@ -312,86 +342,6 @@ export default function ProjectDetail() {
                   <p className="font-medium">{project.mediaCount} items</p>
                 </CardContent>
               </Card>
-            </motion.div>
-
-            {/* Quick Actions for Project */}
-            <motion.div variants={fadeInUp} className="mb-8">
-              <h2
-                className="text-lg font-semibold mb-4"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Project Actions
-              </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card
-                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={() => setUploadDialogOpen(true)}
-                >
-                  <CardContent className="pt-6">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 group-hover:scale-110 transition-transform mb-3">
-                      <Upload className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                      Upload Media
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Add photos and videos to this project
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Link href={`/project/${projectId}/map`}>
-                  <Card
-                    className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  >
-                    <CardContent className="pt-6">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-blue-500/10 text-blue-500 border-blue-500/20 group-hover:scale-110 transition-transform mb-3">
-                        <Map className="h-5 w-5" />
-                      </div>
-                      <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                        View Map
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        See media locations on interactive map
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Card
-                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={() => setExportDialogOpen(true)}
-                >
-                  <CardContent className="pt-6">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-purple-500/10 text-purple-500 border-purple-500/20 group-hover:scale-110 transition-transform mb-3">
-                      <Download className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                      Export GPS Data
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Download KML, CSV, GeoJSON, GPX
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={handleComingSoon}
-                >
-                  <CardContent className="pt-6">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-orange-500/10 text-orange-500 border-orange-500/20 group-hover:scale-110 transition-transform mb-3">
-                      <Layers className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                      PDF Overlay
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Add construction plans to the map
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
             </motion.div>
 
             {/* Media Section */}
@@ -453,17 +403,20 @@ export default function ProjectDetail() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
       />
+
       <DeleteProjectDialog
         project={project}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onSuccess={handleDeleteSuccess}
       />
+
       <MediaUploadDialog
         projectId={projectId}
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
       />
+
       <ExportDataDialog
         projectId={projectId}
         projectName={project.name}
