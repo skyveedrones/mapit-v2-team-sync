@@ -1,6 +1,6 @@
 /**
  * SkyVee Dashboard - Protected page for authenticated users
- * Shows user projects and quick actions
+ * Shows user projects with simplified action menu
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -10,14 +10,23 @@ import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ProjectCard } from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
 import { motion } from "framer-motion";
 import {
   Bell,
+  ChevronDown,
+  Download,
   FolderOpen,
-  Home,
+  FolderPlus,
   Layers,
   LogOut,
   Map,
@@ -27,7 +36,7 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
 const fadeInUp = {
@@ -45,35 +54,9 @@ const staggerContainer = {
   },
 };
 
-const quickActions = [
-  {
-    icon: Upload,
-    title: "Upload Media",
-    description: "Upload drone photos and videos",
-    color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  },
-  {
-    icon: Map,
-    title: "View Maps",
-    description: "Explore your flight data on maps",
-    color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  },
-  {
-    icon: Layers,
-    title: "All Projects",
-    description: "Browse all your projects",
-    color: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  },
-  {
-    icon: Settings,
-    title: "Settings",
-    description: "Configure your account",
-    color: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  },
-];
-
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -102,6 +85,31 @@ export default function Dashboard() {
   const handleDeleteProject = (project: Project) => {
     setSelectedProject(project);
     setDeleteDialogOpen(true);
+  };
+
+  // Navigate to first project's map if available
+  const handleViewMaps = () => {
+    if (projects && projects.length > 0) {
+      setLocation(`/project/${projects[0].id}/map`);
+    } else {
+      toast.info("No projects yet", {
+        description: "Create a project first to view maps.",
+      });
+    }
+  };
+
+  // Navigate to first project for upload if available
+  const handleUploadMedia = () => {
+    if (projects && projects.length > 0) {
+      setLocation(`/project/${projects[0].id}`);
+      toast.info("Select a project", {
+        description: "Click 'Upload Media' on a project to add files.",
+      });
+    } else {
+      toast.info("No projects yet", {
+        description: "Create a project first to upload media.",
+      });
+    }
   };
 
   return (
@@ -151,49 +159,55 @@ export default function Dashboard() {
             animate="visible"
             variants={staggerContainer}
           >
-            {/* Welcome Section */}
+            {/* Welcome Section with Action Dropdown */}
             <motion.div variants={fadeInUp} className="mb-8">
-              <h1
-                className="text-3xl md:text-4xl font-bold mb-2"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Welcome back, {user?.name?.split(" ")[0] || "Pilot"}!
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your drone mapping projects and visualize your aerial data.
-              </p>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div variants={fadeInUp} className="mb-12">
-              <h2
-                className="text-xl font-semibold mb-4"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Quick Actions
-              </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {quickActions.map((action) => (
-                  <Card
-                    key={action.title}
-                    className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                    onClick={handleComingSoon}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h1
+                    className="text-3xl md:text-4xl font-bold mb-2"
+                    style={{ fontFamily: "var(--font-display)" }}
                   >
-                    <CardContent className="pt-6">
-                      <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center border ${action.color} group-hover:scale-110 transition-transform mb-3`}
-                      >
-                        <action.icon className="h-6 w-6" />
-                      </div>
-                      <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
-                        {action.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {action.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                    Welcome back, {user?.name?.split(" ")[0] || "Pilot"}!
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Manage your drone mapping projects and visualize your aerial data.
+                  </p>
+                </div>
+
+                {/* Consolidated Action Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Actions
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      New Project
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleUploadMedia}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Media
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleViewMaps}>
+                      <Map className="h-4 w-4 mr-2" />
+                      View Maps
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleComingSoon}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Data
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleComingSoon}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </motion.div>
 
@@ -206,13 +220,9 @@ export default function Dashboard() {
                 >
                   Your Projects
                 </h2>
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Project
-                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {projects?.length || 0} project{projects?.length !== 1 ? "s" : ""}
+                </span>
               </div>
 
               {/* Projects Grid */}

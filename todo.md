@@ -59,3 +59,6 @@
 - [x] Interactive Maps feature page
 - [x] Flight Path Tracking feature page
 - [x] Link feature cards on home page to feature pages
+
+## Dashboard UI Simplification
+- [x] Consolidate quick actions and New Project into single action dropdown
