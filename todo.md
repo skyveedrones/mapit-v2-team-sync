@@ -21,3 +21,7 @@
 - [x] Project detail page
 - [x] Project settings/edit functionality
 - [x] Project deletion with confirmation
+
+- [x] Migrate City of Forney Project 1
+- [x] Migrate City of Forney Project 2
+- [x] Migrate City of Forney Project 3
