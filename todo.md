@@ -43,3 +43,19 @@
 - [x] Create marker info windows with media thumbnails
 - [x] Add map controls (satellite/terrain toggle)
 - [x] Link map page from project detail
+
+## Media Migration from Existing Site
+- [ ] Extract media data from CIP222 Water Line project
+- [ ] Extract media data from Gail Wilson Extension project
+- [ ] Extract media data from Oncor Forney Switch project
+- [ ] Import all media records to new database
+- [ ] Verify media displays correctly on map
+
+## Hero Feature Pages
+- [x] GPS Data Export page - Export in KML, CSV, GeoJSON, GPX formats
+- [x] PDF Map Overlay page - Overlay construction plans on maps
+- [x] Install as App page - PWA installation instructions
+- [x] Easy Upload feature page
+- [x] Interactive Maps feature page
+- [x] Flight Path Tracking feature page
+- [x] Link feature cards on home page to feature pages

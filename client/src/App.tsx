@@ -12,6 +12,14 @@ import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectMap from "./pages/ProjectMap";
 
+// Feature pages
+import EasyUpload from "./pages/features/EasyUpload";
+import InteractiveMaps from "./pages/features/InteractiveMaps";
+import FlightPathTracking from "./pages/features/FlightPathTracking";
+import GpsDataExport from "./pages/features/GpsDataExport";
+import PdfMapOverlay from "./pages/features/PdfMapOverlay";
+import InstallAsApp from "./pages/features/InstallAsApp";
+
 /**
  * Protected Route Component
  * Redirects to login if user is not authenticated
@@ -57,6 +65,15 @@ function Router() {
       <Route path="/project/:id/map">
         {() => <ProtectedRoute component={ProjectMap} />}
       </Route>
+      
+      {/* Feature pages */}
+      <Route path="/features/easy-upload" component={EasyUpload} />
+      <Route path="/features/interactive-maps" component={InteractiveMaps} />
+      <Route path="/features/flight-path-tracking" component={FlightPathTracking} />
+      <Route path="/features/gps-data-export" component={GpsDataExport} />
+      <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
+      <Route path="/features/install-as-app" component={InstallAsApp} />
+      
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

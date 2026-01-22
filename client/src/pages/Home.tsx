@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 const features = [
   {
@@ -35,6 +35,7 @@ const features = [
     description:
       "Upload drone photos and videos with automatic GPS metadata extraction",
     image: "/images/feature-upload.jpg",
+    link: "/features/easy-upload",
   },
   {
     icon: Map,
@@ -42,6 +43,7 @@ const features = [
     description:
       "Visualize your flights on Google Maps with markers, popups, and key data",
     image: "/images/feature-maps.jpg",
+    link: "/features/interactive-maps",
   },
   {
     icon: Route,
@@ -49,6 +51,7 @@ const features = [
     description:
       "Automatic flight path visualization connecting sequential GPS points",
     image: "/images/feature-maps.jpg",
+    link: "/features/flight-path-tracking",
   },
   {
     icon: Download,
@@ -56,6 +59,7 @@ const features = [
     description:
       "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software",
     image: "/images/feature-export.jpg",
+    link: "/features/gps-data-export",
   },
   {
     icon: Layers,
@@ -63,6 +67,7 @@ const features = [
     description:
       "Overlay construction plans and blueprints on your maps with precise corner positioning",
     image: "/images/feature-maps.jpg",
+    link: "/features/pdf-map-overlay",
   },
   {
     icon: Smartphone,
@@ -70,6 +75,7 @@ const features = [
     description:
       "Install on your phone or desktop for quick access and offline use - works anywhere",
     image: "/images/feature-upload.jpg",
+    link: "/features/install-as-app",
   },
 ];
 
@@ -92,12 +98,6 @@ export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
-
-  const handleComingSoon = () => {
-    toast.info("Feature coming soon!", {
-      description: "This feature is currently under development.",
-    });
-  };
 
   const handleLogin = () => {
     window.location.href = getLoginUrl();
@@ -150,7 +150,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={handleComingSoon}
+                  onClick={() => setLocation("/dashboard")}
                 >
                   Client Portal
                 </Button>
@@ -212,7 +212,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     className="w-full border-primary/50 text-primary"
-                    onClick={handleComingSoon}
+                    onClick={() => setLocation("/dashboard")}
                   >
                     Client Portal
                   </Button>
@@ -352,36 +352,36 @@ export default function Home() {
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {features.map((feature) => (
-              <motion.div
-                key={feature.title}
-                variants={fadeInUp}
-                className="glow-card p-6 cursor-pointer group"
-                onClick={handleComingSoon}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  e.currentTarget.style.setProperty("--mouse-x", `${x}%`);
-                  e.currentTarget.style.setProperty("--mouse-y", `${y}%`);
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary" />
+              <Link key={feature.title} href={feature.link}>
+                <motion.div
+                  variants={fadeInUp}
+                  className="glow-card p-6 cursor-pointer group h-full"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    e.currentTarget.style.setProperty("--mouse-x", `${x}%`);
+                    e.currentTarget.style.setProperty("--mouse-y", `${y}%`);
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                      <feature.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3
+                        className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3
-                      className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </Link>
             ))}
           </motion.div>
         </div>
