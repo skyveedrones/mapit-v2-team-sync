@@ -62,3 +62,6 @@
 
 ## Dashboard UI Simplification
 - [x] Consolidate quick actions and New Project into single action dropdown
+
+## Bug Fixes
+- [x] Fix project card click navigation not working
