@@ -7,6 +7,8 @@
  * - Grid/topographic patterns
  */
 
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
@@ -19,9 +21,12 @@ import {
   ChevronRight,
   Menu,
   X,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 const features = [
   {
@@ -84,12 +89,23 @@ const staggerContainer = {
 };
 
 export default function Home() {
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleComingSoon = () => {
     toast.info("Feature coming soon!", {
       description: "This feature is currently under development.",
     });
+  };
+
+  const handleLogin = () => {
+    window.location.href = getLoginUrl();
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged out successfully");
   };
 
   return (
@@ -107,19 +123,46 @@ export default function Home() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <Button
-              variant="outline"
-              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-              onClick={handleComingSoon}
-            >
-              Client Portal
-            </Button>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={handleComingSoon}
-            >
-              Login
-            </Button>
+            {isAuthenticated && user ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  <span>{user.name || user.email || "User"}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => setLocation("/dashboard")}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  onClick={handleComingSoon}
+                >
+                  Client Portal
+                </Button>
+                <Button
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleLogin}
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : "Login"}
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -142,19 +185,46 @@ export default function Home() {
             className="md:hidden border-t border-border bg-background"
           >
             <div className="container py-4 flex flex-col gap-2">
-              <Button
-                variant="outline"
-                className="w-full border-primary/50 text-primary"
-                onClick={handleComingSoon}
-              >
-                Client Portal
-              </Button>
-              <Button
-                className="w-full bg-primary text-primary-foreground"
-                onClick={handleComingSoon}
-              >
-                Login
-              </Button>
+              {isAuthenticated && user ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <User className="h-4 w-4" />
+                    <span>{user.name || user.email || "User"}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-primary/50 text-primary"
+                    onClick={() => setLocation("/dashboard")}
+                  >
+                    Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full text-muted-foreground"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full border-primary/50 text-primary"
+                    onClick={handleComingSoon}
+                  >
+                    Client Portal
+                  </Button>
+                  <Button
+                    className="w-full bg-primary text-primary-foreground"
+                    onClick={handleLogin}
+                    disabled={loading}
+                  >
+                    {loading ? "Loading..." : "Login"}
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -207,14 +277,25 @@ export default function Home() {
             </motion.p>
 
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                onClick={handleComingSoon}
-              >
-                Get Started
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
+                  onClick={() => setLocation("/dashboard")}
+                >
+                  Go to Dashboard
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
+                  onClick={handleLogin}
+                >
+                  Get Started
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              )}
             </motion.div>
           </motion.div>
         </div>
@@ -270,7 +351,7 @@ export default function Home() {
             variants={staggerContainer}
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={fadeInUp}
@@ -336,10 +417,10 @@ export default function Home() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                onClick={handleComingSoon}
+                onClick={isAuthenticated ? () => setLocation("/dashboard") : handleLogin}
               >
-                Download the App
-                <Download className="ml-2 h-5 w-5" />
+                {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
+                <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </motion.div>
           </motion.div>
