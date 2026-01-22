@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -55,3 +55,46 @@ export const projects = mysqlTable("projects", {
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
+
+/**
+ * Media table for storing uploaded drone photos and videos.
+ * Each media item belongs to a project and contains file metadata + GPS coordinates.
+ */
+export const media = mysqlTable("media", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (owner) */
+  userId: int("userId").notNull(),
+  /** Original filename */
+  filename: varchar("filename", { length: 255 }).notNull(),
+  /** S3 storage key */
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  /** Public URL to access the file */
+  url: varchar("url", { length: 500 }).notNull(),
+  /** File MIME type (image/jpeg, video/mp4, etc.) */
+  mimeType: varchar("mimeType", { length: 100 }).notNull(),
+  /** File size in bytes */
+  fileSize: int("fileSize").notNull(),
+  /** Media type: photo or video */
+  mediaType: mysqlEnum("mediaType", ["photo", "video"]).notNull(),
+  /** GPS latitude from EXIF data (nullable if not available) */
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  /** GPS longitude from EXIF data (nullable if not available) */
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  /** Altitude in meters from EXIF data */
+  altitude: decimal("altitude", { precision: 10, scale: 2 }),
+  /** Date/time the photo/video was captured (from EXIF) */
+  capturedAt: timestamp("capturedAt"),
+  /** Camera make from EXIF */
+  cameraMake: varchar("cameraMake", { length: 100 }),
+  /** Camera model from EXIF */
+  cameraModel: varchar("cameraModel", { length: 100 }),
+  /** Thumbnail URL for quick preview */
+  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Media = typeof media.$inferSelect;
+export type InsertMedia = typeof media.$inferInsert;

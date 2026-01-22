@@ -15,6 +15,13 @@
       "when": 1769102011447,
       "tag": "0001_cold_wrecking_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769104364398,
+      "tag": "0002_spicy_maximus",
+      "breakpoints": true
     }
   ]
 }

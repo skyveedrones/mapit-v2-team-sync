@@ -25,3 +25,13 @@
 - [x] Migrate City of Forney Project 1
 - [x] Migrate City of Forney Project 2
 - [x] Migrate City of Forney Project 3
+
+## Media Upload Feature
+- [x] Database schema for media files table
+- [x] Backend API - Upload media file to S3
+- [x] Backend API - Extract GPS metadata from EXIF
+- [x] Backend API - List media for a project
+- [x] Backend API - Delete media
+- [x] Media upload UI with drag-and-drop
+- [x] Media gallery view in project detail
+- [x] Update project media count on upload/delete

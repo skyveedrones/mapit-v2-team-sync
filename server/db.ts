@@ -1,6 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertProject, InsertUser, projects, users } from "../drizzle/schema";
+import { InsertMedia, InsertProject, InsertUser, media, projects, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -205,6 +205,11 @@ export async function deleteProject(projectId: number, userId: number) {
     return false;
   }
 
+  // Delete all media associated with the project first
+  await db
+    .delete(media)
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)));
+
   await db
     .delete(projects)
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
@@ -225,6 +230,152 @@ export async function getUserProjectCount(userId: number) {
     .select()
     .from(projects)
     .where(eq(projects.userId, userId));
+
+  return result.length;
+}
+
+/**
+ * Increment project media count
+ */
+export async function incrementProjectMediaCount(projectId: number, increment: number = 1) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(projects)
+    .set({ mediaCount: sql`${projects.mediaCount} + ${increment}` })
+    .where(eq(projects.id, projectId));
+}
+
+/**
+ * Decrement project media count
+ */
+export async function decrementProjectMediaCount(projectId: number, decrement: number = 1) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(projects)
+    .set({ mediaCount: sql`GREATEST(${projects.mediaCount} - ${decrement}, 0)` })
+    .where(eq(projects.id, projectId));
+}
+
+// ============================================
+// Media CRUD Operations
+// ============================================
+
+/**
+ * Create a new media record
+ */
+export async function createMedia(mediaItem: InsertMedia) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(media).values(mediaItem);
+  const insertId = result[0].insertId;
+  
+  // Increment the project's media count
+  await incrementProjectMediaCount(mediaItem.projectId);
+  
+  // Return the created media
+  const created = await db.select().from(media).where(eq(media.id, insertId)).limit(1);
+  return created[0];
+}
+
+/**
+ * Get all media for a specific project
+ */
+export async function getProjectMedia(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(media)
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)))
+    .orderBy(desc(media.createdAt));
+}
+
+/**
+ * Get a single media item by ID
+ */
+export async function getMediaById(mediaId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(media)
+    .where(and(eq(media.id, mediaId), eq(media.userId, userId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Delete a media item
+ */
+export async function deleteMedia(mediaId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First get the media to find its project
+  const existing = await getMediaById(mediaId, userId);
+  if (!existing) {
+    return null;
+  }
+
+  await db
+    .delete(media)
+    .where(and(eq(media.id, mediaId), eq(media.userId, userId)));
+
+  // Decrement the project's media count
+  await decrementProjectMediaCount(existing.projectId);
+
+  return existing;
+}
+
+/**
+ * Delete all media for a project
+ */
+export async function deleteProjectMedia(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const deleted = await db
+    .delete(media)
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)));
+
+  return deleted;
+}
+
+/**
+ * Get media count for a project
+ */
+export async function getProjectMediaCount(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(media)
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)));
 
   return result.length;
 }

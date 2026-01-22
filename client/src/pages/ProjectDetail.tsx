@@ -6,6 +6,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
+import { MediaGallery } from "@/components/MediaGallery";
+import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,10 +69,17 @@ export default function ProjectDetail() {
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
     { id: projectId },
+    { enabled: projectId > 0 }
+  );
+
+  // Fetch media list to determine if we show gallery or empty state
+  const { data: mediaList } = trpc.media.list.useQuery(
+    { projectId },
     { enabled: projectId > 0 }
   );
 
@@ -163,6 +172,8 @@ export default function ProjectDetail() {
     day: "numeric",
     year: "numeric",
   });
+
+  const hasMedia = mediaList && mediaList.length > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -311,7 +322,7 @@ export default function ProjectDetail() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card
                   className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={handleComingSoon}
+                  onClick={() => setUploadDialogOpen(true)}
                 >
                   <CardContent className="pt-6">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 group-hover:scale-110 transition-transform mb-3">
@@ -379,32 +390,49 @@ export default function ProjectDetail() {
               </div>
             </motion.div>
 
-            {/* Media Section - Empty State */}
+            {/* Media Section */}
             <motion.div variants={fadeInUp}>
-              <h2
-                className="text-lg font-semibold mb-4"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Project Media
-              </h2>
-              <Card className="border-dashed">
-                <CardContent className="py-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <Image className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
-                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                    Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map.
-                  </p>
+              <div className="flex items-center justify-between mb-4">
+                <h2
+                  className="text-lg font-semibold"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Project Media
+                </h2>
+                {hasMedia && (
                   <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={handleComingSoon}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUploadDialogOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Upload Media
+                    Add Media
                   </Button>
-                </CardContent>
-              </Card>
+                )}
+              </div>
+
+              {hasMedia ? (
+                <MediaGallery projectId={projectId} />
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="py-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <Image className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
+                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                      Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map.
+                    </p>
+                    <Button
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => setUploadDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Upload Media
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
 
             {/* Project Metadata */}
@@ -426,6 +454,11 @@ export default function ProjectDetail() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onSuccess={handleDeleteSuccess}
+      />
+      <MediaUploadDialog
+        projectId={projectId}
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
       />
     </div>
   );
