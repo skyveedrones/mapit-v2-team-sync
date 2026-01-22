@@ -337,22 +337,23 @@ export default function ProjectDetail() {
                   </CardContent>
                 </Card>
 
-                <Card
-                  className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
-                  onClick={handleComingSoon}
-                >
-                  <CardContent className="pt-6">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-blue-500/10 text-blue-500 border-blue-500/20 group-hover:scale-110 transition-transform mb-3">
-                      <Map className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                      View Map
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      See media locations on interactive map
-                    </p>
-                  </CardContent>
-                </Card>
+                <Link href={`/project/${projectId}/map`}>
+                  <Card
+                    className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
+                  >
+                    <CardContent className="pt-6">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center border bg-blue-500/10 text-blue-500 border-blue-500/20 group-hover:scale-110 transition-transform mb-3">
+                        <Map className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                        View Map
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        See media locations on interactive map
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
 
                 <Card
                   className="glow-card cursor-pointer group hover:border-primary/50 transition-all"

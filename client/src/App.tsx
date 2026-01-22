@@ -10,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
+import ProjectMap from "./pages/ProjectMap";
 
 /**
  * Protected Route Component
@@ -52,6 +53,9 @@ function Router() {
       </Route>
       <Route path="/project/:id">
         {() => <ProtectedRoute component={ProjectDetail} />}
+      </Route>
+      <Route path="/project/:id/map">
+        {() => <ProtectedRoute component={ProjectMap} />}
       </Route>
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}

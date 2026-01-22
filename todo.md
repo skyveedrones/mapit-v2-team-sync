@@ -35,3 +35,11 @@
 - [x] Media upload UI with drag-and-drop
 - [x] Media gallery view in project detail
 - [x] Update project media count on upload/delete
+
+## Interactive Map Feature
+- [x] Create ProjectMap page component
+- [x] Integrate Google Maps with markers for media locations
+- [x] Add flight path polyline connecting GPS points
+- [x] Create marker info windows with media thumbnails
+- [x] Add map controls (satellite/terrain toggle)
+- [x] Link map page from project detail
