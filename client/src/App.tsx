@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
+import ProjectDetail from "./pages/ProjectDetail";
 
 /**
  * Protected Route Component
@@ -48,6 +49,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
+      </Route>
+      <Route path="/project/:id">
+        {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}

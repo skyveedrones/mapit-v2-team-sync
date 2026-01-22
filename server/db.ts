@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertProject, InsertUser, projects, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,142 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============================================
+// Project CRUD Operations
+// ============================================
+
+/**
+ * Create a new project for a user
+ */
+export async function createProject(project: InsertProject) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(projects).values(project);
+  const insertId = result[0].insertId;
+  
+  // Return the created project
+  const created = await db.select().from(projects).where(eq(projects.id, insertId)).limit(1);
+  return created[0];
+}
+
+/**
+ * Get all projects for a specific user
+ */
+export async function getUserProjects(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, userId))
+    .orderBy(desc(projects.updatedAt));
+}
+
+/**
+ * Get a single project by ID
+ */
+export async function getProjectById(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Get a project by ID, ensuring it belongs to the specified user
+ */
+export async function getUserProject(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Update a project
+ */
+export async function updateProject(
+  projectId: number,
+  userId: number,
+  updates: Partial<Omit<InsertProject, "id" | "userId" | "createdAt">>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First verify the project belongs to the user
+  const existing = await getUserProject(projectId, userId);
+  if (!existing) {
+    return null;
+  }
+
+  await db
+    .update(projects)
+    .set(updates)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  // Return the updated project
+  return getUserProject(projectId, userId);
+}
+
+/**
+ * Delete a project
+ */
+export async function deleteProject(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First verify the project belongs to the user
+  const existing = await getUserProject(projectId, userId);
+  if (!existing) {
+    return false;
+  }
+
+  await db
+    .delete(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  return true;
+}
+
+/**
+ * Get project count for a user
+ */
+export async function getUserProjectCount(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, userId));
+
+  return result.length;
+}

@@ -4,20 +4,29 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { CreateProjectDialog } from "@/components/CreateProjectDialog";
+import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
+import { EditProjectDialog } from "@/components/EditProjectDialog";
+import { ProjectCard } from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc";
+import { Project } from "../../../drizzle/schema";
 import { motion } from "framer-motion";
 import {
-  Upload,
-  Map,
+  Bell,
   FolderOpen,
+  Home,
+  Layers,
+  LogOut,
+  Map,
   Plus,
   Settings,
-  LogOut,
-  Home,
+  Upload,
   User,
-  Bell,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
@@ -50,9 +59,9 @@ const quickActions = [
     color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   },
   {
-    icon: FolderOpen,
-    title: "My Projects",
-    description: "Manage your mapping projects",
+    icon: Layers,
+    title: "All Projects",
+    description: "Browse all your projects",
     color: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   },
   {
@@ -65,6 +74,13 @@ const quickActions = [
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  // Fetch projects
+  const { data: projects, isLoading: projectsLoading } = trpc.project.list.useQuery();
 
   const handleComingSoon = () => {
     toast.info("Feature coming soon!", {
@@ -76,6 +92,16 @@ export default function Dashboard() {
     await logout();
     toast.success("Logged out successfully");
     window.location.href = "/";
+  };
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setSelectedProject(project);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -153,65 +179,88 @@ export default function Dashboard() {
                     className="glow-card cursor-pointer group hover:border-primary/50 transition-all"
                     onClick={handleComingSoon}
                   >
-                    <CardHeader className="pb-2">
+                    <CardContent className="pt-6">
                       <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center border ${action.color} group-hover:scale-110 transition-transform`}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center border ${action.color} group-hover:scale-110 transition-transform mb-3`}
                       >
                         <action.icon className="h-6 w-6" />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <CardTitle className="text-base mb-1 group-hover:text-primary transition-colors">
+                      <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
                         {action.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm">
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
                         {action.description}
-                      </CardDescription>
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </motion.div>
 
-            {/* Recent Projects Section */}
+            {/* Projects Section */}
             <motion.div variants={fadeInUp}>
               <div className="flex items-center justify-between mb-4">
                 <h2
                   className="text-xl font-semibold"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Recent Projects
+                  Your Projects
                 </h2>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={handleComingSoon}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setCreateDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   New Project
                 </Button>
               </div>
 
-              {/* Empty State */}
-              <Card className="border-dashed">
-                <CardContent className="py-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <FolderOpen className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                    Create your first drone mapping project to start organizing and visualizing your aerial footage.
-                  </p>
-                  <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={handleComingSoon}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Project
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Projects Grid */}
+              {projectsLoading ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="overflow-hidden">
+                      <Skeleton className="h-32 w-full" />
+                      <div className="p-4 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : projects && projects.length > 0 ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {projects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      onEdit={handleEditProject}
+                      onDelete={handleDeleteProject}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* Empty State */
+                <Card className="border-dashed">
+                  <CardContent className="py-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                      Create your first drone mapping project to start organizing and visualizing your aerial footage.
+                    </p>
+                    <Button
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => setCreateDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Project
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
 
             {/* Help Section */}
@@ -241,6 +290,22 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </main>
+
+      {/* Dialogs */}
+      <CreateProjectDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+      <EditProjectDialog
+        project={selectedProject}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      <DeleteProjectDialog
+        project={selectedProject}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      />
     </div>
   );
 }

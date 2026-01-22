@@ -1,0 +1,244 @@
+/**
+ * Edit Project Dialog
+ * Modal form for editing existing drone mapping projects
+ */
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/lib/trpc";
+import { Project } from "../../../drizzle/schema";
+import { Calendar, Loader2, MapPin, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+interface EditProjectDialogProps {
+  project: Project | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+export function EditProjectDialog({
+  project,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditProjectDialogProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [status, setStatus] = useState<"active" | "completed" | "archived">("active");
+  const [flightDate, setFlightDate] = useState("");
+
+  const utils = trpc.useUtils();
+
+  // Populate form when project changes
+  useEffect(() => {
+    if (project) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setLocation(project.location || "");
+      setClientName(project.clientName || "");
+      setStatus(project.status);
+      setFlightDate(
+        project.flightDate
+          ? new Date(project.flightDate).toISOString().split("T")[0]
+          : ""
+      );
+    }
+  }, [project]);
+
+  const updateProject = trpc.project.update.useMutation({
+    onSuccess: () => {
+      toast.success("Project updated successfully!");
+      utils.project.list.invalidate();
+      if (project) {
+        utils.project.get.invalidate({ id: project.id });
+      }
+      onOpenChange(false);
+      onSuccess?.();
+    },
+    onError: (error) => {
+      toast.error("Failed to update project", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project) return;
+    if (!name.trim()) {
+      toast.error("Project name is required");
+      return;
+    }
+
+    updateProject.mutate({
+      id: project.id,
+      name: name.trim(),
+      description: description.trim() || null,
+      location: location.trim() || null,
+      clientName: clientName.trim() || null,
+      status,
+      flightDate: flightDate ? new Date(flightDate) : null,
+    });
+  };
+
+  if (!project) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] bg-card border-border">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle
+              className="text-xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Edit Project
+            </DialogTitle>
+            <DialogDescription>
+              Update your project details. Changes will be saved immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {/* Project Name - Required */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name" className="text-sm font-medium">
+                Project Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-name"
+                placeholder="e.g., Downtown Construction Site Survey"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-status" className="text-sm font-medium">
+                Status
+              </Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Description */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description" className="text-sm font-medium">
+                Description
+              </Label>
+              <Textarea
+                id="edit-description"
+                placeholder="Brief description of the project scope, objectives, or notes..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="bg-background border-border resize-none"
+                rows={3}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-location" className="text-sm font-medium">
+                <MapPin className="inline h-3.5 w-3.5 mr-1" />
+                Location
+              </Label>
+              <Input
+                id="edit-location"
+                placeholder="e.g., 123 Main St, City, State or GPS coordinates"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+
+            {/* Client Name */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-clientName" className="text-sm font-medium">
+                <User className="inline h-3.5 w-3.5 mr-1" />
+                Client Name
+              </Label>
+              <Input
+                id="edit-clientName"
+                placeholder="e.g., ABC Construction Company"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+
+            {/* Flight Date */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-flightDate" className="text-sm font-medium">
+                <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                Flight Date
+              </Label>
+              <Input
+                id="edit-flightDate"
+                type="date"
+                value={flightDate}
+                onChange={(e) => setFlightDate(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="border-border"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={updateProject.isPending || !name.trim()}
+            >
+              {updateProject.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
