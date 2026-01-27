@@ -76,3 +76,5 @@
 
 ## Project Detail UI Simplification
 - [x] Consolidate project action cards into single dropdown button
+
+- [x] Fix JSON parse error on project detail page mutations (increased file size limit to 100MB)

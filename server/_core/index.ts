@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -30,19 +30,39 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  
+  // Configure body parser with larger size limit for file uploads (100MB for base64 encoded files)
+  app.use(express.json({ limit: "100mb" }));
+  app.use(express.urlencoded({ limit: "100mb", extended: true }));
+  
+  // Custom error handler for payload too large errors - return JSON instead of HTML
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    if (err.type === 'entity.too.large') {
+      return res.status(413).json({
+        error: {
+          message: 'File too large. Maximum file size is 75MB.',
+          code: 'PAYLOAD_TOO_LARGE'
+        }
+      });
+    }
+    next(err);
+  });
+  
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
   // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      onError: ({ error, path }) => {
+        console.error(`[tRPC Error] ${path}:`, error.message);
+      },
     })
   );
+  
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
