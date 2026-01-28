@@ -350,51 +350,38 @@ export default function ProjectDetail() {
               </div>
             </motion.div>
 
-            {/* Project Info Cards */}
-            <motion.div variants={fadeInUp} className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {project.location && (
-                <Card className="bg-card">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Location</span>
-                    </div>
-                    <p className="font-medium">{project.location}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {project.clientName && (
-                <Card className="bg-card">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <User className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Client</span>
-                    </div>
-                    <p className="font-medium">{project.clientName}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {formattedFlightDate && (
-                <Card className="bg-card">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Flight Date</span>
-                    </div>
-                    <p className="font-medium">{formattedFlightDate}</p>
-                  </CardContent>
-                </Card>
-              )}
-
+            {/* Condensed Project Info Tile */}
+            <motion.div variants={fadeInUp} className="mb-6">
               <Card className="bg-card">
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Image className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">Media Items</span>
+                <CardContent className="py-3">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    {project.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">Location:</span>
+                        <span className="font-medium">{project.location}</span>
+                      </div>
+                    )}
+                    {project.clientName && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">Client:</span>
+                        <span className="font-medium">{project.clientName}</span>
+                      </div>
+                    )}
+                    {formattedFlightDate && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">Flight:</span>
+                        <span className="font-medium">{formattedFlightDate}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4 text-primary" />
+                      <span className="text-muted-foreground">Media:</span>
+                      <span className="font-medium">{project.mediaCount} items</span>
+                    </div>
                   </div>
-                  <p className="font-medium">{project.mediaCount} items</p>
                 </CardContent>
               </Card>
             </motion.div>

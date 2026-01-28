@@ -154,3 +154,6 @@
 - [x] Report generation dialog UI with media selection
 - [x] Preview report before download
 - [x] Download button for generated PDF
+
+## UI Improvements
+- [x] Condense project information into single compact tile on project detail page
