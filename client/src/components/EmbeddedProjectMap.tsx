@@ -167,10 +167,12 @@ export function EmbeddedProjectMap({ projectId, projectName }: EmbeddedProjectMa
     return (
       <Card className="bg-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Project Map
-          </CardTitle>
+          </h2>
         </CardHeader>
         <CardContent>
           <Skeleton className="w-full h-[300px] rounded-lg" />
@@ -183,15 +185,17 @@ export function EmbeddedProjectMap({ projectId, projectName }: EmbeddedProjectMa
     <Card className="bg-card">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Project Map
             {mediaWithGPS.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground">
+              <span className="text-sm font-normal text-muted-foreground ml-2">
                 ({mediaWithGPS.length} location{mediaWithGPS.length !== 1 ? "s" : ""})
               </span>
             )}
-          </CardTitle>
+          </h2>
           {mediaWithGPS.length > 0 && (
             <Link href={`/project/${projectId}/map`}>
               <Button variant="outline" size="sm">

@@ -203,3 +203,6 @@
 - [x] Add Project Map section between project info and media sections
 - [x] Display GPS markers from project media on the embedded map
 - [x] Remove View Map from Project Actions dropdown (now always visible)
+
+## UI Styling Fixes
+- [x] Update Project Map title to match Project Media title (same font, remove icon)
