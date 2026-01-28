@@ -53,11 +53,15 @@ import {
   deleteWarrantyReminder,
   getDueWarrantyReminders,
   updateProjectWarranty,
+  updateMediaUrls,
+  updateUserWatermark,
+  getUserWatermark,
+  deleteUserWatermark,
 } from "./db";
 import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
-import { applyWatermark, WatermarkOptions } from "./watermark";
+import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 
 // Validation schemas for project operations
 const createProjectSchema = z.object({
@@ -1145,86 +1149,189 @@ export const appRouter = router({
 
   // Watermark procedures
   watermark: router({
-    // Apply watermark to a single media item
-    applyToMedia: protectedProcedure
+    // Get user's saved watermark
+    getSavedWatermark: protectedProcedure
+      .query(async ({ ctx }) => {
+        const watermark = await getUserWatermark(ctx.user.id);
+        return watermark;
+      }),
+
+    // Save/update user's watermark image
+    saveWatermark: protectedProcedure
       .input(z.object({
-        mediaId: z.number(),
         watermarkData: z.string(), // Base64 encoded watermark image
-        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("bottom-right"),
-        opacity: z.number().min(10).max(100).default(70),
-        scale: z.number().min(5).max(50).default(15),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Get the media item
-        const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
-        if (!mediaItem) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Media not found or you don't have permission",
-          });
-        }
-
-        // Only process photos
-        if (mediaItem.mediaType !== "photo") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Watermarks can only be applied to photos",
-          });
-        }
-
         try {
-          // Fetch the original image
-          const imageResponse = await fetch(mediaItem.url);
-          if (!imageResponse.ok) {
-            throw new Error("Failed to fetch original image");
-          }
-          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-
           // Decode watermark from base64
           const watermarkBuffer = Buffer.from(input.watermarkData, "base64");
 
-          // Apply watermark
-          const watermarkedBuffer = await applyWatermark(imageBuffer, watermarkBuffer, {
-            position: input.position,
-            opacity: input.opacity,
-            scale: input.scale,
-            padding: 20,
-          });
-
-          // Generate new filename
+          // Generate unique filename
           const timestamp = Date.now();
-          const ext = mediaItem.filename.split(".").pop() || "jpg";
-          const baseName = mediaItem.filename.replace(/\.[^.]+$/, "");
-          const newFilename = `${baseName}_watermarked_${timestamp}.${ext}`;
-          const fileKey = `${ctx.user.id}/media/${newFilename}`;
+          const fileKey = `${ctx.user.id}/watermarks/watermark_${timestamp}.png`;
 
-          // Upload watermarked image to S3
-          const { url: newUrl } = await storagePut(
+          // Upload watermark to S3
+          const { url } = await storagePut(
             fileKey,
-            watermarkedBuffer,
-            "image/jpeg"
+            watermarkBuffer,
+            "image/png"
           );
+
+          // Update user's watermark in database
+          await updateUserWatermark(ctx.user.id, url, fileKey);
 
           return {
             success: true,
-            url: newUrl,
-            filename: newFilename,
+            url,
+            fileKey,
           };
         } catch (error) {
-          console.error("[Watermark] Failed to apply watermark:", error);
+          console.error("[Watermark] Failed to save watermark:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to apply watermark",
+            message: "Failed to save watermark",
           });
         }
       }),
 
-    // Apply watermark to multiple media items
+    // Delete user's saved watermark
+    deleteWatermark: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        try {
+          await deleteUserWatermark(ctx.user.id);
+          return { success: true };
+        } catch (error) {
+          console.error("[Watermark] Failed to delete watermark:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete watermark",
+          });
+        }
+      }),
+
+    // Apply watermark permanently to selected media (replaces original files)
+    applyPermanent: protectedProcedure
+      .input(z.object({
+        mediaIds: z.array(z.number()).min(1).max(50),
+        watermarkData: z.string().optional(), // Base64 encoded watermark image (optional if using saved)
+        useSavedWatermark: z.boolean().default(false),
+        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("top-left"),
+        opacity: z.number().min(10).max(100).default(70),
+        scale: z.number().min(5).max(50).default(15),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const results: { mediaId: number; success: boolean; error?: string }[] = [];
+        
+        // Get watermark buffer
+        let watermarkBuffer: Buffer;
+        
+        if (input.useSavedWatermark) {
+          // Fetch saved watermark from S3
+          const savedWatermark = await getUserWatermark(ctx.user.id);
+          if (!savedWatermark?.watermarkUrl) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "No saved watermark found. Please upload a watermark first.",
+            });
+          }
+          const wmResponse = await fetch(savedWatermark.watermarkUrl);
+          if (!wmResponse.ok) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to fetch saved watermark",
+            });
+          }
+          watermarkBuffer = Buffer.from(await wmResponse.arrayBuffer());
+        } else if (input.watermarkData) {
+          watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+        } else {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Please provide a watermark image or use saved watermark",
+          });
+        }
+
+        for (const mediaId of input.mediaIds) {
+          try {
+            // Get the media item
+            const mediaItem = await getMediaById(mediaId, ctx.user.id);
+            if (!mediaItem) {
+              results.push({ mediaId, success: false, error: "Not found" });
+              continue;
+            }
+
+            // Only process photos
+            if (mediaItem.mediaType !== "photo") {
+              results.push({ mediaId, success: false, error: "Not a photo" });
+              continue;
+            }
+
+            // Fetch the original image
+            const imageResponse = await fetch(mediaItem.url);
+            if (!imageResponse.ok) {
+              results.push({ mediaId, success: false, error: "Failed to fetch" });
+              continue;
+            }
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+            // Apply watermark to full image
+            const watermarkedBuffer = await applyWatermark(imageBuffer, watermarkBuffer, {
+              position: input.position,
+              opacity: input.opacity,
+              scale: input.scale,
+              padding: 20,
+            });
+
+            // Generate watermarked thumbnail
+            const thumbnailBuffer = await generateThumbnail(watermarkedBuffer, 400);
+
+            // Upload watermarked image to S3 (replace original)
+            const timestamp = Date.now();
+            const ext = mediaItem.filename.split(".").pop() || "jpg";
+            const baseName = mediaItem.filename.replace(/\.[^.]+$/, "").replace(/_watermarked_\d+$/, "");
+            const newFilename = `${baseName}_wm_${timestamp}.${ext}`;
+            const fileKey = `${ctx.user.id}/media/${newFilename}`;
+            const thumbnailKey = `${ctx.user.id}/thumbnails/${newFilename}`;
+
+            const { url: newUrl } = await storagePut(
+              fileKey,
+              watermarkedBuffer,
+              "image/jpeg"
+            );
+
+            const { url: newThumbnailUrl } = await storagePut(
+              thumbnailKey,
+              thumbnailBuffer,
+              "image/jpeg"
+            );
+
+            // Update media record in database with new URLs
+            await updateMediaUrls(mediaId, {
+              url: newUrl,
+              fileKey: fileKey,
+              thumbnailUrl: newThumbnailUrl,
+            });
+
+            results.push({ mediaId, success: true });
+          } catch (error) {
+            console.error(`[Watermark] Failed for media ${mediaId}:`, error);
+            results.push({ mediaId, success: false, error: "Processing failed" });
+          }
+        }
+
+        return {
+          results,
+          successCount: results.filter(r => r.success).length,
+          failCount: results.filter(r => !r.success).length,
+        };
+      }),
+
+    // Legacy: Apply watermark and return for download (not permanent)
     applyBatch: protectedProcedure
       .input(z.object({
         mediaIds: z.array(z.number()).min(1).max(50),
         watermarkData: z.string(), // Base64 encoded watermark image
-        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("bottom-right"),
+        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("top-left"),
         opacity: z.number().min(10).max(100).default(70),
         scale: z.number().min(5).max(50).default(15),
       }))
@@ -1263,14 +1370,14 @@ export const appRouter = router({
               padding: 20,
             });
 
-            // Generate new filename
+            // Generate new filename for download
             const timestamp = Date.now();
             const ext = mediaItem.filename.split(".").pop() || "jpg";
             const baseName = mediaItem.filename.replace(/\.[^.]+$/, "");
             const newFilename = `${baseName}_watermarked_${timestamp}.${ext}`;
-            const fileKey = `${ctx.user.id}/media/${newFilename}`;
+            const fileKey = `${ctx.user.id}/temp/${newFilename}`;
 
-            // Upload watermarked image to S3
+            // Upload watermarked image to S3 temp folder
             const { url: newUrl } = await storagePut(
               fileKey,
               watermarkedBuffer,

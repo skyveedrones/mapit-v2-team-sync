@@ -21,6 +21,10 @@ export const users = mysqlTable("users", {
   logoUrl: varchar("logoUrl", { length: 500 }),
   /** S3 storage key for the logo */
   logoKey: varchar("logoKey", { length: 500 }),
+  /** User's saved watermark image URL */
+  watermarkUrl: varchar("watermarkUrl", { length: 500 }),
+  /** S3 storage key for the watermark */
+  watermarkKey: varchar("watermarkKey", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

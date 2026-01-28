@@ -206,3 +206,10 @@
 
 ## UI Styling Fixes
 - [x] Update Project Map title to match Project Media title (same font, remove icon)
+
+## Watermark Feature Updates
+- [x] Store user watermark image in database for reuse
+- [x] Permanently apply watermarks to media photos in S3 (not just download)
+- [x] Generate watermarked thumbnails
+- [x] Default watermark position to upper left
+- [x] Load saved watermark in dialog if available

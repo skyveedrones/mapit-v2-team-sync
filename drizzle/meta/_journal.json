@@ -50,6 +50,13 @@
       "when": 1769627551160,
       "tag": "0006_furry_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1769633081350,
+      "tag": "0007_overrated_cyclops",
+      "breakpoints": true
     }
   ]
 }

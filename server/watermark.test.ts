@@ -7,12 +7,13 @@ vi.mock("sharp", () => {
     resize: vi.fn().mockReturnThis(),
     composite: vi.fn().mockReturnThis(),
     png: vi.fn().mockReturnThis(),
+    jpeg: vi.fn().mockReturnThis(),
     toBuffer: vi.fn().mockResolvedValue(Buffer.from("mock-image-data")),
   }));
   return { default: mockSharp };
 });
 
-import { applyWatermark, createTextWatermark, batchApplyWatermark } from "./watermark";
+import { applyWatermark, createTextWatermark, batchApplyWatermark, generateThumbnail } from "./watermark";
 
 describe("watermark", () => {
   beforeEach(() => {
@@ -107,6 +108,24 @@ describe("watermark", () => {
       });
 
       expect(results).toHaveLength(2);
+    });
+  });
+
+  describe("generateThumbnail", () => {
+    it("should generate thumbnail with default width", async () => {
+      const imageBuffer = Buffer.from("test-image");
+
+      const result = await generateThumbnail(imageBuffer);
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    it("should generate thumbnail with custom width", async () => {
+      const imageBuffer = Buffer.from("test-image");
+
+      const result = await generateThumbnail(imageBuffer, 200);
+
+      expect(result).toBeInstanceOf(Buffer);
     });
   });
 

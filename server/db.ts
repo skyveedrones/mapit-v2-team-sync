@@ -383,6 +383,46 @@ export async function updateMediaGPS(
 }
 
 /**
+ * Update media URLs (for watermarking - replaces original with watermarked version)
+ */
+export async function updateMediaUrls(
+  mediaId: number,
+  urls: {
+    url: string;
+    fileKey: string;
+    thumbnailUrl?: string | null;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: Record<string, unknown> = {
+    url: urls.url,
+    fileKey: urls.fileKey,
+    updatedAt: new Date(),
+  };
+
+  if (urls.thumbnailUrl !== undefined) {
+    updateData.thumbnailUrl = urls.thumbnailUrl;
+  }
+
+  await db
+    .update(media)
+    .set(updateData)
+    .where(eq(media.id, mediaId));
+
+  // Return the updated media item
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
+}
+
+/**
  * Delete all media for a project
  */
 export async function deleteProjectMedia(projectId: number, userId: number) {
@@ -1160,6 +1200,65 @@ export async function getUserLogo(userId: number) {
 
   const [user] = await db
     .select({ logoUrl: users.logoUrl, logoKey: users.logoKey })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return user || null;
+}
+
+// ==================== User Watermark Functions ====================
+
+export async function updateUserWatermark(
+  userId: number,
+  watermarkUrl: string,
+  watermarkKey: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({ watermarkUrl, watermarkKey })
+    .where(eq(users.id, userId));
+
+  const [updated] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return updated;
+}
+
+export async function deleteUserWatermark(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get current watermark key before deleting
+  const [user] = await db
+    .select({ watermarkKey: users.watermarkKey })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  await db
+    .update(users)
+    .set({ watermarkUrl: null, watermarkKey: null })
+    .where(eq(users.id, userId));
+
+  return user?.watermarkKey || null;
+}
+
+export async function getUserWatermark(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [user] = await db
+    .select({ watermarkUrl: users.watermarkUrl, watermarkKey: users.watermarkKey })
     .from(users)
     .where(eq(users.id, userId));
 

@@ -18,7 +18,7 @@ export interface WatermarkOptions {
 }
 
 const DEFAULT_OPTIONS: WatermarkOptions = {
-  position: "bottom-right",
+  position: "top-left",
   opacity: 70,
   scale: 15,
   padding: 20,
@@ -175,4 +175,21 @@ export async function batchApplyWatermark(
     images.map((img) => applyWatermark(img, watermarkBuffer, options))
   );
   return results;
+}
+
+
+/**
+ * Generate a thumbnail from an image buffer
+ * @param imageBuffer - The source image buffer
+ * @param maxWidth - Maximum width of the thumbnail (default 400)
+ * @returns Buffer of the thumbnail image
+ */
+export async function generateThumbnail(
+  imageBuffer: Buffer,
+  maxWidth: number = 400
+): Promise<Buffer> {
+  return await sharp(imageBuffer)
+    .resize(maxWidth, null, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 80 })
+    .toBuffer();
 }

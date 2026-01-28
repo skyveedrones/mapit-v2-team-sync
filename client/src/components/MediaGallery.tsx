@@ -703,6 +703,10 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         onOpenChange={setWatermarkDialogOpen}
         selectedMedia={selectedMediaItems}
         projectId={projectId}
+        onWatermarkApplied={() => {
+          utils.media.list.invalidate({ projectId });
+          setSelectedIds(new Set());
+        }}
       />
 
       {/* GPS Edit Dialog */}
