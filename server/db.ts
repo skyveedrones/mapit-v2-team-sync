@@ -1105,3 +1105,63 @@ export async function assignMediaToFlight(mediaId: number, flightId: number | nu
 
   return updated;
 }
+
+
+// ==================== User Logo Functions ====================
+
+export async function updateUserLogo(
+  userId: number,
+  logoUrl: string,
+  logoKey: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({ logoUrl, logoKey })
+    .where(eq(users.id, userId));
+
+  const [updated] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return updated;
+}
+
+export async function deleteUserLogo(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get current logo key before deleting
+  const [user] = await db
+    .select({ logoKey: users.logoKey })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  await db
+    .update(users)
+    .set({ logoUrl: null, logoKey: null })
+    .where(eq(users.id, userId));
+
+  return user?.logoKey || null;
+}
+
+export async function getUserLogo(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [user] = await db
+    .select({ logoUrl: users.logoUrl, logoKey: users.logoKey })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return user || null;
+}

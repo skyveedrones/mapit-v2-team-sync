@@ -44,6 +44,9 @@ import {
   updateProject,
   userHasFlightAccess,
   userHasProjectAccess,
+  updateUserLogo,
+  deleteUserLogo,
+  getUserLogo,
 } from "./db";
 import { sendProjectInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
@@ -1302,6 +1305,7 @@ export const appRouter = router({
         watermarkPosition: z.enum(["top-left", "top-right", "center", "bottom-left", "bottom-right"]).default("bottom-right"),
         watermarkOpacity: z.number().min(10).max(100).default(70),
         watermarkScale: z.number().min(5).max(50).default(15),
+        userLogoUrl: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user has access to the project
@@ -1375,7 +1379,8 @@ export const appRouter = router({
           project,
           mediaImages,
           mapImageDataUrl,
-          new Date()
+          new Date(),
+          input.userLogoUrl
         );
 
         return {
@@ -1393,6 +1398,71 @@ export const appRouter = router({
         key,
         ...value,
       }));
+    }),
+  }),
+
+  // ==================== User Logo ====================
+  logo: router({
+    // Get current user's logo
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const logo = await getUserLogo(ctx.user.id);
+      return logo;
+    }),
+
+    // Upload user logo
+    upload: protectedProcedure
+      .input(z.object({
+        fileData: z.string(), // Base64 encoded file data
+        filename: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Validate file type
+        if (!input.mimeType.startsWith("image/")) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Only image files are allowed for logos",
+          });
+        }
+
+        // Decode base64 file data
+        const fileBuffer = Buffer.from(input.fileData, "base64");
+
+        // Check file size (max 5MB for logos)
+        if (fileBuffer.length > 5 * 1024 * 1024) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Logo file size must be less than 5MB",
+          });
+        }
+
+        // Delete existing logo if present
+        const existingLogo = await getUserLogo(ctx.user.id);
+        if (existingLogo?.logoKey) {
+          // Note: We don't delete from S3 to avoid orphaned files issues
+          // The old logo will be replaced
+        }
+
+        // Generate unique file key
+        const ext = input.filename.split(".").pop() || "png";
+        const fileKey = `logos/${ctx.user.id}/${nanoid()}.${ext}`;
+
+        // Upload to S3
+        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+
+        // Update user record
+        const updated = await updateUserLogo(ctx.user.id, url, fileKey);
+
+        return {
+          logoUrl: updated?.logoUrl,
+          logoKey: updated?.logoKey,
+        };
+      }),
+
+    // Delete user logo
+    delete: protectedProcedure.mutation(async ({ ctx }) => {
+      const deletedKey = await deleteUserLogo(ctx.user.id);
+      return { success: true, deletedKey };
     }),
   }),
 });

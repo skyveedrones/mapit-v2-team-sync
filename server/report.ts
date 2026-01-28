@@ -276,7 +276,8 @@ export function generateReportHtml(
   project: Project,
   mediaImages: { filename: string; dataUrl: string }[],
   mapImageDataUrl: string | null,
-  generatedAt: Date
+  generatedAt: Date,
+  userLogoUrl?: string
 ): string {
   const formatDate = (date: Date | null) => {
     if (!date) return "N/A";
@@ -361,9 +362,18 @@ export function generateReportHtml(
   </style>
 </head>
 <body>
-  <h1>Project Report</h1>
-  <p class="subtitle">${project.name}</p>
-  <p class="date">Report Generated On: ${formatDate(generatedAt)}</p>
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <div style="flex: 1;">
+      <h1 style="text-align: left; margin: 0;">Project Report</h1>
+      <p class="subtitle" style="text-align: left;">${project.name}</p>
+      <p class="date" style="text-align: left;">Report Generated On: ${formatDate(generatedAt)}</p>
+    </div>
+    ${userLogoUrl ? `
+      <div style="flex-shrink: 0; margin-left: 20px;">
+        <img src="${userLogoUrl}" alt="Company Logo" style="max-width: 150px; max-height: 80px; object-fit: contain;" />
+      </div>
+    ` : ""}
+  </div>
   
   <h2 style="margin-top: 20px;">Project Information</h2>
   <div class="info-row"><span class="info-label">Description:</span> <span class="info-value">${project.description || "N/A"}</span></div>

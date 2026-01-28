@@ -91,6 +91,9 @@ export function ReportGeneratorDialog({
 
   const generateMutation = trpc.report.generate.useMutation();
 
+  // Fetch user logo for report header
+  const { data: userLogo } = trpc.logo.get.useQuery();
+
   // Filter to only show photos
   const photos = media.filter(m => m.mediaType === "photo");
 
@@ -154,6 +157,7 @@ export function ReportGeneratorDialog({
         watermarkPosition,
         watermarkOpacity,
         watermarkScale,
+        userLogoUrl: userLogo?.logoUrl || undefined,
       });
 
       setPreviewHtml(result.html);

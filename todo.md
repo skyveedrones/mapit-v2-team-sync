@@ -161,3 +161,12 @@
 ## Report Map Enhancements
 - [x] Add flight path polylines connecting GPS markers in capture order
 - [x] Add map style selector (satellite, roadmap, hybrid, terrain)
+
+## User Logo Feature
+- [x] Database schema - Add logo fields to user table (logoUrl, logoKey)
+- [x] Backend API - Upload user logo to S3
+- [x] Backend API - Get/delete user logo
+- [x] Replace "Upload Media" with "Upload Logo" in dashboard Action menu
+- [x] Create logo upload dialog with preview
+- [x] Display user logo on dashboard header
+- [x] Include user logo in project report header
