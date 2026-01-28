@@ -156,9 +156,10 @@ export default function ProjectMap() {
         // Create info window content
         const content = document.createElement("div");
         content.className = "p-2 max-w-xs";
+        const imageUrl = media.thumbnailUrl || media.url;
         content.innerHTML = `
           <div class="font-semibold text-sm mb-1">${media.filename}</div>
-          ${media.thumbnailUrl ? `<img src="${media.thumbnailUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" />` : ''}
+          ${media.mediaType === 'photo' ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">Video</span></div>'}
           <div class="text-xs text-gray-600">
             <div>📍 ${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
             ${media.altitude ? `<div>🏔️ Altitude: ${media.altitude.toFixed(1)}m</div>` : ''}
@@ -504,19 +505,22 @@ export default function ProjectMap() {
             <X className="h-3 w-3" />
           </Button>
           <div className="flex gap-3">
-            {selectedMedia.thumbnailUrl ? (
+            {selectedMedia.mediaType === "photo" ? (
               <img
-                src={selectedMedia.url}
+                src={selectedMedia.thumbnailUrl || selectedMedia.url}
                 alt={selectedMedia.filename}
                 className="w-24 h-18 object-cover rounded"
+                onError={(e) => {
+                  // Fallback to full URL if thumbnail fails
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== selectedMedia.url) {
+                    target.src = selectedMedia.url;
+                  }
+                }}
               />
             ) : (
               <div className="w-24 h-18 bg-muted rounded flex items-center justify-center">
-                {selectedMedia.mediaType === "video" ? (
-                  <Video className="h-6 w-6 text-muted-foreground" />
-                ) : (
-                  <Camera className="h-6 w-6 text-muted-foreground" />
-                )}
+                <Video className="h-6 w-6 text-muted-foreground" />
               </div>
             )}
             <div className="flex-1 min-w-0">

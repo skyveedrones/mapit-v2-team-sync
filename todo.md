@@ -116,3 +116,8 @@
 - [x] Watermark dialog UI with logo upload
 - [x] Watermark position and opacity settings
 - [x] Apply watermark to selected/all images
+
+## Bug Fixes
+- [ ] Fix project sharing email invitations not being delivered
+- [x] Fix watermark dialog not opening from Action dropdown (verified working)
+- [x] Fix map view thumbnail not loading when GPS marker is selected
