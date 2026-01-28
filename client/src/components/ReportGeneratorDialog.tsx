@@ -194,28 +194,47 @@ export function ReportGeneratorDialog({
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
 
-      // Open PDF in new tab - works better on mobile devices
-      // User can then use browser's share/save option to save the file
-      const newWindow = window.open(url, "_blank");
-      
-      if (newWindow) {
-        toast.success("PDF opened in new tab. Use your browser's share or save option to download.");
-      } else {
-        // Fallback: If popup blocked, try direct download
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = result.filename;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("PDF download started!");
+      // Try to use File System Access API for native Save As dialog
+      // This lets the user choose where to save the file
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: result.filename,
+            types: [{
+              description: 'PDF Document',
+              accept: { 'application/pdf': ['.pdf'] },
+            }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          toast.success("PDF saved successfully!");
+          return;
+        } catch (err: any) {
+          // User cancelled the save dialog
+          if (err.name === 'AbortError') {
+            setIsDownloading(false);
+            return;
+          }
+          // Fall through to alternative method if API fails
+          console.log("File System Access API not available, using fallback");
+        }
       }
 
-      // Clean up URL after a delay to allow download/viewing
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      // Fallback for browsers without File System Access API
+      // This will trigger the browser's default download behavior
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up URL after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast.success("PDF download started!");
     } catch (error) {
       console.error("Failed to generate PDF:", error);
       toast.error("Failed to generate PDF. Please try again.");

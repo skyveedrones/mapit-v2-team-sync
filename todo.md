@@ -241,3 +241,7 @@
 ## Mobile PDF Download Fix
 - [x] Change PDF download to open in new tab instead of blob download
 - [x] Works more reliably on mobile devices (Samsung tablets, phones)
+
+## PDF Save As Dialog
+- [x] Use File System Access API to trigger native Save As dialog
+- [x] Let user choose where to save the PDF file
