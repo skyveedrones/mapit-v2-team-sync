@@ -33,7 +33,9 @@ import {
   FileText,
   Image,
   Loader2,
+  Map,
   MapPin,
+  Route,
   Upload,
   X,
 } from "lucide-react";
@@ -49,12 +51,20 @@ interface ReportGeneratorDialogProps {
 }
 
 type ResolutionPreset = "high" | "medium" | "low" | "thumbnail";
+type MapStyle = "roadmap" | "satellite" | "hybrid" | "terrain";
 
 const RESOLUTION_OPTIONS: { value: ResolutionPreset; label: string; description: string }[] = [
   { value: "high", label: "High Quality", description: "1920px - Best for printing" },
   { value: "medium", label: "Medium Quality", description: "1280px - Good balance" },
   { value: "low", label: "Low Quality", description: "800px - Smaller file size" },
   { value: "thumbnail", label: "Thumbnail", description: "400px - Smallest file" },
+];
+
+const MAP_STYLE_OPTIONS: { value: MapStyle; label: string; description: string }[] = [
+  { value: "hybrid", label: "Hybrid", description: "Satellite imagery with labels" },
+  { value: "satellite", label: "Satellite", description: "Satellite imagery only" },
+  { value: "roadmap", label: "Roadmap", description: "Standard road map" },
+  { value: "terrain", label: "Terrain", description: "Physical terrain features" },
 ];
 
 export function ReportGeneratorDialog({
@@ -66,6 +76,8 @@ export function ReportGeneratorDialog({
 }: ReportGeneratorDialogProps) {
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());
   const [resolution, setResolution] = useState<ResolutionPreset>("medium");
+  const [mapStyle, setMapStyle] = useState<MapStyle>("hybrid");
+  const [showFlightPath, setShowFlightPath] = useState(true);
   const [includeWatermark, setIncludeWatermark] = useState(false);
   const [watermarkData, setWatermarkData] = useState<string | null>(null);
   const [watermarkPosition, setWatermarkPosition] = useState<"top-left" | "top-right" | "center" | "bottom-left" | "bottom-right">("bottom-right");
@@ -135,6 +147,8 @@ export function ReportGeneratorDialog({
         projectId,
         mediaIds: Array.from(selectedMediaIds),
         resolution,
+        mapStyle,
+        showFlightPath,
         includeWatermark,
         watermarkData: watermarkData || undefined,
         watermarkPosition,
@@ -310,6 +324,54 @@ export function ReportGeneratorDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Map Options */}
+          <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Map className="h-5 w-5 text-emerald-500" />
+              <Label className="text-base font-semibold">Map Options</Label>
+            </div>
+            <p className="text-sm text-muted-foreground -mt-2">
+              Configure how the project map appears in your report
+            </p>
+            
+            {/* Map Style */}
+            <div className="space-y-2">
+              <Label>Map Style</Label>
+              <Select value={mapStyle} onValueChange={(v) => setMapStyle(v as MapStyle)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MAP_STYLE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex flex-col">
+                        <span>{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Flight Path Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-emerald-500" />
+                <div className="space-y-0.5">
+                  <Label>Show Flight Path</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Draw a line connecting GPS points in capture order
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={showFlightPath}
+                onCheckedChange={setShowFlightPath}
+              />
+            </div>
           </div>
 
           {/* Watermark Options */}

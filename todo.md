@@ -157,3 +157,7 @@
 
 ## UI Improvements
 - [x] Condense project information into single compact tile on project detail page
+
+## Report Map Enhancements
+- [x] Add flight path polylines connecting GPS markers in capture order
+- [x] Add map style selector (satellite, roadmap, hybrid, terrain)

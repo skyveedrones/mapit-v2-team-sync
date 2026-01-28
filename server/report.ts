@@ -36,12 +36,39 @@ export interface ReportData {
 
 import { ENV } from "./_core/env";
 
+// Map style options
+export type MapStyle = "roadmap" | "satellite" | "hybrid" | "terrain";
+
+export const MAP_STYLE_OPTIONS: { value: MapStyle; label: string }[] = [
+  { value: "hybrid", label: "Hybrid (Satellite + Labels)" },
+  { value: "satellite", label: "Satellite" },
+  { value: "roadmap", label: "Roadmap" },
+  { value: "terrain", label: "Terrain" },
+];
+
+export interface StaticMapOptions {
+  mapStyle?: MapStyle;
+  showFlightPath?: boolean;
+}
+
 /**
  * Generate a static Google Maps URL with markers for all GPS points
  * Uses the Manus Maps proxy for authentication
  */
-export function generateStaticMapUrl(media: Media[]): string | null {
-  const gpsMedia = media.filter(m => m.latitude && m.longitude);
+export function generateStaticMapUrl(
+  media: Media[],
+  options: StaticMapOptions = {}
+): string | null {
+  const { mapStyle = "hybrid", showFlightPath = true } = options;
+  
+  // Sort media by capture time for flight path
+  const gpsMedia = media
+    .filter(m => m.latitude && m.longitude)
+    .sort((a, b) => {
+      const dateA = a.capturedAt ? new Date(a.capturedAt).getTime() : 0;
+      const dateB = b.capturedAt ? new Date(b.capturedAt).getTime() : 0;
+      return dateA - dateB;
+    });
   
   if (gpsMedia.length === 0) {
     return null;
@@ -89,10 +116,20 @@ export function generateStaticMapUrl(media: Media[]): string | null {
     center: `${centerLat},${centerLng}`,
     zoom: String(zoom),
     size: "800x500",
-    maptype: "hybrid",
+    maptype: mapStyle,
     markers: `color:red|size:small|${markers}`,
     key: apiKey,
   });
+
+  // Add flight path polyline if enabled and we have multiple points
+  if (showFlightPath && gpsMedia.length >= 2) {
+    // Build path string - Google Static Maps uses path parameter for polylines
+    // Format: path=color:0xff0000ff|weight:3|lat1,lng1|lat2,lng2|...
+    const pathPoints = markersToShow
+      .map(m => `${m.latitude},${m.longitude}`)
+      .join("|");
+    params.append("path", `color:0x10B981FF|weight:3|${pathPoints}`);
+  }
 
   return `${proxyUrl}/v1/maps/proxy/maps/api/staticmap?${params.toString()}`;
 }
@@ -100,8 +137,11 @@ export function generateStaticMapUrl(media: Media[]): string | null {
 /**
  * Fetch static map image and convert to base64 data URL
  */
-export async function fetchStaticMapAsDataUrl(media: Media[]): Promise<string | null> {
-  const mapUrl = generateStaticMapUrl(media);
+export async function fetchStaticMapAsDataUrl(
+  media: Media[],
+  options: StaticMapOptions = {}
+): Promise<string | null> {
+  const mapUrl = generateStaticMapUrl(media, options);
   if (!mapUrl) return null;
   
   try {

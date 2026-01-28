@@ -1295,6 +1295,8 @@ export const appRouter = router({
         projectId: z.number(),
         mediaIds: z.array(z.number()),
         resolution: z.enum(["high", "medium", "low", "thumbnail"]).default("medium"),
+        mapStyle: z.enum(["roadmap", "satellite", "hybrid", "terrain"]).default("hybrid"),
+        showFlightPath: z.boolean().default(true),
         includeWatermark: z.boolean().default(false),
         watermarkData: z.string().optional(),
         watermarkPosition: z.enum(["top-left", "top-right", "center", "bottom-left", "bottom-right"]).default("bottom-right"),
@@ -1362,7 +1364,10 @@ export const appRouter = router({
         const gpsMedia = selectedMedia.filter(m => m.latitude && m.longitude);
         if (gpsMedia.length > 0) {
           const { fetchStaticMapAsDataUrl } = await import("./report");
-          mapImageDataUrl = await fetchStaticMapAsDataUrl(selectedMedia);
+          mapImageDataUrl = await fetchStaticMapAsDataUrl(selectedMedia, {
+            mapStyle: input.mapStyle,
+            showFlightPath: input.showFlightPath,
+          });
         }
 
         // Generate HTML report
