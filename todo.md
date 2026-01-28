@@ -197,3 +197,9 @@
 - [x] Rename "Action" button to "Media Action" in media section
 - [x] Move "Media Action" button to left side under Project Media title
 - [x] Move "Select All" button to right side where Action button was
+
+## Embedded Project Map Section
+- [x] Create embedded map component for project detail page
+- [x] Add Project Map section between project info and media sections
+- [x] Display GPS markers from project media on the embedded map
+- [x] Remove View Map from Project Actions dropdown (now always visible)

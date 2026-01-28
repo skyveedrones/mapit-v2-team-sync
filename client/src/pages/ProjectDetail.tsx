@@ -6,6 +6,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
+import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -303,10 +304,7 @@ export default function ProjectDetail() {
                           New Flight
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => setLocation(`/project/${projectId}/map`)}>
-                        <Map className="h-4 w-4 mr-2 text-blue-500" />
-                        View Map
-                      </DropdownMenuItem>
+
                       <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
                         <FileText className="h-4 w-4 mr-2 text-orange-500" />
                         Generate Report
@@ -403,6 +401,14 @@ export default function ProjectDetail() {
                   </div>
                 </CardContent>
               </Card>
+            </motion.div>
+
+            {/* Project Map Section */}
+            <motion.div variants={fadeInUp} className="mb-8">
+              <EmbeddedProjectMap
+                projectId={project.id}
+                projectName={project.name}
+              />
             </motion.div>
 
             {/* Flights Section */}
