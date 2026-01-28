@@ -1,6 +1,7 @@
 /**
  * Project Map Page
  * Displays media locations on an interactive Google Map with flight path visualization
+ * Redesigned with full-screen map and collapsible consolidated info panel
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -10,6 +11,9 @@ import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
   Camera,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
   Layers,
   MapPin,
   Route,
@@ -17,6 +21,9 @@ import {
   X,
   ZoomIn,
   ZoomOut,
+  Calendar,
+  Image,
+  Mountain,
 } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
@@ -47,6 +54,7 @@ export default function ProjectMap() {
   const [selectedMedia, setSelectedMedia] = useState<GeotaggedMedia | null>(null);
   const [mapType, setMapType] = useState<"roadmap" | "satellite" | "terrain" | "hybrid">("satellite");
   const [mapReady, setMapReady] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = trpc.project.get.useQuery(
@@ -270,172 +278,176 @@ export default function ProjectMap() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-3">
-        <div className="container flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={`/project/${projectId}`}>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Project
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
-                {project.name}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {geotaggedMedia.length} of {mediaItems?.length || 0} media items with GPS data
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      {/* Full-screen Map Container */}
+      <div className="flex-1 relative">
+        {geotaggedMedia.length > 0 ? (
+          <MapView
+            className="w-full h-full"
+            initialCenter={getMapCenter()}
+            initialZoom={15}
+            onMapReady={handleMapReady}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted/20">
+            <div className="text-center p-8">
+              <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">No GPS Data Available</h2>
+              <p className="text-muted-foreground mb-4">
+                Upload drone photos with GPS metadata to see them on the map.
               </p>
+              <Link href={`/project/${projectId}`}>
+                <Button>Upload Media</Button>
+              </Link>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{user?.name}</span>
-          </div>
-        </div>
-      </header>
+        )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Map */}
-        <div className="flex-1 relative">
-          {geotaggedMedia.length > 0 ? (
-            <MapView
-              className="w-full h-full"
-              initialCenter={getMapCenter()}
-              initialZoom={15}
-              onMapReady={handleMapReady}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted/20">
-              <div className="text-center p-8">
-                <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">No GPS Data Available</h2>
-                <p className="text-muted-foreground mb-4">
-                  Upload drone photos with GPS metadata to see them on the map.
-                </p>
-                <Link href={`/project/${projectId}`}>
-                  <Button>Upload Media</Button>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* Map Controls */}
-          {geotaggedMedia.length > 0 && (
-            <div className="absolute top-4 right-4 flex flex-col gap-2">
-              {/* Zoom Controls */}
-              <div className="bg-card rounded-lg shadow-lg border border-border overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-none border-b border-border"
-                  onClick={zoomIn}
-                >
-                  <ZoomIn className="h-4 w-4" />
+        {/* Consolidated Project Info Panel - Top Left */}
+        <div className="absolute top-4 left-4 z-10">
+          <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-4 max-w-sm">
+            <div className="flex items-start gap-3">
+              <Link href={`/project/${projectId}`}>
+                <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8">
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-none"
-                  onClick={zoomOut}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Map Type Toggle */}
-              <div className="bg-card rounded-lg shadow-lg border border-border p-2">
-                <div className="flex flex-col gap-1">
-                  <Button
-                    variant={mapType === "satellite" ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => changeMapType("satellite")}
-                  >
-                    <Layers className="h-4 w-4 mr-2" />
-                    Satellite
-                  </Button>
-                  <Button
-                    variant={mapType === "hybrid" ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => changeMapType("hybrid")}
-                  >
-                    <Layers className="h-4 w-4 mr-2" />
-                    Hybrid
-                  </Button>
-                  <Button
-                    variant={mapType === "terrain" ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => changeMapType("terrain")}
-                  >
-                    <Layers className="h-4 w-4 mr-2" />
-                    Terrain
-                  </Button>
-                  <Button
-                    variant={mapType === "roadmap" ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => changeMapType("roadmap")}
-                  >
-                    <Layers className="h-4 w-4 mr-2" />
-                    Road
-                  </Button>
+              </Link>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-base font-semibold truncate" style={{ fontFamily: "var(--font-display)" }}>
+                  {project.name}
+                </h1>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {geotaggedMedia.length} locations
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Image className="h-3 w-3" />
+                    {mediaItems?.length || 0} total
+                  </span>
+                  {project.location && (
+                    <span className="flex items-center gap-1">
+                      <FolderOpen className="h-3 w-3" />
+                      {project.location}
+                    </span>
+                  )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Flight Path Toggle */}
+        {/* Map Controls - Top Right */}
+        {geotaggedMedia.length > 0 && (
+          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            {/* Zoom Controls */}
+            <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border overflow-hidden">
               <Button
-                variant={showFlightPath ? "default" : "outline"}
-                size="sm"
-                className="shadow-lg"
-                onClick={toggleFlightPath}
+                variant="ghost"
+                size="icon"
+                className="rounded-none border-b border-border h-9 w-9"
+                onClick={zoomIn}
               >
-                <Route className="h-4 w-4 mr-2" />
-                Flight Path
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-none h-9 w-9"
+                onClick={zoomOut}
+              >
+                <ZoomOut className="h-4 w-4" />
               </Button>
             </div>
-          )}
 
-          {/* Legend */}
-          {geotaggedMedia.length > 0 && (
-            <div className="absolute bottom-4 left-4 bg-card rounded-lg shadow-lg border border-border p-3">
-              <h3 className="text-sm font-semibold mb-2">Legend</h3>
-              <div className="flex flex-col gap-1.5 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <Camera className="h-2.5 w-2.5 text-white" />
-                  </div>
-                  <span>Photo</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
-                    <Video className="h-2.5 w-2.5 text-white" />
-                  </div>
-                  <span>Video</span>
-                </div>
-                {showFlightPath && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-0.5 bg-emerald-500" />
-                    <span>Flight Path</span>
-                  </div>
-                )}
+            {/* Map Type Toggle */}
+            <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-1.5">
+              <div className="flex flex-col gap-0.5">
+                {[
+                  { type: "satellite" as const, label: "Satellite" },
+                  { type: "hybrid" as const, label: "Hybrid" },
+                  { type: "terrain" as const, label: "Terrain" },
+                  { type: "roadmap" as const, label: "Road" },
+                ].map(({ type, label }) => (
+                  <Button
+                    key={type}
+                    variant={mapType === type ? "default" : "ghost"}
+                    size="sm"
+                    className="justify-start h-7 text-xs"
+                    onClick={() => changeMapType(type)}
+                  >
+                    <Layers className="h-3 w-3 mr-1.5" />
+                    {label}
+                  </Button>
+                ))}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Sidebar - Media List */}
+            {/* Flight Path Toggle */}
+            <Button
+              variant={showFlightPath ? "default" : "outline"}
+              size="sm"
+              className="shadow-lg bg-card/95 backdrop-blur-sm h-8 text-xs"
+              onClick={toggleFlightPath}
+            >
+              <Route className="h-3 w-3 mr-1.5" />
+              Flight Path
+            </Button>
+          </div>
+        )}
+
+        {/* Legend - Bottom Left */}
         {geotaggedMedia.length > 0 && (
-          <div className="w-80 bg-card border-l border-border overflow-hidden flex flex-col">
+          <div className="absolute bottom-4 left-4 bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-2.5 z-10">
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <Camera className="h-2.5 w-2.5 text-white" />
+                </div>
+                <span>Photo</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+                  <Video className="h-2.5 w-2.5 text-white" />
+                </div>
+                <span>Video</span>
+              </div>
+              {showFlightPath && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-0.5 bg-emerald-500" />
+                  <span>Path</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Media List Toggle Button - Right Edge */}
+        {geotaggedMedia.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className={`absolute top-1/2 -translate-y-1/2 z-20 bg-card/95 backdrop-blur-sm shadow-lg transition-all duration-300 ${
+              sidebarOpen ? "right-[320px]" : "right-0 rounded-l-lg rounded-r-none"
+            }`}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        )}
+
+        {/* Collapsible Sidebar - Media List */}
+        {geotaggedMedia.length > 0 && (
+          <div
+            className={`absolute top-0 right-0 h-full w-80 bg-card/95 backdrop-blur-sm border-l border-border overflow-hidden flex flex-col transition-transform duration-300 z-10 ${
+              sidebarOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
             <div className="p-4 border-b border-border">
-              <h2 className="font-semibold" style={{ fontFamily: "var(--font-display)" }}>
+              <h2 className="font-semibold text-sm" style={{ fontFamily: "var(--font-display)" }}>
                 Media Locations
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Click to center on map
               </p>
             </div>
@@ -449,18 +461,18 @@ export default function ProjectMap() {
                   onClick={() => centerOnMedia(media)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                       media.mediaType === "video" ? "bg-red-500" : "bg-emerald-500"
                     }`}>
-                      <span className="text-white text-sm font-bold">{index + 1}</span>
+                      <span className="text-white text-xs font-bold">{index + 1}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{media.filename}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs font-medium truncate">{media.filename}</p>
+                      <p className="text-[10px] text-muted-foreground">
                         {media.latitude.toFixed(6)}, {media.longitude.toFixed(6)}
                       </p>
                       {media.capturedAt && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground">
                           {new Date(media.capturedAt).toLocaleString()}
                         </p>
                       )}
@@ -469,7 +481,7 @@ export default function ProjectMap() {
                       <img
                         src={media.thumbnailUrl}
                         alt={media.filename}
-                        className="w-12 h-12 object-cover rounded"
+                        className="w-10 h-10 object-cover rounded flex-shrink-0"
                       />
                     )}
                   </div>
@@ -480,40 +492,51 @@ export default function ProjectMap() {
         )}
       </div>
 
-      {/* Selected Media Preview */}
+      {/* Selected Media Preview - Bottom Center */}
       {selectedMedia && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-card rounded-lg shadow-xl border border-border p-4 max-w-md z-50">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm rounded-lg shadow-xl border border-border p-3 max-w-sm z-50">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-6 w-6"
+            className="absolute top-1 right-1 h-6 w-6"
             onClick={() => setSelectedMedia(null)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {selectedMedia.thumbnailUrl ? (
               <img
                 src={selectedMedia.url}
                 alt={selectedMedia.filename}
-                className="w-32 h-24 object-cover rounded"
+                className="w-24 h-18 object-cover rounded"
               />
             ) : (
-              <div className="w-32 h-24 bg-muted rounded flex items-center justify-center">
+              <div className="w-24 h-18 bg-muted rounded flex items-center justify-center">
                 {selectedMedia.mediaType === "video" ? (
-                  <Video className="h-8 w-8 text-muted-foreground" />
+                  <Video className="h-6 w-6 text-muted-foreground" />
                 ) : (
-                  <Camera className="h-8 w-8 text-muted-foreground" />
+                  <Camera className="h-6 w-6 text-muted-foreground" />
                 )}
               </div>
             )}
-            <div className="flex-1">
-              <h3 className="font-semibold text-sm mb-1">{selectedMedia.filename}</h3>
-              <div className="text-xs text-muted-foreground space-y-0.5">
-                <p>📍 {selectedMedia.latitude.toFixed(6)}, {selectedMedia.longitude.toFixed(6)}</p>
-                {selectedMedia.altitude && <p>🏔️ Altitude: {selectedMedia.altitude.toFixed(1)}m</p>}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-xs mb-1 truncate pr-6">{selectedMedia.filename}</h3>
+              <div className="text-[10px] text-muted-foreground space-y-0.5">
+                <p className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {selectedMedia.latitude.toFixed(6)}, {selectedMedia.longitude.toFixed(6)}
+                </p>
+                {selectedMedia.altitude && (
+                  <p className="flex items-center gap-1">
+                    <Mountain className="h-3 w-3" />
+                    {selectedMedia.altitude.toFixed(1)}m
+                  </p>
+                )}
                 {selectedMedia.capturedAt && (
-                  <p>📅 {new Date(selectedMedia.capturedAt).toLocaleString()}</p>
+                  <p className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(selectedMedia.capturedAt).toLocaleString()}
+                  </p>
                 )}
               </div>
             </div>

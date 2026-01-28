@@ -100,3 +100,19 @@
 - [x] Access control - Allow collaborators to view shared projects
 - [x] Share/Invite dialog UI in project detail page
 - [x] Invitation acceptance page for new users
+
+## Map View & Media Gallery Improvements
+- [x] Move file information section in map view to not block full map
+- [x] Consolidate project information into single compact box
+- [x] Change "+Media" button to "Action" dropdown menu
+- [x] Add Upload option to Action dropdown
+- [x] Add Download option to Action dropdown
+- [x] Add Watermark option to Action dropdown
+- [x] Add Delete option to Action dropdown
+- [x] Add Sort option to Action dropdown
+
+## Watermark Feature
+- [x] Backend API - Apply watermark to images
+- [x] Watermark dialog UI with logo upload
+- [x] Watermark position and opacity settings
+- [x] Apply watermark to selected/all images

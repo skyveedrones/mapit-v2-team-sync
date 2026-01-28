@@ -385,20 +385,14 @@ export default function ProjectDetail() {
                 >
                   Project Media
                 </h2>
-                {hasMedia && canEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setUploadDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Media
-                  </Button>
-                )}
               </div>
 
               {hasMedia ? (
-                <MediaGallery projectId={projectId} />
+                <MediaGallery 
+                  projectId={projectId} 
+                  canEdit={canEdit}
+                  onUploadClick={() => setUploadDialogOpen(true)}
+                />
               ) : (
                 <Card className="border-dashed">
                   <CardContent className="py-12 text-center">

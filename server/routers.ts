@@ -34,7 +34,8 @@ import {
   userHasProjectAccess,
 } from "./db";
 import { sendProjectInvitationEmail } from "./email";
-import { storagePut } from "./storage";
+import { storagePut, storageGet } from "./storage";
+import { applyWatermark, WatermarkOptions } from "./watermark";
 
 // Validation schemas for project operations
 const createProjectSchema = z.object({
@@ -866,6 +867,160 @@ export const appRouter = router({
           content: gpxContent,
           filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.gpx`,
           mimeType: 'application/gpx+xml',
+        };
+      }),
+  }),
+
+  // Watermark procedures
+  watermark: router({
+    // Apply watermark to a single media item
+    applyToMedia: protectedProcedure
+      .input(z.object({
+        mediaId: z.number(),
+        watermarkData: z.string(), // Base64 encoded watermark image
+        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("bottom-right"),
+        opacity: z.number().min(10).max(100).default(70),
+        scale: z.number().min(5).max(50).default(15),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Get the media item
+        const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found or you don't have permission",
+          });
+        }
+
+        // Only process photos
+        if (mediaItem.mediaType !== "photo") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Watermarks can only be applied to photos",
+          });
+        }
+
+        try {
+          // Fetch the original image
+          const imageResponse = await fetch(mediaItem.url);
+          if (!imageResponse.ok) {
+            throw new Error("Failed to fetch original image");
+          }
+          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+          // Decode watermark from base64
+          const watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+
+          // Apply watermark
+          const watermarkedBuffer = await applyWatermark(imageBuffer, watermarkBuffer, {
+            position: input.position,
+            opacity: input.opacity,
+            scale: input.scale,
+            padding: 20,
+          });
+
+          // Generate new filename
+          const timestamp = Date.now();
+          const ext = mediaItem.filename.split(".").pop() || "jpg";
+          const baseName = mediaItem.filename.replace(/\.[^.]+$/, "");
+          const newFilename = `${baseName}_watermarked_${timestamp}.${ext}`;
+          const fileKey = `${ctx.user.id}/media/${newFilename}`;
+
+          // Upload watermarked image to S3
+          const { url: newUrl } = await storagePut(
+            fileKey,
+            watermarkedBuffer,
+            "image/jpeg"
+          );
+
+          return {
+            success: true,
+            url: newUrl,
+            filename: newFilename,
+          };
+        } catch (error) {
+          console.error("[Watermark] Failed to apply watermark:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to apply watermark",
+          });
+        }
+      }),
+
+    // Apply watermark to multiple media items
+    applyBatch: protectedProcedure
+      .input(z.object({
+        mediaIds: z.array(z.number()).min(1).max(50),
+        watermarkData: z.string(), // Base64 encoded watermark image
+        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("bottom-right"),
+        opacity: z.number().min(10).max(100).default(70),
+        scale: z.number().min(5).max(50).default(15),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const results: { mediaId: number; success: boolean; url?: string; filename?: string; error?: string }[] = [];
+        const watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+
+        for (const mediaId of input.mediaIds) {
+          try {
+            // Get the media item
+            const mediaItem = await getMediaById(mediaId, ctx.user.id);
+            if (!mediaItem) {
+              results.push({ mediaId, success: false, error: "Not found" });
+              continue;
+            }
+
+            // Only process photos
+            if (mediaItem.mediaType !== "photo") {
+              results.push({ mediaId, success: false, error: "Not a photo" });
+              continue;
+            }
+
+            // Fetch the original image
+            const imageResponse = await fetch(mediaItem.url);
+            if (!imageResponse.ok) {
+              results.push({ mediaId, success: false, error: "Failed to fetch" });
+              continue;
+            }
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+            // Apply watermark
+            const watermarkedBuffer = await applyWatermark(imageBuffer, watermarkBuffer, {
+              position: input.position,
+              opacity: input.opacity,
+              scale: input.scale,
+              padding: 20,
+            });
+
+            // Generate new filename
+            const timestamp = Date.now();
+            const ext = mediaItem.filename.split(".").pop() || "jpg";
+            const baseName = mediaItem.filename.replace(/\.[^.]+$/, "");
+            const newFilename = `${baseName}_watermarked_${timestamp}.${ext}`;
+            const fileKey = `${ctx.user.id}/media/${newFilename}`;
+
+            // Upload watermarked image to S3
+            const { url: newUrl } = await storagePut(
+              fileKey,
+              watermarkedBuffer,
+              "image/jpeg"
+            );
+
+            results.push({
+              mediaId,
+              success: true,
+              url: newUrl,
+              filename: newFilename,
+            });
+          } catch (error) {
+            console.error(`[Watermark] Failed for media ${mediaId}:`, error);
+            results.push({ mediaId, success: false, error: "Processing failed" });
+          }
+        }
+
+        return {
+          results,
+          successCount: results.filter(r => r.success).length,
+          failCount: results.filter(r => !r.success).length,
         };
       }),
   }),
