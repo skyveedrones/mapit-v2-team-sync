@@ -61,6 +61,10 @@ export const projects = mysqlTable("projects", {
   warrantyStartDate: timestamp("warrantyStartDate"),
   /** Warranty end date */
   warrantyEndDate: timestamp("warrantyEndDate"),
+  /** Project logo URL */
+  logoUrl: varchar("logoUrl", { length: 500 }),
+  /** S3 storage key for the project logo */
+  logoKey: varchar("logoKey", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

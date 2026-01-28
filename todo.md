@@ -213,3 +213,17 @@
 - [x] Generate watermarked thumbnails
 - [x] Default watermark position to upper left
 - [x] Load saved watermark in dialog if available
+
+## Move Logo to Project Level
+- [x] Add logoUrl and logoKey fields to projects table
+- [x] Create backend API for project logo upload/delete
+- [x] Add Upload Logo option to Project Actions dropdown
+- [ ] Display project logo on project detail page
+- [ ] Include project logo in project reports (instead of user logo)
+- [x] Remove logo upload from dashboard Action menu
+- [x] Remove logo display from dashboard header
+
+## Watermark Preview Feature
+- [x] Add live preview showing watermark on sample image
+- [x] Update preview when position/opacity/scale changes
+- [x] Show preview before applying permanently

@@ -57,6 +57,9 @@ import {
   updateUserWatermark,
   getUserWatermark,
   deleteUserWatermark,
+  updateProjectLogo,
+  deleteProjectLogo,
+  getProjectLogo,
 } from "./db";
 import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
@@ -1513,6 +1516,69 @@ export const appRouter = router({
         ...value,
       }));
     }),
+  }),
+
+  // ==================== Project Logo ====================
+  projectLogo: router({
+    // Get project logo
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const logo = await getProjectLogo(input.projectId, ctx.user.id);
+        return logo;
+      }),
+
+    // Upload project logo
+    upload: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        fileData: z.string(), // Base64 encoded file data
+        filename: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Validate file type
+        if (!input.mimeType.startsWith("image/")) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Only image files are allowed for logos",
+          });
+        }
+
+        // Decode base64 file data
+        const fileBuffer = Buffer.from(input.fileData, "base64");
+
+        // Check file size (max 5MB for logos)
+        if (fileBuffer.length > 5 * 1024 * 1024) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Logo file size must be less than 5MB",
+          });
+        }
+
+        // Generate unique file key
+        const ext = input.filename.split(".").pop() || "png";
+        const fileKey = `projects/${input.projectId}/logo/${nanoid()}.${ext}`;
+
+        // Upload to S3
+        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+
+        // Update project record
+        const updated = await updateProjectLogo(input.projectId, ctx.user.id, url, fileKey);
+
+        return {
+          logoUrl: updated?.logoUrl,
+          logoKey: updated?.logoKey,
+        };
+      }),
+
+    // Delete project logo
+    delete: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const deletedKey = await deleteProjectLogo(input.projectId, ctx.user.id);
+        return { success: true, deletedKey };
+      }),
   }),
 
   // ==================== User Logo ====================

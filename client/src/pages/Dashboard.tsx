@@ -5,7 +5,7 @@
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
-import { LogoUploadDialog } from "@/components/LogoUploadDialog";
+
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -29,7 +29,6 @@ import {
   Download,
   FolderOpen,
   FolderPlus,
-  ImagePlus,
   Layers,
   LogOut,
   Map,
@@ -65,7 +64,7 @@ export default function Dashboard() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [logoDialogOpen, setLogoDialogOpen] = useState(false);
+
 
   // Fetch projects
   const { data: projects, isLoading: projectsLoading } = trpc.project.list.useQuery();
@@ -73,8 +72,7 @@ export default function Dashboard() {
   // Fetch shared projects
   const { data: sharedProjects, isLoading: sharedProjectsLoading } = trpc.sharing.getSharedWithMe.useQuery();
 
-  // Fetch user logo
-  const { data: userLogo } = trpc.logo.get.useQuery();
+
 
   const handleComingSoon = () => {
     toast.info("Feature coming soon!", {
@@ -146,15 +144,7 @@ export default function Dashboard() {
               <Bell className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {userLogo?.logoUrl ? (
-                <img
-                  src={userLogo.logoUrl}
-                  alt="Logo"
-                  className="h-8 w-8 object-contain rounded"
-                />
-              ) : (
-                <User className="h-4 w-4" />
-              )}
+              <User className="h-4 w-4" />
               <span className="hidden sm:inline">{user?.name || user?.email || "User"}</span>
             </div>
             <Button
@@ -208,10 +198,6 @@ export default function Dashboard() {
                       New Project
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setLogoDialogOpen(true)}>
-                      <ImagePlus className="h-4 w-4 mr-2" />
-                      Upload Logo
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleViewMaps}>
                       <Map className="h-4 w-4 mr-2" />
                       View Maps
@@ -361,10 +347,7 @@ export default function Dashboard() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
-      <LogoUploadDialog
-        open={logoDialogOpen}
-        onOpenChange={setLogoDialogOpen}
-      />
+
     </div>
   );
 }

@@ -4,6 +4,7 @@
  * - Supports uploading new watermark or using saved watermark
  * - Permanently applies watermarks to stored images and thumbnails in S3
  * - Default position: upper-left corner
+ * - Live preview showing how watermark will look on sample image
  */
 
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,9 @@ import {
   AlertCircle,
   Save,
   Trash2,
+  Eye,
 } from "lucide-react";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 interface WatermarkDialogProps {
@@ -49,6 +51,15 @@ interface WatermarkDialogProps {
 }
 
 type Position = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+
+// Position CSS classes for watermark overlay
+const positionStyles: Record<Position, string> = {
+  "top-left": "top-2 left-2",
+  "top-right": "top-2 right-2",
+  "bottom-left": "bottom-2 left-2",
+  "bottom-right": "bottom-2 right-2",
+  "center": "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+};
 
 export function WatermarkDialog({
   open,
@@ -66,6 +77,8 @@ export function WatermarkDialog({
   const [useSavedWatermark, setUseSavedWatermark] = useState(false);
   const [saveWatermarkForFuture, setSaveWatermarkForFuture] = useState(false);
   const [results, setResults] = useState<{ mediaId: number; success: boolean; error?: string }[]>([]);
+  const [showPreview, setShowPreview] = useState(true);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch saved watermark
   const { data: savedWatermark, refetch: refetchSavedWatermark } = trpc.watermark.getSavedWatermark.useQuery(
@@ -76,6 +89,12 @@ export function WatermarkDialog({
   const applyPermanentMutation = trpc.watermark.applyPermanent.useMutation();
   const saveWatermarkMutation = trpc.watermark.saveWatermark.useMutation();
   const deleteWatermarkMutation = trpc.watermark.deleteWatermark.useMutation();
+
+  // Get sample image for preview (first photo from selection)
+  const sampleImage = useMemo(() => {
+    const photos = selectedMedia.filter(m => m.mediaType === "photo");
+    return photos.length > 0 ? photos[0] : null;
+  }, [selectedMedia]);
 
   // Reset to use saved watermark if available
   useEffect(() => {
@@ -213,6 +232,7 @@ export function WatermarkDialog({
       setResults([]);
       setSaveWatermarkForFuture(false);
       setUseSavedWatermark(false);
+      setShowPreview(true);
     }
     onOpenChange(open);
   };
@@ -220,10 +240,11 @@ export function WatermarkDialog({
   const photoCount = selectedMedia.filter(m => m.mediaType === "photo").length;
   const successCount = results.filter(r => r.success).length;
   const hasSavedWatermark = !!savedWatermark?.watermarkUrl;
+  const hasWatermark = useSavedWatermark ? hasSavedWatermark : !!watermarkPreview;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ImagePlus className="h-5 w-5" />
@@ -235,84 +256,85 @@ export function WatermarkDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Saved Watermark Option */}
-          {hasSavedWatermark && (
-            <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="use-saved"
-                    checked={useSavedWatermark}
-                    onCheckedChange={(checked) => {
-                      setUseSavedWatermark(checked);
-                      if (checked) {
-                        setWatermarkFile(null);
-                        setWatermarkPreview(savedWatermark.watermarkUrl);
-                      } else {
-                        setWatermarkPreview(null);
-                      }
-                    }}
-                  />
-                  <Label htmlFor="use-saved" className="cursor-pointer">
-                    Use saved watermark
-                  </Label>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleDeleteSavedWatermark}
-                  disabled={deleteWatermarkMutation.isPending}
-                >
-                  {deleteWatermarkMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              {useSavedWatermark && savedWatermark.watermarkUrl && (
-                <div className="flex items-center gap-2">
-                  <img
-                    src={savedWatermark.watermarkUrl}
-                    alt="Saved watermark"
-                    className="max-h-16 rounded border border-border bg-white/10 p-1"
-                  />
-                  <span className="text-xs text-muted-foreground">Your saved watermark</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Watermark Upload */}
-          {!useSavedWatermark && (
-            <div className="space-y-2">
-              <Label>Watermark Image</Label>
-              {watermarkPreview && !useSavedWatermark ? (
-                <div className="relative inline-block">
-                  <img
-                    src={watermarkPreview}
-                    alt="Watermark preview"
-                    className="max-h-24 rounded border border-border bg-muted/50 p-2"
-                  />
+        <div className="grid md:grid-cols-2 gap-6 py-4">
+          {/* Left Column - Settings */}
+          <div className="space-y-4">
+            {/* Saved Watermark Option */}
+            {hasSavedWatermark && (
+              <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="use-saved"
+                      checked={useSavedWatermark}
+                      onCheckedChange={(checked) => {
+                        setUseSavedWatermark(checked);
+                        if (checked) {
+                          setWatermarkFile(null);
+                          setWatermarkPreview(savedWatermark.watermarkUrl);
+                        } else {
+                          setWatermarkPreview(null);
+                        }
+                      }}
+                    />
+                    <Label htmlFor="use-saved" className="cursor-pointer text-sm">
+                      Use saved watermark
+                    </Label>
+                  </div>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => {
-                      setWatermarkFile(null);
-                      setWatermarkPreview(null);
-                    }}
+                    size="sm"
+                    className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={handleDeleteSavedWatermark}
+                    disabled={deleteWatermarkMutation.isPending}
                   >
-                    <X className="h-3 w-3" />
+                    {deleteWatermarkMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-4 py-3 hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                {useSavedWatermark && savedWatermark.watermarkUrl && (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={savedWatermark.watermarkUrl}
+                      alt="Saved watermark"
+                      className="max-h-12 rounded border border-border bg-white/10 p-1"
+                    />
+                    <span className="text-xs text-muted-foreground">Your saved watermark</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Watermark Upload */}
+            {!useSavedWatermark && (
+              <div className="space-y-2">
+                <Label>Watermark Image</Label>
+                {watermarkPreview && !useSavedWatermark ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={watermarkPreview}
+                      alt="Watermark preview"
+                      className="max-h-16 rounded border border-border bg-muted/50 p-2"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        setWatermarkFile(null);
+                        setWatermarkPreview(null);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 hover:border-primary/50 hover:bg-muted/50 transition-colors">
                     <Upload className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Upload watermark image</span>
+                    <span className="text-sm text-muted-foreground">Upload watermark</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -320,117 +342,176 @@ export function WatermarkDialog({
                       onChange={handleFileChange}
                     />
                   </label>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Recommended: PNG with transparent background, max 5MB
-              </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  PNG with transparent background recommended
+                </p>
 
-              {/* Save for future option */}
-              {watermarkFile && (
-                <div className="flex items-center gap-2 mt-2">
-                  <Switch
-                    id="save-watermark"
-                    checked={saveWatermarkForFuture}
-                    onCheckedChange={setSaveWatermarkForFuture}
-                  />
-                  <Label htmlFor="save-watermark" className="cursor-pointer text-sm flex items-center gap-1">
-                    <Save className="h-3 w-3" />
-                    Save watermark for future use
-                  </Label>
-                </div>
-              )}
+                {/* Save for future option */}
+                {watermarkFile && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Switch
+                      id="save-watermark"
+                      checked={saveWatermarkForFuture}
+                      onCheckedChange={setSaveWatermarkForFuture}
+                    />
+                    <Label htmlFor="save-watermark" className="cursor-pointer text-xs flex items-center gap-1">
+                      <Save className="h-3 w-3" />
+                      Save for future use
+                    </Label>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Position */}
+            <div className="space-y-2">
+              <Label>Position</Label>
+              <Select value={position} onValueChange={(v) => setPosition(v as Position)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top-left">Top Left (Default)</SelectItem>
+                  <SelectItem value="top-right">Top Right</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          {/* Position */}
-          <div className="space-y-2">
-            <Label>Position</Label>
-            <Select value={position} onValueChange={(v) => setPosition(v as Position)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="top-left">Top Left (Default)</SelectItem>
-                <SelectItem value="top-right">Top Right</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-                <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                <SelectItem value="bottom-right">Bottom Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Opacity */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Opacity</Label>
-              <span className="text-sm text-muted-foreground">{opacity}%</span>
-            </div>
-            <Slider
-              value={[opacity]}
-              onValueChange={([v]) => setOpacity(v)}
-              min={10}
-              max={100}
-              step={5}
-            />
-          </div>
-
-          {/* Scale */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Size</Label>
-              <span className="text-sm text-muted-foreground">{scale}% of image width</span>
-            </div>
-            <Slider
-              value={[scale]}
-              onValueChange={([v]) => setScale(v)}
-              min={5}
-              max={50}
-              step={5}
-            />
-          </div>
-
-          {/* Warning */}
-          <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              <strong>Note:</strong> This will permanently modify your images. The watermark will be 
-              embedded into the stored files and cannot be removed. Make sure you have backups if needed.
-            </p>
-          </div>
-
-          {/* Results */}
-          {results.length > 0 && (
-            <div className="space-y-2 rounded-lg border border-border p-3">
+            {/* Opacity */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {successCount} of {results.length} processed successfully
-                </span>
+                <Label>Opacity</Label>
+                <span className="text-xs text-muted-foreground">{opacity}%</span>
               </div>
-              <div className="max-h-32 overflow-y-auto space-y-1">
-                {results.map((result) => {
-                  const media = selectedMedia.find(m => m.id === result.mediaId);
-                  return (
-                    <div
-                      key={result.mediaId}
-                      className="flex items-center gap-2 text-xs"
-                    >
-                      {result.success ? (
-                        <CheckCircle className="h-3 w-3 text-emerald-500" />
-                      ) : (
-                        <AlertCircle className="h-3 w-3 text-destructive" />
-                      )}
-                      <span className="truncate flex-1">
-                        {media?.filename || `Media ${result.mediaId}`}
-                      </span>
-                      {!result.success && (
-                        <span className="text-destructive">{result.error}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <Slider
+                value={[opacity]}
+                onValueChange={([v]) => setOpacity(v)}
+                min={10}
+                max={100}
+                step={5}
+              />
             </div>
-          )}
+
+            {/* Scale */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Size</Label>
+                <span className="text-xs text-muted-foreground">{scale}% of image</span>
+              </div>
+              <Slider
+                value={[scale]}
+                onValueChange={([v]) => setScale(v)}
+                min={5}
+                max={50}
+                step={5}
+              />
+            </div>
+
+            {/* Warning */}
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-2">
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                <strong>Note:</strong> This permanently modifies your images. The watermark cannot be removed after applying.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Column - Live Preview */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Live Preview
+              </Label>
+              <Switch
+                id="show-preview"
+                checked={showPreview}
+                onCheckedChange={setShowPreview}
+              />
+            </div>
+            
+            {showPreview && (
+              <div 
+                ref={previewContainerRef}
+                className="relative rounded-lg border border-border overflow-hidden bg-muted/30"
+                style={{ aspectRatio: "4/3" }}
+              >
+                {sampleImage?.thumbnailUrl ? (
+                  <>
+                    <img
+                      src={sampleImage.thumbnailUrl}
+                      alt="Sample preview"
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Watermark overlay */}
+                    {hasWatermark && watermarkPreview && (
+                      <div 
+                        className={`absolute ${positionStyles[position]} pointer-events-none`}
+                        style={{ 
+                          opacity: opacity / 100,
+                          width: `${scale}%`,
+                        }}
+                      >
+                        <img
+                          src={watermarkPreview}
+                          alt="Watermark"
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    )}
+                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                      Preview
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <div className="text-center p-4">
+                      <ImagePlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">No sample image available</p>
+                      <p className="text-xs opacity-70">Select photos to see preview</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Results */}
+            {results.length > 0 && (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {successCount} of {results.length} processed
+                  </span>
+                </div>
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {results.map((result) => {
+                    const media = selectedMedia.find(m => m.id === result.mediaId);
+                    return (
+                      <div
+                        key={result.mediaId}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        {result.success ? (
+                          <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-3 w-3 text-destructive flex-shrink-0" />
+                        )}
+                        <span className="truncate flex-1">
+                          {media?.filename || `Media ${result.mediaId}`}
+                        </span>
+                        {!result.success && (
+                          <span className="text-destructive truncate">{result.error}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
@@ -440,7 +521,7 @@ export function WatermarkDialog({
           {results.length === 0 && (
             <Button
               onClick={handleApplyWatermark}
-              disabled={(!useSavedWatermark && !watermarkFile) || photoCount === 0 || isProcessing}
+              disabled={!hasWatermark || photoCount === 0 || isProcessing}
             >
               {isProcessing ? (
                 <>

@@ -1147,6 +1147,73 @@ export async function assignMediaToFlight(mediaId: number, flightId: number | nu
 }
 
 
+// ==================== Project Logo Functions ====================
+
+export async function updateProjectLogo(
+  projectId: number,
+  userId: number,
+  logoUrl: string,
+  logoKey: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Verify user owns the project
+  const project = await getUserProject(projectId, userId);
+  if (!project) {
+    throw new Error("Project not found or access denied");
+  }
+
+  await db
+    .update(projects)
+    .set({ logoUrl, logoKey })
+    .where(eq(projects.id, projectId));
+
+  return getUserProject(projectId, userId);
+}
+
+export async function deleteProjectLogo(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Verify user owns the project
+  const project = await getUserProject(projectId, userId);
+  if (!project) {
+    throw new Error("Project not found or access denied");
+  }
+
+  const logoKey = project.logoKey;
+
+  await db
+    .update(projects)
+    .set({ logoUrl: null, logoKey: null })
+    .where(eq(projects.id, projectId));
+
+  return logoKey || null;
+}
+
+export async function getProjectLogo(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  // Get project with access check
+  const project = await getProjectWithAccess(projectId, userId);
+  if (!project) {
+    return null;
+  }
+
+  return {
+    logoUrl: project.logoUrl,
+    logoKey: project.logoKey,
+  };
+}
+
 // ==================== User Logo Functions ====================
 
 export async function updateUserLogo(
