@@ -40,6 +40,7 @@ import {
   FileVideo,
   ImagePlus,
   MapPin,
+  MapPinOff,
   Mountain,
   SortAsc,
   SortDesc,
@@ -456,7 +457,7 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
             </div>
 
             {/* Media type badge */}
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
               <div className="p-1.5 rounded-full bg-black/50 backdrop-blur-sm">
                 {item.mediaType === "video" ? (
                   <FileVideo className="h-4 w-4 text-white" />
@@ -464,6 +465,13 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
                   <FileImage className="h-4 w-4 text-white" />
                 )}
               </div>
+              {/* No GPS indicator */}
+              {(!item.latitude || !item.longitude) && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium">
+                  <MapPinOff className="h-3 w-3" />
+                  <span>No GPS</span>
+                </div>
+              )}
             </div>
           </div>
         ))}

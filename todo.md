@@ -129,3 +129,4 @@
 - [x] Map-based GPS picker centered on project media points
 - [x] Backend API for updating media GPS coordinates
 - [x] Fix media thumbnail checkboxes not visible for individual selection
+- [x] Add "No GPS" indicator badge on thumbnails missing GPS data
