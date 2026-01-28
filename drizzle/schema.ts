@@ -53,6 +53,10 @@ export const projects = mysqlTable("projects", {
   coverImage: varchar("coverImage", { length: 500 }),
   /** Number of media items in the project */
   mediaCount: int("mediaCount").default(0).notNull(),
+  /** Warranty start date */
+  warrantyStartDate: timestamp("warrantyStartDate"),
+  /** Warranty end date */
+  warrantyEndDate: timestamp("warrantyEndDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -176,3 +180,34 @@ export const flights = mysqlTable("flights", {
 
 export type Flight = typeof flights.$inferSelect;
 export type InsertFlight = typeof flights.$inferInsert;
+
+/**
+ * Warranty reminders table for scheduling automated email notifications.
+ * Each reminder configuration belongs to a project.
+ */
+export const warrantyReminders = mysqlTable("warranty_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (creator) */
+  userId: int("userId").notNull(),
+  /** Email address to send reminders to */
+  reminderEmail: varchar("reminderEmail", { length: 320 }).notNull(),
+  /** Reminder intervals in months (stored as JSON array, e.g., [3, 6, 9]) */
+  intervals: varchar("intervals", { length: 100 }).notNull(),
+  /** Custom email subject template */
+  emailSubject: varchar("emailSubject", { length: 255 }),
+  /** Custom email message template */
+  emailMessage: text("emailMessage"),
+  /** Whether reminders are enabled */
+  enabled: mysqlEnum("enabled", ["yes", "no"]).default("yes").notNull(),
+  /** Last time a reminder was sent */
+  lastSentAt: timestamp("lastSentAt"),
+  /** Next scheduled reminder date */
+  nextReminderDate: timestamp("nextReminderDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WarrantyReminder = typeof warrantyReminders.$inferSelect;
+export type InsertWarrantyReminder = typeof warrantyReminders.$inferInsert;

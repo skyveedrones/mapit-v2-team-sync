@@ -306,3 +306,85 @@ export async function validateResendApiKey(): Promise<{ valid: boolean; error?: 
     return { valid: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+
+/**
+ * Send a warranty reminder email
+ */
+export async function sendWarrantyReminderEmail(params: {
+  to: string;
+  projectName: string;
+  projectLocation?: string;
+  clientName?: string;
+  warrantyStartDate: Date;
+  warrantyEndDate: Date;
+  monthsRemaining: number;
+  customSubject?: string;
+  customMessage?: string;
+  projectUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { 
+    to, 
+    projectName, 
+    projectLocation,
+    clientName,
+    warrantyStartDate, 
+    warrantyEndDate, 
+    monthsRemaining,
+    customSubject,
+    customMessage,
+    projectUrl 
+  } = params;
+  
+  const formatDate = (date: Date) => date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const defaultMessage = `
+    <p>This is a reminder that the warranty for the following drone mapping project is approaching its expiration:</p>
+    <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">"${projectName}"</p>
+    ${clientName ? `<p><strong>Client:</strong> ${clientName}</p>` : ''}
+    ${projectLocation ? `<p><strong>Location:</strong> ${projectLocation}</p>` : ''}
+    <p><strong>Warranty Period:</strong> ${formatDate(warrantyStartDate)} - ${formatDate(warrantyEndDate)}</p>
+    <p style="font-size: 18px; color: ${monthsRemaining <= 1 ? '#ef4444' : BRAND_COLORS.primary}; font-weight: 600; text-align: center; margin: 24px 0;">
+      ${monthsRemaining <= 0 ? 'WARRANTY HAS EXPIRED' : `${monthsRemaining} month${monthsRemaining !== 1 ? 's' : ''} remaining`}
+    </p>
+    <p>Please review the project and take any necessary action before the warranty expires.</p>
+  `;
+
+  const html = generateEmailTemplate({
+    preheader: `Warranty reminder for "${projectName}" - ${monthsRemaining} months remaining`,
+    title: 'Warranty Reminder',
+    body: customMessage || defaultMessage,
+    ctaText: 'View Project',
+    ctaUrl: projectUrl,
+    footer: `
+      <p>This is an automated warranty reminder from SkyVee.</p>
+      <p>To manage your reminder settings, visit the project settings.</p>
+      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+    `,
+  });
+
+  const subject = customSubject || `Warranty Reminder: "${projectName}" - ${monthsRemaining} month${monthsRemaining !== 1 ? 's' : ''} remaining`;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'SkyVee <noreply@skyveedrones.com>',
+      to: [to],
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Failed to send warranty reminder:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Error sending warranty reminder:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

@@ -43,6 +43,13 @@
       "when": 1769617678463,
       "tag": "0005_fair_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1769627551160,
+      "tag": "0006_furry_caretaker",
+      "breakpoints": true
     }
   ]
 }

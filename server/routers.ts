@@ -47,7 +47,14 @@ import {
   updateUserLogo,
   deleteUserLogo,
   getUserLogo,
+  createWarrantyReminder,
+  getProjectWarrantyReminder,
+  updateWarrantyReminder,
+  deleteWarrantyReminder,
+  getDueWarrantyReminders,
+  updateProjectWarranty,
 } from "./db";
+import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 import { applyWatermark, WatermarkOptions } from "./watermark";
@@ -1463,6 +1470,263 @@ export const appRouter = router({
     delete: protectedProcedure.mutation(async ({ ctx }) => {
       const deletedKey = await deleteUserLogo(ctx.user.id);
       return { success: true, deletedKey };
+    }),
+  }),
+
+  // Warranty management procedures
+  warranty: router({
+    // Get warranty reminder for a project
+    getReminder: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Verify user has access to project
+        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this project",
+          });
+        }
+        return getProjectWarrantyReminder(input.projectId);
+      }),
+
+    // Update project warranty dates
+    updateWarrantyDates: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        warrantyStartDate: z.string().nullable(),
+        warrantyEndDate: z.string().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        const startDate = input.warrantyStartDate ? new Date(input.warrantyStartDate) : null;
+        const endDate = input.warrantyEndDate ? new Date(input.warrantyEndDate) : null;
+
+        await updateProjectWarranty(input.projectId, ctx.user.id, startDate, endDate);
+        return { success: true };
+      }),
+
+    // Create or update warranty reminder
+    saveReminder: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        reminderEmail: z.string().email(),
+        intervals: z.array(z.number()), // [3, 6, 9] months before expiry
+        emailSubject: z.string().optional(),
+        emailMessage: z.string().optional(),
+        enabled: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        // Check if warranty dates are set
+        if (!project.warrantyEndDate) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Please set warranty dates before configuring reminders",
+          });
+        }
+
+        // Calculate next reminder date based on intervals
+        const warrantyEndDate = new Date(project.warrantyEndDate);
+        const now = new Date();
+        let nextReminderDate: Date | null = null;
+
+        // Sort intervals in descending order (9, 6, 3)
+        const sortedIntervals = [...input.intervals].sort((a, b) => b - a);
+        
+        for (const monthsBefore of sortedIntervals) {
+          const reminderDate = new Date(warrantyEndDate);
+          reminderDate.setMonth(reminderDate.getMonth() - monthsBefore);
+          
+          if (reminderDate > now) {
+            nextReminderDate = reminderDate;
+          }
+        }
+
+        const intervalsJson = JSON.stringify(input.intervals);
+
+        // Check if reminder already exists
+        const existingReminder = await getProjectWarrantyReminder(input.projectId);
+
+        if (existingReminder) {
+          // Update existing reminder
+          await updateWarrantyReminder(existingReminder.id, ctx.user.id, {
+            reminderEmail: input.reminderEmail,
+            intervals: intervalsJson,
+            emailSubject: input.emailSubject || null,
+            emailMessage: input.emailMessage || null,
+            enabled: input.enabled ? "yes" : "no",
+            nextReminderDate,
+          });
+          return { success: true, id: existingReminder.id };
+        } else {
+          // Create new reminder
+          const id = await createWarrantyReminder({
+            projectId: input.projectId,
+            userId: ctx.user.id,
+            reminderEmail: input.reminderEmail,
+            intervals: intervalsJson,
+            emailSubject: input.emailSubject,
+            emailMessage: input.emailMessage,
+            enabled: input.enabled ? "yes" : "no",
+            nextReminderDate,
+          });
+          return { success: true, id };
+        }
+      }),
+
+    // Delete warranty reminder
+    deleteReminder: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const reminder = await getProjectWarrantyReminder(input.projectId);
+        if (!reminder) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Warranty reminder not found",
+          });
+        }
+
+        await deleteWarrantyReminder(reminder.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Send test reminder email
+    sendTestReminder: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        email: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        if (!project.warrantyStartDate || !project.warrantyEndDate) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Warranty dates must be set to send test reminder",
+          });
+        }
+
+        const warrantyEndDate = new Date(project.warrantyEndDate);
+        const now = new Date();
+        const monthsRemaining = Math.ceil(
+          (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
+        );
+
+        const baseUrl = process.env.VITE_APP_URL || "https://skyveedrones.com";
+        const projectUrl = `${baseUrl}/project/${project.id}`;
+
+        const result = await sendWarrantyReminderEmail({
+          to: input.email,
+          projectName: project.name,
+          projectLocation: project.location || undefined,
+          clientName: project.clientName || undefined,
+          warrantyStartDate: new Date(project.warrantyStartDate),
+          warrantyEndDate: warrantyEndDate,
+          monthsRemaining: Math.max(0, monthsRemaining),
+          projectUrl,
+        });
+
+        if (!result.success) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: result.error || "Failed to send test email",
+          });
+        }
+
+        return { success: true };
+      }),
+
+    // Process due reminders (called by scheduled job)
+    processDueReminders: protectedProcedure.mutation(async ({ ctx }) => {
+      // Only allow admin users to trigger this
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can trigger reminder processing",
+        });
+      }
+
+      const dueReminders = await getDueWarrantyReminders();
+      const results: { projectId: number; success: boolean; error?: string }[] = [];
+
+      for (const { reminder, project, user } of dueReminders) {
+        if (!project.warrantyStartDate || !project.warrantyEndDate) continue;
+
+        const warrantyEndDate = new Date(project.warrantyEndDate);
+        const now = new Date();
+        const monthsRemaining = Math.ceil(
+          (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
+        );
+
+        const baseUrl = process.env.VITE_APP_URL || "https://skyveedrones.com";
+        const projectUrl = `${baseUrl}/project/${project.id}`;
+
+        const result = await sendWarrantyReminderEmail({
+          to: reminder.reminderEmail,
+          projectName: project.name,
+          projectLocation: project.location || undefined,
+          clientName: project.clientName || undefined,
+          warrantyStartDate: new Date(project.warrantyStartDate),
+          warrantyEndDate: warrantyEndDate,
+          monthsRemaining: Math.max(0, monthsRemaining),
+          customSubject: reminder.emailSubject || undefined,
+          customMessage: reminder.emailMessage || undefined,
+          projectUrl,
+        });
+
+        results.push({
+          projectId: project.id,
+          success: result.success,
+          error: result.error,
+        });
+
+        if (result.success) {
+          // Calculate next reminder date
+          const intervals: number[] = JSON.parse(reminder.intervals);
+          const sortedIntervals = [...intervals].sort((a, b) => b - a);
+          let nextReminderDate: Date | null = null;
+
+          for (const monthsBefore of sortedIntervals) {
+            const reminderDate = new Date(warrantyEndDate);
+            reminderDate.setMonth(reminderDate.getMonth() - monthsBefore);
+            
+            if (reminderDate > now) {
+              nextReminderDate = reminderDate;
+            }
+          }
+
+          // Update reminder with last sent time and next reminder date
+          await updateWarrantyReminder(reminder.id, reminder.userId, {
+            lastSentAt: now,
+            nextReminderDate,
+          });
+        }
+      }
+
+      return { processed: results.length, results };
     }),
   }),
 });

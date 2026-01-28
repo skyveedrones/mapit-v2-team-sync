@@ -174,3 +174,15 @@
 ## Map Popup Enhancements
 - [x] Add enlarge button to GPS marker popup on project map
 - [x] Create fullscreen image viewer when enlarge is clicked
+
+## Project Warranty Feature
+- [x] Database schema - Add warranty fields to projects table (warrantyStartDate, warrantyEndDate)
+- [x] Database schema - Create warranty_reminders table (projectId, reminderEmail, intervals, emailTemplate, enabled)
+- [x] Backend API - Update project with warranty dates
+- [x] Backend API - Configure warranty reminders (email, intervals)
+- [x] Backend API - Send warranty reminder emails
+- [x] UI - Add warranty fields to project edit form
+- [x] UI - Display warranty info on project detail page
+- [x] UI - Create warranty reminder configuration dialog
+- [x] Email template for warranty reminders
+- [x] Scheduled job to check and send due reminders (processDueReminders API ready)

@@ -13,6 +13,7 @@ import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { NewFlightDialog } from "@/components/NewFlightDialog";
 import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
+import { WarrantyReminderDialog } from "@/components/WarrantyReminderDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -28,6 +29,7 @@ import { Project } from "../../../drizzle/schema";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  Bell,
   Calendar,
   ChevronDown,
   Download,
@@ -42,6 +44,7 @@ import {
   Plane,
   Plus,
   Share2,
+  Shield,
   Trash2,
   Upload,
   User,
@@ -91,6 +94,7 @@ export default function ProjectDetail() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [newFlightDialogOpen, setNewFlightDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
@@ -381,6 +385,27 @@ export default function ProjectDetail() {
                       <span className="text-muted-foreground">Media:</span>
                       <span className="font-medium">{project.mediaCount} items</span>
                     </div>
+                    {/* Warranty Info */}
+                    {project.warrantyEndDate && (
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">Warranty:</span>
+                        <span className="font-medium">
+                          {new Date(project.warrantyStartDate!).toLocaleDateString()} - {new Date(project.warrantyEndDate).toLocaleDateString()}
+                        </span>
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => setWarrantyReminderDialogOpen(true)}
+                          >
+                            <Bell className="h-3 w-3 mr-1" />
+                            Reminders
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -520,6 +545,15 @@ export default function ProjectDetail() {
         projectId={projectId}
         projectName={project?.name || "Project"}
         media={mediaList || []}
+      />
+
+      <WarrantyReminderDialog
+        projectId={projectId}
+        projectName={project?.name || "Project"}
+        warrantyStartDate={project?.warrantyStartDate ? new Date(project.warrantyStartDate) : null}
+        warrantyEndDate={project?.warrantyEndDate ? new Date(project.warrantyEndDate) : null}
+        open={warrantyReminderDialogOpen}
+        onOpenChange={setWarrantyReminderDialogOpen}
       />
     </div>
   );

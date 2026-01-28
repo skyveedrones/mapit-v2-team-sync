@@ -1,6 +1,6 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, media, projectCollaborators, projectInvitations, projects, users } from "../drizzle/schema";
+import { flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1164,4 +1164,128 @@ export async function getUserLogo(userId: number) {
     .where(eq(users.id, userId));
 
   return user || null;
+}
+
+// ==================== WARRANTY REMINDER FUNCTIONS ====================
+
+export async function createWarrantyReminder(reminder: InsertWarrantyReminder) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const [result] = await db.insert(warrantyReminders).values(reminder).$returningId();
+  return result.id;
+}
+
+export async function getProjectWarrantyReminder(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [reminder] = await db
+    .select()
+    .from(warrantyReminders)
+    .where(eq(warrantyReminders.projectId, projectId));
+
+  return reminder || null;
+}
+
+export async function updateWarrantyReminder(
+  reminderId: number,
+  userId: number,
+  updates: Partial<{
+    reminderEmail: string;
+    intervals: string;
+    emailSubject: string | null;
+    emailMessage: string | null;
+    enabled: "yes" | "no";
+    nextReminderDate: Date | null;
+    lastSentAt: Date | null;
+  }>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(warrantyReminders)
+    .set(updates)
+    .where(
+      and(
+        eq(warrantyReminders.id, reminderId),
+        eq(warrantyReminders.userId, userId)
+      )
+    );
+}
+
+export async function deleteWarrantyReminder(reminderId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .delete(warrantyReminders)
+    .where(
+      and(
+        eq(warrantyReminders.id, reminderId),
+        eq(warrantyReminders.userId, userId)
+      )
+    );
+}
+
+export async function getDueWarrantyReminders() {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const now = new Date();
+  
+  // Get all enabled reminders where nextReminderDate is in the past or today
+  const reminders = await db
+    .select({
+      reminder: warrantyReminders,
+      project: projects,
+      user: users,
+    })
+    .from(warrantyReminders)
+    .innerJoin(projects, eq(warrantyReminders.projectId, projects.id))
+    .innerJoin(users, eq(warrantyReminders.userId, users.id))
+    .where(
+      and(
+        eq(warrantyReminders.enabled, "yes"),
+        sql`${warrantyReminders.nextReminderDate} <= ${now}`
+      )
+    );
+
+  return reminders;
+}
+
+export async function updateProjectWarranty(
+  projectId: number,
+  userId: number,
+  warrantyStartDate: Date | null,
+  warrantyEndDate: Date | null
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(projects)
+    .set({
+      warrantyStartDate,
+      warrantyEndDate,
+    })
+    .where(
+      and(
+        eq(projects.id, projectId),
+        eq(projects.userId, userId)
+      )
+    );
 }

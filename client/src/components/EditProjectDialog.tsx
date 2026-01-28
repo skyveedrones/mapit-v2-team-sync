@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
-import { Calendar, Loader2, MapPin, User } from "lucide-react";
+import { Calendar, Loader2, MapPin, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -47,6 +47,8 @@ export function EditProjectDialog({
   const [clientName, setClientName] = useState("");
   const [status, setStatus] = useState<"active" | "completed" | "archived">("active");
   const [flightDate, setFlightDate] = useState("");
+  const [warrantyStartDate, setWarrantyStartDate] = useState("");
+  const [warrantyEndDate, setWarrantyEndDate] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -61,6 +63,16 @@ export function EditProjectDialog({
       setFlightDate(
         project.flightDate
           ? new Date(project.flightDate).toISOString().split("T")[0]
+          : ""
+      );
+      setWarrantyStartDate(
+        project.warrantyStartDate
+          ? new Date(project.warrantyStartDate).toISOString().split("T")[0]
+          : ""
+      );
+      setWarrantyEndDate(
+        project.warrantyEndDate
+          ? new Date(project.warrantyEndDate).toISOString().split("T")[0]
           : ""
       );
     }
@@ -83,7 +95,15 @@ export function EditProjectDialog({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const updateWarranty = trpc.warranty.updateWarrantyDates.useMutation({
+    onError: (error) => {
+      toast.error("Failed to update warranty dates", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project) return;
     if (!name.trim()) {
@@ -91,6 +111,17 @@ export function EditProjectDialog({
       return;
     }
 
+    // Validate warranty dates
+    if (warrantyStartDate && warrantyEndDate) {
+      const start = new Date(warrantyStartDate);
+      const end = new Date(warrantyEndDate);
+      if (end <= start) {
+        toast.error("Warranty end date must be after start date");
+        return;
+      }
+    }
+
+    // Update project details
     updateProject.mutate({
       id: project.id,
       name: name.trim(),
@@ -100,13 +131,20 @@ export function EditProjectDialog({
       status,
       flightDate: flightDate ? new Date(flightDate) : null,
     });
+
+    // Update warranty dates separately
+    updateWarranty.mutate({
+      projectId: project.id,
+      warrantyStartDate: warrantyStartDate || null,
+      warrantyEndDate: warrantyEndDate || null,
+    });
   };
 
   if (!project) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-card border-border">
+      <DialogContent className="sm:max-w-[500px] bg-card border-border max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle
@@ -211,6 +249,44 @@ export function EditProjectDialog({
                 className="bg-background border-border"
               />
             </div>
+
+            {/* Warranty Section */}
+            <div className="border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Warranty Information</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Track project warranty periods and set up automated reminders.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-warrantyStart" className="text-sm font-medium">
+                    Warranty Start
+                  </Label>
+                  <Input
+                    id="edit-warrantyStart"
+                    type="date"
+                    value={warrantyStartDate}
+                    onChange={(e) => setWarrantyStartDate(e.target.value)}
+                    className="bg-background border-border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-warrantyEnd" className="text-sm font-medium">
+                    Warranty End
+                  </Label>
+                  <Input
+                    id="edit-warrantyEnd"
+                    type="date"
+                    value={warrantyEndDate}
+                    onChange={(e) => setWarrantyEndDate(e.target.value)}
+                    className="bg-background border-border"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -225,9 +301,9 @@ export function EditProjectDialog({
             <Button
               type="submit"
               className="bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={updateProject.isPending || !name.trim()}
+              disabled={updateProject.isPending || updateWarranty.isPending || !name.trim()}
             >
-              {updateProject.isPending ? (
+              {(updateProject.isPending || updateWarranty.isPending) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
