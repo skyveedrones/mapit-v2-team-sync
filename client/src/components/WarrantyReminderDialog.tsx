@@ -1,10 +1,9 @@
 /**
  * Warranty Reminder Dialog
- * Configure automated warranty reminder emails at 3, 6, 9 month intervals
+ * Configure automated warranty reminder emails with monthly interval or custom date
  */
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { Bell, Calendar, Loader2, Mail, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -68,20 +68,6 @@ Would you like to schedule an inspection? Reply to this email or call us to set 
 Best regards,
 SkyVee Drone Services`,
   },
-  renewal: {
-    name: "Renewal Offer",
-    subject: "Warranty Renewal Available: {{projectName}}",
-    body: `Dear Client,
-
-The warranty for project "{{projectName}}" will expire on {{warrantyEndDate}}.
-
-We're pleased to offer you a warranty renewal option. Renewing your warranty ensures continued coverage and peace of mind for your project.
-
-Contact us to discuss renewal options and pricing.
-
-Best regards,
-SkyVee Drone Services`,
-  },
 };
 
 export function WarrantyReminderDialog({
@@ -94,7 +80,9 @@ export function WarrantyReminderDialog({
 }: WarrantyReminderDialogProps) {
   const [enabled, setEnabled] = useState(false);
   const [reminderEmail, setReminderEmail] = useState("");
-  const [selectedIntervals, setSelectedIntervals] = useState<number[]>([3, 6, 9]);
+  const [intervalMode, setIntervalMode] = useState<"monthly" | "custom">("monthly");
+  const [monthlyInterval, setMonthlyInterval] = useState<string>("3");
+  const [customDate, setCustomDate] = useState("");
   const [emailTemplate, setEmailTemplate] = useState<keyof typeof EMAIL_TEMPLATES>("standard");
   const [customSubject, setCustomSubject] = useState("");
   const [customBody, setCustomBody] = useState("");
@@ -114,10 +102,19 @@ export function WarrantyReminderDialog({
       setEnabled(existingConfig.enabled === "yes");
       setReminderEmail(existingConfig.reminderEmail || "");
       try {
-        const intervals = JSON.parse(existingConfig.intervals || "[3,6,9]");
-        setSelectedIntervals(intervals);
+        const intervals = JSON.parse(existingConfig.intervals || "[3]");
+        if (Array.isArray(intervals) && intervals.length > 0) {
+          // Check if it's a custom date (stored as negative number or string)
+          if (typeof intervals[0] === "string" && intervals[0].includes("-")) {
+            setIntervalMode("custom");
+            setCustomDate(intervals[0]);
+          } else {
+            setIntervalMode("monthly");
+            setMonthlyInterval(String(intervals[0]));
+          }
+        }
       } catch {
-        setSelectedIntervals([3, 6, 9]);
+        setMonthlyInterval("3");
       }
       if (existingConfig.emailSubject || existingConfig.emailMessage) {
         setUseCustomTemplate(true);
@@ -153,34 +150,27 @@ export function WarrantyReminderDialog({
     },
   });
 
-  const handleIntervalToggle = (months: number) => {
-    setSelectedIntervals((prev) =>
-      prev.includes(months)
-        ? prev.filter((m) => m !== months)
-        : [...prev, months].sort((a, b) => a - b)
-    );
-  };
-
   const handleSave = () => {
     if (enabled && !reminderEmail.trim()) {
       toast.error("Please enter an email address for reminders");
       return;
     }
 
-    if (enabled && selectedIntervals.length === 0) {
-      toast.error("Please select at least one reminder interval");
+    if (enabled && intervalMode === "custom" && !customDate) {
+      toast.error("Please select a custom reminder date");
       return;
     }
 
-    const templateValue = useCustomTemplate
-      ? JSON.stringify({ subject: customSubject, body: customBody })
-      : emailTemplate;
+    // Store intervals - for monthly, store the number; for custom, store the date string
+    const intervals = intervalMode === "monthly" 
+      ? [parseInt(monthlyInterval)] 
+      : [customDate];
 
     saveConfig.mutate({
       projectId,
       enabled,
       reminderEmail: reminderEmail.trim(),
-      intervals: selectedIntervals,
+      intervals: intervals as number[],
       emailSubject: useCustomTemplate ? customSubject : undefined,
       emailMessage: useCustomTemplate ? customBody : undefined,
     });
@@ -192,32 +182,28 @@ export function WarrantyReminderDialog({
       return;
     }
 
-    const templateValue = useCustomTemplate
-      ? JSON.stringify({ subject: customSubject, body: customBody })
-      : emailTemplate;
-
     sendTestEmail.mutate({
       projectId,
       email: reminderEmail.trim(),
     });
   };
 
-  // Calculate reminder dates based on warranty end date
-  const getReminderDates = () => {
-    if (!warrantyEndDate) return [];
+  // Calculate next reminder date based on settings
+  const getNextReminderDate = () => {
+    if (!warrantyEndDate) return null;
+    
+    if (intervalMode === "custom" && customDate) {
+      return new Date(customDate);
+    }
+    
     const endDate = new Date(warrantyEndDate);
-    return selectedIntervals.map((months) => {
-      const reminderDate = new Date(endDate);
-      reminderDate.setMonth(reminderDate.getMonth() - months);
-      return {
-        months,
-        date: reminderDate,
-        isPast: reminderDate < new Date(),
-      };
-    });
+    const reminderDate = new Date(endDate);
+    reminderDate.setMonth(reminderDate.getMonth() - parseInt(monthlyInterval));
+    return reminderDate;
   };
 
-  const reminderDates = getReminderDates();
+  const nextReminderDate = getNextReminderDate();
+  const isReminderPast = nextReminderDate && nextReminderDate < new Date();
 
   if (!warrantyEndDate) {
     return (
@@ -265,6 +251,17 @@ export function WarrantyReminderDialog({
           </div>
         ) : (
           <div className="grid gap-6 py-4">
+            {/* Warranty Info Display */}
+            <div className="bg-muted/50 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="font-medium">Warranty Period</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {warrantyStartDate?.toLocaleDateString()} - {warrantyEndDate.toLocaleDateString()}
+              </p>
+            </div>
+
             {/* Enable/Disable Toggle */}
             <div className="flex items-center justify-between">
               <div>
@@ -297,44 +294,94 @@ export function WarrantyReminderDialog({
                   </p>
                 </div>
 
-                {/* Reminder Intervals */}
+                {/* Reminder Schedule */}
                 <div className="grid gap-3">
                   <Label className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Reminder Intervals
+                    Reminder Schedule
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Select when to send reminders before warranty expiration:
+                    Choose when to send the reminder before warranty expiration:
                   </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[3, 6, 9].map((months) => {
-                      const reminderInfo = reminderDates.find((r) => r.months === months);
-                      return (
-                        <div
-                          key={months}
-                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                            selectedIntervals.includes(months)
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                          onClick={() => handleIntervalToggle(months)}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <Checkbox
-                              checked={selectedIntervals.includes(months)}
-                              onCheckedChange={() => handleIntervalToggle(months)}
-                            />
-                            <span className="font-medium">{months} Months</span>
-                          </div>
-                          {reminderInfo && (
-                            <p className={`text-xs ${reminderInfo.isPast ? "text-destructive" : "text-muted-foreground"}`}>
-                              {reminderInfo.isPast ? "Past: " : ""}
-                              {reminderInfo.date.toLocaleDateString()}
-                            </p>
-                          )}
+                  
+                  {/* Monthly Interval Option */}
+                  <div 
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      intervalMode === "monthly" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setIntervalMode("monthly")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        checked={intervalMode === "monthly"}
+                        onChange={() => setIntervalMode("monthly")}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">Send reminder every</span>
+                          <Select 
+                            value={monthlyInterval} 
+                            onValueChange={setMonthlyInterval}
+                            disabled={intervalMode !== "monthly"}
+                          >
+                            <SelectTrigger className="w-24 h-8 bg-background border-border">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border">
+                              <SelectItem value="3">3</SelectItem>
+                              <SelectItem value="6">6</SelectItem>
+                              <SelectItem value="9">9</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="font-medium">months before expiration</span>
                         </div>
-                      );
-                    })}
+                        {intervalMode === "monthly" && nextReminderDate && (
+                          <p className={`text-xs mt-2 ${isReminderPast ? "text-destructive" : "text-muted-foreground"}`}>
+                            {isReminderPast ? "Past date: " : "Next reminder: "}
+                            {nextReminderDate.toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom Date Option */}
+                  <div 
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      intervalMode === "custom" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setIntervalMode("custom")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        checked={intervalMode === "custom"}
+                        onChange={() => setIntervalMode("custom")}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">Custom date:</span>
+                          <Input
+                            type="date"
+                            value={customDate}
+                            onChange={(e) => setCustomDate(e.target.value)}
+                            disabled={intervalMode !== "custom"}
+                            className="w-44 h-8 bg-background border-border"
+                            max={warrantyEndDate.toISOString().split('T')[0]}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Set a specific date to receive the reminder
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -450,7 +497,7 @@ export function WarrantyReminderDialog({
                 Saving...
               </>
             ) : (
-              "Save Settings"
+              "Save Configuration"
             )}
           </Button>
         </DialogFooter>

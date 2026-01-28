@@ -186,3 +186,8 @@
 - [x] UI - Create warranty reminder configuration dialog
 - [x] Email template for warranty reminders
 - [x] Scheduled job to check and send due reminders (processDueReminders API ready)
+
+## Warranty Reminder Dialog Updates
+- [x] Remove renewal option from warranty reminder dialog
+- [x] Change interval selection to monthly dropdown (every 3, 6, or 9 months)
+- [x] Add custom date schedule option for reminders
