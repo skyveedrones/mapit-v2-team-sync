@@ -296,18 +296,12 @@ export default function ProjectDetail() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      {/* Upload - only for owners and editors */}
+                      {/* Owner and editor actions */}
                       {canEdit && (
-                        <>
-                          <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
-                            <Upload className="h-4 w-4 mr-2 text-emerald-500" />
-                            Upload Media
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
-                            <Plane className="h-4 w-4 mr-2 text-sky-500" />
-                            New Flight
-                          </DropdownMenuItem>
-                        </>
+                        <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
+                          <Plane className="h-4 w-4 mr-2 text-sky-500" />
+                          New Flight
+                        </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={() => setLocation(`/project/${projectId}/map`)}>
                         <Map className="h-4 w-4 mr-2 text-blue-500" />

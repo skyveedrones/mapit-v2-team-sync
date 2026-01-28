@@ -269,25 +269,47 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     <>
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-4">
+        {/* Left side - Media Action dropdown */}
         <div className="flex items-center gap-2">
           {canEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleSelectAll}
-            >
-              {selectedIds.size === sortedMedia.length ? (
-                <>
-                  <X className="h-4 w-4 mr-2" />
-                  Deselect All
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Select All
-                </>
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  Media Action
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={onUploadClick}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Media
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleDownloadSelected}
+                  disabled={selectedIds.size === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Selected ({selectedIds.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setWatermarkDialogOpen(true)}
+                  disabled={photoCount === 0}
+                >
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                  Watermark Photos ({photoCount})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setBulkDeleteDialogOpen(true)}
+                  disabled={selectedIds.size === 0}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected ({selectedIds.size})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {selectedIds.size > 0 && (
             <span className="text-sm text-muted-foreground">
@@ -296,6 +318,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           )}
         </div>
 
+        {/* Right side - Select All and Sort */}
         <div className="flex items-center gap-2">
           {/* Sort Dropdown */}
           <DropdownMenu>
@@ -348,46 +371,25 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Action Dropdown */}
+          {/* Select All button - now on the right */}
           {canEdit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  Action
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onUploadClick}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Media
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleDownloadSelected}
-                  disabled={selectedIds.size === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Selected ({selectedIds.size})
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setWatermarkDialogOpen(true)}
-                  disabled={photoCount === 0}
-                >
-                  <ImagePlus className="h-4 w-4 mr-2" />
-                  Watermark Photos ({photoCount})
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setBulkDeleteDialogOpen(true)}
-                  disabled={selectedIds.size === 0}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Selected ({selectedIds.size})
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectAll}
+            >
+              {selectedIds.size === sortedMedia.length ? (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Deselect All
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Select All
+                </>
+              )}
+            </Button>
           )}
         </div>
       </div>

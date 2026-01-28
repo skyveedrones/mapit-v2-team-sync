@@ -191,3 +191,9 @@
 - [x] Remove renewal option from warranty reminder dialog
 - [x] Change interval selection to monthly dropdown (every 3, 6, or 9 months)
 - [x] Add custom date schedule option for reminders
+
+## Media Section Button Layout Changes
+- [x] Remove "Upload Media" from Project Actions dropdown
+- [x] Rename "Action" button to "Media Action" in media section
+- [x] Move "Media Action" button to left side under Project Media title
+- [x] Move "Select All" button to right side where Action button was
