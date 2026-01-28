@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectMap from "./pages/ProjectMap";
+import FlightDetail from "./pages/FlightDetail";
 import InviteAccept from "./pages/InviteAccept";
 
 // Feature pages
@@ -64,6 +65,12 @@ function Router() {
         {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
       <Route path="/project/:id/map">
+        {() => <ProtectedRoute component={ProjectMap} />}
+      </Route>
+      <Route path="/project/:id/flight/:flightId">
+        {() => <ProtectedRoute component={FlightDetail} />}
+      </Route>
+      <Route path="/project/:id/flight/:flightId/map">
         {() => <ProtectedRoute component={ProjectMap} />}
       </Route>
       

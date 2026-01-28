@@ -21,6 +21,7 @@ interface MediaUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
+  flightId?: number;
   onUploadComplete?: () => void;
 }
 
@@ -50,6 +51,7 @@ export function MediaUploadDialog({
   open,
   onOpenChange,
   projectId,
+  flightId,
   onUploadComplete,
 }: MediaUploadDialogProps) {
   const [files, setFiles] = useState<FileToUpload[]>([]);

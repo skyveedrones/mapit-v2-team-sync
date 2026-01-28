@@ -64,6 +64,8 @@ export const media = mysqlTable("media", {
   id: int("id").autoincrement().primaryKey(),
   /** Foreign key to projects table */
   projectId: int("projectId").notNull(),
+  /** Foreign key to flights table (optional - media can belong to a specific flight) */
+  flightId: int("flightId"),
   /** Foreign key to users table (owner) */
   userId: int("userId").notNull(),
   /** Original filename */
@@ -145,3 +147,28 @@ export const projectInvitations = mysqlTable("project_invitations", {
 
 export type ProjectInvitation = typeof projectInvitations.$inferSelect;
 export type InsertProjectInvitation = typeof projectInvitations.$inferInsert;
+
+/**
+ * Flights table for organizing multiple drone flights within a project.
+ * Each flight belongs to a project and contains its own set of media files.
+ */
+export const flights = mysqlTable("flights", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (creator) */
+  userId: int("userId").notNull(),
+  /** Flight name/title */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Optional description of the flight */
+  description: text("description"),
+  /** Date when the drone flight was conducted */
+  flightDate: timestamp("flightDate"),
+  /** Number of media items in the flight */
+  mediaCount: int("mediaCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Flight = typeof flights.$inferSelect;
+export type InsertFlight = typeof flights.$inferInsert;

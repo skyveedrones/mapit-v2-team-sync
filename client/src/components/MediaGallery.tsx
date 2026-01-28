@@ -55,13 +55,14 @@ import { GPSEditDialog } from "./GPSEditDialog";
 
 interface MediaGalleryProps {
   projectId: number;
+  flightId?: number;
   canEdit?: boolean;
   onUploadClick?: () => void;
 }
 
 type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
 
-export function MediaGallery({ projectId, canEdit = true, onUploadClick }: MediaGalleryProps) {
+export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick }: MediaGalleryProps) {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);

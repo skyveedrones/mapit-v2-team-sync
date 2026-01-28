@@ -130,3 +130,17 @@
 - [x] Backend API for updating media GPS coordinates
 - [x] Fix media thumbnail checkboxes not visible for individual selection
 - [x] Add "No GPS" indicator badge on thumbnails missing GPS data
+
+## Flight Folder System
+- [x] Database schema - Create flights table (id, projectId, name, description, flightDate, createdAt)
+- [x] Update media table to include optional flightId reference
+- [x] Backend API - Create flight (under a project)
+- [x] Backend API - List flights for a project
+- [x] Backend API - Update flight details
+- [x] Backend API - Delete flight
+- [x] Backend API - Get flight with media
+- [x] UI - Add "New Flight" button to Action dropdown
+- [x] UI - Display flights list in project detail page
+- [x] UI - Create flight detail page with media gallery
+- [x] UI - Allow uploading media to specific flight
+- [x] UI - Flight card component showing flight info and media count

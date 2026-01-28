@@ -7,8 +7,10 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
+import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
+import { NewFlightDialog } from "@/components/NewFlightDialog";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +37,7 @@ import {
   Map,
   MapPin,
   Pencil,
+  Plane,
   Plus,
   Share2,
   Trash2,
@@ -84,6 +87,7 @@ export default function ProjectDetail() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [newFlightDialogOpen, setNewFlightDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
@@ -93,6 +97,12 @@ export default function ProjectDetail() {
 
   // Fetch media list to determine if we show gallery or empty state
   const { data: mediaList } = trpc.media.list.useQuery(
+    { projectId },
+    { enabled: projectId > 0 }
+  );
+
+  // Fetch flights for this project
+  const { data: flights } = trpc.flight.list.useQuery(
     { projectId },
     { enabled: projectId > 0 }
   );
@@ -281,10 +291,16 @@ export default function ProjectDetail() {
                     <DropdownMenuContent align="end" className="w-56">
                       {/* Upload - only for owners and editors */}
                       {canEdit && (
-                        <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
-                          <Upload className="h-4 w-4 mr-2 text-emerald-500" />
-                          Upload Media
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                            <Upload className="h-4 w-4 mr-2 text-emerald-500" />
+                            Upload Media
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
+                            <Plane className="h-4 w-4 mr-2 text-sky-500" />
+                            New Flight
+                          </DropdownMenuItem>
+                        </>
                       )}
                       <DropdownMenuItem onClick={() => setLocation(`/project/${projectId}/map`)}>
                         <Map className="h-4 w-4 mr-2 text-blue-500" />
@@ -376,6 +392,43 @@ export default function ProjectDetail() {
               </Card>
             </motion.div>
 
+            {/* Flights Section */}
+            {flights && flights.length > 0 && (
+              <motion.div variants={fadeInUp} className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2
+                    className="text-lg font-semibold"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    <Plane className="h-5 w-5 inline mr-2 text-primary" />
+                    Flights ({flights.length})
+                  </h2>
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewFlightDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Flight
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Organize your drone media by flight sessions. Each flight can contain its own set of photos and videos.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {flights.map((flight) => (
+                    <FlightCard
+                      key={flight.id}
+                      flight={flight}
+                      canEdit={canEdit}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Media Section */}
             <motion.div variants={fadeInUp}>
               <div className="flex items-center justify-between mb-4">
@@ -459,6 +512,12 @@ export default function ProjectDetail() {
         projectName={project.name}
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
+      />
+
+      <NewFlightDialog
+        projectId={projectId}
+        open={newFlightDialogOpen}
+        onOpenChange={setNewFlightDialogOpen}
       />
     </div>
   );

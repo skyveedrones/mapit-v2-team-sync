@@ -1,6 +1,6 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, media, projectCollaborators, projectInvitations, projects, users } from "../drizzle/schema";
+import { flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, media, projectCollaborators, projectInvitations, projects, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -850,4 +850,258 @@ export async function getProjectMediaWithAccess(projectId: number, userId: numbe
     .from(media)
     .where(eq(media.projectId, projectId))
     .orderBy(desc(media.createdAt));
+}
+
+// ============================================
+// Flights
+// ============================================
+
+/**
+ * Create a new flight within a project
+ */
+export async function createFlight(flight: InsertFlight) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(flights).values(flight);
+  const insertId = result[0].insertId;
+
+  const created = await db
+    .select()
+    .from(flights)
+    .where(eq(flights.id, insertId))
+    .limit(1);
+
+  return created[0];
+}
+
+/**
+ * Get all flights for a project
+ */
+export async function getProjectFlights(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(flights)
+    .where(eq(flights.projectId, projectId))
+    .orderBy(desc(flights.flightDate), desc(flights.createdAt));
+}
+
+/**
+ * Get a single flight by ID
+ */
+export async function getFlightById(flightId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(flights)
+    .where(eq(flights.id, flightId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Get a flight by ID, ensuring it belongs to the specified user
+ */
+export async function getUserFlight(flightId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(flights)
+    .where(and(eq(flights.id, flightId), eq(flights.userId, userId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Update a flight
+ */
+export async function updateFlight(
+  flightId: number,
+  userId: number,
+  updates: Partial<Omit<InsertFlight, "id" | "userId" | "projectId" | "createdAt">>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First verify the flight belongs to the user
+  const existing = await getUserFlight(flightId, userId);
+  if (!existing) {
+    return null;
+  }
+
+  await db
+    .update(flights)
+    .set(updates)
+    .where(and(eq(flights.id, flightId), eq(flights.userId, userId)));
+
+  return getUserFlight(flightId, userId);
+}
+
+/**
+ * Delete a flight and all its media
+ */
+export async function deleteFlight(flightId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First verify the flight belongs to the user
+  const existing = await getUserFlight(flightId, userId);
+  if (!existing) {
+    return null;
+  }
+
+  // Delete all media associated with this flight
+  await db
+    .delete(media)
+    .where(eq(media.flightId, flightId));
+
+  // Delete the flight
+  await db
+    .delete(flights)
+    .where(and(eq(flights.id, flightId), eq(flights.userId, userId)));
+
+  return existing;
+}
+
+/**
+ * Get media for a specific flight
+ */
+export async function getFlightMedia(flightId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(media)
+    .where(eq(media.flightId, flightId))
+    .orderBy(desc(media.capturedAt), desc(media.createdAt));
+}
+
+/**
+ * Get media count for a flight
+ */
+export async function getFlightMediaCount(flightId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(media)
+    .where(eq(media.flightId, flightId));
+
+  return result.length;
+}
+
+/**
+ * Update flight media count
+ */
+export async function updateFlightMediaCount(flightId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const count = await getFlightMediaCount(flightId);
+  
+  await db
+    .update(flights)
+    .set({ mediaCount: count })
+    .where(eq(flights.id, flightId));
+
+  return count;
+}
+
+/**
+ * Check if user has access to a flight (owner or project collaborator)
+ */
+export async function userHasFlightAccess(flightId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get the flight
+  const flight = await getFlightById(flightId);
+  if (!flight) {
+    return false;
+  }
+
+  // Check if user is the owner of the flight
+  if (flight.userId === userId) {
+    return true;
+  }
+
+  // Check if user has access to the parent project
+  return userHasProjectAccess(flight.projectId, userId);
+}
+
+/**
+ * Get project media that is not assigned to any flight
+ */
+export async function getProjectUnassignedMedia(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(media)
+    .where(and(
+      eq(media.projectId, projectId),
+      sql`${media.flightId} IS NULL`
+    ))
+    .orderBy(desc(media.capturedAt), desc(media.createdAt));
+}
+
+/**
+ * Assign media to a flight
+ */
+export async function assignMediaToFlight(mediaId: number, flightId: number | null) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(media)
+    .set({ flightId: flightId })
+    .where(eq(media.id, mediaId));
+
+  // If assigning to a flight, update the flight's media count
+  if (flightId) {
+    await updateFlightMediaCount(flightId);
+  }
+
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
 }

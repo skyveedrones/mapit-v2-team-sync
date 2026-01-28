@@ -9,29 +9,40 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   acceptProjectInvitation,
   addProjectCollaborator,
+  assignMediaToFlight,
+  createFlight,
   createMedia,
   createProject,
   createProjectInvitation,
+  deleteFlight,
   deleteMedia,
   deleteProject,
+  getFlightById,
+  getFlightMedia,
   getInvitationByToken,
   getMediaById,
   getProjectById,
   getProjectCollaborators,
+  getProjectFlights,
   getProjectInvitations,
   getProjectMedia,
   getProjectMediaWithAccess,
+  getProjectUnassignedMedia,
   getProjectWithAccess,
   getUserAccessibleProjects,
   getUserById,
   getUserByEmail,
+  getUserFlight,
   getUserProject,
   getUserProjectCount,
   getUserProjects,
   removeProjectCollaborator,
   revokeProjectInvitation,
+  updateFlight,
+  updateFlightMediaCount,
   updateMediaGPS,
   updateProject,
+  userHasFlightAccess,
   userHasProjectAccess,
 } from "./db";
 import { sendProjectInvitationEmail } from "./email";
@@ -904,6 +915,220 @@ export const appRouter = router({
           content: gpxContent,
           filename: `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_gps.gpx`,
           mimeType: 'application/gpx+xml',
+        };
+      }),
+  }),
+
+  // Flight procedures
+  flight: router({
+    // Create a new flight within a project
+    create: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        name: z.string().min(1, "Flight name is required").max(255),
+        description: z.string().max(5000).optional(),
+        flightDate: z.date().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        const flight = await createFlight({
+          projectId: input.projectId,
+          userId: ctx.user.id,
+          name: input.name,
+          description: input.description || null,
+          flightDate: input.flightDate || null,
+        });
+
+        return flight;
+      }),
+
+    // List all flights for a project
+    list: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Check if user has access to the project (owner or collaborator)
+        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access",
+          });
+        }
+
+        return getProjectFlights(input.projectId);
+      }),
+
+    // Get a single flight with its media
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const flight = await getFlightById(input.id);
+        if (!flight) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found",
+          });
+        }
+
+        // Check if user has access to the parent project
+        const hasAccess = await userHasProjectAccess(flight.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found or you don't have access",
+          });
+        }
+
+        const media = await getFlightMedia(input.id);
+        return { ...flight, media };
+      }),
+
+    // Update a flight
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1).max(255).optional(),
+        description: z.string().max(5000).nullable().optional(),
+        flightDate: z.date().nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        const updated = await updateFlight(id, ctx.user.id, updates);
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found or you don't have permission",
+          });
+        }
+
+        return updated;
+      }),
+
+    // Delete a flight
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const deleted = await deleteFlight(input.id, ctx.user.id);
+        if (!deleted) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found or you don't have permission to delete it",
+          });
+        }
+        return { success: true, deleted };
+      }),
+
+    // Get media for a flight
+    getMedia: protectedProcedure
+      .input(z.object({ flightId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const hasAccess = await userHasFlightAccess(input.flightId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found or you don't have access",
+          });
+        }
+
+        return getFlightMedia(input.flightId);
+      }),
+
+    // Get unassigned media for a project (media not in any flight)
+    getUnassignedMedia: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access",
+          });
+        }
+
+        return getProjectUnassignedMedia(input.projectId);
+      }),
+
+    // Assign media to a flight
+    assignMedia: protectedProcedure
+      .input(z.object({
+        mediaId: z.number(),
+        flightId: z.number().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Get the media item
+        const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found or you don't have permission",
+          });
+        }
+
+        // If assigning to a flight, verify the flight exists and belongs to the same project
+        if (input.flightId) {
+          const flight = await getFlightById(input.flightId);
+          if (!flight || flight.projectId !== mediaItem.projectId) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Invalid flight or flight doesn't belong to the same project",
+            });
+          }
+        }
+
+        const updated = await assignMediaToFlight(input.mediaId, input.flightId);
+        return updated;
+      }),
+
+    // Bulk assign media to a flight
+    assignMediaBulk: protectedProcedure
+      .input(z.object({
+        mediaIds: z.array(z.number()).min(1),
+        flightId: z.number().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const results: { mediaId: number; success: boolean; error?: string }[] = [];
+
+        for (const mediaId of input.mediaIds) {
+          try {
+            const mediaItem = await getMediaById(mediaId, ctx.user.id);
+            if (!mediaItem) {
+              results.push({ mediaId, success: false, error: "Not found" });
+              continue;
+            }
+
+            if (input.flightId) {
+              const flight = await getFlightById(input.flightId);
+              if (!flight || flight.projectId !== mediaItem.projectId) {
+                results.push({ mediaId, success: false, error: "Invalid flight" });
+                continue;
+              }
+            }
+
+            await assignMediaToFlight(mediaId, input.flightId);
+            results.push({ mediaId, success: true });
+          } catch (error) {
+            results.push({ mediaId, success: false, error: "Failed" });
+          }
+        }
+
+        // Update flight media count if assigning to a flight
+        if (input.flightId) {
+          await updateFlightMediaCount(input.flightId);
+        }
+
+        return {
+          results,
+          successCount: results.filter(r => r.success).length,
+          failCount: results.filter(r => !r.success).length,
         };
       }),
   }),
