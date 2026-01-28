@@ -424,18 +424,16 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
               </div>
             )}
 
-            {/* Selection Checkbox */}
+            {/* Selection Checkbox - Always visible */}
             {canEdit && (
               <div
-                className={`absolute top-2 left-2 transition-opacity ${
-                  selectedIds.has(item.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                }`}
+                className="absolute top-2 left-2 z-10"
                 onClick={(e) => toggleSelection(item.id, e)}
               >
-                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                   selectedIds.has(item.id)
                     ? "bg-primary border-primary"
-                    : "bg-background/80 border-border backdrop-blur-sm"
+                    : "bg-white/90 border-gray-400 hover:border-primary"
                 }`}>
                   {selectedIds.has(item.id) && <Check className="h-4 w-4 text-primary-foreground" />}
                 </div>
