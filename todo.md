@@ -121,3 +121,10 @@
 - [ ] Fix project sharing email invitations not being delivered
 - [x] Fix watermark dialog not opening from Action dropdown (verified working)
 - [x] Fix map view thumbnail not loading when GPS marker is selected
+
+## Media Gallery Enhancements
+- [x] Individual image selection for watermarks and deleting (already implemented)
+- [x] Add GPS/flight path sorting option (by capture time)
+- [x] Manual GPS entry dialog for media without location
+- [x] Map-based GPS picker centered on project media points
+- [x] Backend API for updating media GPS coordinates

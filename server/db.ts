@@ -348,6 +348,41 @@ export async function deleteMedia(mediaId: number, userId: number) {
 }
 
 /**
+ * Update GPS coordinates for a media item
+ */
+export async function updateMediaGPS(
+  mediaId: number,
+  gpsData: {
+    latitude: string | null;
+    longitude: string | null;
+    altitude: string | null;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(media)
+    .set({
+      latitude: gpsData.latitude,
+      longitude: gpsData.longitude,
+      altitude: gpsData.altitude,
+      updatedAt: new Date(),
+    })
+    .where(eq(media.id, mediaId));
+
+  // Return the updated media item
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
+}
+
+/**
  * Delete all media for a project
  */
 export async function deleteProjectMedia(projectId: number, userId: number) {

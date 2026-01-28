@@ -30,6 +30,7 @@ import {
   getUserProjects,
   removeProjectCollaborator,
   revokeProjectInvitation,
+  updateMediaGPS,
   updateProject,
   userHasProjectAccess,
 } from "./db";
@@ -523,6 +524,42 @@ export const appRouter = router({
         }
         // Note: We're not deleting from S3 here - could add cleanup job later
         return { success: true, deleted };
+      }),
+
+    // Update GPS coordinates for a media item
+    updateGPS: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        latitude: z.number().min(-90).max(90).nullable(),
+        longitude: z.number().min(-180).max(180).nullable(),
+        altitude: z.number().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+
+        // Verify user owns the project (not just collaborator)
+        const project = await getUserProject(mediaItem.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only project owners can edit GPS coordinates",
+          });
+        }
+
+        // Update the media item with new GPS coordinates
+        const updated = await updateMediaGPS(input.id, {
+          latitude: input.latitude?.toString() ?? null,
+          longitude: input.longitude?.toString() ?? null,
+          altitude: input.altitude?.toString() ?? null,
+        });
+
+        return updated;
       }),
   }),
 

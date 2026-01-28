@@ -35,6 +35,7 @@ import {
   Check,
   ChevronDown,
   Download,
+  Edit,
   FileImage,
   FileVideo,
   ImagePlus,
@@ -49,6 +50,7 @@ import {
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { WatermarkDialog } from "./WatermarkDialog";
+import { GPSEditDialog } from "./GPSEditDialog";
 
 interface MediaGalleryProps {
   projectId: number;
@@ -56,7 +58,7 @@ interface MediaGalleryProps {
   onUploadClick?: () => void;
 }
 
-type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc";
+type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
 
 export function MediaGallery({ projectId, canEdit = true, onUploadClick }: MediaGalleryProps) {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
@@ -66,6 +68,8 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
   const [watermarkDialogOpen, setWatermarkDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [gpsEditDialogOpen, setGpsEditDialogOpen] = useState(false);
+  const [mediaForGpsEdit, setMediaForGpsEdit] = useState<Media | null>(null);
 
   const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
   const deleteMutation = trpc.media.delete.useMutation();
@@ -89,6 +93,19 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
         return sorted.sort((a, b) => a.fileSize - b.fileSize);
       case "size-desc":
         return sorted.sort((a, b) => b.fileSize - a.fileSize);
+      case "flight-path":
+        // Sort by capture time to match drone flight sequence
+        return sorted.sort((a, b) => {
+          // Items with capture time come first
+          if (a.capturedAt && b.capturedAt) {
+            return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
+          }
+          // Items without capture time go to the end
+          if (a.capturedAt && !b.capturedAt) return -1;
+          if (!a.capturedAt && b.capturedAt) return 1;
+          // Fall back to filename for items without capture time
+          return a.filename.localeCompare(b.filename);
+        });
       default:
         return sorted;
     }
@@ -214,6 +231,7 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
       case "name-desc": return "Name (Z-A)";
       case "size-asc": return "Size (Smallest)";
       case "size-desc": return "Size (Largest)";
+      case "flight-path": return "Flight Path";
     }
   };
 
@@ -318,6 +336,12 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
                 <SortDesc className="h-4 w-4 mr-2" />
                 Size (Largest)
                 {sortBy === "size-desc" && <Check className="h-4 w-4 ml-auto" />}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSortBy("flight-path")}>
+                <MapPin className="h-4 w-4 mr-2" />
+                Flight Path (by capture time)
+                {sortBy === "flight-path" && <Check className="h-4 w-4 ml-auto" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -478,20 +502,40 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
               {/* Metadata Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {/* GPS Coordinates */}
-                {selectedMedia.latitude && selectedMedia.longitude && (
-                  <div className="p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <div className="p-3 rounded-lg bg-card border border-border">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-4 w-4" />
                       <span className="text-xs uppercase tracking-wide">Location</span>
                     </div>
-                    <p className="text-sm font-medium">
-                      {formatCoordinate(selectedMedia.latitude, "lat")}
-                    </p>
-                    <p className="text-sm font-medium">
-                      {formatCoordinate(selectedMedia.longitude, "lng")}
-                    </p>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          setMediaForGpsEdit(selectedMedia);
+                          setGpsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    )}
                   </div>
-                )}
+                  {selectedMedia.latitude && selectedMedia.longitude ? (
+                    <>
+                      <p className="text-sm font-medium">
+                        {formatCoordinate(selectedMedia.latitude, "lat")}
+                      </p>
+                      <p className="text-sm font-medium">
+                        {formatCoordinate(selectedMedia.longitude, "lng")}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No GPS data</p>
+                  )}
+                </div>
 
                 {/* Altitude */}
                 {selectedMedia.altitude && (
@@ -650,6 +694,20 @@ export function MediaGallery({ projectId, canEdit = true, onUploadClick }: Media
         onOpenChange={setWatermarkDialogOpen}
         selectedMedia={selectedMediaItems}
         projectId={projectId}
+      />
+
+      {/* GPS Edit Dialog */}
+      <GPSEditDialog
+        open={gpsEditDialogOpen}
+        onOpenChange={setGpsEditDialogOpen}
+        media={mediaForGpsEdit}
+        projectId={projectId}
+        onSuccess={() => {
+          // Refresh the selected media if it was edited
+          if (mediaForGpsEdit && selectedMedia?.id === mediaForGpsEdit.id) {
+            setSelectedMedia(null);
+          }
+        }}
       />
     </>
   );
