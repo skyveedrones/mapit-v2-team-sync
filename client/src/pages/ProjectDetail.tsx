@@ -9,6 +9,7 @@ import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
+import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -35,9 +36,11 @@ import {
   MapPin,
   Pencil,
   Plus,
+  Share2,
   Trash2,
   Upload,
   User,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
@@ -80,6 +83,7 @@ export default function ProjectDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
@@ -184,6 +188,12 @@ export default function ProjectDetail() {
   });
 
   const hasMedia = mediaList && mediaList.length > 0;
+  
+  // Check if user is owner or collaborator
+  const isOwner = (project as any).accessRole === 'owner';
+  const isEditor = (project as any).accessRole === 'editor';
+  const isViewer = (project as any).accessRole === 'viewer';
+  const canEdit = isOwner || isEditor;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -251,7 +261,15 @@ export default function ProjectDetail() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
+                  {/* Show access role badge for shared projects */}
+                  {!isOwner && (
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
+                      <Users className="h-3 w-3 inline mr-1" />
+                      {isEditor ? 'Editor' : 'Viewer'}
+                    </span>
+                  )}
+                  
                   {/* Consolidated Project Actions Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -261,10 +279,13 @@ export default function ProjectDetail() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
-                        <Upload className="h-4 w-4 mr-2 text-emerald-500" />
-                        Upload Media
-                      </DropdownMenuItem>
+                      {/* Upload - only for owners and editors */}
+                      {canEdit && (
+                        <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                          <Upload className="h-4 w-4 mr-2 text-emerald-500" />
+                          Upload Media
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => setLocation(`/project/${projectId}/map`)}>
                         <Map className="h-4 w-4 mr-2 text-blue-500" />
                         View Map
@@ -277,18 +298,29 @@ export default function ProjectDetail() {
                         <Layers className="h-4 w-4 mr-2 text-orange-500" />
                         PDF Overlay
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit Project
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeleteDialogOpen(true)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Project
-                      </DropdownMenuItem>
+                      
+                      {/* Owner-only actions */}
+                      {isOwner && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                            <Users className="h-4 w-4 mr-2 text-cyan-500" />
+                            Share Project
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Project
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Project
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -353,7 +385,7 @@ export default function ProjectDetail() {
                 >
                   Project Media
                 </h2>
-                {hasMedia && (
+                {hasMedia && canEdit && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -375,15 +407,19 @@ export default function ProjectDetail() {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
                     <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map.
+                      {canEdit 
+                        ? "Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map."
+                        : "No media has been uploaded to this project yet."}
                     </p>
-                    <Button
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() => setUploadDialogOpen(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Upload Media
-                    </Button>
+                    {canEdit && (
+                      <Button
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => setUploadDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Upload Media
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -422,6 +458,13 @@ export default function ProjectDetail() {
         projectName={project.name}
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
+      />
+
+      <ShareProjectDialog
+        projectId={projectId}
+        projectName={project.name}
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
       />
     </div>
   );

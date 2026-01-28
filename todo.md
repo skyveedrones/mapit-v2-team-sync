@@ -78,3 +78,25 @@
 - [x] Consolidate project action cards into single dropdown button
 
 - [x] Fix JSON parse error on project detail page mutations (increased file size limit to 100MB)
+
+## Project Sharing Feature
+- [ ] Add shareToken field to projects database schema
+- [ ] Backend API - Generate share link
+- [ ] Backend API - Revoke share link
+- [ ] Backend API - Public project view (no auth required)
+- [ ] Public project map page accessible via share link
+- [ ] Share dialog UI in project detail page
+- [ ] Copy share link to clipboard functionality
+
+## Project Sharing Feature (with Registration Required)
+- [x] Database schema - Project collaborators table
+- [x] Database schema - Project invitations table
+- [x] Integrate Resend API for email sending (API key validated)
+- [x] Create SkyVee branded email invitation template
+- [x] Backend API - Send project invitation
+- [x] Backend API - Accept invitation (link user to project)
+- [x] Backend API - List project collaborators
+- [x] Backend API - Remove collaborator
+- [x] Access control - Allow collaborators to view shared projects
+- [x] Share/Invite dialog UI in project detail page
+- [x] Invitation acceptance page for new users

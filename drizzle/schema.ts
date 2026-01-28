@@ -98,3 +98,50 @@ export const media = mysqlTable("media", {
 
 export type Media = typeof media.$inferSelect;
 export type InsertMedia = typeof media.$inferInsert;
+
+/**
+ * Project collaborators table - links users to projects they have access to.
+ * This enables project sharing with registered users.
+ */
+export const projectCollaborators = mysqlTable("project_collaborators", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (the collaborator) */
+  userId: int("userId").notNull(),
+  /** Role of the collaborator: viewer can only view, editor can also upload/edit */
+  role: mysqlEnum("role", ["viewer", "editor"]).default("viewer").notNull(),
+  /** When the collaborator was added */
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ProjectCollaborator = typeof projectCollaborators.$inferSelect;
+export type InsertProjectCollaborator = typeof projectCollaborators.$inferInsert;
+
+/**
+ * Project invitations table - tracks pending invitations sent via email.
+ * Once a user registers and logs in, the invitation is converted to a collaborator entry.
+ */
+export const projectInvitations = mysqlTable("project_invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (who sent the invitation) */
+  invitedBy: int("invitedBy").notNull(),
+  /** Email address the invitation was sent to */
+  email: varchar("email", { length: 320 }).notNull(),
+  /** Unique token for accepting the invitation */
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  /** Role to assign when invitation is accepted */
+  role: mysqlEnum("role", ["viewer", "editor"]).default("viewer").notNull(),
+  /** Status of the invitation */
+  status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
+  /** When the invitation expires (7 days from creation) */
+  expiresAt: timestamp("expiresAt").notNull(),
+  /** When the invitation was accepted (if accepted) */
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ProjectInvitation = typeof projectInvitations.$inferSelect;
+export type InsertProjectInvitation = typeof projectInvitations.$inferInsert;

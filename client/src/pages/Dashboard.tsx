@@ -8,6 +8,7 @@ import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ProjectCard } from "@/components/ProjectCard";
+import { SharedProjectCard } from "@/components/SharedProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -34,6 +35,7 @@ import {
   Settings,
   Upload,
   User,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -64,6 +66,9 @@ export default function Dashboard() {
 
   // Fetch projects
   const { data: projects, isLoading: projectsLoading } = trpc.project.list.useQuery();
+  
+  // Fetch shared projects
+  const { data: sharedProjects, isLoading: sharedProjectsLoading } = trpc.sharing.getSharedWithMe.useQuery();
 
   const handleComingSoon = () => {
     toast.info("Feature coming soon!", {
@@ -272,6 +277,32 @@ export default function Dashboard() {
                 </Card>
               )}
             </motion.div>
+
+            {/* Shared Projects Section */}
+            {(sharedProjects && sharedProjects.length > 0) && (
+              <motion.div variants={fadeInUp} className="mt-12">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-cyan-500" />
+                    <h2
+                      className="text-xl font-semibold"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      Shared With Me
+                    </h2>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {sharedProjects.length} project{sharedProjects.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sharedProjects.map((project) => (
+                    <SharedProjectCard key={project.id} project={project} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Help Section */}
             <motion.div variants={fadeInUp} className="mt-12">

@@ -7,17 +7,33 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  acceptProjectInvitation,
+  addProjectCollaborator,
   createMedia,
   createProject,
+  createProjectInvitation,
   deleteMedia,
   deleteProject,
+  getInvitationByToken,
   getMediaById,
+  getProjectById,
+  getProjectCollaborators,
+  getProjectInvitations,
   getProjectMedia,
+  getProjectMediaWithAccess,
+  getProjectWithAccess,
+  getUserAccessibleProjects,
+  getUserById,
+  getUserByEmail,
   getUserProject,
   getUserProjectCount,
   getUserProjects,
+  removeProjectCollaborator,
+  revokeProjectInvitation,
   updateProject,
+  userHasProjectAccess,
 } from "./db";
+import { sendProjectInvitationEmail } from "./email";
 import { storagePut } from "./storage";
 
 // Validation schemas for project operations
@@ -326,18 +342,26 @@ export const appRouter = router({
       return getUserProjectCount(ctx.user.id);
     }),
 
-    // Get a single project by ID
+    // Get a single project by ID (owner or collaborator)
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
-        const project = await getUserProject(input.id, ctx.user.id);
-        if (!project) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Project not found",
-          });
+        // First check if user is owner
+        const ownedProject = await getUserProject(input.id, ctx.user.id);
+        if (ownedProject) {
+          return { ...ownedProject, accessRole: 'owner' as const };
         }
-        return project;
+        
+        // Check if user is a collaborator
+        const sharedProject = await getProjectWithAccess(input.id, ctx.user.id);
+        if (sharedProject) {
+          return sharedProject;
+        }
+        
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
       }),
 
     // Create a new project
@@ -387,19 +411,22 @@ export const appRouter = router({
 
   // Media management procedures
   media: router({
-    // List all media for a project
+    // List all media for a project (owner or collaborator)
     list: protectedProcedure
       .input(z.object({ projectId: z.number() }))
       .query(async ({ ctx, input }) => {
-        // Verify user owns the project
-        const project = await getUserProject(input.projectId, ctx.user.id);
-        if (!project) {
+        // Check if user has access (owner or collaborator)
+        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",
           });
         }
-        return getProjectMedia(input.projectId, ctx.user.id);
+        
+        // Use the access-aware function to get media
+        const media = await getProjectMediaWithAccess(input.projectId, ctx.user.id);
+        return media || [];
       }),
 
     // Get a single media item
@@ -496,6 +523,260 @@ export const appRouter = router({
         // Note: We're not deleting from S3 here - could add cleanup job later
         return { success: true, deleted };
       }),
+  }),
+
+  // Project Sharing procedures
+  sharing: router({
+    // Get project collaborators
+    getCollaborators: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+        return getProjectCollaborators(input.projectId);
+      }),
+
+    // Get project invitations
+    getInvitations: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+        return getProjectInvitations(input.projectId);
+      }),
+
+    // Send a project invitation
+    invite: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        email: z.string().email(),
+        role: z.enum(["viewer", "editor"]).default("viewer"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        // Check if the email belongs to an existing user who is already a collaborator
+        const existingUser = await getUserByEmail(input.email);
+        if (existingUser) {
+          // Check if already a collaborator
+          const collaborators = await getProjectCollaborators(input.projectId);
+          const isAlreadyCollaborator = collaborators.some(c => c.userId === existingUser.id);
+          if (isAlreadyCollaborator) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "This user is already a collaborator on this project",
+            });
+          }
+        }
+
+        // Don't allow inviting yourself
+        if (input.email.toLowerCase() === ctx.user.email?.toLowerCase()) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You cannot invite yourself to your own project",
+          });
+        }
+
+        // Generate unique token
+        const token = nanoid(32);
+        
+        // Set expiration to 7 days from now
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        // Create the invitation
+        const { invitation, isNew } = await createProjectInvitation({
+          projectId: input.projectId,
+          invitedBy: ctx.user.id,
+          email: input.email.toLowerCase(),
+          token,
+          role: input.role,
+          expiresAt,
+        });
+
+        // Build the accept URL
+        const baseUrl = process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+        const acceptUrl = `${baseUrl}/invite/${invitation.token}`;
+
+        // Send the invitation email
+        const emailResult = await sendProjectInvitationEmail({
+          to: input.email,
+          inviterName: ctx.user.name || 'A SkyVee user',
+          projectName: project.name,
+          role: input.role,
+          inviteUrl: acceptUrl,
+        });
+
+        if (!emailResult.success) {
+          console.error('[Sharing] Failed to send invitation email:', emailResult.error);
+          // Don't throw - invitation is still created, just email failed
+        }
+
+        return {
+          success: true,
+          invitation,
+          isNew,
+          emailSent: emailResult.success,
+        };
+      }),
+
+    // Accept an invitation (called after user logs in)
+    acceptInvitation: protectedProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await acceptProjectInvitation(input.token, ctx.user.id);
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to accept invitation",
+          });
+        }
+
+        // Get the project details to return
+        const project = await getProjectById(result.invitation!.projectId);
+
+        return {
+          success: true,
+          project,
+        };
+      }),
+
+    // Get invitation details by token (public - for showing invitation info before login)
+    getInvitationByToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const invitation = await getInvitationByToken(input.token);
+        
+        if (!invitation) {
+          return null;
+        }
+
+        // Get project details
+        const project = await getProjectById(invitation.projectId);
+        
+        // Get inviter details
+        const inviter = await getUserById(invitation.invitedBy);
+
+        return {
+          invitation: {
+            id: invitation.id,
+            email: invitation.email,
+            role: invitation.role,
+            status: invitation.status,
+            expiresAt: invitation.expiresAt,
+          },
+          project: project ? {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+          } : null,
+          inviter: inviter ? {
+            name: inviter.name,
+          } : null,
+        };
+      }),
+
+    // Revoke an invitation
+    revokeInvitation: protectedProcedure
+      .input(z.object({ invitationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await revokeProjectInvitation(input.invitationId, ctx.user.id);
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to revoke invitation",
+          });
+        }
+
+        return { success: true };
+      }),
+
+    // Remove a collaborator
+    removeCollaborator: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        userId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        const removed = await removeProjectCollaborator(input.projectId, input.userId);
+        
+        if (!removed) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Collaborator not found",
+          });
+        }
+
+        return { success: true };
+      }),
+
+    // Get a shared project (for collaborators)
+    getSharedProject: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectWithAccess(input.projectId, ctx.user.id);
+        
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access",
+          });
+        }
+
+        return project;
+      }),
+
+    // Get media for a shared project
+    getSharedProjectMedia: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const media = await getProjectMediaWithAccess(input.projectId, ctx.user.id);
+        
+        if (media === null) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access",
+          });
+        }
+
+        return media;
+      }),
+
+    // Get all projects shared with the current user
+    getSharedWithMe: protectedProcedure.query(async ({ ctx }) => {
+      const { shared } = await getUserAccessibleProjects(ctx.user.id);
+      return shared;
+    }),
   }),
 
   // GPS Export procedures

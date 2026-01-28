@@ -22,6 +22,13 @@
       "when": 1769104364398,
       "tag": "0002_spicy_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1769557382450,
+      "tag": "0003_chemical_marrow",
+      "breakpoints": true
     }
   ]
 }

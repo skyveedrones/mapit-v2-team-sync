@@ -1,6 +1,6 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertMedia, InsertProject, InsertUser, media, projects, users } from "../drizzle/schema";
+import { InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, media, projectCollaborators, projectInvitations, projects, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -378,4 +378,441 @@ export async function getProjectMediaCount(projectId: number, userId: number) {
     .where(and(eq(media.projectId, projectId), eq(media.userId, userId)));
 
   return result.length;
+}
+
+// ============================================
+// Project Collaborators & Invitations
+// ============================================
+
+/**
+ * Check if a user has access to a project (owner or collaborator)
+ */
+export async function userHasProjectAccess(projectId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if user is the owner
+  const project = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .limit(1);
+
+  if (project.length > 0) {
+    return true;
+  }
+
+  // Check if user is a collaborator
+  const collaborator = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(eq(projectCollaborators.projectId, projectId), eq(projectCollaborators.userId, userId)))
+    .limit(1);
+
+  return collaborator.length > 0;
+}
+
+/**
+ * Get a project with access check (owner or collaborator)
+ */
+export async function getProjectWithAccess(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const project = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (project.length === 0) {
+    return null;
+  }
+
+  // Check if user is owner
+  if (project[0].userId === userId) {
+    return { ...project[0], accessRole: 'owner' as const };
+  }
+
+  // Check if user is collaborator
+  const collaborator = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(eq(projectCollaborators.projectId, projectId), eq(projectCollaborators.userId, userId)))
+    .limit(1);
+
+  if (collaborator.length > 0) {
+    return { ...project[0], accessRole: collaborator[0].role };
+  }
+
+  return null;
+}
+
+/**
+ * Get all projects a user has access to (owned + shared)
+ */
+export async function getUserAccessibleProjects(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get owned projects
+  const ownedProjects = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, userId))
+    .orderBy(desc(projects.updatedAt));
+
+  // Get shared projects
+  const sharedProjectIds = await db
+    .select({ projectId: projectCollaborators.projectId, role: projectCollaborators.role })
+    .from(projectCollaborators)
+    .where(eq(projectCollaborators.userId, userId));
+
+  const sharedProjects = [];
+  for (const collab of sharedProjectIds) {
+    const project = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, collab.projectId))
+      .limit(1);
+    if (project.length > 0) {
+      sharedProjects.push({ ...project[0], sharedRole: collab.role });
+    }
+  }
+
+  return {
+    owned: ownedProjects,
+    shared: sharedProjects,
+  };
+}
+
+/**
+ * Add a collaborator to a project
+ */
+export async function addProjectCollaborator(collaborator: InsertProjectCollaborator) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if collaborator already exists
+  const existing = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(
+      eq(projectCollaborators.projectId, collaborator.projectId),
+      eq(projectCollaborators.userId, collaborator.userId)
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const result = await db.insert(projectCollaborators).values(collaborator);
+  const insertId = result[0].insertId;
+
+  const created = await db
+    .select()
+    .from(projectCollaborators)
+    .where(eq(projectCollaborators.id, insertId))
+    .limit(1);
+
+  return created[0];
+}
+
+/**
+ * Remove a collaborator from a project
+ */
+export async function removeProjectCollaborator(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(
+      eq(projectCollaborators.projectId, projectId),
+      eq(projectCollaborators.userId, userId)
+    ))
+    .limit(1);
+
+  if (existing.length === 0) {
+    return null;
+  }
+
+  await db
+    .delete(projectCollaborators)
+    .where(and(
+      eq(projectCollaborators.projectId, projectId),
+      eq(projectCollaborators.userId, userId)
+    ));
+
+  return existing[0];
+}
+
+/**
+ * Get all collaborators for a project
+ */
+export async function getProjectCollaborators(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const collaborators = await db
+    .select({
+      id: projectCollaborators.id,
+      projectId: projectCollaborators.projectId,
+      userId: projectCollaborators.userId,
+      role: projectCollaborators.role,
+      createdAt: projectCollaborators.createdAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
+    .from(projectCollaborators)
+    .innerJoin(users, eq(projectCollaborators.userId, users.id))
+    .where(eq(projectCollaborators.projectId, projectId));
+
+  return collaborators;
+}
+
+/**
+ * Create a project invitation
+ */
+export async function createProjectInvitation(invitation: InsertProjectInvitation) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if there's already a pending invitation for this email
+  const existing = await db
+    .select()
+    .from(projectInvitations)
+    .where(and(
+      eq(projectInvitations.projectId, invitation.projectId),
+      eq(projectInvitations.email, invitation.email),
+      eq(projectInvitations.status, 'pending')
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return { invitation: existing[0], isNew: false };
+  }
+
+  const result = await db.insert(projectInvitations).values(invitation);
+  const insertId = result[0].insertId;
+
+  const created = await db
+    .select()
+    .from(projectInvitations)
+    .where(eq(projectInvitations.id, insertId))
+    .limit(1);
+
+  return { invitation: created[0], isNew: true };
+}
+
+/**
+ * Get a project invitation by token
+ */
+export async function getInvitationByToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(projectInvitations)
+    .where(eq(projectInvitations.token, token))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Accept a project invitation
+ */
+export async function acceptProjectInvitation(token: string, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get the invitation
+  const invitation = await getInvitationByToken(token);
+  if (!invitation) {
+    return { success: false, error: 'Invitation not found' };
+  }
+
+  if (invitation.status !== 'pending') {
+    return { success: false, error: `Invitation has already been ${invitation.status}` };
+  }
+
+  if (new Date() > invitation.expiresAt) {
+    // Update status to expired
+    await db
+      .update(projectInvitations)
+      .set({ status: 'expired' })
+      .where(eq(projectInvitations.id, invitation.id));
+    return { success: false, error: 'Invitation has expired' };
+  }
+
+  // Add user as collaborator
+  await addProjectCollaborator({
+    projectId: invitation.projectId,
+    userId: userId,
+    role: invitation.role,
+  });
+
+  // Update invitation status
+  await db
+    .update(projectInvitations)
+    .set({ status: 'accepted', acceptedAt: new Date() })
+    .where(eq(projectInvitations.id, invitation.id));
+
+  return { success: true, invitation };
+}
+
+/**
+ * Revoke a project invitation
+ */
+export async function revokeProjectInvitation(invitationId: number, projectOwnerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get the invitation and verify ownership
+  const invitation = await db
+    .select()
+    .from(projectInvitations)
+    .where(eq(projectInvitations.id, invitationId))
+    .limit(1);
+
+  if (invitation.length === 0) {
+    return { success: false, error: 'Invitation not found' };
+  }
+
+  // Verify the project belongs to the user
+  const project = await getUserProject(invitation[0].projectId, projectOwnerId);
+  if (!project) {
+    return { success: false, error: 'Not authorized to revoke this invitation' };
+  }
+
+  if (invitation[0].status !== 'pending') {
+    return { success: false, error: 'Can only revoke pending invitations' };
+  }
+
+  await db
+    .update(projectInvitations)
+    .set({ status: 'revoked' })
+    .where(eq(projectInvitations.id, invitationId));
+
+  return { success: true };
+}
+
+/**
+ * Get all invitations for a project
+ */
+export async function getProjectInvitations(projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(projectInvitations)
+    .where(eq(projectInvitations.projectId, projectId))
+    .orderBy(desc(projectInvitations.createdAt));
+}
+
+/**
+ * Get pending invitations for an email address
+ */
+export async function getPendingInvitationsForEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const now = new Date();
+  const invitations = await db
+    .select()
+    .from(projectInvitations)
+    .where(and(
+      eq(projectInvitations.email, email),
+      eq(projectInvitations.status, 'pending')
+    ));
+
+  // Filter out expired ones
+  return invitations.filter(inv => inv.expiresAt > now);
+}
+
+/**
+ * Get user by email
+ */
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Get user by ID
+ */
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Get project media with access check (for collaborators)
+ */
+export async function getProjectMediaWithAccess(projectId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // First verify user has access to the project
+  const hasAccess = await userHasProjectAccess(projectId, userId);
+  if (!hasAccess) {
+    return null;
+  }
+
+  return db
+    .select()
+    .from(media)
+    .where(eq(media.projectId, projectId))
+    .orderBy(desc(media.createdAt));
 }

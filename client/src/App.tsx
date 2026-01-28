@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectMap from "./pages/ProjectMap";
+import InviteAccept from "./pages/InviteAccept";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -73,6 +74,9 @@ function Router() {
       <Route path="/features/gps-data-export" component={GpsDataExport} />
       <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
       <Route path="/features/install-as-app" component={InstallAsApp} />
+      
+      {/* Invitation acceptance page */}
+      <Route path="/invite/:token" component={InviteAccept} />
       
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
