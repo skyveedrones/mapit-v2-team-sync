@@ -148,7 +148,7 @@
 ## Project Report Generation
 - [x] Backend API - Generate project report PDF
 - [x] Include project information section (name, description, location, dates, etc.)
-- [ ] Include project map with GPS marker points (static map image)
+- [x] Include project map with GPS marker points (static map image)
 - [x] Include selected media files with optional watermarks
 - [x] Resolution quality selector for media (affects file size)
 - [x] Report generation dialog UI with media selection

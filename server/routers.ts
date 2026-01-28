@@ -1361,9 +1361,8 @@ export const appRouter = router({
         let mapImageDataUrl: string | null = null;
         const gpsMedia = selectedMedia.filter(m => m.latitude && m.longitude);
         if (gpsMedia.length > 0) {
-          // For now, we'll skip the static map as it requires API key handling
-          // The map can be added later with proper Google Maps Static API integration
-          mapImageDataUrl = null;
+          const { fetchStaticMapAsDataUrl } = await import("./report");
+          mapImageDataUrl = await fetchStaticMapAsDataUrl(selectedMedia);
         }
 
         // Generate HTML report

@@ -34,39 +34,90 @@ export interface ReportData {
   generatedAt: Date;
 }
 
+import { ENV } from "./_core/env";
+
 /**
  * Generate a static Google Maps URL with markers for all GPS points
+ * Uses the Manus Maps proxy for authentication
  */
-export function generateStaticMapUrl(media: Media[], apiKey: string): string | null {
+export function generateStaticMapUrl(media: Media[]): string | null {
   const gpsMedia = media.filter(m => m.latitude && m.longitude);
   
   if (gpsMedia.length === 0) {
     return null;
   }
 
-  // Calculate center point
+  const baseUrl = ENV.forgeApiUrl;
+  const apiKey = ENV.forgeApiKey;
+  
+  if (!baseUrl || !apiKey) {
+    console.warn("[Report] Maps proxy credentials not configured");
+    return null;
+  }
+
+  // Calculate center point and zoom level based on bounds
   const lats = gpsMedia.map(m => parseFloat(m.latitude!));
   const lngs = gpsMedia.map(m => parseFloat(m.longitude!));
-  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const centerLat = (minLat + maxLat) / 2;
+  const centerLng = (minLng + maxLng) / 2;
+  
+  // Calculate appropriate zoom level based on bounds
+  const latDiff = maxLat - minLat;
+  const lngDiff = maxLng - minLng;
+  const maxDiff = Math.max(latDiff, lngDiff);
+  let zoom = 14;
+  if (maxDiff > 0.5) zoom = 10;
+  else if (maxDiff > 0.2) zoom = 11;
+  else if (maxDiff > 0.1) zoom = 12;
+  else if (maxDiff > 0.05) zoom = 13;
+  else if (maxDiff > 0.01) zoom = 14;
+  else zoom = 15;
 
-  // Build markers string
-  const markers = gpsMedia
+  // Build markers string - limit to 100 markers for URL length
+  const markersToShow = gpsMedia.slice(0, 100);
+  const markers = markersToShow
     .map(m => `${m.latitude},${m.longitude}`)
     .join("|");
 
-  // Generate static map URL
-  const baseUrl = "https://maps.googleapis.com/maps/api/staticmap";
+  // Generate static map URL via Manus proxy
+  const proxyUrl = baseUrl.replace(/\/+$/, "");
   const params = new URLSearchParams({
     center: `${centerLat},${centerLng}`,
-    zoom: "12",
-    size: "800x600",
-    maptype: "roadmap",
-    markers: `color:red|${markers}`,
+    zoom: String(zoom),
+    size: "800x500",
+    maptype: "hybrid",
+    markers: `color:red|size:small|${markers}`,
     key: apiKey,
   });
 
-  return `${baseUrl}?${params.toString()}`;
+  return `${proxyUrl}/v1/maps/proxy/maps/api/staticmap?${params.toString()}`;
+}
+
+/**
+ * Fetch static map image and convert to base64 data URL
+ */
+export async function fetchStaticMapAsDataUrl(media: Media[]): Promise<string | null> {
+  const mapUrl = generateStaticMapUrl(media);
+  if (!mapUrl) return null;
+  
+  try {
+    const response = await fetch(mapUrl);
+    if (!response.ok) {
+      console.error(`[Report] Failed to fetch static map: ${response.status}`);
+      return null;
+    }
+    
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") || "image/png";
+    return `data:${contentType};base64,${buffer.toString("base64")}`;
+  } catch (error) {
+    console.error("[Report] Error fetching static map:", error);
+    return null;
+  }
 }
 
 /**
