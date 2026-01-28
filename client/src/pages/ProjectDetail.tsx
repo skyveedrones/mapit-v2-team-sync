@@ -261,7 +261,18 @@ export default function ProjectDetail() {
               </Link>
 
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
+                <div className="flex items-start gap-4">
+                  {/* Project Logo */}
+                  {project.logoUrl && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={project.logoUrl}
+                        alt="Project Logo"
+                        className="h-16 w-16 md:h-20 md:w-20 object-contain rounded-lg border border-border bg-card p-1"
+                      />
+                    </div>
+                  )}
+                  <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h1
                       className="text-2xl md:text-3xl font-bold"
@@ -280,6 +291,7 @@ export default function ProjectDetail() {
                       {project.description}
                     </p>
                   )}
+                </div>
                 </div>
 
                 <div className="flex items-center gap-3">

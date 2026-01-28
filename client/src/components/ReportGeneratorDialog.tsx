@@ -174,22 +174,62 @@ export function ReportGeneratorDialog({
   const handleDownloadPdf = () => {
     if (!previewHtml) return;
 
-    // Create a new window with the HTML content
-    const printWindow = window.open("", "_blank");
+    // Open a new window with the HTML content for printing
+    const printWindow = window.open("", "_blank", "width=800,height=600");
     if (!printWindow) {
       toast.error("Please allow popups to download the report");
       return;
     }
 
-    printWindow.document.write(previewHtml);
+    // Add print-specific styles to the HTML
+    const printHtml = previewHtml.replace(
+      "</head>",
+      `<style>
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { margin: 0.5in; size: letter; }
+        }
+      </style></head>`
+    );
+
+    printWindow.document.write(printHtml);
     printWindow.document.close();
 
-    // Wait for images to load, then trigger print
-    printWindow.onload = () => {
+    // Wait for content to load, then trigger print
+    const images = printWindow.document.getElementsByTagName("img");
+    let loadedCount = 0;
+    const totalImages = images.length;
+
+    const triggerPrint = () => {
       setTimeout(() => {
+        printWindow.focus();
         printWindow.print();
+        toast.success("Use 'Save as PDF' in the print dialog to download");
       }, 500);
     };
+
+    if (totalImages === 0) {
+      triggerPrint();
+    } else {
+      const checkAllLoaded = () => {
+        loadedCount++;
+        if (loadedCount >= totalImages) {
+          triggerPrint();
+        }
+      };
+
+      Array.from(images).forEach((img) => {
+        if (img.complete) {
+          checkAllLoaded();
+        } else {
+          img.onload = checkAllLoaded;
+          img.onerror = checkAllLoaded;
+        }
+      });
+
+      // Timeout fallback
+      setTimeout(triggerPrint, 5000);
+    }
   };
 
   const handleClose = () => {
@@ -226,7 +266,10 @@ export function ReportGeneratorDialog({
               <X className="h-4 w-4 mr-2" />
               Back to Options
             </Button>
-            <Button onClick={handleDownloadPdf} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button 
+              onClick={handleDownloadPdf} 
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>

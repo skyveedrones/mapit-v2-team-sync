@@ -1491,13 +1491,16 @@ export const appRouter = router({
           });
         }
 
+        // Use project logo if available, otherwise fall back to user-provided logo
+        const logoUrl = project.logoUrl || input.userLogoUrl;
+
         // Generate HTML report
         const html = generateReportHtml(
           project,
           mediaImages,
           mapImageDataUrl,
           new Date(),
-          input.userLogoUrl
+          logoUrl
         );
 
         return {

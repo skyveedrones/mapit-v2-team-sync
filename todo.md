@@ -218,8 +218,8 @@
 - [x] Add logoUrl and logoKey fields to projects table
 - [x] Create backend API for project logo upload/delete
 - [x] Add Upload Logo option to Project Actions dropdown
-- [ ] Display project logo on project detail page
-- [ ] Include project logo in project reports (instead of user logo)
+- [x] Display project logo on project detail page
+- [x] Include project logo in project reports (instead of user logo)
 - [x] Remove logo upload from dashboard Action menu
 - [x] Remove logo display from dashboard header
 
@@ -227,3 +227,8 @@
 - [x] Add live preview showing watermark on sample image
 - [x] Update preview when position/opacity/scale changes
 - [x] Show preview before applying permanently
+
+## Project Logo Display & PDF Fixes
+- [x] Fix PDF download function not working
+- [x] Display project logo on project detail page header/info tile
+- [x] Include project logo in PDF report header
