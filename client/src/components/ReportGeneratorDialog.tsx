@@ -186,7 +186,7 @@ export function ReportGeneratorDialog({
         projectName,
       });
 
-      // Convert base64 to blob and download
+      // Convert base64 to blob
       const byteCharacters = atob(result.pdfData);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -194,18 +194,28 @@ export function ReportGeneratorDialog({
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "application/pdf" });
-
-      // Create download link and trigger download
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = result.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
 
-      toast.success("PDF downloaded successfully!");
+      // Open PDF in new tab - works better on mobile devices
+      // User can then use browser's share/save option to save the file
+      const newWindow = window.open(url, "_blank");
+      
+      if (newWindow) {
+        toast.success("PDF opened in new tab. Use your browser's share or save option to download.");
+      } else {
+        // Fallback: If popup blocked, try direct download
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = result.filename;
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("PDF download started!");
+      }
+
+      // Clean up URL after a delay to allow download/viewing
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
       console.error("Failed to generate PDF:", error);
       toast.error("Failed to generate PDF. Please try again.");

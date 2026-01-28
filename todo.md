@@ -237,3 +237,7 @@
 - [x] Implement server-side PDF generation using puppeteer or similar
 - [x] Update frontend to download PDF directly without print dialog
 - [x] Test PDF download functionality
+
+## Mobile PDF Download Fix
+- [x] Change PDF download to open in new tab instead of blob download
+- [x] Works more reliably on mobile devices (Samsung tablets, phones)
