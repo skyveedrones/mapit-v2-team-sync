@@ -171,64 +171,46 @@ export function ReportGeneratorDialog({
     }
   };
 
-  const handleDownloadPdf = () => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const downloadPdfMutation = trpc.report.downloadPdf.useMutation();
+
+  const handleDownloadPdf = async () => {
     if (!previewHtml) return;
 
-    // Open a new window with the HTML content for printing
-    const printWindow = window.open("", "_blank", "width=800,height=600");
-    if (!printWindow) {
-      toast.error("Please allow popups to download the report");
-      return;
-    }
+    setIsDownloading(true);
+    toast.info("Generating PDF, please wait...");
 
-    // Add print-specific styles to the HTML
-    const printHtml = previewHtml.replace(
-      "</head>",
-      `<style>
-        @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          @page { margin: 0.5in; size: letter; }
-        }
-      </style></head>`
-    );
-
-    printWindow.document.write(printHtml);
-    printWindow.document.close();
-
-    // Wait for content to load, then trigger print
-    const images = printWindow.document.getElementsByTagName("img");
-    let loadedCount = 0;
-    const totalImages = images.length;
-
-    const triggerPrint = () => {
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        toast.success("Use 'Save as PDF' in the print dialog to download");
-      }, 500);
-    };
-
-    if (totalImages === 0) {
-      triggerPrint();
-    } else {
-      const checkAllLoaded = () => {
-        loadedCount++;
-        if (loadedCount >= totalImages) {
-          triggerPrint();
-        }
-      };
-
-      Array.from(images).forEach((img) => {
-        if (img.complete) {
-          checkAllLoaded();
-        } else {
-          img.onload = checkAllLoaded;
-          img.onerror = checkAllLoaded;
-        }
+    try {
+      const result = await downloadPdfMutation.mutateAsync({
+        html: previewHtml,
+        projectName,
       });
 
-      // Timeout fallback
-      setTimeout(triggerPrint, 5000);
+      // Convert base64 to blob and download
+      const byteCharacters = atob(result.pdfData);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "application/pdf" });
+
+      // Create download link and trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -268,10 +250,20 @@ export function ReportGeneratorDialog({
             </Button>
             <Button 
               onClick={handleDownloadPdf} 
+              disabled={isDownloading}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

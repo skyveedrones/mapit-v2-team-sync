@@ -1519,6 +1519,32 @@ export const appRouter = router({
         ...value,
       }));
     }),
+
+    // Generate PDF from HTML report
+    downloadPdf: protectedProcedure
+      .input(z.object({
+        html: z.string(),
+        projectName: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { generatePdfFromHtml } = await import("./pdfGenerator");
+        
+        try {
+          const pdfBuffer = await generatePdfFromHtml(input.html);
+          
+          // Return as base64 encoded string
+          return {
+            pdfData: pdfBuffer.toString("base64"),
+            filename: `${input.projectName.replace(/[^a-zA-Z0-9]/g, "_")}_Report_${new Date().toISOString().split("T")[0]}.pdf`,
+          };
+        } catch (error) {
+          console.error("[Report] Failed to generate PDF:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to generate PDF. Please try again.",
+          });
+        }
+      }),
   }),
 
   // ==================== Project Logo ====================

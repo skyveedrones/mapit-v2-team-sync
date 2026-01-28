@@ -232,3 +232,8 @@
 - [x] Fix PDF download function not working
 - [x] Display project logo on project detail page header/info tile
 - [x] Include project logo in PDF report header
+
+## Automatic PDF Download
+- [x] Implement server-side PDF generation using puppeteer or similar
+- [x] Update frontend to download PDF directly without print dialog
+- [x] Test PDF download functionality
