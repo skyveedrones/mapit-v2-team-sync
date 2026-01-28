@@ -170,3 +170,7 @@
 - [x] Create logo upload dialog with preview
 - [x] Display user logo on dashboard header
 - [x] Include user logo in project report header
+
+## Map Popup Enhancements
+- [x] Add enlarge button to GPS marker popup on project map
+- [x] Create fullscreen image viewer when enlarge is clicked

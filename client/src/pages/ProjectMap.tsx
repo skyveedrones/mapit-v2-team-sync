@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Layers,
   MapPin,
+  Maximize2,
   Route,
   Video,
   X,
@@ -55,6 +56,7 @@ export default function ProjectMap() {
   const [mapType, setMapType] = useState<"roadmap" | "satellite" | "terrain" | "hybrid">("satellite");
   const [mapReady, setMapReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<GeotaggedMedia | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = trpc.project.get.useQuery(
@@ -159,13 +161,31 @@ export default function ProjectMap() {
         const imageUrl = media.thumbnailUrl || media.url;
         content.innerHTML = `
           <div class="font-semibold text-sm mb-1">${media.filename}</div>
-          ${media.mediaType === 'photo' ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">Video</span></div>'}
+          <div class="relative">
+            ${media.mediaType === 'photo' ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">Video</span></div>'}
+            ${media.mediaType === 'photo' ? `<button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="Enlarge image">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+            </button>` : ''}
+          </div>
           <div class="text-xs text-gray-600">
             <div>📍 ${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
             ${media.altitude ? `<div>🏔️ Altitude: ${media.altitude.toFixed(1)}m</div>` : ''}
             ${media.capturedAt ? `<div>📅 ${new Date(media.capturedAt).toLocaleString()}</div>` : ''}
           </div>
         `;
+
+        // Add click handler for enlarge button after content is added to DOM
+        if (media.mediaType === 'photo') {
+          setTimeout(() => {
+            const enlargeBtn = document.getElementById(`enlarge-btn-${media.id}`);
+            if (enlargeBtn) {
+              enlargeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setEnlargedImage(media);
+              });
+            }
+          }, 100);
+        }
 
         infoWindowRef.current?.setContent(content);
         infoWindowRef.current?.open(map, marker);
@@ -495,7 +515,7 @@ export default function ProjectMap() {
 
       {/* Selected Media Preview - Bottom Center */}
       {selectedMedia && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm rounded-lg shadow-xl border border-border p-3 max-w-sm z-50">
+        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-border">
           <Button
             variant="ghost"
             size="icon"
@@ -506,18 +526,30 @@ export default function ProjectMap() {
           </Button>
           <div className="flex gap-3">
             {selectedMedia.mediaType === "photo" ? (
-              <img
-                src={selectedMedia.thumbnailUrl || selectedMedia.url}
-                alt={selectedMedia.filename}
-                className="w-24 h-18 object-cover rounded"
-                onError={(e) => {
-                  // Fallback to full URL if thumbnail fails
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== selectedMedia.url) {
-                    target.src = selectedMedia.url;
-                  }
-                }}
-              />
+              <div className="relative">
+                <img
+                  src={selectedMedia.thumbnailUrl || selectedMedia.url}
+                  alt={selectedMedia.filename}
+                  className="w-24 h-18 object-cover rounded cursor-pointer"
+                  onClick={() => setEnlargedImage(selectedMedia)}
+                  onError={(e) => {
+                    // Fallback to full URL if thumbnail fails
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== selectedMedia.url) {
+                      target.src = selectedMedia.url;
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute bottom-1 right-1 h-5 w-5 bg-black/60 hover:bg-black/80 border-0"
+                  onClick={() => setEnlargedImage(selectedMedia)}
+                  title="Enlarge image"
+                >
+                  <Maximize2 className="h-3 w-3 text-white" />
+                </Button>
+              </div>
             ) : (
               <div className="w-24 h-18 bg-muted rounded flex items-center justify-center">
                 <Video className="h-6 w-6 text-muted-foreground" />
@@ -541,6 +573,51 @@ export default function ProjectMap() {
                     <Calendar className="h-3 w-3" />
                     {new Date(selectedMedia.capturedAt).toLocaleString()}
                   </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Viewer Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 h-10 w-10 text-white hover:bg-white/20"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="max-w-[90vw] max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={enlargedImage.url}
+              alt={enlargedImage.filename}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
+              <h3 className="font-semibold text-sm mb-1">{enlargedImage.filename}</h3>
+              <div className="text-xs text-gray-300 flex flex-wrap gap-4">
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {enlargedImage.latitude.toFixed(6)}, {enlargedImage.longitude.toFixed(6)}
+                </span>
+                {enlargedImage.altitude && (
+                  <span className="flex items-center gap-1">
+                    <Mountain className="h-3 w-3" />
+                    {enlargedImage.altitude.toFixed(1)}m
+                  </span>
+                )}
+                {enlargedImage.capturedAt && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(enlargedImage.capturedAt).toLocaleString()}
+                  </span>
                 )}
               </div>
             </div>
