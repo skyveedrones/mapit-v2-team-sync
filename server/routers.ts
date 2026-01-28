@@ -1286,6 +1286,111 @@ export const appRouter = router({
         };
       }),
   }),
+
+  // Report generation procedures
+  report: router({
+    // Generate project report
+    generate: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        mediaIds: z.array(z.number()),
+        resolution: z.enum(["high", "medium", "low", "thumbnail"]).default("medium"),
+        includeWatermark: z.boolean().default(false),
+        watermarkData: z.string().optional(),
+        watermarkPosition: z.enum(["top-left", "top-right", "center", "bottom-left", "bottom-right"]).default("bottom-right"),
+        watermarkOpacity: z.number().min(10).max(100).default(70),
+        watermarkScale: z.number().min(5).max(50).default(15),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user has access to the project
+        const project = await getProjectWithAccess(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access",
+          });
+        }
+
+        // Get selected media
+        const allMedia = await getProjectMediaWithAccess(input.projectId, ctx.user.id) || [];
+        const selectedMedia = input.mediaIds.length > 0
+          ? allMedia.filter(m => input.mediaIds.includes(m.id))
+          : allMedia;
+
+        // Import report functions
+        const { generateReportHtml, processImageForReport, generateStaticMapUrl, RESOLUTION_PRESETS } = await import("./report");
+
+        // Prepare watermark buffer if needed
+        let watermarkBuffer: Buffer | undefined;
+        if (input.includeWatermark && input.watermarkData) {
+          watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+        }
+
+        // Process media images
+        const mediaImages: { filename: string; dataUrl: string }[] = [];
+        for (const media of selectedMedia) {
+          if (media.mediaType !== "photo") continue;
+
+          try {
+            // Fetch original image
+            const response = await fetch(media.url);
+            if (!response.ok) continue;
+            const imageBuffer = Buffer.from(await response.arrayBuffer());
+
+            // Process image (resize and optionally watermark)
+            const processedBuffer = await processImageForReport(
+              imageBuffer,
+              input.resolution,
+              watermarkBuffer ? {
+                watermarkBuffer,
+                position: input.watermarkPosition,
+                opacity: input.watermarkOpacity,
+                scale: input.watermarkScale,
+              } : undefined
+            );
+
+            // Convert to base64 data URL
+            const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString("base64")}`;
+            mediaImages.push({ filename: media.filename, dataUrl });
+          } catch (error) {
+            console.error(`[Report] Failed to process media ${media.id}:`, error);
+          }
+        }
+
+        // Generate static map image
+        let mapImageDataUrl: string | null = null;
+        const gpsMedia = selectedMedia.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length > 0) {
+          // For now, we'll skip the static map as it requires API key handling
+          // The map can be added later with proper Google Maps Static API integration
+          mapImageDataUrl = null;
+        }
+
+        // Generate HTML report
+        const html = generateReportHtml(
+          project,
+          mediaImages,
+          mapImageDataUrl,
+          new Date()
+        );
+
+        return {
+          html,
+          projectName: project.name,
+          mediaCount: mediaImages.length,
+          resolution: RESOLUTION_PRESETS[input.resolution].label,
+        };
+      }),
+
+    // Get resolution presets
+    getResolutionPresets: publicProcedure.query(async () => {
+      const { RESOLUTION_PRESETS } = await import("./report");
+      return Object.entries(RESOLUTION_PRESETS).map(([key, value]) => ({
+        key,
+        ...value,
+      }));
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

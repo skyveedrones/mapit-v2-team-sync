@@ -11,6 +11,7 @@ import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { NewFlightDialog } from "@/components/NewFlightDialog";
+import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,7 @@ import {
   Calendar,
   ChevronDown,
   Download,
+  FileText,
   FolderOpen,
   Image,
   Layers,
@@ -88,6 +90,7 @@ export default function ProjectDetail() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [newFlightDialogOpen, setNewFlightDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading, error } = trpc.project.get.useQuery(
@@ -306,6 +309,10 @@ export default function ProjectDetail() {
                         <Map className="h-4 w-4 mr-2 text-blue-500" />
                         View Map
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                        <FileText className="h-4 w-4 mr-2 text-orange-500" />
+                        Generate Report
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setExportDialogOpen(true)}>
                         <Download className="h-4 w-4 mr-2 text-purple-500" />
                         Export GPS Data
@@ -518,6 +525,14 @@ export default function ProjectDetail() {
         projectId={projectId}
         open={newFlightDialogOpen}
         onOpenChange={setNewFlightDialogOpen}
+      />
+
+      <ReportGeneratorDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        projectId={projectId}
+        projectName={project?.name || "Project"}
+        media={mediaList || []}
       />
     </div>
   );

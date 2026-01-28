@@ -144,3 +144,13 @@
 - [x] UI - Create flight detail page with media gallery
 - [x] UI - Allow uploading media to specific flight
 - [x] UI - Flight card component showing flight info and media count
+
+## Project Report Generation
+- [x] Backend API - Generate project report PDF
+- [x] Include project information section (name, description, location, dates, etc.)
+- [ ] Include project map with GPS marker points (static map image)
+- [x] Include selected media files with optional watermarks
+- [x] Resolution quality selector for media (affects file size)
+- [x] Report generation dialog UI with media selection
+- [x] Preview report before download
+- [x] Download button for generated PDF
