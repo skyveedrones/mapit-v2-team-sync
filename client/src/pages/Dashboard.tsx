@@ -5,7 +5,7 @@
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
-
+import DashboardLayout from "@/components/DashboardLayout";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -24,22 +24,17 @@ import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
 import { motion } from "framer-motion";
 import {
-  Bell,
   ChevronDown,
   Download,
   FolderOpen,
   FolderPlus,
-  Layers,
-  LogOut,
   Map,
   Plus,
   Settings,
-  Upload,
-  User,
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 const fadeInUp = {
@@ -58,7 +53,7 @@ const staggerContainer = {
 };
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -70,7 +65,7 @@ export default function Dashboard() {
   const { data: projects, isLoading: projectsLoading } = trpc.project.list.useQuery();
   
   // Fetch shared projects
-  const { data: sharedProjects, isLoading: sharedProjectsLoading } = trpc.sharing.getSharedWithMe.useQuery();
+  const { data: sharedProjects } = trpc.sharing.getSharedWithMe.useQuery();
 
 
 
@@ -78,12 +73,6 @@ export default function Dashboard() {
     toast.info("Feature coming soon!", {
       description: "This feature is currently under development.",
     });
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    toast.success("Logged out successfully");
-    window.location.href = "/";
   };
 
   const handleEditProject = (project: Project) => {
@@ -107,230 +96,175 @@ export default function Dashboard() {
     }
   };
 
-  // Navigate to first project for upload if available
-  const handleUploadMedia = () => {
-    if (projects && projects.length > 0) {
-      setLocation(`/project/${projects[0].id}`);
-      toast.info("Select a project", {
-        description: "Click 'Upload Media' on a project to add files.",
-      });
-    } else {
-      toast.info("No projects yet", {
-        description: "Create a project first to upload media.",
-      });
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/images/skyvee-logo-white.png"
-              alt="SkyVee"
-              className="h-8 w-auto"
-            />
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={handleComingSoon}
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">{user?.name || user?.email || "User"}</span>
+    <DashboardLayout>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={staggerContainer}
+        className="space-y-6"
+      >
+        {/* Welcome Section with Action Dropdown */}
+        <motion.div variants={fadeInUp}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1
+                className="text-3xl md:text-4xl font-bold mb-2"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Welcome back, {user?.name?.split(" ")[0] || "Pilot"}!
+              </h1>
+              <p className="text-muted-foreground">
+                Manage your drone mapping projects and visualize your aerial data.
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
+
+            {/* Consolidated Action Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Actions
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  New Project
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleViewMaps}>
+                  <Map className="h-4 w-4 mr-2" />
+                  View Maps
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleComingSoon}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Data
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleComingSoon}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-      </nav>
+        </motion.div>
 
-      {/* Main Content */}
-      <main className="pt-24 pb-12">
-        <div className="container">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-          >
-            {/* Welcome Section with Action Dropdown */}
-            <motion.div variants={fadeInUp} className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h1
-                    className="text-3xl md:text-4xl font-bold mb-2"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    Welcome back, {user?.name?.split(" ")[0] || "Pilot"}!
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Manage your drone mapping projects and visualize your aerial data.
-                  </p>
+        {/* Projects Section */}
+        <motion.div variants={fadeInUp}>
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-xl font-semibold"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Your Projects
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              {projects?.length || 0} project{projects?.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {/* Projects Grid */}
+          {projectsLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-32 w-full" />
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : projects && projects.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onEdit={handleEditProject}
+                  onDelete={handleDeleteProject}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Empty State */
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <FolderOpen className="h-8 w-8 text-muted-foreground" />
                 </div>
+                <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Create your first drone mapping project to start organizing and visualizing your aerial footage.
+                </p>
+                <Button
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Project
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
 
-                {/* Consolidated Action Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Actions
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
-                      <FolderPlus className="h-4 w-4 mr-2" />
-                      New Project
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleViewMaps}>
-                      <Map className="h-4 w-4 mr-2" />
-                      View Maps
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleComingSoon}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Data
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleComingSoon}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </motion.div>
-
-            {/* Projects Section */}
-            <motion.div variants={fadeInUp}>
-              <div className="flex items-center justify-between mb-4">
+        {/* Shared Projects Section */}
+        {(sharedProjects && sharedProjects.length > 0) && (
+          <motion.div variants={fadeInUp}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-cyan-500" />
                 <h2
                   className="text-xl font-semibold"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Your Projects
+                  Shared With Me
                 </h2>
-                <span className="text-sm text-muted-foreground">
-                  {projects?.length || 0} project{projects?.length !== 1 ? "s" : ""}
-                </span>
               </div>
+              <span className="text-sm text-muted-foreground">
+                {sharedProjects.length} project{sharedProjects.length !== 1 ? "s" : ""}
+              </span>
+            </div>
 
-              {/* Projects Grid */}
-              {projectsLoading ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i} className="overflow-hidden">
-                      <Skeleton className="h-32 w-full" />
-                      <div className="p-4 space-y-2">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-1/2" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : projects && projects.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {projects.map((project) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      onEdit={handleEditProject}
-                      onDelete={handleDeleteProject}
-                    />
-                  ))}
-                </div>
-              ) : (
-                /* Empty State */
-                <Card className="border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <FolderOpen className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      Create your first drone mapping project to start organizing and visualizing your aerial footage.
-                    </p>
-                    <Button
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() => setCreateDialogOpen(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Project
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </motion.div>
-
-            {/* Shared Projects Section */}
-            {(sharedProjects && sharedProjects.length > 0) && (
-              <motion.div variants={fadeInUp} className="mt-12">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-cyan-500" />
-                    <h2
-                      className="text-xl font-semibold"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      Shared With Me
-                    </h2>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {sharedProjects.length} project{sharedProjects.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sharedProjects.map((project) => (
-                    <SharedProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Help Section */}
-            <motion.div variants={fadeInUp} className="mt-12">
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="py-6">
-                  <div className="flex flex-col md:flex-row items-center gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-1">
-                        Need help getting started?
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        Check out our quick start guide to learn how to upload your first drone footage and create interactive maps.
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap"
-                      onClick={handleComingSoon}
-                    >
-                      View Guide
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sharedProjects.map((project) => (
+                <SharedProjectCard key={project.id} project={project} />
+              ))}
+            </div>
           </motion.div>
-        </div>
-      </main>
+        )}
+
+        {/* Help Section */}
+        <motion.div variants={fadeInUp}>
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="py-6">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-1">
+                    Need help getting started?
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Check out our quick start guide to learn how to upload your first drone footage and create interactive maps.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap"
+                  onClick={handleComingSoon}
+                >
+                  View Guide
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
       {/* Dialogs */}
       <CreateProjectDialog
@@ -347,7 +281,6 @@ export default function Dashboard() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
-
-    </div>
+    </DashboardLayout>
   );
 }

@@ -366,3 +366,6 @@
 - [x] Implement client invitation email system
 - [x] Assign Oncor Forney Switch project to City of Forney
 - [x] Assign Gail Wilson Extension project to City of Forney
+
+## Dashboard Navigation Enhancement
+- [x] Add sidebar navigation to Dashboard page (consistent with Clients page)
