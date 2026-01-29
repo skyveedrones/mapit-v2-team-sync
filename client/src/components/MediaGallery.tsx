@@ -264,6 +264,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   }
 
   const photoCount = selectedMediaItems.filter(m => m.mediaType === "photo").length;
+  const videoCount = selectedMediaItems.filter(m => m.mediaType === "video").length;
+  const watermarkableCount = photoCount + videoCount;
 
   return (
     <>
@@ -294,10 +296,10 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setWatermarkDialogOpen(true)}
-                  disabled={photoCount === 0}
+                  disabled={watermarkableCount === 0}
                 >
                   <ImagePlus className="h-4 w-4 mr-2" />
-                  Watermark Photos ({photoCount})
+                  Watermark Media ({watermarkableCount})
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

@@ -305,3 +305,8 @@
 - [x] Update WatermarkDialog to handle video files
 - [x] Add progress indicator for video watermarking (longer process)
 - [x] Add unit tests for video watermark functionality
+
+## Video Watermark Bug Fix
+- [x] Fix watermark dialog not showing video count when only videos selected
+- [x] Fix "Apply Permanently" button staying disabled when only videos selected
+- [x] Update menu item from "Watermark Photos" to "Watermark Media"
