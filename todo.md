@@ -253,3 +253,7 @@
 - [x] Add detailed upload progress indicator with speed and ETA for large files
 - [x] Add video compression option before upload to save storage
 - [x] Add automatic video thumbnail extraction from uploaded videos
+
+## Video Gallery & Playback
+- [x] Display video thumbnails in media gallery instead of generic video icon
+- [x] Add inline video player in media detail view

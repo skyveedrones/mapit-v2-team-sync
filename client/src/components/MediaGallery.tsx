@@ -422,6 +422,21 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
+            ) : item.thumbnailUrl ? (
+              <div className="relative w-full h-full">
+                <img
+                  src={item.thumbnailUrl}
+                  alt={item.filename}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                {/* Video play icon overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                    <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1" />
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted">
                 <FileVideo className="h-12 w-12 text-muted-foreground" />
@@ -500,11 +515,24 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     className="w-full max-h-[50vh] object-contain"
                   />
                 ) : (
-                  <video
-                    src={selectedMedia.url}
-                    controls
-                    className="w-full max-h-[50vh]"
-                  />
+                  <div className="relative">
+                    <video
+                      src={selectedMedia.url}
+                      controls
+                      controlsList="nodownload"
+                      playsInline
+                      poster={selectedMedia.thumbnailUrl || undefined}
+                      className="w-full max-h-[50vh] bg-black"
+                      preload="metadata"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                    {/* Video info overlay */}
+                    <div className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs flex items-center gap-1">
+                      <FileVideo className="h-3 w-3" />
+                      Video
+                    </div>
+                  </div>
                 )}
               </div>
 
