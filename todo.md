@@ -341,3 +341,6 @@
 
 ## Video Player UI Improvement
 - [x] Move H.265 video tip from above to below the video player
+
+## Generate Reports UI Update
+- [x] Remove "Add Watermark" option from Generate Reports tile
