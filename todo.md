@@ -268,3 +268,9 @@
 
 ## Fix Video Upload JSON Parse Error
 - [x] Fix "JSON.parse: unexpected character" error during chunked video upload (reduced chunk size to 2MB, added retry logic)
+
+## Upload Progress Persistence
+- [x] Save upload state to localStorage (uploadId, filename, chunks uploaded, total chunks)
+- [x] Detect incomplete uploads on page load and show resume option
+- [x] Add "Resume Upload" button for interrupted uploads
+- [x] Clean up completed/expired upload states from localStorage

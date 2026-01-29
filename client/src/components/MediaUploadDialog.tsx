@@ -1,7 +1,8 @@
 /**
  * Media Upload Dialog
  * Allows users to upload drone photos and videos with drag-and-drop support
- * Features: detailed progress with speed/ETA, chunked uploads for large files, auto thumbnail extraction
+ * Features: detailed progress with speed/ETA, chunked uploads for large files, 
+ * auto thumbnail extraction, resumable uploads with localStorage persistence
  */
 
 import { Button } from "@/components/ui/button";
@@ -23,9 +24,11 @@ import {
   AlertCircle,
   Loader2,
   Clock,
-  ArrowUpRight
+  ArrowUpRight,
+  RefreshCw,
+  Trash2
 } from "lucide-react";
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 interface MediaUploadDialogProps {
@@ -38,7 +41,7 @@ interface MediaUploadDialogProps {
 
 interface FileToUpload {
   file: File;
-  status: "pending" | "uploading" | "success" | "error";
+  status: "pending" | "uploading" | "success" | "error" | "paused";
   progress: number;
   error?: string;
   thumbnail?: string; // base64 thumbnail for videos
@@ -46,6 +49,22 @@ interface FileToUpload {
   eta?: number; // seconds remaining
   startTime?: number;
   bytesUploaded?: number;
+  uploadId?: string; // For resumable uploads
+  chunksUploaded?: number; // Track which chunks have been uploaded
+}
+
+// Persisted upload state for resumable uploads
+interface PersistedUpload {
+  uploadId: string;
+  projectId: number;
+  filename: string;
+  fileSize: number;
+  mimeType: string;
+  totalChunks: number;
+  chunksUploaded: number;
+  thumbnailData?: string;
+  createdAt: number;
+  lastUpdated: number;
 }
 
 const ACCEPTED_TYPES = [
@@ -62,7 +81,9 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks for large file uploads (smaller to avoid proxy limits)
+const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks for large file uploads
+const STORAGE_KEY = "skyvee_pending_uploads";
+const UPLOAD_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -86,6 +107,54 @@ function formatTime(seconds: number): string {
   return `${hours}h ${mins}m`;
 }
 
+// LocalStorage helpers for persisted uploads
+function getPersistedUploads(): PersistedUpload[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    const uploads = JSON.parse(data) as PersistedUpload[];
+    // Filter out expired uploads
+    const now = Date.now();
+    return uploads.filter(u => now - u.createdAt < UPLOAD_EXPIRY_MS);
+  } catch {
+    return [];
+  }
+}
+
+function savePersistedUpload(upload: PersistedUpload): void {
+  try {
+    const uploads = getPersistedUploads();
+    const existingIndex = uploads.findIndex(u => u.uploadId === upload.uploadId);
+    if (existingIndex >= 0) {
+      uploads[existingIndex] = upload;
+    } else {
+      uploads.push(upload);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(uploads));
+  } catch (e) {
+    console.error("Failed to save upload state:", e);
+  }
+}
+
+function removePersistedUpload(uploadId: string): void {
+  try {
+    const uploads = getPersistedUploads();
+    const filtered = uploads.filter(u => u.uploadId !== uploadId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.error("Failed to remove upload state:", e);
+  }
+}
+
+function clearExpiredUploads(): void {
+  try {
+    const uploads = getPersistedUploads(); // Already filters expired
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(uploads));
+  } catch (e) {
+    console.error("Failed to clear expired uploads:", e);
+  }
+}
+
 // Extract thumbnail from video
 async function extractVideoThumbnail(file: File): Promise<string | null> {
   return new Promise((resolve) => {
@@ -99,13 +168,14 @@ async function extractVideoThumbnail(file: File): Promise<string | null> {
     
     video.onloadeddata = () => {
       // Seek to 1 second or 10% of video, whichever is smaller
-      video.currentTime = Math.min(1, video.duration * 0.1);
+      const seekTime = Math.min(1, video.duration * 0.1);
+      video.currentTime = seekTime;
     };
     
     video.onseeked = () => {
-      canvas.width = 320;
-      canvas.height = Math.round((video.videoHeight / video.videoWidth) * 320) || 180;
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx?.drawImage(video, 0, 0);
       
       try {
         const thumbnail = canvas.toDataURL("image/jpeg", 0.7);
@@ -142,12 +212,20 @@ export function MediaUploadDialog({
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [pendingResumable, setPendingResumable] = useState<PersistedUpload[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const uploadMutation = trpc.media.upload.useMutation();
   const uploadChunkMutation = trpc.media.uploadChunk.useMutation();
   const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
   const utils = trpc.useUtils();
+
+  // Load pending resumable uploads on mount
+  useEffect(() => {
+    clearExpiredUploads();
+    const pending = getPersistedUploads().filter(u => u.projectId === projectId);
+    setPendingResumable(pending);
+  }, [projectId, open]);
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -255,20 +333,44 @@ export function MediaUploadDialog({
     });
   };
 
-  // Upload large file in chunks with retry logic
+  // Upload large file in chunks with retry logic and persistence
   const uploadInChunks = async (
     fileItem: FileToUpload,
     index: number,
-    startTime: number
+    startTime: number,
+    resumeFrom?: { uploadId: string; startChunk: number }
   ): Promise<void> => {
     const file = fileItem.file;
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const uploadId = resumeFrom?.uploadId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const startChunk = resumeFrom?.startChunk || 0;
     
-    let uploadedBytes = 0;
+    let uploadedBytes = startChunk * CHUNK_SIZE;
     const maxRetries = 3;
     
-    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    // Save initial state to localStorage
+    const persistedState: PersistedUpload = {
+      uploadId,
+      projectId,
+      filename: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      totalChunks,
+      chunksUploaded: startChunk,
+      thumbnailData: fileItem.thumbnail?.split(",")[1],
+      createdAt: Date.now(),
+      lastUpdated: Date.now(),
+    };
+    savePersistedUpload(persistedState);
+    
+    // Update file item with uploadId
+    setFiles((prev) =>
+      prev.map((f, idx) =>
+        idx === index ? { ...f, uploadId, chunksUploaded: startChunk } : f
+      )
+    );
+    
+    for (let chunkIndex = startChunk; chunkIndex < totalChunks; chunkIndex++) {
       const start = chunkIndex * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, file.size);
       const chunkData = await readChunkAsBase64(file, start, end);
@@ -299,12 +401,37 @@ export function MediaUploadDialog({
       }
       
       if (lastError) {
+        // Save progress before throwing error so upload can be resumed
+        persistedState.chunksUploaded = chunkIndex;
+        persistedState.lastUpdated = Date.now();
+        savePersistedUpload(persistedState);
+        
+        // Update UI to show paused state
+        setFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === index ? { 
+              ...f, 
+              status: "paused" as const,
+              chunksUploaded: chunkIndex,
+              error: `Upload paused at ${Math.round((chunkIndex / totalChunks) * 100)}%. You can resume later.`
+            } : f
+          )
+        );
+        
+        // Refresh pending resumable list
+        setPendingResumable(getPersistedUploads().filter(u => u.projectId === projectId));
+        
         throw new Error(`Failed to upload chunk ${chunkIndex + 1} after ${maxRetries} attempts: ${lastError.message}`);
       }
       
+      // Update persisted state
+      persistedState.chunksUploaded = chunkIndex + 1;
+      persistedState.lastUpdated = Date.now();
+      savePersistedUpload(persistedState);
+      
       uploadedBytes = end;
       const elapsed = (Date.now() - startTime) / 1000;
-      const speed = uploadedBytes / elapsed;
+      const speed = (uploadedBytes - (startChunk * CHUNK_SIZE)) / elapsed;
       const remaining = file.size - uploadedBytes;
       const eta = remaining / speed;
       const progress = (uploadedBytes / file.size) * 90; // 90% for upload
@@ -316,7 +443,8 @@ export function MediaUploadDialog({
             progress,
             uploadSpeed: speed,
             eta,
-            bytesUploaded: uploadedBytes
+            bytesUploaded: uploadedBytes,
+            chunksUploaded: chunkIndex + 1
           } : f
         )
       );
@@ -335,6 +463,99 @@ export function MediaUploadDialog({
       fileSize: file.size,
       thumbnailData: fileItem.thumbnail?.split(",")[1],
     });
+    
+    // Remove from persisted uploads on success
+    removePersistedUpload(uploadId);
+    setPendingResumable(getPersistedUploads().filter(u => u.projectId === projectId));
+  };
+
+  // Resume a paused upload
+  const resumeUpload = async (persistedUpload: PersistedUpload) => {
+    // User needs to re-select the file
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ACCEPTED_TYPES.join(",");
+    
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      
+      if (!file) return;
+      
+      // Verify file matches
+      if (file.name !== persistedUpload.filename || file.size !== persistedUpload.fileSize) {
+        toast.error("File doesn't match the interrupted upload", {
+          description: `Expected: ${persistedUpload.filename} (${formatBytes(persistedUpload.fileSize)})`
+        });
+        return;
+      }
+      
+      // Add file to list and start upload
+      const fileItem: FileToUpload = {
+        file,
+        status: "uploading",
+        progress: (persistedUpload.chunksUploaded / persistedUpload.totalChunks) * 90,
+        uploadId: persistedUpload.uploadId,
+        chunksUploaded: persistedUpload.chunksUploaded,
+      };
+      
+      // Extract thumbnail if available
+      if (file.type.startsWith("video/") && file.size < 500 * 1024 * 1024) {
+        const thumbnail = await extractVideoThumbnail(file);
+        if (thumbnail) {
+          fileItem.thumbnail = thumbnail;
+        }
+      }
+      
+      setFiles((prev) => [...prev, fileItem]);
+      const fileIndex = files.length;
+      
+      setIsUploading(true);
+      
+      try {
+        await uploadInChunks(
+          fileItem, 
+          fileIndex, 
+          Date.now(),
+          { uploadId: persistedUpload.uploadId, startChunk: persistedUpload.chunksUploaded }
+        );
+        
+        setFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === fileIndex ? { 
+              ...f, 
+              status: "success" as const, 
+              progress: 100,
+              uploadSpeed: undefined,
+              eta: undefined
+            } : f
+          )
+        );
+        
+        toast.success(`Successfully resumed and completed upload: ${file.name}`);
+        
+        // Invalidate queries
+        await utils.media.list.invalidate({ projectId });
+        await utils.project.get.invalidate({ id: projectId });
+        onUploadComplete?.();
+      } catch (error) {
+        console.error("Resume upload error:", error);
+        toast.error("Failed to resume upload", {
+          description: error instanceof Error ? error.message : "Unknown error"
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    
+    input.click();
+  };
+
+  // Delete a pending resumable upload
+  const deletePendingUpload = (uploadId: string) => {
+    removePersistedUpload(uploadId);
+    setPendingResumable(getPersistedUploads().filter(u => u.projectId === projectId));
+    toast.success("Pending upload removed");
   };
 
   const uploadFiles = async () => {
@@ -420,19 +641,20 @@ export function MediaUploadDialog({
         );
       } catch (error) {
         console.error("Upload error:", error);
-        // Mark as error
+        // Mark as error (chunked uploads will be marked as paused instead)
         setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                  ...f,
-                  status: "error" as const,
-                  error: error instanceof Error ? error.message : "Upload failed",
-                  uploadSpeed: undefined,
-                  eta: undefined
-                }
-              : f
-          )
+          prev.map((f, idx) => {
+            if (idx !== i) return f;
+            // If it's already paused (from chunked upload), keep that state
+            if (f.status === "paused") return f;
+            return {
+              ...f,
+              status: "error" as const,
+              error: error instanceof Error ? error.message : "Upload failed",
+              uploadSpeed: undefined,
+              eta: undefined
+            };
+          })
         );
       }
     }
@@ -463,6 +685,7 @@ export function MediaUploadDialog({
   const pendingCount = files.filter((f) => f.status === "pending").length;
   const successCount = files.filter((f) => f.status === "success").length;
   const errorCount = files.filter((f) => f.status === "error").length;
+  const pausedCount = files.filter((f) => f.status === "paused").length;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -471,11 +694,58 @@ export function MediaUploadDialog({
           <DialogTitle>Upload Media</DialogTitle>
           <DialogDescription>
             Upload drone photos and videos. GPS data will be extracted automatically from images.
-            Videos up to 1GB supported.
+            Videos up to 1GB supported. Large uploads can be resumed if interrupted.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4">
+          {/* Pending Resumable Uploads */}
+          {pendingResumable.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Interrupted Uploads ({pendingResumable.length})
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                These uploads were interrupted. Select the same file to resume.
+              </p>
+              <div className="space-y-2">
+                {pendingResumable.map((upload) => (
+                  <div 
+                    key={upload.uploadId}
+                    className="flex items-center justify-between bg-background/50 rounded p-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{upload.filename}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatBytes(upload.fileSize)} • {Math.round((upload.chunksUploaded / upload.totalChunks) * 100)}% uploaded
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => resumeUpload(upload)}
+                        disabled={isUploading}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Resume
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => deletePendingUpload(upload.uploadId)}
+                        disabled={isUploading}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Drop Zone */}
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -558,7 +828,7 @@ export function MediaUploadDialog({
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{formatBytes(fileItem.file.size)}</span>
                         {fileItem.file.size > 50 * 1024 * 1024 && (
-                          <span className="text-blue-500">(Chunked upload)</span>
+                          <span className="text-blue-500">(Resumable)</span>
                         )}
                         {fileItem.uploadSpeed && fileItem.status === "uploading" && (
                           <>
@@ -578,11 +848,19 @@ export function MediaUploadDialog({
                             )}
                           </>
                         )}
+                        {fileItem.status === "paused" && fileItem.chunksUploaded && (
+                          <span className="text-amber-500">
+                            Paused at {Math.round((fileItem.chunksUploaded / Math.ceil(fileItem.file.size / CHUNK_SIZE)) * 100)}%
+                          </span>
+                        )}
                       </div>
 
                       {/* Progress Bar */}
-                      {fileItem.status === "uploading" && (
-                        <Progress value={fileItem.progress} className="h-1 mt-2" />
+                      {(fileItem.status === "uploading" || fileItem.status === "paused") && (
+                        <Progress 
+                          value={fileItem.progress} 
+                          className={`h-1 mt-2 ${fileItem.status === "paused" ? "opacity-50" : ""}`} 
+                        />
                       )}
 
                       {/* Error Message */}
@@ -614,6 +892,9 @@ export function MediaUploadDialog({
                       {fileItem.status === "error" && (
                         <AlertCircle className="h-5 w-5 text-destructive" />
                       )}
+                      {fileItem.status === "paused" && (
+                        <RefreshCw className="h-5 w-5 text-amber-500" />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -628,6 +909,7 @@ export function MediaUploadDialog({
             {pendingCount > 0 && `${pendingCount} pending`}
             {successCount > 0 && ` • ${successCount} uploaded`}
             {errorCount > 0 && ` • ${errorCount} failed`}
+            {pausedCount > 0 && ` • ${pausedCount} paused`}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleClose} disabled={isUploading}>
