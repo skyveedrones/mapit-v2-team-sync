@@ -16,6 +16,7 @@ import InviteAccept from "./pages/InviteAccept";
 import Clients from "./pages/Clients";
 import ClientProjects from "./pages/ClientProjects";
 import ClientPortal from "./pages/ClientPortal";
+import ClientManage from "./pages/ClientManage";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -88,6 +89,9 @@ function Router() {
       {/* Client management */}
       <Route path="/clients">
         {() => <ProtectedRoute component={Clients} />}
+      </Route>
+      <Route path="/clients/:clientId">
+        {() => <ProtectedRoute component={ClientManage} />}
       </Route>
       <Route path="/clients/:clientId/projects">
         {() => <ProtectedRoute component={ClientProjects} />}

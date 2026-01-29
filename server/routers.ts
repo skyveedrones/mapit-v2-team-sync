@@ -80,6 +80,9 @@ import {
   getClientPendingInvitations,
   revokeClientInvitation,
   userHasClientProjectAccess,
+  updateClientLogo,
+  deleteClientLogo,
+  getClientLogo,
 } from "./db";
 import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
@@ -2329,6 +2332,66 @@ export const appRouter = router({
           });
         }
         return { success: true };
+      }),
+
+    // Get client logo
+    getLogo: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const logo = await getClientLogo(input.clientId, ctx.user.id);
+        return logo;
+      }),
+
+    // Upload client logo
+    uploadLogo: protectedProcedure
+      .input(z.object({
+        clientId: z.number(),
+        fileData: z.string(), // Base64 encoded file data
+        filename: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Validate file type
+        if (!input.mimeType.startsWith("image/")) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Only image files are allowed for logos",
+          });
+        }
+
+        // Decode base64 file data
+        const fileBuffer = Buffer.from(input.fileData, "base64");
+
+        // Check file size (max 5MB for logos)
+        if (fileBuffer.length > 5 * 1024 * 1024) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Logo file size must be less than 5MB",
+          });
+        }
+
+        // Generate unique file key
+        const ext = input.filename.split(".").pop() || "png";
+        const fileKey = `clients/${input.clientId}/logo/${nanoid()}.${ext}`;
+
+        // Upload to S3
+        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+
+        // Update client record
+        const updated = await updateClientLogo(input.clientId, ctx.user.id, url, fileKey);
+
+        return {
+          logoUrl: updated?.logoUrl,
+          logoKey: updated?.logoKey,
+        };
+      }),
+
+    // Delete client logo
+    deleteLogo: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const deletedKey = await deleteClientLogo(input.clientId, ctx.user.id);
+        return { success: true, deletedKey };
       }),
 
     // Get projects assigned to a client

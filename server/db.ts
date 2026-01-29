@@ -1935,3 +1935,69 @@ export async function userHasClientProjectAccess(userId: number, projectId: numb
 
   return clientAccess.length > 0;
 }
+
+
+/**
+ * Update client logo
+ */
+export async function updateClientLogo(
+  clientId: number,
+  ownerId: number,
+  logoUrl: string,
+  logoKey: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getOwnerClient(clientId, ownerId);
+  if (!existing) {
+    return null;
+  }
+
+  await db
+    .update(clients)
+    .set({ logoUrl, logoKey })
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId)));
+
+  return getOwnerClient(clientId, ownerId);
+}
+
+/**
+ * Delete client logo
+ */
+export async function deleteClientLogo(clientId: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getOwnerClient(clientId, ownerId);
+  if (!existing) {
+    return null;
+  }
+
+  const oldKey = existing.logoKey;
+
+  await db
+    .update(clients)
+    .set({ logoUrl: null, logoKey: null })
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId)));
+
+  return oldKey;
+}
+
+/**
+ * Get client logo
+ */
+export async function getClientLogo(clientId: number, ownerId: number) {
+  const client = await getOwnerClient(clientId, ownerId);
+  if (!client) {
+    return null;
+  }
+  return {
+    logoUrl: client.logoUrl,
+    logoKey: client.logoKey,
+  };
+}
