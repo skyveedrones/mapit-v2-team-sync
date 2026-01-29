@@ -231,42 +231,78 @@ async function extractVideoThumbnail(file: File): Promise<string | null> {
     const video = document.createElement("video");
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
+    let resolved = false;
+    
+    const cleanup = () => {
+      if (!resolved) {
+        resolved = true;
+        try {
+          URL.revokeObjectURL(video.src);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+    };
     
     video.preload = "metadata";
     video.muted = true;
     video.playsInline = true;
+    // Allow cross-origin for some video sources
+    video.crossOrigin = "anonymous";
+    
+    video.onloadedmetadata = () => {
+      console.log(`[Thumbnail] Video metadata loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+    };
     
     video.onloadeddata = () => {
       // Seek to 1 second or 10% of video, whichever is smaller
       const seekTime = Math.min(1, video.duration * 0.1);
+      console.log(`[Thumbnail] Seeking to ${seekTime}s`);
       video.currentTime = seekTime;
     };
     
     video.onseeked = () => {
+      if (resolved) return;
+      
+      console.log(`[Thumbnail] Seeked, capturing frame at ${video.videoWidth}x${video.videoHeight}`);
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      ctx?.drawImage(video, 0, 0);
       
       try {
+        ctx?.drawImage(video, 0, 0);
         const thumbnail = canvas.toDataURL("image/jpeg", 0.7);
-        URL.revokeObjectURL(video.src);
-        resolve(thumbnail);
-      } catch {
-        URL.revokeObjectURL(video.src);
+        
+        // Check if thumbnail is valid (not empty or too small)
+        if (thumbnail && thumbnail.length > 1000) {
+          console.log(`[Thumbnail] Successfully extracted thumbnail (${Math.round(thumbnail.length / 1024)}KB)`);
+          cleanup();
+          resolve(thumbnail);
+        } else {
+          console.warn(`[Thumbnail] Extracted thumbnail too small or empty`);
+          cleanup();
+          resolve(null);
+        }
+      } catch (e) {
+        console.error(`[Thumbnail] Error capturing frame:`, e);
+        cleanup();
         resolve(null);
       }
     };
     
-    video.onerror = () => {
-      URL.revokeObjectURL(video.src);
+    video.onerror = (e) => {
+      console.error(`[Thumbnail] Video error:`, e);
+      cleanup();
       resolve(null);
     };
     
-    // Timeout after 10 seconds
+    // Timeout after 15 seconds (increased from 10)
     setTimeout(() => {
-      URL.revokeObjectURL(video.src);
-      resolve(null);
-    }, 10000);
+      if (!resolved) {
+        console.warn(`[Thumbnail] Extraction timed out after 15s`);
+        cleanup();
+        resolve(null);
+      }
+    }, 15000);
     
     video.src = URL.createObjectURL(file);
   });
@@ -328,12 +364,15 @@ export function MediaUploadDialog({
           fileItem.isH265 = true;
         }
         
-        // Extract thumbnail for videos (only for smaller videos to avoid memory issues)
-        if (file.size < 500 * 1024 * 1024) {
-          const thumbnail = await extractVideoThumbnail(file);
-          if (thumbnail) {
-            fileItem.thumbnail = thumbnail;
-          }
+        // Extract thumbnail for all videos (browser will handle memory)
+        // Note: H.265 videos may produce green/corrupted thumbnails due to codec issues
+        console.log(`[Upload] Extracting thumbnail for video: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
+        const thumbnail = await extractVideoThumbnail(file);
+        if (thumbnail) {
+          fileItem.thumbnail = thumbnail;
+          console.log(`[Upload] Thumbnail extracted successfully for: ${file.name}`);
+        } else {
+          console.warn(`[Upload] Failed to extract thumbnail for: ${file.name}`);
         }
       }
       
@@ -709,6 +748,13 @@ export function MediaUploadDialog({
             setFiles((prev) =>
               prev.map((f, idx) => (idx === index ? { ...f, progress: 95 } : f))
             );
+            
+            // Log thumbnail status for debugging
+            console.log(`[TUS] Creating media record for: ${file.name}`);
+            console.log(`[TUS] Thumbnail available: ${!!fileItem.thumbnail}`);
+            if (fileItem.thumbnail) {
+              console.log(`[TUS] Thumbnail size: ${Math.round(fileItem.thumbnail.length / 1024)}KB`);
+            }
             
             await createMediaMutation.mutateAsync({
               projectId,

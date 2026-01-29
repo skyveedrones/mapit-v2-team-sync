@@ -291,3 +291,10 @@
 - [x] Keep H.265 detection warning (no transcoding)
 - [x] Support up to 5GB video files
 - [x] Client-side thumbnail extraction for videos (server stores thumbnail to S3)
+
+## Video Thumbnail Bug Fix
+- [x] Fix video thumbnail not displaying after TUS upload
+- [x] Ensure extracted thumbnail is properly saved to S3
+- [x] Verify thumbnail URL is stored in media record
+- [x] Add detailed logging for thumbnail extraction debugging
+- [x] Remove 500MB file size limit for thumbnail extraction
