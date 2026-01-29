@@ -43,14 +43,19 @@ import {
   ImagePlus,
   MapPin,
   MapPinOff,
+  Maximize2,
+  Minimize2,
   Mountain,
+  RotateCcw,
   SortAsc,
   SortDesc,
   Trash2,
   Upload,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { WatermarkDialog } from "./WatermarkDialog";
 import { GPSEditDialog } from "./GPSEditDialog";
@@ -74,6 +79,14 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [gpsEditDialogOpen, setGpsEditDialogOpen] = useState(false);
   const [mediaForGpsEdit, setMediaForGpsEdit] = useState<Media | null>(null);
+  
+  // Fullscreen and zoom state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
   const deleteMutation = trpc.media.delete.useMutation();
@@ -140,25 +153,109 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     }
   }, [currentMediaIndex, sortedMedia]);
 
-  // Keyboard navigation
+  // Zoom functions
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 5;
+  const ZOOM_STEP = 0.5;
+
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prev => {
+      const newZoom = Math.max(prev - ZOOM_STEP, MIN_ZOOM);
+      if (newZoom === MIN_ZOOM) {
+        setPanPosition({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPanPosition({ x: 0, y: 0 });
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+    // Reset zoom when exiting fullscreen
+    if (isFullscreen) {
+      handleResetZoom();
+    }
+  }, [isFullscreen, handleResetZoom]);
+
+  // Reset zoom when changing media
+  useEffect(() => {
+    handleResetZoom();
+  }, [selectedMedia?.id, handleResetZoom]);
+
+  // Handle mouse wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  }, [selectedMedia, handleZoomIn, handleZoomOut]);
+
+  // Handle drag/pan when zoomed
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panPosition.x, y: e.clientY - panPosition.y });
+  }, [zoomLevel, panPosition]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    setPanPosition({ x: newX, y: newY });
+  }, [isDragging, dragStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Keyboard navigation and zoom
   useEffect(() => {
     if (!selectedMedia) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         navigateToPrevious();
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         navigateToNext();
       } else if (e.key === "Escape") {
-        setSelectedMedia(null);
+        if (isFullscreen) {
+          setIsFullscreen(false);
+          handleResetZoom();
+        } else {
+          setSelectedMedia(null);
+        }
+      } else if (e.key === "+" || e.key === "=") {
+        e.preventDefault();
+        handleZoomIn();
+      } else if (e.key === "-") {
+        e.preventDefault();
+        handleZoomOut();
+      } else if (e.key === "0") {
+        e.preventDefault();
+        handleResetZoom();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedMedia, navigateToPrevious, navigateToNext]);
+  }, [selectedMedia, navigateToPrevious, navigateToNext, isFullscreen, handleZoomIn, handleZoomOut, handleResetZoom, toggleFullscreen]);
 
   // Toggle selection
   const toggleSelection = (id: number, e: React.MouseEvent) => {
@@ -540,40 +637,106 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       </div>
 
       {/* Media Preview Dialog */}
-      <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+      <Dialog open={!!selectedMedia} onOpenChange={() => { setSelectedMedia(null); setIsFullscreen(false); handleResetZoom(); }}>
+        <DialogContent 
+          className={`overflow-hidden flex flex-col transition-all duration-300 ${
+            isFullscreen 
+              ? "!fixed !inset-0 !top-0 !left-0 !translate-x-0 !translate-y-0 !w-screen !h-screen !max-w-none !max-h-none !rounded-none !border-none !p-0" 
+              : "sm:max-w-4xl max-h-[90vh]"
+          }`}
+          showCloseButton={!isFullscreen}
+        >
+          <DialogHeader className={`flex-shrink-0 ${isFullscreen ? "absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4" : ""}`}>
             <div className="flex items-center justify-between pr-8">
-              <DialogTitle className="truncate">
+              <DialogTitle className={`truncate ${isFullscreen ? "text-white" : ""}`}>
                 {selectedMedia?.filename}
               </DialogTitle>
-              {sortedMedia.length > 1 && (
-                <span className="text-sm text-muted-foreground ml-4 flex-shrink-0">
-                  {currentMediaIndex + 1} of {sortedMedia.length}
-                </span>
-              )}
+              <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                {sortedMedia.length > 1 && (
+                  <span className={`text-sm ${isFullscreen ? "text-white/80" : "text-muted-foreground"}`}>
+                    {currentMediaIndex + 1} of {sortedMedia.length}
+                  </span>
+                )}
+                {/* Zoom controls for photos */}
+                {selectedMedia?.mediaType === "photo" && (
+                  <div className={`flex items-center gap-1 ml-2 px-2 py-1 rounded-lg ${isFullscreen ? "bg-black/50" : "bg-muted"}`}>
+                    <button
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel <= MIN_ZOOM}
+                      className={`p-1 rounded hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed ${isFullscreen ? "text-white" : ""}`}
+                      title="Zoom out (-)"
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </button>
+                    <span className={`text-xs min-w-[3rem] text-center ${isFullscreen ? "text-white" : ""}`}>
+                      {Math.round(zoomLevel * 100)}%
+                    </span>
+                    <button
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel >= MAX_ZOOM}
+                      className={`p-1 rounded hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed ${isFullscreen ? "text-white" : ""}`}
+                      title="Zoom in (+)"
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </button>
+                    {zoomLevel > 1 && (
+                      <button
+                        onClick={handleResetZoom}
+                        className={`p-1 rounded hover:bg-white/20 ml-1 ${isFullscreen ? "text-white" : ""}`}
+                        title="Reset zoom (0)"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* Fullscreen toggle */}
+                <button
+                  onClick={toggleFullscreen}
+                  className={`p-1.5 rounded-lg hover:bg-white/20 ${isFullscreen ? "text-white bg-black/50" : "bg-muted"}`}
+                  title={isFullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"}
+                >
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           </DialogHeader>
 
           {selectedMedia && (
-            <div className="flex-1 overflow-auto">
+            <div className={`flex-1 overflow-hidden ${isFullscreen ? "h-full" : ""}`}>
               {/* Media Preview with Navigation */}
-              <div className="relative bg-black rounded-lg overflow-hidden mb-4 group">
+              <div 
+                ref={imageContainerRef}
+                className={`relative bg-black overflow-hidden group ${
+                  isFullscreen ? "h-full" : "rounded-lg mb-4"
+                } ${zoomLevel > 1 ? "cursor-grab active:cursor-grabbing" : ""}`}
+                onWheel={handleWheel}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
                 {selectedMedia.mediaType === "photo" ? (
                   <img
                     src={selectedMedia.url}
                     alt={selectedMedia.filename}
-                    className="w-full max-h-[50vh] object-contain"
+                    className={`w-full object-contain select-none transition-transform duration-100 ${
+                      isFullscreen ? "h-full" : "max-h-[50vh]"
+                    }`}
+                    style={{
+                      transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`,
+                    }}
+                    draggable={false}
                   />
                 ) : (
-                  <div className="relative">
+                  <div className={`relative ${isFullscreen ? "h-full flex items-center justify-center" : ""}`}>
                     <video
                       key={selectedMedia.id}
                       controls
                       controlsList="nodownload"
                       playsInline
                       poster={selectedMedia.thumbnailUrl || undefined}
-                      className="w-full max-h-[50vh] bg-black"
+                      className={`w-full bg-black ${isFullscreen ? "h-full object-contain" : "max-h-[50vh]"}`}
                       preload="metadata"
                     >
                       {/* Provide multiple source options for better compatibility */}
@@ -629,7 +792,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 )}
               </div>
 
-              {/* Metadata Grid */}
+              {/* Metadata Grid - Hidden in fullscreen */}
+              {!isFullscreen && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {/* GPS Coordinates */}
                 <div className="p-3 rounded-lg bg-card border border-border">
@@ -730,10 +894,12 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   </p>
                 </div>
               </div>
+              )}
             </div>
           )}
 
-          {/* Actions */}
+          {/* Actions - Hidden in fullscreen */}
+          {!isFullscreen && (
           <div className="flex justify-between items-center pt-4 border-t border-border flex-shrink-0">
             {canEdit ? (
               <Button
@@ -765,6 +931,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               </Button>
             </div>
           </div>
+          )}
         </DialogContent>
       </Dialog>
 

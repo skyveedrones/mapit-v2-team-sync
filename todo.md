@@ -316,3 +316,16 @@
 - [x] Navigate to previous/next media file when clicking arrows
 - [x] Add keyboard support (left/right arrow keys)
 - [x] Show current position indicator (e.g., "3 of 15")
+
+## Media Viewer Fullscreen and Zoom
+- [x] Add fullscreen mode toggle button
+- [x] Implement zoom in/out controls
+- [x] Add mouse wheel zoom support
+- [x] Add pan/drag when zoomed in
+- [x] Show zoom level indicator
+- [x] Reset zoom button
+- [x] Keyboard shortcuts (+/- for zoom, F for fullscreen, 0 to reset)
+
+## Bug Fixes - Google Maps and Fullscreen
+- [x] Fix Google Maps API being loaded multiple times error
+- [x] Fix fullscreen mode not displaying image properly in media viewer
