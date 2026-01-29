@@ -1,7 +1,7 @@
 /**
  * Media Upload Dialog
  * Allows users to upload drone photos and videos with drag-and-drop support
- * Features: detailed progress with speed/ETA, video compression, auto thumbnail extraction
+ * Features: detailed progress with speed/ETA, direct S3 upload for large files, auto thumbnail extraction
  */
 
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { 
   CheckCircle, 
@@ -24,11 +22,10 @@ import {
   X, 
   AlertCircle,
   Loader2,
-  Zap,
   Clock,
   ArrowUpRight
 } from "lucide-react";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef } from "react";
 import { toast } from "sonner";
 
 interface MediaUploadDialogProps {
@@ -41,10 +38,9 @@ interface MediaUploadDialogProps {
 
 interface FileToUpload {
   file: File;
-  status: "pending" | "compressing" | "uploading" | "success" | "error";
+  status: "pending" | "uploading" | "success" | "error";
   progress: number;
   error?: string;
-  compressedFile?: File;
   thumbnail?: string; // base64 thumbnail for videos
   uploadSpeed?: number; // bytes per second
   eta?: number; // seconds remaining
@@ -66,6 +62,7 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
+const DIRECT_UPLOAD_THRESHOLD = 50 * 1024 * 1024; // 50MB - use direct S3 upload for files larger than this
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -107,7 +104,7 @@ async function extractVideoThumbnail(file: File): Promise<string | null> {
     
     video.onseeked = () => {
       canvas.width = 320;
-      canvas.height = Math.round((video.videoHeight / video.videoWidth) * 320);
+      canvas.height = Math.round((video.videoHeight / video.videoWidth) * 320) || 180;
       ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
       
       try {
@@ -135,117 +132,6 @@ async function extractVideoThumbnail(file: File): Promise<string | null> {
   });
 }
 
-// Compress video using browser's MediaRecorder (basic compression)
-async function compressVideo(
-  file: File, 
-  onProgress: (progress: number) => void
-): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.preload = "auto";
-    video.muted = true;
-    video.playsInline = true;
-    
-    video.onloadedmetadata = async () => {
-      try {
-        // Create a canvas to draw video frames
-        const canvas = document.createElement("canvas");
-        // Reduce resolution for compression (max 1080p)
-        const maxWidth = 1920;
-        const maxHeight = 1080;
-        let width = video.videoWidth;
-        let height = video.videoHeight;
-        
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height);
-          height = maxHeight;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d")!;
-        
-        // Use MediaRecorder for compression
-        const stream = canvas.captureStream(30);
-        
-        // Try to get audio from video
-        try {
-          const audioCtx = new AudioContext();
-          const source = audioCtx.createMediaElementSource(video);
-          const dest = audioCtx.createMediaStreamDestination();
-          source.connect(dest);
-          source.connect(audioCtx.destination);
-          dest.stream.getAudioTracks().forEach(track => stream.addTrack(track));
-        } catch {
-          // No audio or audio extraction failed, continue without audio
-        }
-        
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "video/webm;codecs=vp9",
-          videoBitsPerSecond: 2500000, // 2.5 Mbps for good quality compression
-        });
-        
-        const chunks: Blob[] = [];
-        
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: "video/webm" });
-          const compressedFile = new File(
-            [blob], 
-            file.name.replace(/\.[^.]+$/, ".webm"),
-            { type: "video/webm" }
-          );
-          URL.revokeObjectURL(video.src);
-          resolve(compressedFile);
-        };
-        
-        mediaRecorder.onerror = () => {
-          URL.revokeObjectURL(video.src);
-          reject(new Error("Video compression failed"));
-        };
-        
-        // Start recording
-        mediaRecorder.start(100);
-        video.play();
-        
-        // Draw frames to canvas
-        const drawFrame = () => {
-          if (video.paused || video.ended) {
-            mediaRecorder.stop();
-            return;
-          }
-          ctx.drawImage(video, 0, 0, width, height);
-          const progress = (video.currentTime / video.duration) * 100;
-          onProgress(progress);
-          requestAnimationFrame(drawFrame);
-        };
-        
-        drawFrame();
-        
-      } catch (err) {
-        URL.revokeObjectURL(video.src);
-        reject(err);
-      }
-    };
-    
-    video.onerror = () => {
-      URL.revokeObjectURL(video.src);
-      reject(new Error("Failed to load video for compression"));
-    };
-    
-    video.src = URL.createObjectURL(file);
-  });
-}
-
 export function MediaUploadDialog({
   open,
   onOpenChange,
@@ -256,11 +142,11 @@ export function MediaUploadDialog({
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [compressVideos, setCompressVideos] = useState(false);
-  const [extractThumbnails, setExtractThumbnails] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const uploadMutation = trpc.media.upload.useMutation();
+  const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
+  const confirmUploadMutation = trpc.media.confirmUpload.useMutation();
   const utils = trpc.useUtils();
 
   const validateFile = (file: File): string | null => {
@@ -268,7 +154,7 @@ export function MediaUploadDialog({
       return `Invalid file type: ${file.type}`;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 1GB)`;
+      return `File too large: ${formatBytes(file.size)} (max 1GB)`;
     }
     return null;
   };
@@ -285,8 +171,8 @@ export function MediaUploadDialog({
         error: error || undefined,
       };
       
-      // Extract thumbnail for videos
-      if (!error && file.type.startsWith("video/") && extractThumbnails) {
+      // Extract thumbnail for videos (only for smaller videos to avoid memory issues)
+      if (!error && file.type.startsWith("video/") && file.size < 500 * 1024 * 1024) {
         const thumbnail = await extractVideoThumbnail(file);
         if (thumbnail) {
           fileItem.thumbnail = thumbnail;
@@ -297,7 +183,7 @@ export function MediaUploadDialog({
     }
 
     setFiles((prev) => [...prev, ...filesToAdd]);
-  }, [extractThumbnails]);
+  }, []);
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
@@ -327,6 +213,64 @@ export function MediaUploadDialog({
     }
   };
 
+  // Upload file directly to S3 using presigned URL (for large files)
+  const uploadDirectToS3 = async (
+    file: File,
+    uploadUrl: string,
+    onProgress: (loaded: number, total: number) => void
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(e.loaded, e.total);
+        }
+      };
+      
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      };
+      
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.ontimeout = () => reject(new Error("Upload timed out"));
+      
+      xhr.open("PUT", uploadUrl);
+      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.send(file);
+    });
+  };
+
+  // Upload thumbnail to S3
+  const uploadThumbnailToS3 = async (
+    thumbnailData: string,
+    uploadUrl: string
+  ): Promise<void> => {
+    // Convert base64 to blob
+    const base64Data = thumbnailData.split(",")[1];
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "image/jpeg" });
+    
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "image/jpeg" },
+      body: blob,
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to upload thumbnail");
+    }
+  };
+
+  // Convert file to base64 with progress (for smaller files)
   const fileToBase64WithProgress = (
     file: File, 
     onProgress: (loaded: number, total: number) => void
@@ -362,41 +306,6 @@ export function MediaUploadDialog({
       const fileItem = files[i];
       if (fileItem.status !== "pending") continue;
 
-      let fileToUpload = fileItem.file;
-      
-      // Compress video if enabled
-      if (compressVideos && fileItem.file.type.startsWith("video/")) {
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, status: "compressing" as const, progress: 0 } : f
-          )
-        );
-        
-        try {
-          fileToUpload = await compressVideo(fileItem.file, (progress) => {
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress } : f
-              )
-            );
-          });
-          
-          // Update with compressed file
-          setFiles((prev) =>
-            prev.map((f, idx) =>
-              idx === i ? { ...f, compressedFile: fileToUpload } : f
-            )
-          );
-          
-          toast.success(`Compressed ${fileItem.file.name}: ${formatBytes(fileItem.file.size)} → ${formatBytes(fileToUpload.size)}`);
-        } catch (err) {
-          console.error("Compression failed:", err);
-          toast.error(`Compression failed for ${fileItem.file.name}, uploading original`);
-          fileToUpload = fileItem.file;
-        }
-      }
-
-      // Update status to uploading
       const startTime = Date.now();
       setFiles((prev) =>
         prev.map((f, idx) =>
@@ -411,43 +320,104 @@ export function MediaUploadDialog({
       );
 
       try {
-        // Convert file to base64 with progress tracking
-        const base64Data = await fileToBase64WithProgress(
-          fileToUpload,
-          (loaded, total) => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            const speed = loaded / elapsed;
-            const remaining = total - loaded;
-            const eta = remaining / speed;
-            const progress = (loaded / total) * 50; // First 50% is reading
-            
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { 
-                  ...f, 
-                  progress,
-                  uploadSpeed: speed,
-                  eta,
-                  bytesUploaded: loaded
-                } : f
-              )
-            );
+        const useDirectUpload = fileItem.file.size > DIRECT_UPLOAD_THRESHOLD;
+        
+        if (useDirectUpload) {
+          // Large file: use direct S3 upload
+          const uploadInfo = await getUploadUrlMutation.mutateAsync({
+            projectId,
+            filename: fileItem.file.name,
+            mimeType: fileItem.file.type,
+            fileSize: fileItem.file.size,
+          });
+
+          // Upload file directly to S3
+          await uploadDirectToS3(
+            fileItem.file,
+            uploadInfo.uploadUrl,
+            (loaded, total) => {
+              const elapsed = (Date.now() - startTime) / 1000;
+              const speed = loaded / elapsed;
+              const remaining = total - loaded;
+              const eta = remaining / speed;
+              const progress = (loaded / total) * 90; // 90% for upload
+              
+              setFiles((prev) =>
+                prev.map((f, idx) =>
+                  idx === i ? { 
+                    ...f, 
+                    progress,
+                    uploadSpeed: speed,
+                    eta,
+                    bytesUploaded: loaded
+                  } : f
+                )
+              );
+            }
+          );
+
+          // Upload thumbnail if available
+          let thumbnailUrl: string | null = null;
+          if (fileItem.thumbnail) {
+            try {
+              await uploadThumbnailToS3(fileItem.thumbnail, uploadInfo.thumbnailUploadUrl);
+              thumbnailUrl = uploadInfo.thumbnailPublicUrl;
+            } catch (err) {
+              console.warn("Failed to upload thumbnail:", err);
+            }
           }
-        );
 
-        // Update progress for upload phase
-        setFiles((prev) =>
-          prev.map((f, idx) => (idx === i ? { ...f, progress: 60 } : f))
-        );
+          // Confirm upload in database
+          setFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, progress: 95 } : f))
+          );
 
-        // Upload to server
-        await uploadMutation.mutateAsync({
-          projectId,
-          filename: fileToUpload.name,
-          mimeType: fileToUpload.type,
-          fileData: base64Data,
-          thumbnailData: fileItem.thumbnail?.split(",")[1], // Send thumbnail if available
-        });
+          await confirmUploadMutation.mutateAsync({
+            projectId,
+            filename: fileItem.file.name,
+            mimeType: fileItem.file.type,
+            fileSize: fileItem.file.size,
+            fileKey: uploadInfo.fileKey,
+            url: uploadInfo.publicUrl,
+            thumbnailUrl,
+          });
+        } else {
+          // Small file: use base64 upload through server
+          const base64Data = await fileToBase64WithProgress(
+            fileItem.file,
+            (loaded, total) => {
+              const elapsed = (Date.now() - startTime) / 1000;
+              const speed = loaded / elapsed;
+              const remaining = total - loaded;
+              const eta = remaining / speed;
+              const progress = (loaded / total) * 50; // First 50% is reading
+              
+              setFiles((prev) =>
+                prev.map((f, idx) =>
+                  idx === i ? { 
+                    ...f, 
+                    progress,
+                    uploadSpeed: speed,
+                    eta,
+                    bytesUploaded: loaded
+                  } : f
+                )
+              );
+            }
+          );
+
+          setFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, progress: 60 } : f))
+          );
+
+          await uploadMutation.mutateAsync({
+            projectId,
+            filename: fileItem.file.name,
+            mimeType: fileItem.file.type,
+            fileData: base64Data,
+            thumbnailData: fileItem.thumbnail?.split(",")[1],
+          });
+        }
 
         // Mark as success
         setFiles((prev) =>
@@ -462,6 +432,7 @@ export function MediaUploadDialog({
           )
         );
       } catch (error) {
+        console.error("Upload error:", error);
         // Mark as error
         setFiles((prev) =>
           prev.map((f, idx) =>
@@ -505,211 +476,193 @@ export function MediaUploadDialog({
   const pendingCount = files.filter((f) => f.status === "pending").length;
   const successCount = files.filter((f) => f.status === "success").length;
   const errorCount = files.filter((f) => f.status === "error").length;
-  const hasVideos = files.some((f) => f.file.type.startsWith("video/") && f.status === "pending");
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
-            Upload Media
-          </DialogTitle>
+          <DialogTitle>Upload Media</DialogTitle>
           <DialogDescription>
-            Upload drone photos and videos to this project. GPS coordinates will be
-            automatically extracted from EXIF data.
+            Upload drone photos and videos. GPS data will be extracted automatically from images.
+            Videos up to 1GB supported.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Options for videos */}
-        {hasVideos && (
-          <div className="space-y-3 p-3 rounded-lg bg-muted/50 border border-border">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="compress-videos" className="text-sm font-medium">
-                  Compress Videos
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Reduce file size (may take a while for large videos)
-                </p>
-              </div>
-              <Switch
-                id="compress-videos"
-                checked={compressVideos}
-                onCheckedChange={setCompressVideos}
-                disabled={isUploading}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="extract-thumbnails" className="text-sm font-medium">
-                  Extract Thumbnails
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Generate preview images from videos
-                </p>
-              </div>
-              <Switch
-                id="extract-thumbnails"
-                checked={extractThumbnails}
-                onCheckedChange={setExtractThumbnails}
-                disabled={isUploading}
-              />
-            </div>
+        <div className="flex-1 overflow-auto space-y-4">
+          {/* Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mb-2">
+              Drag and drop files here, or click to browse
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos (max 1GB)
+            </p>
+            <input
+              type="file"
+              multiple
+              accept={ACCEPTED_TYPES.join(",")}
+              onChange={handleFileSelect}
+              className="hidden"
+              id="file-upload"
+              disabled={isUploading}
+            />
+            <label htmlFor="file-upload">
+              <Button variant="outline" asChild disabled={isUploading}>
+                <span>Browse Files</span>
+              </Button>
+            </label>
           </div>
-        )}
 
-        {/* Drop Zone */}
-        <div
-          className={`
-            relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
-            ${isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
-            ${isUploading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          `}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => !isUploading && document.getElementById("file-input")?.click()}
-        >
-          <input
-            id="file-input"
-            type="file"
-            multiple
-            accept={ACCEPTED_TYPES.join(",")}
-            className="hidden"
-            onChange={handleFileSelect}
-            disabled={isUploading}
-          />
-          <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-sm font-medium mb-1">
-            Drag and drop files here, or click to browse
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos (max 1GB)
-          </p>
-        </div>
+          {/* File List */}
+          {files.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">
+                  Files ({files.length})
+                </h4>
+                {!isUploading && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFiles([])}
+                    className="text-muted-foreground"
+                  >
+                    Clear All
+                  </Button>
+                )}
+              </div>
 
-        {/* File List */}
-        {files.length > 0 && (
-          <div className="max-h-60 overflow-y-auto space-y-2">
-            {files.map((fileItem, index) => (
-              <div
-                key={`${fileItem.file.name}-${index}`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border"
-              >
-                {/* File Icon / Thumbnail */}
-                <div className="flex-shrink-0">
-                  {fileItem.thumbnail ? (
-                    <img 
-                      src={fileItem.thumbnail} 
-                      alt="Video thumbnail"
-                      className="h-12 w-12 object-cover rounded"
-                    />
-                  ) : fileItem.file.type.startsWith("video/") ? (
-                    <FileVideo className="h-8 w-8 text-blue-500" />
-                  ) : (
-                    <FileImage className="h-8 w-8 text-emerald-500" />
-                  )}
-                </div>
+              <div className="space-y-2 max-h-[300px] overflow-auto">
+                {files.map((fileItem, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border"
+                  >
+                    {/* Thumbnail or Icon */}
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {fileItem.thumbnail ? (
+                        <img 
+                          src={fileItem.thumbnail} 
+                          alt="Video thumbnail" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : fileItem.file.type.startsWith("image/") ? (
+                        <FileImage className="h-6 w-6 text-muted-foreground" />
+                      ) : (
+                        <FileVideo className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
 
-                {/* File Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{fileItem.file.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{formatBytes(fileItem.compressedFile?.size || fileItem.file.size)}</span>
-                    {fileItem.compressedFile && (
-                      <span className="text-emerald-500">
-                        (saved {formatBytes(fileItem.file.size - fileItem.compressedFile.size)})
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Progress bar with details */}
-                  {(fileItem.status === "uploading" || fileItem.status === "compressing") && (
-                    <div className="mt-1 space-y-1">
-                      <Progress value={fileItem.progress} className="h-1.5" />
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          {fileItem.status === "compressing" ? (
-                            <>
-                              <Zap className="h-3 w-3" />
-                              Compressing...
-                            </>
-                          ) : (
-                            <>
+                    {/* File Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {fileItem.file.name}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{formatBytes(fileItem.file.size)}</span>
+                        {fileItem.file.size > DIRECT_UPLOAD_THRESHOLD && (
+                          <span className="text-blue-500">(Direct upload)</span>
+                        )}
+                        {fileItem.uploadSpeed && fileItem.status === "uploading" && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
                               <ArrowUpRight className="h-3 w-3" />
-                              {fileItem.uploadSpeed ? formatBytes(fileItem.uploadSpeed) + "/s" : "Starting..."}
-                            </>
-                          )}
-                        </span>
-                        {fileItem.eta !== undefined && fileItem.eta > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatTime(fileItem.eta)} remaining
-                          </span>
+                              {formatBytes(fileItem.uploadSpeed)}/s
+                            </span>
+                            {fileItem.eta && fileItem.eta > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {formatTime(fileItem.eta)} left
+                                </span>
+                              </>
+                            )}
+                          </>
                         )}
                       </div>
+
+                      {/* Progress Bar */}
+                      {fileItem.status === "uploading" && (
+                        <Progress value={fileItem.progress} className="h-1 mt-2" />
+                      )}
+
+                      {/* Error Message */}
+                      {fileItem.error && (
+                        <p className="text-xs text-destructive mt-1">
+                          {fileItem.error}
+                        </p>
+                      )}
                     </div>
-                  )}
-                  
-                  {fileItem.status === "error" && fileItem.error && (
-                    <p className="text-xs text-destructive mt-1">{fileItem.error}</p>
-                  )}
-                </div>
 
-                {/* Status / Actions */}
-                <div className="flex-shrink-0">
-                  {fileItem.status === "success" && (
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  )}
-                  {fileItem.status === "error" && (
-                    <AlertCircle className="h-5 w-5 text-destructive" />
-                  )}
-                  {(fileItem.status === "uploading" || fileItem.status === "compressing") && (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  )}
-                  {(fileItem.status === "pending" || fileItem.status === "error") && !isUploading && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(index);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                    {/* Status Icon */}
+                    <div className="flex-shrink-0">
+                      {fileItem.status === "pending" && !isUploading && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => removeFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {fileItem.status === "uploading" && (
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      )}
+                      {fileItem.status === "success" && (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      )}
+                      {fileItem.status === "error" && (
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
-        {/* Summary */}
-        {files.length > 0 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              {pendingCount} pending, {successCount} uploaded
-              {errorCount > 0 && `, ${errorCount} failed`}
-            </span>
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            {pendingCount > 0 && `${pendingCount} pending`}
+            {successCount > 0 && ` • ${successCount} uploaded`}
+            {errorCount > 0 && ` • ${errorCount} failed`}
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={isUploading}>
-            {successCount > 0 && pendingCount === 0 ? "Done" : "Cancel"}
-          </Button>
-          {pendingCount > 0 && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose} disabled={isUploading}>
+              {isUploading ? "Uploading..." : "Close"}
+            </Button>
             <Button
               onClick={uploadFiles}
-              disabled={isUploading}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={pendingCount === 0 || isUploading}
             >
-              {isUploading ? "Uploading..." : `Upload ${pendingCount} File(s)`}
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload {pendingCount > 0 ? `(${pendingCount})` : ""}
+                </>
+              )}
             </Button>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -63,7 +63,7 @@ import {
 } from "./db";
 import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageGetUploadUrl } from "./storage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 
 // Validation schemas for project operations
@@ -473,7 +473,88 @@ export const appRouter = router({
         return mediaItem;
       }),
 
-    // Upload a new media file
+    // Get presigned URL for direct upload (for large files like videos)
+    getUploadUrl: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Generate unique file key
+        const uniqueId = nanoid(12);
+        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+
+        // Get presigned URLs for direct upload
+        const { uploadUrl, publicUrl } = await storageGetUploadUrl(fileKey, input.mimeType);
+        const thumbnailUpload = await storageGetUploadUrl(thumbnailKey, "image/jpeg");
+
+        return {
+          uploadUrl,
+          publicUrl,
+          fileKey,
+          uniqueId,
+          thumbnailUploadUrl: thumbnailUpload.uploadUrl,
+          thumbnailPublicUrl: thumbnailUpload.publicUrl,
+          thumbnailKey,
+        };
+      }),
+
+    // Confirm upload after direct S3 upload completes
+    confirmUpload: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+        fileKey: z.string(),
+        url: z.string(),
+        thumbnailUrl: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Create media record in database
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ctx.user.id,
+          filename: input.filename,
+          fileKey: input.fileKey,
+          url: input.url,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: null,
+          longitude: null,
+          altitude: null,
+          capturedAt: null,
+          cameraMake: null,
+          cameraModel: null,
+          thumbnailUrl: input.thumbnailUrl ?? null,
+        });
+
+        return mediaItem;
+      }),
+
+    // Upload a new media file (for smaller files - base64 method)
     upload: protectedProcedure
       .input(z.object({
         projectId: z.number(),

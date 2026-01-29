@@ -257,3 +257,7 @@
 ## Video Gallery & Playback
 - [x] Display video thumbnails in media gallery instead of generic video icon
 - [x] Add inline video player in media detail view
+
+## Video Upload Bug Fixes
+- [x] Fix video compression failure (removed unreliable browser compression)
+- [x] Fix out of memory error on normal video uploads (use direct S3 upload for files >50MB)

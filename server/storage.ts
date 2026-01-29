@@ -100,3 +100,34 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
 }
+
+// Get a presigned URL for direct client-side uploads (bypasses server memory)
+export async function storageGetUploadUrl(
+  relKey: string,
+  contentType: string
+): Promise<{ key: string; uploadUrl: string; publicUrl: string }> {
+  const { baseUrl, apiKey } = getStorageConfig();
+  const key = normalizeKey(relKey);
+  
+  // Get presigned upload URL from the storage proxy
+  const presignUrl = new URL("v1/storage/presignUpload", ensureTrailingSlash(baseUrl));
+  presignUrl.searchParams.set("path", key);
+  presignUrl.searchParams.set("contentType", contentType);
+  
+  const response = await fetch(presignUrl, {
+    method: "GET",
+    headers: buildAuthHeaders(apiKey),
+  });
+  
+  if (!response.ok) {
+    const message = await response.text().catch(() => response.statusText);
+    throw new Error(`Failed to get presigned URL (${response.status}): ${message}`);
+  }
+  
+  const result = await response.json();
+  return {
+    key,
+    uploadUrl: result.uploadUrl,
+    publicUrl: result.url,
+  };
+}
