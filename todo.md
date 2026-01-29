@@ -329,3 +329,12 @@
 ## Bug Fixes - Google Maps and Fullscreen
 - [x] Fix Google Maps API being loaded multiple times error
 - [x] Fix fullscreen mode not displaying image properly in media viewer
+
+## Website Branding Color Scheme Update
+- [x] Update CSS variables with aurora-inspired palette
+- [x] Spearmint (#117660) - secondary buttons, hover states
+- [x] Forest Green (#09323B) - dark backgrounds, cards
+- [x] Lime Green (#04B16F) - primary accent, CTAs
+- [x] Neon Green (#14E114) - logo accent, highlights
+- [x] Add white accents for contrast and readability
+- [x] Apply new colors across all components

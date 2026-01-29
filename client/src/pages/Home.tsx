@@ -1,7 +1,8 @@
 /**
  * SkyVee Drone Mapping - Home Page
- * Design: Aerospace Command Center
- * - Dark interface with emerald accents
+ * Design: Aurora Borealis Theme
+ * - Dark forest green interface with lime/neon green accents
+ * - Colors: Spearmint #117660, Forest Green #09323B, Lime Green #04B16F, Neon Green #14E114
  * - Orbitron display font, Inter body font
  * - Glowing card effects on hover
  * - Grid/topographic patterns
