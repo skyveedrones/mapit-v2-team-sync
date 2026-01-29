@@ -347,3 +347,7 @@
 
 ## Video Tip Layout Bug Fix
 - [x] Fix video tip message blocking metadata grid in media viewer
+
+## Email Configuration Update
+- [x] Update "from" email address to use verified Resend domain (notifications.skyveedrones.com)
+- [x] Send test email to verify configuration

@@ -223,7 +223,7 @@ export async function sendProjectInvitationEmail(params: {
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@skyveedrones.com>',
+      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
       to: [to],
       subject: `${inviterName} invited you to "${projectName}" on SkyVee`,
       html,
@@ -271,7 +271,7 @@ export async function sendWelcomeEmail(params: {
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@skyveedrones.com>',
+      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
       to: [to],
       subject: `Welcome to SkyVee - You now have access to "${projectName}"`,
       html,
@@ -307,6 +307,54 @@ export async function validateResendApiKey(): Promise<{ valid: boolean; error?: 
   }
 }
 
+/**
+ * Send a test email to verify the configuration
+ */
+export async function sendTestEmail(params: {
+  to: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { to } = params;
+  
+  const html = generateEmailTemplate({
+    preheader: 'This is a test email from SkyVee',
+    title: 'Test Email Successful!',
+    body: `
+      <p>Congratulations! Your email configuration is working correctly.</p>
+      <p>This test email was sent from your verified domain: <span class="highlight">notifications.skyveedrones.com</span></p>
+      <p>You can now send:</p>
+      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0;">
+        <li>Project invitation emails</li>
+        <li>Welcome emails</li>
+        <li>Warranty reminder emails</li>
+      </ul>
+    `,
+    ctaText: 'Go to Dashboard',
+    ctaUrl: 'https://skyveedrones.com/dashboard',
+    footer: `
+      <p>This was a test email sent at ${new Date().toLocaleString()}.</p>
+      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+    `,
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      to: [to],
+      subject: 'SkyVee Test Email - Configuration Verified',
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Failed to send test email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Error sending test email:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
 
 /**
  * Send a warranty reminder email
@@ -371,7 +419,7 @@ export async function sendWarrantyReminderEmail(params: {
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@skyveedrones.com>',
+      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
       to: [to],
       subject,
       html,
