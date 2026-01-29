@@ -261,3 +261,7 @@
 ## Video Upload Bug Fixes
 - [x] Fix video compression failure (removed unreliable browser compression)
 - [x] Fix out of memory error on normal video uploads (use direct S3 upload for files >50MB)
+
+## Fix Video Upload Presigned URL Error
+- [x] Fix "Failed to get presigned URL (404)" error for large video uploads
+- [x] Use chunked upload approach instead of presigned URLs

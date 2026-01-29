@@ -1,7 +1,7 @@
 /**
  * Media Upload Dialog
  * Allows users to upload drone photos and videos with drag-and-drop support
- * Features: detailed progress with speed/ETA, direct S3 upload for large files, auto thumbnail extraction
+ * Features: detailed progress with speed/ETA, chunked uploads for large files, auto thumbnail extraction
  */
 
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
-const DIRECT_UPLOAD_THRESHOLD = 50 * 1024 * 1024; // 50MB - use direct S3 upload for files larger than this
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for large file uploads
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -145,8 +145,8 @@ export function MediaUploadDialog({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const uploadMutation = trpc.media.upload.useMutation();
-  const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
-  const confirmUploadMutation = trpc.media.confirmUpload.useMutation();
+  const uploadChunkMutation = trpc.media.uploadChunk.useMutation();
+  const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
   const utils = trpc.useUtils();
 
   const validateFile = (file: File): string | null => {
@@ -213,63 +213,6 @@ export function MediaUploadDialog({
     }
   };
 
-  // Upload file directly to S3 using presigned URL (for large files)
-  const uploadDirectToS3 = async (
-    file: File,
-    uploadUrl: string,
-    onProgress: (loaded: number, total: number) => void
-  ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          onProgress(e.loaded, e.total);
-        }
-      };
-      
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      };
-      
-      xhr.onerror = () => reject(new Error("Network error during upload"));
-      xhr.ontimeout = () => reject(new Error("Upload timed out"));
-      
-      xhr.open("PUT", uploadUrl);
-      xhr.setRequestHeader("Content-Type", file.type);
-      xhr.send(file);
-    });
-  };
-
-  // Upload thumbnail to S3
-  const uploadThumbnailToS3 = async (
-    thumbnailData: string,
-    uploadUrl: string
-  ): Promise<void> => {
-    // Convert base64 to blob
-    const base64Data = thumbnailData.split(",")[1];
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: "image/jpeg" });
-    
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": "image/jpeg" },
-      body: blob,
-    });
-    
-    if (!response.ok) {
-      throw new Error("Failed to upload thumbnail");
-    }
-  };
-
   // Convert file to base64 with progress (for smaller files)
   const fileToBase64WithProgress = (
     file: File, 
@@ -292,6 +235,85 @@ export function MediaUploadDialog({
       
       reader.onerror = (error) => reject(error);
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Read a chunk of file as base64
+  const readChunkAsBase64 = (file: File, start: number, end: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const chunk = file.slice(start, end);
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(chunk);
+    });
+  };
+
+  // Upload large file in chunks
+  const uploadInChunks = async (
+    fileItem: FileToUpload,
+    index: number,
+    startTime: number
+  ): Promise<void> => {
+    const file = fileItem.file;
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    let uploadedBytes = 0;
+    
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunkData = await readChunkAsBase64(file, start, end);
+      
+      await uploadChunkMutation.mutateAsync({
+        uploadId,
+        chunkIndex,
+        totalChunks,
+        chunkData,
+        projectId,
+        filename: file.name,
+        mimeType: file.type,
+      });
+      
+      uploadedBytes = end;
+      const elapsed = (Date.now() - startTime) / 1000;
+      const speed = uploadedBytes / elapsed;
+      const remaining = file.size - uploadedBytes;
+      const eta = remaining / speed;
+      const progress = (uploadedBytes / file.size) * 90; // 90% for upload
+      
+      setFiles((prev) =>
+        prev.map((f, idx) =>
+          idx === index ? { 
+            ...f, 
+            progress,
+            uploadSpeed: speed,
+            eta,
+            bytesUploaded: uploadedBytes
+          } : f
+        )
+      );
+    }
+    
+    // Finalize the upload
+    setFiles((prev) =>
+      prev.map((f, idx) => (idx === index ? { ...f, progress: 95 } : f))
+    );
+    
+    await finalizeChunkedUploadMutation.mutateAsync({
+      uploadId,
+      projectId,
+      filename: file.name,
+      mimeType: file.type,
+      fileSize: file.size,
+      thumbnailData: fileItem.thumbnail?.split(",")[1],
     });
   };
 
@@ -320,69 +342,14 @@ export function MediaUploadDialog({
       );
 
       try {
-        const useDirectUpload = fileItem.file.size > DIRECT_UPLOAD_THRESHOLD;
+        // Use chunked upload for files larger than 50MB
+        const useChunkedUpload = fileItem.file.size > 50 * 1024 * 1024;
         
-        if (useDirectUpload) {
-          // Large file: use direct S3 upload
-          const uploadInfo = await getUploadUrlMutation.mutateAsync({
-            projectId,
-            filename: fileItem.file.name,
-            mimeType: fileItem.file.type,
-            fileSize: fileItem.file.size,
-          });
-
-          // Upload file directly to S3
-          await uploadDirectToS3(
-            fileItem.file,
-            uploadInfo.uploadUrl,
-            (loaded, total) => {
-              const elapsed = (Date.now() - startTime) / 1000;
-              const speed = loaded / elapsed;
-              const remaining = total - loaded;
-              const eta = remaining / speed;
-              const progress = (loaded / total) * 90; // 90% for upload
-              
-              setFiles((prev) =>
-                prev.map((f, idx) =>
-                  idx === i ? { 
-                    ...f, 
-                    progress,
-                    uploadSpeed: speed,
-                    eta,
-                    bytesUploaded: loaded
-                  } : f
-                )
-              );
-            }
-          );
-
-          // Upload thumbnail if available
-          let thumbnailUrl: string | null = null;
-          if (fileItem.thumbnail) {
-            try {
-              await uploadThumbnailToS3(fileItem.thumbnail, uploadInfo.thumbnailUploadUrl);
-              thumbnailUrl = uploadInfo.thumbnailPublicUrl;
-            } catch (err) {
-              console.warn("Failed to upload thumbnail:", err);
-            }
-          }
-
-          // Confirm upload in database
-          setFiles((prev) =>
-            prev.map((f, idx) => (idx === i ? { ...f, progress: 95 } : f))
-          );
-
-          await confirmUploadMutation.mutateAsync({
-            projectId,
-            filename: fileItem.file.name,
-            mimeType: fileItem.file.type,
-            fileSize: fileItem.file.size,
-            fileKey: uploadInfo.fileKey,
-            url: uploadInfo.publicUrl,
-            thumbnailUrl,
-          });
+        if (useChunkedUpload) {
+          // Large file: use chunked upload
+          await uploadInChunks(fileItem, i, startTime);
         } else {
-          // Small file: use base64 upload through server
+          // Small file: use base64 upload
           const base64Data = await fileToBase64WithProgress(
             fileItem.file,
             (loaded, total) => {
@@ -570,8 +537,8 @@ export function MediaUploadDialog({
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{formatBytes(fileItem.file.size)}</span>
-                        {fileItem.file.size > DIRECT_UPLOAD_THRESHOLD && (
-                          <span className="text-blue-500">(Direct upload)</span>
+                        {fileItem.file.size > 50 * 1024 * 1024 && (
+                          <span className="text-blue-500">(Chunked upload)</span>
                         )}
                         {fileItem.uploadSpeed && fileItem.status === "uploading" && (
                           <>

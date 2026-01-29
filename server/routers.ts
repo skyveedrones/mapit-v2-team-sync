@@ -63,7 +63,7 @@ import {
 } from "./db";
 import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
-import { storagePut, storageGet, storageGetUploadUrl } from "./storage";
+import { storagePut, storageGet } from "./storage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 
 // Validation schemas for project operations
@@ -473,13 +473,16 @@ export const appRouter = router({
         return mediaItem;
       }),
 
-    // Get presigned URL for direct upload (for large files like videos)
-    getUploadUrl: protectedProcedure
+    // Upload a chunk of a large file (chunked upload for videos)
+    uploadChunk: protectedProcedure
       .input(z.object({
+        uploadId: z.string(),
+        chunkIndex: z.number(),
+        totalChunks: z.number(),
+        chunkData: z.string(), // Base64 encoded chunk
         projectId: z.number(),
         filename: z.string(),
         mimeType: z.string(),
-        fileSize: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the project
@@ -491,36 +494,27 @@ export const appRouter = router({
           });
         }
 
-        // Generate unique file key
-        const uniqueId = nanoid(12);
-        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
-        const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+        // Store chunk in temporary storage
+        const chunkBuffer = Buffer.from(input.chunkData, "base64");
+        const chunkKey = `temp-chunks/${input.uploadId}/chunk-${input.chunkIndex.toString().padStart(5, '0')}`;
+        await storagePut(chunkKey, chunkBuffer, "application/octet-stream");
 
-        // Get presigned URLs for direct upload
-        const { uploadUrl, publicUrl } = await storageGetUploadUrl(fileKey, input.mimeType);
-        const thumbnailUpload = await storageGetUploadUrl(thumbnailKey, "image/jpeg");
-
-        return {
-          uploadUrl,
-          publicUrl,
-          fileKey,
-          uniqueId,
-          thumbnailUploadUrl: thumbnailUpload.uploadUrl,
-          thumbnailPublicUrl: thumbnailUpload.publicUrl,
-          thumbnailKey,
+        return { 
+          success: true, 
+          chunkIndex: input.chunkIndex,
+          totalChunks: input.totalChunks 
         };
       }),
 
-    // Confirm upload after direct S3 upload completes
-    confirmUpload: protectedProcedure
+    // Finalize chunked upload - combine chunks and create media record
+    finalizeChunkedUpload: protectedProcedure
       .input(z.object({
+        uploadId: z.string(),
         projectId: z.number(),
         filename: z.string(),
         mimeType: z.string(),
         fileSize: z.number(),
-        fileKey: z.string(),
-        url: z.string(),
-        thumbnailUrl: z.string().nullable().optional(),
+        thumbnailData: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the project
@@ -530,6 +524,37 @@ export const appRouter = router({
             code: "NOT_FOUND",
             message: "Project not found",
           });
+        }
+
+        // Generate unique file key for final file
+        const uniqueId = nanoid(12);
+        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+
+        // Fetch and combine all chunks
+        const totalChunks = Math.ceil(input.fileSize / (5 * 1024 * 1024)); // 5MB chunks
+        const chunks: Buffer[] = [];
+        
+        for (let i = 0; i < totalChunks; i++) {
+          const chunkKey = `temp-chunks/${input.uploadId}/chunk-${i.toString().padStart(5, '0')}`;
+          const { url: chunkUrl } = await storageGet(chunkKey);
+          const response = await fetch(chunkUrl);
+          const arrayBuffer = await response.arrayBuffer();
+          chunks.push(Buffer.from(arrayBuffer));
+        }
+
+        // Combine chunks
+        const combinedBuffer = Buffer.concat(chunks);
+
+        // Upload combined file to S3
+        const { url } = await storagePut(fileKey, combinedBuffer, input.mimeType);
+
+        // Upload thumbnail if provided
+        let thumbnailUrl: string | null = null;
+        if (input.thumbnailData) {
+          const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
+          const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+          const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
+          thumbnailUrl = thumbnailResult.url;
         }
 
         // Create media record in database
@@ -537,8 +562,8 @@ export const appRouter = router({
           projectId: input.projectId,
           userId: ctx.user.id,
           filename: input.filename,
-          fileKey: input.fileKey,
-          url: input.url,
+          fileKey,
+          url,
           mimeType: input.mimeType,
           fileSize: input.fileSize,
           mediaType: getMediaType(input.mimeType),
@@ -548,7 +573,7 @@ export const appRouter = router({
           capturedAt: null,
           cameraMake: null,
           cameraModel: null,
-          thumbnailUrl: input.thumbnailUrl ?? null,
+          thumbnailUrl,
         });
 
         return mediaItem;
