@@ -65,6 +65,8 @@ export const projects = mysqlTable("projects", {
   logoUrl: varchar("logoUrl", { length: 500 }),
   /** S3 storage key for the project logo */
   logoKey: varchar("logoKey", { length: 500 }),
+  /** Foreign key to clients table (optional - project can be assigned to a client) */
+  clientId: int("clientId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -219,3 +221,79 @@ export const warrantyReminders = mysqlTable("warranty_reminders", {
 
 export type WarrantyReminder = typeof warrantyReminders.$inferSelect;
 export type InsertWarrantyReminder = typeof warrantyReminders.$inferInsert;
+
+/**
+ * Clients table for organizing projects by client.
+ * Clients can be invited to view their own portal with all their projects.
+ */
+export const clients = mysqlTable("clients", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to users table (owner/admin who created the client) */
+  ownerId: int("ownerId").notNull(),
+  /** Client company/organization name */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Primary contact email for the client */
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  /** Primary contact name */
+  contactName: varchar("contactName", { length: 255 }),
+  /** Client phone number */
+  phone: varchar("phone", { length: 50 }),
+  /** Client address */
+  address: text("address"),
+  /** Client logo URL */
+  logoUrl: varchar("logoUrl", { length: 500 }),
+  /** S3 storage key for the logo */
+  logoKey: varchar("logoKey", { length: 500 }),
+  /** Number of projects assigned to this client */
+  projectCount: int("projectCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = typeof clients.$inferInsert;
+
+/**
+ * Client users table - links users to clients for portal access.
+ * Users with client access can view all projects assigned to that client.
+ */
+export const clientUsers = mysqlTable("client_users", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to clients table */
+  clientId: int("clientId").notNull(),
+  /** Foreign key to users table */
+  userId: int("userId").notNull(),
+  /** Role of the user: viewer can only view, admin can manage client settings */
+  role: mysqlEnum("role", ["viewer", "admin"]).default("viewer").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ClientUser = typeof clientUsers.$inferSelect;
+export type InsertClientUser = typeof clientUsers.$inferInsert;
+
+/**
+ * Client invitations table - tracks pending invitations to client portals.
+ */
+export const clientInvitations = mysqlTable("client_invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to clients table */
+  clientId: int("clientId").notNull(),
+  /** Foreign key to users table (who sent the invitation) */
+  invitedBy: int("invitedBy").notNull(),
+  /** Email address the invitation was sent to */
+  email: varchar("email", { length: 320 }).notNull(),
+  /** Unique token for accepting the invitation */
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  /** Role to assign when invitation is accepted */
+  role: mysqlEnum("role", ["viewer", "admin"]).default("viewer").notNull(),
+  /** Status of the invitation */
+  status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
+  /** When the invitation expires (7 days from creation) */
+  expiresAt: timestamp("expiresAt").notNull(),
+  /** When the invitation was accepted (if accepted) */
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ClientInvitation = typeof clientInvitations.$inferSelect;
+export type InsertClientInvitation = typeof clientInvitations.$inferInsert;

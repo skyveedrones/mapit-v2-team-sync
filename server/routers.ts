@@ -60,6 +60,25 @@ import {
   updateProjectLogo,
   deleteProjectLogo,
   getProjectLogo,
+  // Client functions
+  createClient,
+  getOwnerClients,
+  getClientById,
+  getOwnerClient,
+  updateClient,
+  deleteClient,
+  getClientProjects,
+  assignProjectToClient,
+  userHasClientAccess,
+  getUserClientAccess,
+  addClientUser,
+  removeClientUser,
+  getClientUsers,
+  createClientInvitation,
+  getClientInvitationByToken,
+  acceptClientInvitation,
+  getClientPendingInvitations,
+  revokeClientInvitation,
 } from "./db";
 import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
@@ -2223,6 +2242,308 @@ export const appRouter = router({
 
       return { processed: results.length, results };
     }),
+  }),
+
+  // Client portal management
+  clientPortal: router({
+    // List all clients for the current user (owner)
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getOwnerClients(ctx.user.id);
+    }),
+
+    // Get a single client by ID
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.id, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        return client;
+      }),
+
+    // Create a new client
+    create: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1, "Client name is required").max(255),
+          contactName: z.string().max(255).optional(),
+          contactEmail: z.string().email().optional().or(z.literal("")),
+          phone: z.string().max(50).optional(),
+          address: z.string().max(500).optional(),
+          logoUrl: z.string().max(500).optional(),
+          logoKey: z.string().max(500).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return createClient({
+          ownerId: ctx.user.id,
+          name: input.name,
+          contactName: input.contactName || null,
+          contactEmail: input.contactEmail || null,
+          phone: input.phone || null,
+          address: input.address || null,
+          logoUrl: input.logoUrl || null,
+          logoKey: input.logoKey || null,
+        });
+      }),
+
+    // Update a client
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().min(1).max(255).optional(),
+          contactName: z.string().max(255).nullable().optional(),
+          contactEmail: z.string().email().nullable().optional().or(z.literal("")),
+          phone: z.string().max(50).nullable().optional(),
+          address: z.string().max(500).nullable().optional(),
+          logoUrl: z.string().max(500).nullable().optional(),
+          logoKey: z.string().max(500).nullable().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        const client = await updateClient(id, ctx.user.id, updates);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        return client;
+      }),
+
+    // Delete a client
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await deleteClient(input.id, ctx.user.id);
+        if (!success) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        return { success: true };
+      }),
+
+    // Get projects assigned to a client
+    getProjects: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Verify user has access to this client (owner or client user)
+        const hasAccess = await userHasClientAccess(input.clientId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this client",
+          });
+        }
+        return getClientProjects(input.clientId);
+      }),
+
+    // Assign a project to a client
+    assignProject: protectedProcedure
+      .input(
+        z.object({
+          projectId: z.number(),
+          clientId: z.number().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const project = await assignProjectToClient(
+          input.projectId,
+          input.clientId,
+          ctx.user.id
+        );
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project or client not found",
+          });
+        }
+        return project;
+      }),
+
+    // Get clients the current user has access to (as a client user)
+    getMyClientAccess: protectedProcedure.query(async ({ ctx }) => {
+      return getUserClientAccess(ctx.user.id);
+    }),
+
+    // Get users for a client
+    getUsers: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        return getClientUsers(input.clientId);
+      }),
+
+    // Remove a user from a client
+    removeUser: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        await removeClientUser(input.clientId, input.userId);
+        return { success: true };
+      }),
+
+    // Invite a user to a client
+    invite: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          email: z.string().email(),
+          role: z.enum(["viewer", "admin"]).default("viewer"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+
+        const token = nanoid(32);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+
+        const invitation = await createClientInvitation({
+          clientId: input.clientId,
+          email: input.email,
+          role: input.role,
+          token,
+          invitedBy: ctx.user.id,
+          expiresAt,
+        });
+
+        // TODO: Send invitation email
+        // For now, return the invitation with token for manual sharing
+        return {
+          invitation,
+          inviteUrl: `/client-invite/${token}`,
+        };
+      }),
+
+    // Accept a client invitation
+    acceptInvitation: protectedProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await acceptClientInvitation(input.token, ctx.user.id);
+        if (!result.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to accept invitation",
+          });
+        }
+        return result;
+      }),
+
+    // Get pending invitations for a client
+    getPendingInvitations: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        return getClientPendingInvitations(input.clientId);
+      }),
+
+    // Revoke a client invitation
+    revokeInvitation: protectedProcedure
+      .input(z.object({ invitationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await revokeClientInvitation(input.invitationId, ctx.user.id);
+        if (!success) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Invitation not found",
+          });
+        }
+        return { success: true };
+      }),
+
+    // Assign multiple projects to a client
+    assignProjects: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          projectIds: z.array(z.number()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns this client
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        // Assign each project
+        const results = [];
+        for (const projectId of input.projectIds) {
+          const project = await assignProjectToClient(projectId, input.clientId, ctx.user.id);
+          if (project) {
+            results.push(project);
+          }
+        }
+        return results;
+      }),
+
+    // Unassign a project from a client
+    unassignProject: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          projectId: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns this client
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        // Unassign by setting clientId to null
+        const project = await assignProjectToClient(input.projectId, null, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+        return { success: true };
+      }),
   }),
 });
 

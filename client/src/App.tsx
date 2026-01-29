@@ -13,6 +13,8 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ProjectMap from "./pages/ProjectMap";
 import FlightDetail from "./pages/FlightDetail";
 import InviteAccept from "./pages/InviteAccept";
+import Clients from "./pages/Clients";
+import ClientProjects from "./pages/ClientProjects";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -81,6 +83,14 @@ function Router() {
       <Route path="/features/gps-data-export" component={GpsDataExport} />
       <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
       <Route path="/features/install-as-app" component={InstallAsApp} />
+      
+      {/* Client management */}
+      <Route path="/clients">
+        {() => <ProtectedRoute component={Clients} />}
+      </Route>
+      <Route path="/clients/:clientId/projects">
+        {() => <ProtectedRoute component={ClientProjects} />}
+      </Route>
       
       {/* Invitation acceptance page */}
       <Route path="/invite/:token" component={InviteAccept} />

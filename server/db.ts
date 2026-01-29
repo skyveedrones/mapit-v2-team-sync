@@ -1,6 +1,6 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders } from "../drizzle/schema";
+import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1454,4 +1454,448 @@ export async function updateProjectWarranty(
         eq(projects.userId, userId)
       )
     );
+}
+
+
+// ============================================
+// Client CRUD Operations
+// ============================================
+
+/**
+ * Create a new client
+ */
+export async function createClient(client: InsertClient) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(clients).values(client);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(clients).where(eq(clients.id, insertId)).limit(1);
+  return created[0];
+}
+
+/**
+ * Get all clients for an owner
+ */
+export async function getOwnerClients(ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(clients)
+    .where(eq(clients.ownerId, ownerId))
+    .orderBy(desc(clients.updatedAt));
+}
+
+/**
+ * Get a single client by ID
+ */
+export async function getClientById(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.id, clientId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Get a client by ID, ensuring it belongs to the specified owner
+ */
+export async function getOwnerClient(clientId: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Update a client
+ */
+export async function updateClient(
+  clientId: number,
+  ownerId: number,
+  updates: Partial<Omit<InsertClient, "id" | "ownerId" | "createdAt">>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getOwnerClient(clientId, ownerId);
+  if (!existing) {
+    return null;
+  }
+
+  await db
+    .update(clients)
+    .set(updates)
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId)));
+
+  return getOwnerClient(clientId, ownerId);
+}
+
+/**
+ * Delete a client
+ */
+export async function deleteClient(clientId: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getOwnerClient(clientId, ownerId);
+  if (!existing) {
+    return false;
+  }
+
+  // Remove client association from projects
+  await db
+    .update(projects)
+    .set({ clientId: null })
+    .where(eq(projects.clientId, clientId));
+
+  // Delete client users
+  await db.delete(clientUsers).where(eq(clientUsers.clientId, clientId));
+
+  // Delete client invitations
+  await db.delete(clientInvitations).where(eq(clientInvitations.clientId, clientId));
+
+  // Delete the client
+  await db.delete(clients).where(eq(clients.id, clientId));
+
+  return true;
+}
+
+/**
+ * Get projects assigned to a client
+ */
+export async function getClientProjects(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.clientId, clientId))
+    .orderBy(desc(projects.updatedAt));
+}
+
+/**
+ * Assign a project to a client
+ */
+export async function assignProjectToClient(projectId: number, clientId: number | null, ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Verify the project belongs to the owner
+  const project = await getUserProject(projectId, ownerId);
+  if (!project) {
+    return null;
+  }
+
+  // If assigning to a client, verify the client belongs to the owner
+  if (clientId !== null) {
+    const client = await getOwnerClient(clientId, ownerId);
+    if (!client) {
+      return null;
+    }
+  }
+
+  // Get the old clientId to update project counts
+  const oldClientId = project.clientId;
+
+  // Update the project
+  await db
+    .update(projects)
+    .set({ clientId })
+    .where(eq(projects.id, projectId));
+
+  // Update project counts
+  if (oldClientId !== null && oldClientId !== clientId) {
+    await db
+      .update(clients)
+      .set({ projectCount: sql`GREATEST(${clients.projectCount} - 1, 0)` })
+      .where(eq(clients.id, oldClientId));
+  }
+
+  if (clientId !== null && clientId !== oldClientId) {
+    await db
+      .update(clients)
+      .set({ projectCount: sql`${clients.projectCount} + 1` })
+      .where(eq(clients.id, clientId));
+  }
+
+  return getProjectById(projectId);
+}
+
+// ============================================
+// Client Users & Invitations
+// ============================================
+
+/**
+ * Check if a user has access to a client portal
+ */
+export async function userHasClientAccess(clientId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if user is the owner
+  const client = await db
+    .select()
+    .from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, userId)))
+    .limit(1);
+
+  if (client.length > 0) {
+    return true;
+  }
+
+  // Check if user is a client user
+  const clientUser = await db
+    .select()
+    .from(clientUsers)
+    .where(and(eq(clientUsers.clientId, clientId), eq(clientUsers.userId, userId)))
+    .limit(1);
+
+  return clientUser.length > 0;
+}
+
+/**
+ * Get clients a user has access to (as a client user, not owner)
+ */
+export async function getUserClientAccess(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select({
+      client: clients,
+      role: clientUsers.role,
+    })
+    .from(clientUsers)
+    .innerJoin(clients, eq(clientUsers.clientId, clients.id))
+    .where(eq(clientUsers.userId, userId));
+
+  return result;
+}
+
+/**
+ * Add a user to a client
+ */
+export async function addClientUser(clientUser: InsertClientUser) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if user already has access
+  const existing = await db
+    .select()
+    .from(clientUsers)
+    .where(and(eq(clientUsers.clientId, clientUser.clientId), eq(clientUsers.userId, clientUser.userId)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const result = await db.insert(clientUsers).values(clientUser);
+  const insertId = result[0].insertId;
+
+  const created = await db.select().from(clientUsers).where(eq(clientUsers.id, insertId)).limit(1);
+  return created[0];
+}
+
+/**
+ * Remove a user from a client
+ */
+export async function removeClientUser(clientId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .delete(clientUsers)
+    .where(and(eq(clientUsers.clientId, clientId), eq(clientUsers.userId, userId)));
+
+  return true;
+}
+
+/**
+ * Get all users for a client
+ */
+export async function getClientUsers(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select({
+      clientUser: clientUsers,
+      user: users,
+    })
+    .from(clientUsers)
+    .innerJoin(users, eq(clientUsers.userId, users.id))
+    .where(eq(clientUsers.clientId, clientId));
+}
+
+/**
+ * Create a client invitation
+ */
+export async function createClientInvitation(invitation: InsertClientInvitation) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(clientInvitations).values(invitation);
+  const insertId = result[0].insertId;
+
+  const created = await db.select().from(clientInvitations).where(eq(clientInvitations.id, insertId)).limit(1);
+  return created[0];
+}
+
+/**
+ * Get a client invitation by token
+ */
+export async function getClientInvitationByToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select({
+      invitation: clientInvitations,
+      client: clients,
+    })
+    .from(clientInvitations)
+    .innerJoin(clients, eq(clientInvitations.clientId, clients.id))
+    .where(eq(clientInvitations.token, token))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Accept a client invitation
+ */
+export async function acceptClientInvitation(token: string, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const invitationData = await getClientInvitationByToken(token);
+  if (!invitationData) {
+    return { success: false, error: "Invitation not found" };
+  }
+
+  const { invitation, client } = invitationData;
+
+  if (invitation.status !== "pending") {
+    return { success: false, error: "Invitation is no longer valid" };
+  }
+
+  if (new Date() > invitation.expiresAt) {
+    await db
+      .update(clientInvitations)
+      .set({ status: "expired" })
+      .where(eq(clientInvitations.id, invitation.id));
+    return { success: false, error: "Invitation has expired" };
+  }
+
+  // Add user to client
+  await addClientUser({
+    clientId: invitation.clientId,
+    userId,
+    role: invitation.role,
+  });
+
+  // Update invitation status
+  await db
+    .update(clientInvitations)
+    .set({ status: "accepted", acceptedAt: new Date() })
+    .where(eq(clientInvitations.id, invitation.id));
+
+  return { success: true, client };
+}
+
+/**
+ * Get pending invitations for a client
+ */
+export async function getClientPendingInvitations(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(clientInvitations)
+    .where(and(eq(clientInvitations.clientId, clientId), eq(clientInvitations.status, "pending")));
+}
+
+/**
+ * Revoke a client invitation
+ */
+export async function revokeClientInvitation(invitationId: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const invitation = await db
+    .select()
+    .from(clientInvitations)
+    .where(eq(clientInvitations.id, invitationId))
+    .limit(1);
+
+  if (invitation.length === 0) {
+    return false;
+  }
+
+  // Verify the client belongs to the owner
+  const client = await getOwnerClient(invitation[0].clientId, ownerId);
+  if (!client) {
+    return false;
+  }
+
+  await db
+    .update(clientInvitations)
+    .set({ status: "revoked" })
+    .where(eq(clientInvitations.id, invitationId));
+
+  return true;
 }

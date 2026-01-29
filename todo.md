@@ -351,3 +351,12 @@
 ## Email Configuration Update
 - [x] Update "from" email address to use verified Resend domain (notifications.skyveedrones.com)
 - [x] Send test email to verify configuration
+
+## Client Portal Feature
+- [x] Add clients table to database
+- [x] Add clientId field to projects table (preserving existing data)
+- [x] Create client management UI for admin
+- [x] Implement client invitation system
+- [x] Build client projects page for assigning projects
+- [x] Create "City of Forney" as first client
+- [x] Assign relevant projects to City of Forney
