@@ -310,3 +310,9 @@
 - [x] Fix watermark dialog not showing video count when only videos selected
 - [x] Fix "Apply Permanently" button staying disabled when only videos selected
 - [x] Update menu item from "Watermark Photos" to "Watermark Media"
+
+## Media Viewer Navigation
+- [x] Add left/right navigation arrows to media viewer dialog
+- [x] Navigate to previous/next media file when clicking arrows
+- [x] Add keyboard support (left/right arrow keys)
+- [x] Show current position indicator (e.g., "3 of 15")

@@ -34,6 +34,8 @@ import {
   Camera,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Edit,
   FileImage,
@@ -48,7 +50,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { WatermarkDialog } from "./WatermarkDialog";
 import { GPSEditDialog } from "./GPSEditDialog";
@@ -117,6 +119,46 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const selectedMediaItems = useMemo(() => {
     return sortedMedia.filter(m => selectedIds.has(m.id));
   }, [sortedMedia, selectedIds]);
+
+  // Get current media index for navigation
+  const currentMediaIndex = useMemo(() => {
+    if (!selectedMedia) return -1;
+    return sortedMedia.findIndex(m => m.id === selectedMedia.id);
+  }, [selectedMedia, sortedMedia]);
+
+  // Navigate to previous media
+  const navigateToPrevious = useCallback(() => {
+    if (currentMediaIndex > 0) {
+      setSelectedMedia(sortedMedia[currentMediaIndex - 1]);
+    }
+  }, [currentMediaIndex, sortedMedia]);
+
+  // Navigate to next media
+  const navigateToNext = useCallback(() => {
+    if (currentMediaIndex < sortedMedia.length - 1) {
+      setSelectedMedia(sortedMedia[currentMediaIndex + 1]);
+    }
+  }, [currentMediaIndex, sortedMedia]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!selectedMedia) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        navigateToPrevious();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        navigateToNext();
+      } else if (e.key === "Escape") {
+        setSelectedMedia(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMedia, navigateToPrevious, navigateToNext]);
 
   // Toggle selection
   const toggleSelection = (id: number, e: React.MouseEvent) => {
@@ -501,15 +543,22 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="truncate pr-8">
-              {selectedMedia?.filename}
-            </DialogTitle>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle className="truncate">
+                {selectedMedia?.filename}
+              </DialogTitle>
+              {sortedMedia.length > 1 && (
+                <span className="text-sm text-muted-foreground ml-4 flex-shrink-0">
+                  {currentMediaIndex + 1} of {sortedMedia.length}
+                </span>
+              )}
+            </div>
           </DialogHeader>
 
           {selectedMedia && (
             <div className="flex-1 overflow-auto">
-              {/* Media Preview */}
-              <div className="relative bg-black rounded-lg overflow-hidden mb-4">
+              {/* Media Preview with Navigation */}
+              <div className="relative bg-black rounded-lg overflow-hidden mb-4 group">
                 {selectedMedia.mediaType === "photo" ? (
                   <img
                     src={selectedMedia.url}
@@ -544,6 +593,39 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       </p>
                     </div>
                   </div>
+                )}
+
+                {/* Navigation Arrows */}
+                {sortedMedia.length > 1 && (
+                  <>
+                    {/* Previous Button */}
+                    <button
+                      onClick={navigateToPrevious}
+                      disabled={currentMediaIndex === 0}
+                      className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white transition-all ${
+                        currentMediaIndex === 0
+                          ? "opacity-30 cursor-not-allowed"
+                          : "opacity-0 group-hover:opacity-100 hover:bg-black/80"
+                      }`}
+                      aria-label="Previous media"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={navigateToNext}
+                      disabled={currentMediaIndex === sortedMedia.length - 1}
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white transition-all ${
+                        currentMediaIndex === sortedMedia.length - 1
+                          ? "opacity-30 cursor-not-allowed"
+                          : "opacity-0 group-hover:opacity-100 hover:bg-black/80"
+                      }`}
+                      aria-label="Next media"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
                 )}
               </div>
 

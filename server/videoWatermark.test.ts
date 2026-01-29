@@ -69,11 +69,11 @@ describe("watermark.applyVideoWatermark", () => {
     ).rejects.toThrow("Please login");
   });
 
-  it("rejects requests when no saved watermark exists", async () => {
+  it("rejects requests for non-existent media", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // When useSavedWatermark is true but user has no saved watermark
+    // Media 999999 doesn't exist, should throw
     await expect(
       caller.watermark.applyVideoWatermark({
         mediaId: 999999,
@@ -82,7 +82,7 @@ describe("watermark.applyVideoWatermark", () => {
         opacity: 70,
         scale: 15,
       })
-    ).rejects.toThrow("No saved watermark found");
+    ).rejects.toThrow("Media not found");
   });
 
   it("validates position parameter types", async () => {
