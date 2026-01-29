@@ -45,7 +45,7 @@ const ACCEPTED_TYPES = [
   "video/webm",
 ];
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
 
 export function MediaUploadDialog({
   open,
@@ -66,7 +66,7 @@ export function MediaUploadDialog({
       return `Invalid file type: ${file.type}`;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 100MB)`;
+      return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 1GB)`;
     }
     return null;
   };
@@ -250,7 +250,7 @@ export function MediaUploadDialog({
             Drag and drop files here, or click to browse
           </p>
           <p className="text-xs text-muted-foreground">
-            Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos (max 100MB)
+            Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos (max 1GB)
           </p>
         </div>
 

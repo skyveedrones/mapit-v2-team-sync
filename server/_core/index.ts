@@ -31,16 +31,16 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
-  // Configure body parser with larger size limit for file uploads (100MB for base64 encoded files)
-  app.use(express.json({ limit: "100mb" }));
-  app.use(express.urlencoded({ limit: "100mb", extended: true }));
+  // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
+  app.use(express.json({ limit: "1500mb" }));
+  app.use(express.urlencoded({ limit: "1500mb", extended: true }));
   
   // Custom error handler for payload too large errors - return JSON instead of HTML
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     if (err.type === 'entity.too.large') {
       return res.status(413).json({
         error: {
-          message: 'File too large. Maximum file size is 75MB.',
+          message: 'File too large. Maximum file size is 1GB.',
           code: 'PAYLOAD_TOO_LARGE'
         }
       });

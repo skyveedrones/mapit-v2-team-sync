@@ -245,3 +245,6 @@
 ## PDF Save As Dialog
 - [x] Use File System Access API to trigger native Save As dialog
 - [x] Let user choose where to save the PDF file
+
+## Increase Video Upload Size
+- [x] Increase media file upload size limit to 1 GB for videos
