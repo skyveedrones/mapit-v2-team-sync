@@ -248,3 +248,8 @@
 
 ## Increase Video Upload Size
 - [x] Increase media file upload size limit to 1 GB for videos
+
+## Video Upload Enhancements
+- [x] Add detailed upload progress indicator with speed and ETA for large files
+- [x] Add video compression option before upload to save storage
+- [x] Add automatic video thumbnail extraction from uploaded videos

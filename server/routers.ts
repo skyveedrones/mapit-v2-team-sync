@@ -480,6 +480,7 @@ export const appRouter = router({
         filename: z.string(),
         mimeType: z.string(),
         fileData: z.string(), // Base64 encoded file data
+        thumbnailData: z.string().optional(), // Base64 encoded thumbnail for videos
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the project
@@ -517,6 +518,15 @@ export const appRouter = router({
         // Upload to S3
         const { url } = await storagePut(fileKey, buffer, input.mimeType);
 
+        // Upload thumbnail if provided (for videos)
+        let thumbnailUrl: string | null = null;
+        if (input.thumbnailData) {
+          const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
+          const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+          const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
+          thumbnailUrl = thumbnailResult.url;
+        }
+
         // Create media record in database
         const mediaItem = await createMedia({
           projectId: input.projectId,
@@ -533,7 +543,7 @@ export const appRouter = router({
           capturedAt: exifData.capturedAt,
           cameraMake: exifData.cameraMake,
           cameraModel: exifData.cameraModel,
-          thumbnailUrl: null, // Could generate thumbnails later
+          thumbnailUrl,
         });
 
         return mediaItem;
