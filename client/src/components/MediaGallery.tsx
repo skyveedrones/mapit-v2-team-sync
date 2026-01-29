@@ -786,18 +786,19 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 )}
               </div>
 
-              {/* Tip for green screen issues - shown below video */}
-              {selectedMedia.mediaType === "video" && !isFullscreen && (
-                <div className="text-center py-3">
-                  <p className="text-sm text-muted-foreground">
-                    If video appears green, try downloading and playing locally
-                  </p>
-                </div>
-              )}
-
               {/* Metadata Grid - Hidden in fullscreen */}
               {!isFullscreen && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="space-y-4">
+                {/* Tip for green screen issues - shown below video */}
+                {selectedMedia.mediaType === "video" && (
+                  <div className="text-center py-2 px-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      If video appears green, try downloading and playing locally
+                    </p>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {/* GPS Coordinates */}
                 <div className="p-3 rounded-lg bg-card border border-border">
                   <div className="flex items-center justify-between mb-1">
@@ -895,6 +896,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   <p className="text-sm font-medium">
                     {formatDate(selectedMedia.createdAt)}
                   </p>
+                </div>
                 </div>
               </div>
               )}

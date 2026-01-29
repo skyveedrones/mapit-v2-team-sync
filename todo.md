@@ -344,3 +344,6 @@
 
 ## Generate Reports UI Update
 - [x] Remove "Add Watermark" option from Generate Reports tile
+
+## Video Tip Layout Bug Fix
+- [x] Fix video tip message blocking metadata grid in media viewer
