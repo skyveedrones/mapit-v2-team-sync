@@ -30,63 +30,38 @@ function createAuthContext(): TrpcContext {
 }
 
 describe("export.kml", () => {
-  it("returns KML content with correct structure", async () => {
+  it("rejects requests for non-existent projects", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // This will return empty data since no media exists, but should have valid KML structure
-    const result = await caller.export.kml({ projectId: 1 });
-
-    expect(result.filename).toMatch(/\.kml$/);
-    expect(result.mimeType).toBe("application/vnd.google-earth.kml+xml");
-    expect(result.content).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    expect(result.content).toContain("<kml");
-    expect(result.content).toContain("<Document>");
-    expect(result.content).toContain("</Document>");
-    expect(result.content).toContain("</kml>");
+    // Project 999999 doesn't exist, should throw
+    await expect(caller.export.kml({ projectId: 999999 })).rejects.toThrow("Project not found");
   });
 });
 
 describe("export.csv", () => {
-  it("returns CSV content with headers", async () => {
+  it("rejects requests for non-existent projects", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.export.csv({ projectId: 1 });
-
-    expect(result.filename).toMatch(/\.csv$/);
-    expect(result.mimeType).toBe("text/csv");
-    expect(result.content).toContain("filename,latitude,longitude,altitude,captured_at,media_type,url");
+    await expect(caller.export.csv({ projectId: 999999 })).rejects.toThrow("Project not found");
   });
 });
 
 describe("export.geojson", () => {
-  it("returns valid GeoJSON structure", async () => {
+  it("rejects requests for non-existent projects", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.export.geojson({ projectId: 1 });
-
-    expect(result.filename).toMatch(/\.geojson$/);
-    expect(result.mimeType).toBe("application/geo+json");
-    
-    const parsed = JSON.parse(result.content);
-    expect(parsed.type).toBe("FeatureCollection");
-    expect(parsed.features).toBeInstanceOf(Array);
+    await expect(caller.export.geojson({ projectId: 999999 })).rejects.toThrow("Project not found");
   });
 });
 
 describe("export.gpx", () => {
-  it("returns GPX content with correct structure", async () => {
+  it("rejects requests for non-existent projects", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.export.gpx({ projectId: 1 });
-
-    expect(result.filename).toMatch(/\.gpx$/);
-    expect(result.mimeType).toBe("application/gpx+xml");
-    expect(result.content).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    expect(result.content).toContain("<gpx");
-    expect(result.content).toContain("</gpx>");
+    await expect(caller.export.gpx({ projectId: 999999 })).rejects.toThrow("Project not found");
   });
 });

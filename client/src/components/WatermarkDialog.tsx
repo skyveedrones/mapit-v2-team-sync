@@ -1,10 +1,11 @@
 /**
  * Watermark Dialog Component
- * Allows users to apply watermarks permanently to selected images
+ * Allows users to apply watermarks permanently to selected images and videos
  * - Supports uploading new watermark or using saved watermark
- * - Permanently applies watermarks to stored images and thumbnails in S3
+ * - Permanently applies watermarks to stored images/videos and thumbnails in S3
  * - Default position: upper-left corner
  * - Live preview showing how watermark will look on sample image
+ * - Video watermarking uses FFmpeg for processing
  */
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -35,9 +37,9 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Save,
   Trash2,
-  Eye,
+  Video,
+  Image,
 } from "lucide-react";
 import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -76,8 +78,10 @@ export function WatermarkDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const [useSavedWatermark, setUseSavedWatermark] = useState(false);
   const [saveWatermarkForFuture, setSaveWatermarkForFuture] = useState(false);
-  const [results, setResults] = useState<{ mediaId: number; success: boolean; error?: string }[]>([]);
+  const [results, setResults] = useState<{ mediaId: number; success: boolean; error?: string; type: "photo" | "video" }[]>([]);
   const [showPreview, setShowPreview] = useState(true);
+  const [currentProcessing, setCurrentProcessing] = useState<string | null>(null);
+  const [videoProgress, setVideoProgress] = useState(0);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch saved watermark
@@ -87,6 +91,7 @@ export function WatermarkDialog({
   );
 
   const applyPermanentMutation = trpc.watermark.applyPermanent.useMutation();
+  const applyVideoWatermarkMutation = trpc.watermark.applyVideoWatermark.useMutation();
   const saveWatermarkMutation = trpc.watermark.saveWatermark.useMutation();
   const deleteWatermarkMutation = trpc.watermark.deleteWatermark.useMutation();
 
@@ -132,7 +137,7 @@ export function WatermarkDialog({
     reader.readAsDataURL(file);
   }, []);
 
-  // Apply watermark permanently to selected images
+  // Apply watermark permanently to selected images and videos
   const handleApplyWatermark = async () => {
     if (!useSavedWatermark && !watermarkFile) {
       toast.error("Please upload a watermark or use your saved watermark");
@@ -140,19 +145,22 @@ export function WatermarkDialog({
     }
 
     if (selectedMedia.length === 0) {
-      toast.error("Please select images to watermark");
+      toast.error("Please select media to watermark");
       return;
     }
 
-    // Filter to only photos
+    // Separate photos and videos
     const photos = selectedMedia.filter(m => m.mediaType === "photo");
-    if (photos.length === 0) {
-      toast.error("No photos selected. Watermarks can only be applied to photos.");
+    const videos = selectedMedia.filter(m => m.mediaType === "video");
+
+    if (photos.length === 0 && videos.length === 0) {
+      toast.error("No photos or videos selected for watermarking.");
       return;
     }
 
     setIsProcessing(true);
     setResults([]);
+    setVideoProgress(0);
 
     try {
       let watermarkBase64: string | undefined;
@@ -183,30 +191,81 @@ export function WatermarkDialog({
         }
       }
 
-      // Apply watermark permanently
-      const result = await applyPermanentMutation.mutateAsync({
-        mediaIds: photos.map(m => m.id),
-        watermarkData: watermarkBase64,
-        useSavedWatermark: useSavedWatermark,
-        position,
-        opacity,
-        scale,
-      });
+      const allResults: typeof results = [];
 
-      setResults(result.results);
+      // Process photos first (faster)
+      if (photos.length > 0) {
+        setCurrentProcessing(`Processing ${photos.length} photo${photos.length > 1 ? "s" : ""}...`);
+        
+        const photoResult = await applyPermanentMutation.mutateAsync({
+          mediaIds: photos.map(m => m.id),
+          watermarkData: watermarkBase64,
+          useSavedWatermark: useSavedWatermark,
+          position,
+          opacity,
+          scale,
+        });
 
-      if (result.successCount > 0) {
-        toast.success(`Watermark permanently applied to ${result.successCount} image${result.successCount > 1 ? "s" : ""}`);
+        allResults.push(...photoResult.results.map(r => ({ ...r, type: "photo" as const })));
+
+        if (photoResult.successCount > 0) {
+          toast.success(`Watermark applied to ${photoResult.successCount} photo${photoResult.successCount > 1 ? "s" : ""}`);
+        }
+      }
+
+      // Process videos one at a time (slower, more resource intensive)
+      if (videos.length > 0) {
+        for (let i = 0; i < videos.length; i++) {
+          const video = videos[i];
+          setCurrentProcessing(`Processing video ${i + 1} of ${videos.length}: ${video.filename}`);
+          setVideoProgress(0);
+
+          try {
+            await applyVideoWatermarkMutation.mutateAsync({
+              mediaId: video.id,
+              watermarkData: watermarkBase64,
+              useSavedWatermark: useSavedWatermark,
+              position,
+              opacity,
+              scale,
+            });
+
+            allResults.push({ mediaId: video.id, success: true, type: "video" });
+            toast.success(`Watermark applied to video: ${video.filename}`);
+          } catch (error) {
+            console.error(`Failed to watermark video ${video.id}:`, error);
+            allResults.push({ 
+              mediaId: video.id, 
+              success: false, 
+              error: error instanceof Error ? error.message : "Processing failed",
+              type: "video" 
+            });
+            toast.error(`Failed to watermark video: ${video.filename}`);
+          }
+
+          setVideoProgress(100);
+        }
+      }
+
+      setResults(allResults);
+      setCurrentProcessing(null);
+
+      const successCount = allResults.filter(r => r.success).length;
+      const failCount = allResults.filter(r => !r.success).length;
+
+      if (successCount > 0) {
         onWatermarkApplied?.();
       }
-      if (result.failCount > 0) {
-        toast.error(`Failed to process ${result.failCount} image${result.failCount > 1 ? "s" : ""}`);
+      if (failCount > 0 && successCount === 0) {
+        toast.error(`Failed to process all ${failCount} item${failCount > 1 ? "s" : ""}`);
       }
     } catch (error) {
       console.error("Watermark error:", error);
       toast.error("Failed to apply watermark");
     } finally {
       setIsProcessing(false);
+      setCurrentProcessing(null);
+      setVideoProgress(0);
     }
   };
 
@@ -233,14 +292,30 @@ export function WatermarkDialog({
       setSaveWatermarkForFuture(false);
       setUseSavedWatermark(false);
       setShowPreview(true);
+      setCurrentProcessing(null);
+      setVideoProgress(0);
     }
     onOpenChange(open);
   };
 
   const photoCount = selectedMedia.filter(m => m.mediaType === "photo").length;
+  const videoCount = selectedMedia.filter(m => m.mediaType === "video").length;
+  const totalCount = photoCount + videoCount;
   const successCount = results.filter(r => r.success).length;
   const hasSavedWatermark = !!savedWatermark?.watermarkUrl;
   const hasWatermark = useSavedWatermark ? hasSavedWatermark : !!watermarkPreview;
+
+  // Build description text
+  const getDescriptionText = () => {
+    const parts: string[] = [];
+    if (photoCount > 0) {
+      parts.push(`${photoCount} photo${photoCount !== 1 ? "s" : ""}`);
+    }
+    if (videoCount > 0) {
+      parts.push(`${videoCount} video${videoCount !== 1 ? "s" : ""}`);
+    }
+    return parts.join(" and ");
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -251,14 +326,35 @@ export function WatermarkDialog({
             Apply Watermark
           </DialogTitle>
           <DialogDescription>
-            Permanently apply your watermark to {photoCount} selected photo{photoCount !== 1 ? "s" : ""}.
-            This will replace the original images with watermarked versions.
+            Permanently apply your watermark to {getDescriptionText()}.
+            This will replace the original files with watermarked versions.
+            {videoCount > 0 && (
+              <span className="block mt-1 text-amber-500">
+                Note: Video processing may take several minutes depending on file size.
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-6 py-4">
           {/* Left Column - Settings */}
           <div className="space-y-4">
+            {/* Media Summary */}
+            <div className="flex gap-4 p-3 rounded-lg border border-border bg-muted/30">
+              {photoCount > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Image className="h-4 w-4 text-blue-500" />
+                  <span>{photoCount} photo{photoCount !== 1 ? "s" : ""}</span>
+                </div>
+              )}
+              {videoCount > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Video className="h-4 w-4 text-purple-500" />
+                  <span>{videoCount} video{videoCount !== 1 ? "s" : ""}</span>
+                </div>
+              )}
+            </div>
+
             {/* Saved Watermark Option */}
             {hasSavedWatermark && (
               <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/30">
@@ -348,15 +444,14 @@ export function WatermarkDialog({
                 </p>
 
                 {/* Save for future option */}
-                {watermarkFile && (
-                  <div className="flex items-center gap-2 mt-2">
+                {watermarkFile && !hasSavedWatermark && (
+                  <div className="flex items-center gap-2 pt-1">
                     <Switch
                       id="save-watermark"
                       checked={saveWatermarkForFuture}
                       onCheckedChange={setSaveWatermarkForFuture}
                     />
-                    <Label htmlFor="save-watermark" className="cursor-pointer text-xs flex items-center gap-1">
-                      <Save className="h-3 w-3" />
+                    <Label htmlFor="save-watermark" className="cursor-pointer text-xs text-muted-foreground">
                       Save for future use
                     </Label>
                   </div>
@@ -368,22 +463,22 @@ export function WatermarkDialog({
             <div className="space-y-2">
               <Label>Position</Label>
               <Select value={position} onValueChange={(v) => setPosition(v as Position)}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="top-left">Top Left (Default)</SelectItem>
+                  <SelectItem value="top-left">Top Left</SelectItem>
                   <SelectItem value="top-right">Top Right</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
                   <SelectItem value="bottom-left">Bottom Left</SelectItem>
                   <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Opacity */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <Label>Opacity</Label>
                 <span className="text-xs text-muted-foreground">{opacity}%</span>
               </div>
@@ -398,82 +493,73 @@ export function WatermarkDialog({
 
             {/* Scale */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <Label>Size</Label>
-                <span className="text-xs text-muted-foreground">{scale}% of image</span>
+                <span className="text-xs text-muted-foreground">{scale}% of image width</span>
               </div>
               <Slider
                 value={[scale]}
                 onValueChange={([v]) => setScale(v)}
                 min={5}
                 max={50}
-                step={5}
+                step={1}
               />
-            </div>
-
-            {/* Warning */}
-            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-2">
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                <strong>Note:</strong> This permanently modifies your images. The watermark cannot be removed after applying.
-              </p>
             </div>
           </div>
 
-          {/* Right Column - Live Preview */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Live Preview
-              </Label>
-              <Switch
-                id="show-preview"
-                checked={showPreview}
-                onCheckedChange={setShowPreview}
-              />
-            </div>
-            
-            {showPreview && (
-              <div 
-                ref={previewContainerRef}
-                className="relative rounded-lg border border-border overflow-hidden bg-muted/30"
-                style={{ aspectRatio: "4/3" }}
-              >
-                {sampleImage?.thumbnailUrl ? (
-                  <>
+          {/* Right Column - Preview & Results */}
+          <div className="space-y-4">
+            {/* Preview */}
+            {showPreview && sampleImage && hasWatermark && (
+              <div className="space-y-2">
+                <Label className="flex items-center justify-between">
+                  <span>Preview</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => setShowPreview(false)}
+                  >
+                    Hide
+                  </Button>
+                </Label>
+                <div
+                  ref={previewContainerRef}
+                  className="relative rounded-lg border border-border overflow-hidden bg-muted/30"
+                >
+                  <img
+                    src={sampleImage.thumbnailUrl || sampleImage.url}
+                    alt="Preview"
+                    className="w-full h-auto max-h-48 object-contain"
+                  />
+                  {watermarkPreview && (
                     <img
-                      src={sampleImage.thumbnailUrl}
-                      alt="Sample preview"
-                      className="w-full h-full object-cover"
+                      src={watermarkPreview}
+                      alt="Watermark"
+                      className={`absolute pointer-events-none ${positionStyles[position]}`}
+                      style={{
+                        width: `${scale}%`,
+                        height: "auto",
+                        opacity: opacity / 100,
+                      }}
                     />
-                    {/* Watermark overlay */}
-                    {hasWatermark && watermarkPreview && (
-                      <div 
-                        className={`absolute ${positionStyles[position]} pointer-events-none`}
-                        style={{ 
-                          opacity: opacity / 100,
-                          width: `${scale}%`,
-                        }}
-                      >
-                        <img
-                          src={watermarkPreview}
-                          alt="Watermark"
-                          className="w-full h-auto"
-                        />
-                      </div>
-                    )}
-                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
-                      Preview
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    <div className="text-center p-4">
-                      <ImagePlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-xs">No sample image available</p>
-                      <p className="text-xs opacity-70">Select photos to see preview</p>
-                    </div>
-                  </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Approximate preview - actual result may vary
+                </p>
+              </div>
+            )}
+
+            {/* Processing Status */}
+            {isProcessing && currentProcessing && (
+              <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">{currentProcessing}</span>
+                </div>
+                {videoProgress > 0 && (
+                  <Progress value={videoProgress} className="h-2" />
                 )}
               </div>
             )}
@@ -486,7 +572,7 @@ export function WatermarkDialog({
                     {successCount} of {results.length} processed
                   </span>
                 </div>
-                <div className="max-h-24 overflow-y-auto space-y-1">
+                <div className="max-h-32 overflow-y-auto space-y-1">
                   {results.map((result) => {
                     const media = selectedMedia.find(m => m.id === result.mediaId);
                     return (
@@ -498,6 +584,11 @@ export function WatermarkDialog({
                           <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
                         ) : (
                           <AlertCircle className="h-3 w-3 text-destructive flex-shrink-0" />
+                        )}
+                        {result.type === "video" ? (
+                          <Video className="h-3 w-3 text-purple-500 flex-shrink-0" />
+                        ) : (
+                          <Image className="h-3 w-3 text-blue-500 flex-shrink-0" />
                         )}
                         <span className="truncate flex-1">
                           {media?.filename || `Media ${result.mediaId}`}
@@ -515,13 +606,13 @@ export function WatermarkDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleClose(false)}>
+          <Button variant="outline" onClick={() => handleClose(false)} disabled={isProcessing}>
             {results.length > 0 ? "Done" : "Cancel"}
           </Button>
           {results.length === 0 && (
             <Button
               onClick={handleApplyWatermark}
-              disabled={!hasWatermark || photoCount === 0 || isProcessing}
+              disabled={!hasWatermark || totalCount === 0 || isProcessing}
             >
               {isProcessing ? (
                 <>

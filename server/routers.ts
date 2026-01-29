@@ -65,6 +65,7 @@ import { sendWarrantyReminderEmail } from "./email";
 import { sendProjectInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
+import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
 
 // Validation schemas for project operations
 const createProjectSchema = z.object({
@@ -1500,6 +1501,125 @@ export const appRouter = router({
           successCount: results.filter(r => r.success).length,
           failCount: results.filter(r => !r.success).length,
         };
+      }),
+
+    // Apply watermark to video files permanently
+    applyVideoWatermark: protectedProcedure
+      .input(z.object({
+        mediaId: z.number(),
+        watermarkData: z.string().optional(), // Base64 encoded watermark image (optional if using saved)
+        useSavedWatermark: z.boolean().default(false),
+        position: z.enum(["top-left", "top-right", "bottom-left", "bottom-right", "center"]).default("top-left"),
+        opacity: z.number().min(10).max(100).default(70),
+        scale: z.number().min(5).max(50).default(15),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Get watermark buffer
+        let watermarkBuffer: Buffer;
+        
+        if (input.useSavedWatermark) {
+          // Fetch saved watermark from S3
+          const savedWatermark = await getUserWatermark(ctx.user.id);
+          if (!savedWatermark?.watermarkUrl) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "No saved watermark found. Please upload a watermark first.",
+            });
+          }
+          const wmResponse = await fetch(savedWatermark.watermarkUrl);
+          if (!wmResponse.ok) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to fetch saved watermark",
+            });
+          }
+          watermarkBuffer = Buffer.from(await wmResponse.arrayBuffer());
+        } else if (input.watermarkData) {
+          watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+        } else {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Please provide a watermark image or use saved watermark",
+          });
+        }
+
+        // Get the media item
+        const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+
+        // Only process videos
+        if (mediaItem.mediaType !== "video") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This media is not a video",
+          });
+        }
+
+        try {
+          // Fetch the original video
+          console.log(`[VideoWatermark] Fetching video: ${mediaItem.url}`);
+          const videoResponse = await fetch(mediaItem.url);
+          if (!videoResponse.ok) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to fetch video",
+            });
+          }
+          const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+          console.log(`[VideoWatermark] Video size: ${Math.round(videoBuffer.length / 1024 / 1024)}MB`);
+
+          // Apply watermark to video
+          console.log(`[VideoWatermark] Applying watermark...`);
+          const watermarkedBuffer = await applyVideoWatermarkFromBuffers(
+            videoBuffer,
+            watermarkBuffer,
+            {
+              position: input.position,
+              opacity: input.opacity,
+              scale: input.scale,
+              padding: 20,
+            }
+          );
+          console.log(`[VideoWatermark] Watermarked video size: ${Math.round(watermarkedBuffer.length / 1024 / 1024)}MB`);
+
+          // Upload watermarked video to S3
+          const timestamp = Date.now();
+          const ext = mediaItem.filename.split(".").pop() || "mp4";
+          const baseName = mediaItem.filename.replace(/\.[^.]+$/, "").replace(/_wm_\d+$/, "");
+          const newFilename = `${baseName}_wm_${timestamp}.${ext}`;
+          const fileKey = `projects/${mediaItem.projectId}/videos/${newFilename}`;
+
+          console.log(`[VideoWatermark] Uploading to S3: ${fileKey}`);
+          const { url: newUrl } = await storagePut(
+            fileKey,
+            watermarkedBuffer,
+            "video/mp4"
+          );
+
+          // Update media record in database with new URL
+          await updateMediaUrls(input.mediaId, {
+            url: newUrl,
+            fileKey: fileKey,
+          });
+
+          console.log(`[VideoWatermark] Successfully watermarked video: ${newFilename}`);
+          return {
+            success: true,
+            url: newUrl,
+            filename: newFilename,
+          };
+        } catch (error) {
+          console.error(`[VideoWatermark] Failed for media ${input.mediaId}:`, error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to watermark video",
+          });
+        }
       }),
 
     // Legacy: Apply watermark and return for download (not permanent)

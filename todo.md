@@ -298,3 +298,10 @@
 - [x] Verify thumbnail URL is stored in media record
 - [x] Add detailed logging for thumbnail extraction debugging
 - [x] Remove 500MB file size limit for thumbnail extraction
+
+## Video Watermark Feature
+- [x] Extend watermark feature to support video files
+- [x] Implement server-side video watermarking using ffmpeg
+- [x] Update WatermarkDialog to handle video files
+- [x] Add progress indicator for video watermarking (longer process)
+- [x] Add unit tests for video watermark functionality
