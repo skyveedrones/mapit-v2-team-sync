@@ -517,7 +517,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 ) : (
                   <div className="relative">
                     <video
-                      src={selectedMedia.url}
+                      key={selectedMedia.id}
                       controls
                       controlsList="nodownload"
                       playsInline
@@ -525,12 +525,21 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       className="w-full max-h-[50vh] bg-black"
                       preload="metadata"
                     >
+                      {/* Provide multiple source options for better compatibility */}
+                      <source src={selectedMedia.url} type={selectedMedia.mimeType || 'video/mp4'} />
+                      <source src={selectedMedia.url} type="video/mp4" />
                       Your browser does not support the video tag.
                     </video>
                     {/* Video info overlay */}
                     <div className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs flex items-center gap-1">
                       <FileVideo className="h-3 w-3" />
                       Video
+                    </div>
+                    {/* Tip for green screen issues */}
+                    <div className="absolute bottom-2 left-2 right-2 text-center">
+                      <p className="text-xs text-white/60 bg-black/50 px-2 py-1 rounded inline-block">
+                        If video appears green, try downloading and playing locally
+                      </p>
                     </div>
                   </div>
                 )}

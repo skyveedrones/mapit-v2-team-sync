@@ -274,3 +274,11 @@
 - [x] Detect incomplete uploads on page load and show resume option
 - [x] Add "Resume Upload" button for interrupted uploads
 - [x] Clean up completed/expired upload states from localStorage
+
+## Fix Video Display Issue
+- [x] Fix green/corrupted video display in media detail dialog
+- [x] Decided against server-side transcoding (not available in production)
+- [x] Detect H.265/HEVC codec in video files before upload
+- [x] Show warning dialog when H.265 video detected
+- [x] Recommend HandBrake for conversion to H.264
+- [x] Allow user to proceed anyway or cancel upload

@@ -51,6 +51,7 @@ interface FileToUpload {
   bytesUploaded?: number;
   uploadId?: string; // For resumable uploads
   chunksUploaded?: number; // Track which chunks have been uploaded
+  isH265?: boolean; // Flag for H.265/HEVC videos that may have playback issues
 }
 
 // Persisted upload state for resumable uploads
@@ -155,6 +156,74 @@ function clearExpiredUploads(): void {
   }
 }
 
+// Detect H.265/HEVC codec in video file
+async function detectH265Codec(file: File): Promise<boolean> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    
+    // Create a MediaSource to check codec support
+    const checkCodec = () => {
+      // Check if the video can be played - H.265 often fails or shows green
+      // We'll use a heuristic based on file characteristics
+      
+      // DJI drones typically use H.265 for high bitrate 4K video
+      // Check video dimensions and estimate bitrate
+      const duration = video.duration;
+      const estimatedBitrate = duration > 0 ? (file.size * 8) / duration : 0;
+      
+      // H.265 is commonly used for:
+      // - 4K video (3840x2160 or higher)
+      // - High bitrate (>50 Mbps for 4K)
+      const is4K = video.videoWidth >= 3840 || video.videoHeight >= 2160;
+      const isHighBitrate = estimatedBitrate > 50000000; // 50 Mbps
+      
+      // Also check if browser reports codec issues
+      const canPlay = video.canPlayType('video/mp4; codecs="hvc1"') || 
+                      video.canPlayType('video/mp4; codecs="hev1"');
+      const hasHEVCSupport = canPlay !== '';
+      
+      // If it's 4K with high bitrate and browser doesn't fully support HEVC, likely H.265
+      // Or check filename patterns from DJI drones
+      const filename = file.name.toLowerCase();
+      const isDJIVideo = filename.includes('dji_') || filename.includes('_d.mp4');
+      
+      URL.revokeObjectURL(video.src);
+      
+      // Heuristic: High bitrate 4K from DJI is almost certainly H.265
+      if (is4K && isHighBitrate && isDJIVideo) {
+        resolve(true);
+        return;
+      }
+      
+      // For other high bitrate 4K videos, warn as well
+      if (is4K && isHighBitrate) {
+        resolve(true);
+        return;
+      }
+      
+      resolve(false);
+    };
+    
+    video.onloadedmetadata = checkCodec;
+    
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      // If video fails to load metadata, it might be H.265
+      resolve(false);
+    };
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      URL.revokeObjectURL(video.src);
+      resolve(false);
+    }, 5000);
+    
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 // Extract thumbnail from video
 async function extractVideoThumbnail(file: File): Promise<string | null> {
   return new Promise((resolve) => {
@@ -213,6 +282,8 @@ export function MediaUploadDialog({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingResumable, setPendingResumable] = useState<PersistedUpload[]>([]);
+  const [h265WarningOpen, setH265WarningOpen] = useState(false);
+  const [h265Files, setH265Files] = useState<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const uploadMutation = trpc.media.upload.useMutation();
@@ -249,11 +320,19 @@ export function MediaUploadDialog({
         error: error || undefined,
       };
       
-      // Extract thumbnail for videos (only for smaller videos to avoid memory issues)
-      if (!error && file.type.startsWith("video/") && file.size < 500 * 1024 * 1024) {
-        const thumbnail = await extractVideoThumbnail(file);
-        if (thumbnail) {
-          fileItem.thumbnail = thumbnail;
+      // Check for H.265 codec in video files
+      if (!error && file.type.startsWith("video/")) {
+        const isH265 = await detectH265Codec(file);
+        if (isH265) {
+          fileItem.isH265 = true;
+        }
+        
+        // Extract thumbnail for videos (only for smaller videos to avoid memory issues)
+        if (file.size < 500 * 1024 * 1024) {
+          const thumbnail = await extractVideoThumbnail(file);
+          if (thumbnail) {
+            fileItem.thumbnail = thumbnail;
+          }
         }
       }
       
@@ -261,6 +340,13 @@ export function MediaUploadDialog({
     }
 
     setFiles((prev) => [...prev, ...filesToAdd]);
+    
+    // Show H.265 warning if any videos were detected as H.265
+    const h265Detected = filesToAdd.filter(f => f.isH265);
+    if (h265Detected.length > 0) {
+      setH265Files(h265Detected.map(f => f.file.name));
+      setH265WarningOpen(true);
+    }
   }, []);
 
   const removeFile = (index: number) => {
@@ -830,6 +916,9 @@ export function MediaUploadDialog({
                         {fileItem.file.size > 50 * 1024 * 1024 && (
                           <span className="text-blue-500">(Resumable)</span>
                         )}
+                        {fileItem.isH265 && (
+                          <span className="text-amber-500 font-medium">(H.265 - may not play in browser)</span>
+                        )}
                         {fileItem.uploadSpeed && fileItem.status === "uploading" && (
                           <>
                             <span>•</span>
@@ -934,6 +1023,71 @@ export function MediaUploadDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* H.265 Warning Dialog */}
+      <Dialog open={h265WarningOpen} onOpenChange={setH265WarningOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-500">
+              <AlertCircle className="h-5 w-5" />
+              H.265/HEVC Video Detected
+            </DialogTitle>
+            <DialogDescription>
+              The following video(s) appear to be encoded in H.265/HEVC format, which may not play correctly in web browsers:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-muted p-3 rounded-lg max-h-32 overflow-y-auto">
+              <ul className="text-sm space-y-1">
+                {h265Files.map((filename, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <FileVideo className="h-4 w-4 text-muted-foreground" />
+                    <span className="truncate">{filename}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-400 mb-2">Recommended: Convert to H.264</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                For best browser compatibility, convert your videos to H.264 format using <strong>HandBrake</strong> (free software):
+              </p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Download HandBrake from <a href="https://handbrake.fr" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">handbrake.fr</a></li>
+                <li>Open your video file in HandBrake</li>
+                <li>Select "Fast 1080p30" or "Fast 2160p60 4K" preset</li>
+                <li>Ensure Video Codec is set to "H.264 (x264)"</li>
+                <li>Click "Start Encode" and upload the converted file</li>
+              </ol>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              <strong>Tip:</strong> On your DJI drone, you can change the video codec from H.265 to H.264 in the camera settings to avoid this issue for future recordings.
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Remove H.265 files from the upload list
+                setFiles(prev => prev.filter(f => !f.isH265));
+                setH265WarningOpen(false);
+              }}
+            >
+              Remove & Convert First
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setH265WarningOpen(false)}
+            >
+              Upload Anyway
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
