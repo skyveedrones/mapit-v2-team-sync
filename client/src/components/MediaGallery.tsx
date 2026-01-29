@@ -749,12 +749,6 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       <FileVideo className="h-3 w-3" />
                       Video
                     </div>
-                    {/* Tip for green screen issues */}
-                    <div className="absolute bottom-2 left-2 right-2 text-center">
-                      <p className="text-xs text-white/60 bg-black/50 px-2 py-1 rounded inline-block">
-                        If video appears green, try downloading and playing locally
-                      </p>
-                    </div>
                   </div>
                 )}
 
@@ -791,6 +785,15 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   </>
                 )}
               </div>
+
+              {/* Tip for green screen issues - shown below video */}
+              {selectedMedia.mediaType === "video" && !isFullscreen && (
+                <div className="text-center py-3">
+                  <p className="text-sm text-muted-foreground">
+                    If video appears green, try downloading and playing locally
+                  </p>
+                </div>
+              )}
 
               {/* Metadata Grid - Hidden in fullscreen */}
               {!isFullscreen && (

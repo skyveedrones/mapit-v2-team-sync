@@ -338,3 +338,6 @@
 - [x] Neon Green (#14E114) - logo accent, highlights
 - [x] Add white accents for contrast and readability
 - [x] Apply new colors across all components
+
+## Video Player UI Improvement
+- [x] Move H.265 video tip from above to below the video player
