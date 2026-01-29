@@ -265,3 +265,6 @@
 ## Fix Video Upload Presigned URL Error
 - [x] Fix "Failed to get presigned URL (404)" error for large video uploads
 - [x] Use chunked upload approach instead of presigned URLs
+
+## Fix Video Upload JSON Parse Error
+- [x] Fix "JSON.parse: unexpected character" error during chunked video upload (reduced chunk size to 2MB, added retry logic)

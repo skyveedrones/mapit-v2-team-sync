@@ -62,7 +62,7 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
-const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for large file uploads
+const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks for large file uploads (smaller to avoid proxy limits)
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -255,7 +255,7 @@ export function MediaUploadDialog({
     });
   };
 
-  // Upload large file in chunks
+  // Upload large file in chunks with retry logic
   const uploadInChunks = async (
     fileItem: FileToUpload,
     index: number,
@@ -266,21 +266,41 @@ export function MediaUploadDialog({
     const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     let uploadedBytes = 0;
+    const maxRetries = 3;
     
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
       const start = chunkIndex * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, file.size);
       const chunkData = await readChunkAsBase64(file, start, end);
       
-      await uploadChunkMutation.mutateAsync({
-        uploadId,
-        chunkIndex,
-        totalChunks,
-        chunkData,
-        projectId,
-        filename: file.name,
-        mimeType: file.type,
-      });
+      // Retry logic for each chunk
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          await uploadChunkMutation.mutateAsync({
+            uploadId,
+            chunkIndex,
+            totalChunks,
+            chunkData,
+            projectId,
+            filename: file.name,
+            mimeType: file.type,
+          });
+          lastError = null;
+          break; // Success, exit retry loop
+        } catch (err) {
+          lastError = err as Error;
+          console.warn(`Chunk ${chunkIndex + 1}/${totalChunks} failed (attempt ${attempt + 1}/${maxRetries}):`, err);
+          if (attempt < maxRetries - 1) {
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          }
+        }
+      }
+      
+      if (lastError) {
+        throw new Error(`Failed to upload chunk ${chunkIndex + 1} after ${maxRetries} attempts: ${lastError.message}`);
+      }
       
       uploadedBytes = end;
       const elapsed = (Date.now() - startTime) / 1000;

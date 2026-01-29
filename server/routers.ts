@@ -531,7 +531,7 @@ export const appRouter = router({
         const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
 
         // Fetch and combine all chunks
-        const totalChunks = Math.ceil(input.fileSize / (5 * 1024 * 1024)); // 5MB chunks
+        const totalChunks = Math.ceil(input.fileSize / (2 * 1024 * 1024)); // 2MB chunks (must match client)
         const chunks: Buffer[] = [];
         
         for (let i = 0; i < totalChunks; i++) {
