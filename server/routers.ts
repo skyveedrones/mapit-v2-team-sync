@@ -670,6 +670,63 @@ export const appRouter = router({
         return { success: true, deleted };
       }),
 
+    // Create media record from URL (used after TUS upload)
+    createFromUrl: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileUrl: z.string(),
+        fileSize: z.number(),
+        thumbnailUrl: z.string().nullable().optional(),
+        thumbnailData: z.string().optional(), // Base64 encoded thumbnail
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Upload thumbnail if provided as base64
+        let thumbnailUrl = input.thumbnailUrl || null;
+        if (input.thumbnailData && !thumbnailUrl) {
+          const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
+          const uniqueId = nanoid(12);
+          const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+          const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
+          thumbnailUrl = thumbnailResult.url;
+        }
+
+        // Extract file key from URL
+        const urlParts = new URL(input.fileUrl);
+        const fileKey = urlParts.pathname.replace(/^\//, "");
+
+        // Create media record in database
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ctx.user.id,
+          filename: input.filename,
+          fileKey,
+          url: input.fileUrl,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: null,
+          longitude: null,
+          altitude: null,
+          capturedAt: null,
+          cameraMake: null,
+          cameraModel: null,
+          thumbnailUrl,
+        });
+
+        return mediaItem;
+      }),
+
     // Update GPS coordinates for a media item
     updateGPS: protectedProcedure
       .input(z.object({

@@ -282,3 +282,12 @@
 - [x] Show warning dialog when H.265 video detected
 - [x] Recommend HandBrake for conversion to H.264
 - [x] Allow user to proceed anyway or cancel upload
+
+## TUS Resumable Upload Implementation
+- [x] Install TUS dependencies (tus-js-client, @tus/server, @tus/file-store)
+- [x] Create TUS server endpoint at /api/video-upload
+- [x] Update MediaUploadDialog to use TUS for video uploads
+- [x] Add createFromUrl mutation for creating media records after TUS upload
+- [x] Keep H.265 detection warning (no transcoding)
+- [x] Support up to 5GB video files
+- [x] Client-side thumbnail extraction for videos (server stores thumbnail to S3)

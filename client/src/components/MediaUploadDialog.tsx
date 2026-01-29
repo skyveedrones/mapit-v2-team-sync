@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import * as tus from "tus-js-client";
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -644,6 +645,101 @@ export function MediaUploadDialog({
     toast.success("Pending upload removed");
   };
 
+  // Upload video using TUS protocol for better reliability
+  const uploadVideoWithTus = async (
+    fileItem: FileToUpload,
+    index: number,
+    startTime: number
+  ): Promise<{ url: string }> => {
+    return new Promise((resolve, reject) => {
+      const file = fileItem.file;
+      
+      const upload = new tus.Upload(file, {
+        endpoint: "/api/video-upload",
+        retryDelays: [0, 1000, 3000, 5000, 10000],
+        chunkSize: 5 * 1024 * 1024, // 5MB chunks
+        metadata: {
+          filename: file.name,
+          filetype: file.type,
+          projectId: projectId.toString(),
+        },
+        onError: (error) => {
+          console.error("TUS upload error:", error);
+          reject(error);
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const speed = bytesUploaded / elapsed;
+          const remaining = bytesTotal - bytesUploaded;
+          const eta = remaining / speed;
+          const progress = (bytesUploaded / bytesTotal) * 90; // 90% for upload
+          
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === index ? { 
+                ...f, 
+                progress,
+                uploadSpeed: speed,
+                eta,
+                bytesUploaded
+              } : f
+            )
+          );
+        },
+        onSuccess: async () => {
+          try {
+            // Get the upload URL from the TUS upload
+            const uploadUrl = upload.url;
+            if (!uploadUrl) {
+              throw new Error("No upload URL returned");
+            }
+            
+            // Extract upload ID from URL
+            const uploadId = uploadUrl.split("/").pop();
+            
+            // Get metadata from server
+            const response = await fetch(`/api/video-upload-metadata/${uploadId}`);
+            if (!response.ok) {
+              throw new Error("Failed to get upload metadata");
+            }
+            
+            const metadata = await response.json();
+            
+            // Create media record in database
+            setFiles((prev) =>
+              prev.map((f, idx) => (idx === index ? { ...f, progress: 95 } : f))
+            );
+            
+            await createMediaMutation.mutateAsync({
+              projectId,
+              filename: file.name,
+              mimeType: file.type,
+              fileUrl: metadata.finalUrl,
+              fileSize: file.size,
+              thumbnailUrl: fileItem.thumbnail ? undefined : null,
+              thumbnailData: fileItem.thumbnail?.split(",")[1],
+            });
+            
+            resolve({ url: metadata.finalUrl });
+          } catch (err) {
+            reject(err);
+          }
+        },
+      });
+      
+      // Check for previous uploads to resume
+      upload.findPreviousUploads().then((previousUploads) => {
+        if (previousUploads.length > 0) {
+          upload.resumeFromPreviousUpload(previousUploads[0]);
+        }
+        upload.start();
+      });
+    });
+  };
+
+  // Mutation to create media record after TUS upload
+  const createMediaMutation = trpc.media.createFromUrl.useMutation();
+
   const uploadFiles = async () => {
     const pendingFiles = files.filter((f) => f.status === "pending");
     if (pendingFiles.length === 0) return;
@@ -669,11 +765,15 @@ export function MediaUploadDialog({
       );
 
       try {
-        // Use chunked upload for files larger than 50MB
-        const useChunkedUpload = fileItem.file.size > 50 * 1024 * 1024;
+        // Use TUS for video uploads (better reliability), chunked upload for large images
+        const isVideo = fileItem.file.type.startsWith("video/");
+        const useChunkedUpload = !isVideo && fileItem.file.size > 50 * 1024 * 1024;
         
-        if (useChunkedUpload) {
-          // Large file: use chunked upload
+        if (isVideo) {
+          // Video: use TUS protocol for better reliability and resumability
+          await uploadVideoWithTus(fileItem, i, startTime);
+        } else if (useChunkedUpload) {
+          // Large image: use chunked upload
           await uploadInChunks(fileItem, i, startTime);
         } else {
           // Small file: use base64 upload
