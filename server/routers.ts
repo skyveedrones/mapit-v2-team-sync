@@ -79,9 +79,9 @@ import {
   acceptClientInvitation,
   getClientPendingInvitations,
   revokeClientInvitation,
+  userHasClientProjectAccess,
 } from "./db";
-import { sendWarrantyReminderEmail } from "./email";
-import { sendProjectInvitationEmail } from "./email";
+import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
@@ -2439,11 +2439,27 @@ export const appRouter = router({
           expiresAt,
         });
 
-        // TODO: Send invitation email
-        // For now, return the invitation with token for manual sharing
+        // Send invitation email
+        const baseUrl = process.env.VITE_APP_URL || 'https://skyveedrones.com';
+        const inviteUrl = `${baseUrl}/client-invite/${token}`;
+        
+        const emailResult = await sendClientInvitationEmail({
+          to: input.email,
+          inviterName: ctx.user.name || 'SkyVee User',
+          clientName: client.name,
+          role: input.role,
+          inviteUrl,
+        });
+
+        if (!emailResult.success) {
+          console.error('[Client Invite] Failed to send email:', emailResult.error);
+          // Still return success since invitation was created
+        }
+
         return {
           invitation,
-          inviteUrl: `/client-invite/${token}`,
+          inviteUrl,
+          emailSent: emailResult.success,
         };
       }),
 
@@ -2543,6 +2559,75 @@ export const appRouter = router({
           });
         }
         return { success: true };
+      }),
+
+    // Get client portal data for the current user (client user view)
+    getMyPortal: protectedProcedure.query(async ({ ctx }) => {
+      // Get all clients this user has access to
+      const clientAccess = await getUserClientAccess(ctx.user.id);
+      
+      // For each client, get their assigned projects
+      const clientsWithProjects = await Promise.all(
+        clientAccess.map(async (access) => {
+          const projects = await getClientProjects(access.client.id);
+          return {
+            client: access.client,
+            role: access.role,
+            projects,
+          };
+        })
+      );
+      
+      return { clients: clientsWithProjects };
+    }),
+
+    // Get a specific project for client portal view (read-only)
+    getPortalProject: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Check if user has client access to this project
+        const hasAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this project",
+          });
+        }
+        
+        const project = await getProjectById(input.projectId);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+        
+        return project;
+      }),
+
+    // Get media for a project in client portal (read-only)
+    getPortalProjectMedia: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Check if user has client access to this project
+        const hasAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this project",
+          });
+        }
+        
+        // Use 0 as userId since we already verified client access above
+        // The getProjectMedia function requires userId but we've already authorized via client access
+        const project = await getProjectById(input.projectId);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+        return getProjectMedia(input.projectId, project.userId);
       }),
   }),
 });

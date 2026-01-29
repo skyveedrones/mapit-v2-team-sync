@@ -436,3 +436,57 @@ export async function sendWarrantyReminderEmail(params: {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+/**
+ * Send a client portal invitation email
+ */
+export async function sendClientInvitationEmail(params: {
+  to: string;
+  inviterName: string;
+  clientName: string;
+  role: 'viewer' | 'admin';
+  inviteUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { to, inviterName, clientName, role, inviteUrl } = params;
+  
+  const roleDescription = role === 'admin' 
+    ? 'view projects and manage settings' 
+    : 'view projects';
+  
+  const html = generateEmailTemplate({
+    preheader: `${inviterName} has invited you to access the ${clientName} client portal on SkyVee`,
+    title: 'Client Portal Access',
+    body: `
+      <p><span class="highlight">${inviterName}</span> has invited you to access the client portal for:</p>
+      <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">${clientName}</p>
+      <p>As a portal member, you'll be able to ${roleDescription} for ${clientName}.</p>
+      <p>Click the button below to accept the invitation and access your portal. You'll need to create an account or sign in if you haven't already.</p>
+    `,
+    ctaText: 'Access Client Portal',
+    ctaUrl: inviteUrl,
+    footer: `
+      <p>This invitation will expire in 7 days.</p>
+      <p>If you don't want to join this portal, you can ignore this email.</p>
+      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+    `,
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      to: [to],
+      subject: `${inviterName} invited you to the ${clientName} portal on SkyVee`,
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Failed to send client invitation:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Error sending client invitation:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

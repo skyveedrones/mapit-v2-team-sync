@@ -360,3 +360,9 @@
 - [x] Build client projects page for assigning projects
 - [x] Create "City of Forney" as first client
 - [x] Assign relevant projects to City of Forney
+
+## Client Portal Completion
+- [x] Build client portal dashboard view (read-only project access for clients)
+- [x] Implement client invitation email system
+- [x] Assign Oncor Forney Switch project to City of Forney
+- [x] Assign Gail Wilson Extension project to City of Forney

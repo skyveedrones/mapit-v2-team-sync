@@ -15,6 +15,7 @@ import FlightDetail from "./pages/FlightDetail";
 import InviteAccept from "./pages/InviteAccept";
 import Clients from "./pages/Clients";
 import ClientProjects from "./pages/ClientProjects";
+import ClientPortal from "./pages/ClientPortal";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -90,6 +91,14 @@ function Router() {
       </Route>
       <Route path="/clients/:clientId/projects">
         {() => <ProtectedRoute component={ClientProjects} />}
+      </Route>
+      
+      {/* Client Portal (for client users to view their projects) */}
+      <Route path="/portal">
+        {() => <ProtectedRoute component={ClientPortal} />}
+      </Route>
+      <Route path="/portal/project/:id">
+        {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
       
       {/* Invitation acceptance page */}

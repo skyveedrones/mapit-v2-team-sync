@@ -1899,3 +1899,39 @@ export async function revokeClientInvitation(invitationId: number, ownerId: numb
 
   return true;
 }
+
+/**
+ * Check if a user has client access to a specific project
+ * (i.e., the user is a client user for a client that has this project assigned)
+ */
+export async function userHasClientProjectAccess(userId: number, projectId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get the project to check its clientId
+  const project = await db
+    .select({ clientId: projects.clientId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (project.length === 0 || !project[0].clientId) {
+    return false;
+  }
+
+  // Check if user has access to this client
+  const clientAccess = await db
+    .select()
+    .from(clientUsers)
+    .where(
+      and(
+        eq(clientUsers.userId, userId),
+        eq(clientUsers.clientId, project[0].clientId)
+      )
+    )
+    .limit(1);
+
+  return clientAccess.length > 0;
+}
