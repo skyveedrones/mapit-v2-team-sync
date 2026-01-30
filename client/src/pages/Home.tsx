@@ -35,7 +35,7 @@ const features = [
     title: "Easy Upload",
     description:
       "Upload drone photos and videos with automatic GPS metadata extraction",
-    image: "/images/feature-upload.jpg",
+    image: "/images/feature-upload-new.jpg",
     link: "/features/easy-upload",
   },
   {
@@ -43,7 +43,7 @@ const features = [
     title: "Interactive Maps",
     description:
       "Visualize your flights on Google Maps with markers, popups, and key data",
-    image: "/images/feature-maps.jpg",
+    image: "/images/feature-maps-new.jpg",
     link: "/features/interactive-maps",
   },
   {
@@ -51,7 +51,7 @@ const features = [
     title: "Flight Path Tracking",
     description:
       "Automatic flight path visualization connecting sequential GPS points",
-    image: "/images/feature-maps.jpg",
+    image: "/images/feature-flightpath-new.jpg",
     link: "/features/flight-path-tracking",
   },
   {
@@ -59,7 +59,7 @@ const features = [
     title: "GPS Data Export",
     description:
       "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software",
-    image: "/images/feature-export.jpg",
+    image: "/images/feature-export-new.png",
     link: "/features/gps-data-export",
   },
   {
@@ -67,7 +67,7 @@ const features = [
     title: "PDF Map Overlay",
     description:
       "Overlay construction plans and blueprints on your maps with precise corner positioning",
-    image: "/images/feature-maps.jpg",
+    image: "/images/feature-overlay-new.jpg",
     link: "/features/pdf-map-overlay",
   },
   {
@@ -75,7 +75,7 @@ const features = [
     title: "Install as App",
     description:
       "Install on your phone or desktop for quick access and offline use - works anywhere",
-    image: "/images/feature-upload.jpg",
+    image: "/images/feature-install-new.png",
     link: "/features/install-as-app",
   },
 ];

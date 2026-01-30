@@ -188,7 +188,7 @@ export default function GpsDataExport() {
             >
               <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border shadow-2xl">
                 <img
-                  src="/images/feature-export.jpg"
+                  src="/images/feature-export-new.png"
                   alt="GPS Data Export"
                   className="w-full h-full object-cover"
                   onError={(e) => {

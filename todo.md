@@ -519,3 +519,11 @@
 
 ## Feature Page Scroll Fix
 - [x] Fix feature pages to scroll to top when navigating from homepage hero tiles
+
+## Feature Page Image Updates
+- [x] Find and update Easy Upload feature page image
+- [x] Find and update Interactive Maps feature page image
+- [x] Find and update Flight Path Tracking feature page image
+- [x] Find and update GPS Data Export feature page image
+- [x] Find and update PDF Map Overlay feature page image
+- [x] Find and update Install as App feature page image
