@@ -431,3 +431,7 @@
 - [x] Replace white photo/video icons with stylish colored icons
 - [x] Photo icon - use brand green color (#04B16F)
 - [x] Video icon - use red color
+
+## Bug Fix: Video Thumbnails on Map
+- [x] Fix video thumbnails not showing in GPS marker popups
+- [x] Enable enlarge functionality for video thumbnails like photos

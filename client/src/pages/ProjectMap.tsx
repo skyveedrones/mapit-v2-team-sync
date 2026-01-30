@@ -162,10 +162,10 @@ export default function ProjectMap() {
         content.innerHTML = `
           <div class="font-semibold text-sm mb-1">${media.filename}</div>
           <div class="relative">
-            ${media.mediaType === 'photo' ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">Video</span></div>'}
-            ${media.mediaType === 'photo' ? `<button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="Enlarge image">
+            ${media.thumbnailUrl ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">No Thumbnail</span></div>'}
+            <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${media.mediaType === 'video' ? 'Play video' : 'Enlarge image'}">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-            </button>` : ''}
+            </button>
           </div>
           <div class="text-xs text-gray-600">
             <div>📍 ${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
@@ -175,17 +175,15 @@ export default function ProjectMap() {
         `;
 
         // Add click handler for enlarge button after content is added to DOM
-        if (media.mediaType === 'photo') {
-          setTimeout(() => {
-            const enlargeBtn = document.getElementById(`enlarge-btn-${media.id}`);
-            if (enlargeBtn) {
-              enlargeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                setEnlargedImage(media);
-              });
-            }
-          }, 100);
-        }
+        setTimeout(() => {
+          const enlargeBtn = document.getElementById(`enlarge-btn-${media.id}`);
+          if (enlargeBtn) {
+            enlargeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setEnlargedImage(media);
+            });
+          }
+        }, 100);
 
         infoWindowRef.current?.setContent(content);
         infoWindowRef.current?.open(map, marker);
