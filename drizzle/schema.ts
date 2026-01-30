@@ -196,6 +196,12 @@ export const flights = mysqlTable("flights", {
   description: text("description"),
   /** Date when the drone flight was conducted */
   flightDate: timestamp("flightDate"),
+  /** Drone pilot name */
+  dronePilot: varchar("dronePilot", { length: 255 }),
+  /** FAA License number */
+  faaLicenseNumber: varchar("faaLicenseNumber", { length: 100 }),
+  /** LAANC Authorization number */
+  laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
   /** Number of media items in the flight */
   mediaCount: int("mediaCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

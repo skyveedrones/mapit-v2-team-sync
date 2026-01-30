@@ -1204,6 +1204,9 @@ export const appRouter = router({
         name: z.string().min(1, "Flight name is required").max(255),
         description: z.string().max(5000).optional(),
         flightDate: z.date().optional(),
+        dronePilot: z.string().max(255).optional(),
+        faaLicenseNumber: z.string().max(100).optional(),
+        laancAuthNumber: z.string().max(100).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the project
@@ -1221,6 +1224,9 @@ export const appRouter = router({
           name: input.name,
           description: input.description || null,
           flightDate: input.flightDate || null,
+          dronePilot: input.dronePilot || null,
+          faaLicenseNumber: input.faaLicenseNumber || null,
+          laancAuthNumber: input.laancAuthNumber || null,
         });
 
         return flight;
@@ -1274,6 +1280,9 @@ export const appRouter = router({
         name: z.string().min(1).max(255).optional(),
         description: z.string().max(5000).nullable().optional(),
         flightDate: z.date().nullable().optional(),
+        dronePilot: z.string().max(255).nullable().optional(),
+        faaLicenseNumber: z.string().max(100).nullable().optional(),
+        laancAuthNumber: z.string().max(100).nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...updates } = input;

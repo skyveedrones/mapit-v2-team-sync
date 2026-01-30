@@ -479,3 +479,9 @@
 ## Flight Map GPS Markers Fix
 - [x] Update flight detail map to show only GPS markers from that flight's media
 - [x] Filter map data by flightId instead of showing all project media
+
+## Drone Pilot Information Fields
+- [x] Add pilot fields to flights database table (name, license, contact)
+- [x] Update flight creation dialog with pilot information inputs
+- [x] Display pilot information on flight detail page
+- [x] Allow editing pilot information on existing flights

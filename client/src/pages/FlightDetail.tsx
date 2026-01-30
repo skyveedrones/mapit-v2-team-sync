@@ -34,6 +34,7 @@ import {
   ArrowLeft,
   Calendar,
   ChevronDown,
+  FileText,
   FolderOpen,
   Image,
   Loader2,
@@ -42,6 +43,7 @@ import {
   Pencil,
   Plane,
   Plus,
+  Shield,
   Trash2,
   Upload,
   User,
@@ -90,6 +92,9 @@ export default function FlightDetail() {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editFlightDate, setEditFlightDate] = useState("");
+  const [editDronePilot, setEditDronePilot] = useState("");
+  const [editFaaLicenseNumber, setEditFaaLicenseNumber] = useState("");
+  const [editLaancAuthNumber, setEditLaancAuthNumber] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -146,6 +151,9 @@ export default function FlightDetail() {
           ? format(new Date(flight.flightDate), "yyyy-MM-dd")
           : ""
       );
+      setEditDronePilot(flight.dronePilot || "");
+      setEditFaaLicenseNumber(flight.faaLicenseNumber || "");
+      setEditLaancAuthNumber(flight.laancAuthNumber || "");
       setEditDialogOpen(true);
     }
   };
@@ -161,6 +169,9 @@ export default function FlightDetail() {
       name: editName.trim(),
       description: editDescription.trim() || null,
       flightDate: editFlightDate ? new Date(editFlightDate) : null,
+      dronePilot: editDronePilot.trim() || null,
+      faaLicenseNumber: editFaaLicenseNumber.trim() || null,
+      laancAuthNumber: editLaancAuthNumber.trim() || null,
     });
   };
 
@@ -424,6 +435,49 @@ export default function FlightDetail() {
                   </Link>
                 </CardContent>
               </Card>
+
+              {/* Pilot Information Cards */}
+              {flight.dronePilot && (
+                <Card className="bg-card">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <User className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">
+                        Drone Pilot
+                      </span>
+                    </div>
+                    <p className="font-medium">{flight.dronePilot}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {flight.faaLicenseNumber && (
+                <Card className="bg-card">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <FileText className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">
+                        FAA License #
+                      </span>
+                    </div>
+                    <p className="font-medium">{flight.faaLicenseNumber}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {flight.laancAuthNumber && (
+                <Card className="bg-card">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Shield className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">
+                        LAANC Auth #
+                      </span>
+                    </div>
+                    <p className="font-medium">{flight.laancAuthNumber}</p>
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
 
             {/* Media Section */}
@@ -531,6 +585,55 @@ export default function FlightDetail() {
                 disabled={updateFlight.isPending}
                 rows={3}
               />
+            </div>
+
+            {/* Pilot Information Section */}
+            <div className="border-t pt-4 space-y-4">
+              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Pilot Information
+              </h4>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-drone-pilot">Drone Pilot Name</Label>
+                <Input
+                  id="edit-drone-pilot"
+                  placeholder="Enter pilot name"
+                  value={editDronePilot}
+                  onChange={(e) => setEditDronePilot(e.target.value)}
+                  disabled={updateFlight.isPending}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-faa-license" className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    FAA License #
+                  </Label>
+                  <Input
+                    id="edit-faa-license"
+                    placeholder="e.g., 1234567"
+                    value={editFaaLicenseNumber}
+                    onChange={(e) => setEditFaaLicenseNumber(e.target.value)}
+                    disabled={updateFlight.isPending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-laanc-auth" className="flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    LAANC Auth #
+                  </Label>
+                  <Input
+                    id="edit-laanc-auth"
+                    placeholder="e.g., LAANC-2025-001"
+                    value={editLaancAuthNumber}
+                    onChange={(e) => setEditLaancAuthNumber(e.target.value)}
+                    disabled={updateFlight.isPending}
+                  />
+                </div>
+              </div>
             </div>
 
             <DialogFooter>
