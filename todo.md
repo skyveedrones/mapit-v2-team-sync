@@ -547,8 +547,3 @@
 - [x] Update logo files and favicon
 - [x] Update page titles and metadata
 - [x] Test all branding changes across the site
-
-## Update Mapit Logo with Green V
-- [x] Generate new Mapit logo with green "V" replacing GPS marker dot
-- [x] Update logo files throughout the site
-- [x] Extract SkyVee green V wing and composite it into Mapit logo
