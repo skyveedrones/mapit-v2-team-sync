@@ -671,8 +671,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     {currentMediaIndex + 1} of {sortedMedia.length}
                   </span>
                 )}
-                {/* Zoom controls for photos */}
-                {selectedMedia?.mediaType === "photo" && (
+                {/* Zoom controls for photos and videos */}
+                {selectedMedia && (
                   <div className={`flex items-center gap-1 ml-2 px-2 py-1 rounded-lg ${isFullscreen ? "bg-black/50" : "bg-muted"}`}>
                     <button
                       onClick={handleZoomOut}
@@ -750,7 +750,10 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       controlsList="nodownload"
                       playsInline
                       poster={selectedMedia.thumbnailUrl || undefined}
-                      className={`w-full bg-black ${isFullscreen ? "h-full object-contain" : "max-h-[50vh]"}`}
+                      className={`w-full bg-black select-none transition-transform duration-100 ${isFullscreen ? "h-full object-contain" : "max-h-[50vh]"}`}
+                      style={{
+                        transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`,
+                      }}
                       preload="metadata"
                     >
                       {/* Provide multiple source options for better compatibility */}

@@ -453,3 +453,8 @@
 - [x] Add scrollbar to popup dialog
 - [x] Shrink green video tip banner
 - [x] Adjust all tiles for symmetry and alignment
+
+## Video Zoom Feature
+- [x] Enable zoom controls for video playback
+- [x] Apply zoom transformation to video element
+- [x] Support pan/drag functionality for zoomed videos
