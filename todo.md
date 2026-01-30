@@ -488,3 +488,7 @@
 
 ## SkyVee Logo Link Update
 - [x] Change SkyVee logo link to point to www.skyveedrones.com
+
+## Report Download Page Logo Fix
+- [x] Fix SkyVee logo "V" on report download page
+- [x] Lower the logo position to not be crowded at top of page

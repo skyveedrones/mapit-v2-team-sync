@@ -290,9 +290,15 @@ export function generateReportHtml(
   };
 
   // SkyVee logo as inline SVG for consistent rendering
-  const skyVeeLogo = `<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
-    <path d="M60 5 L75 20 L60 12 L45 20 Z" fill="#10B981"/>
-    <text x="10" y="35" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">SkyVee</text>
+  // The V is a stylized checkmark/bird shape pointing upward
+  const skyVeeLogo = `<svg width="140" height="45" viewBox="0 0 140 45" xmlns="http://www.w3.org/2000/svg">
+    <!-- SkyVee green V/checkmark logo mark -->
+    <path d="M70 8 C70 8 78 18 78 18 L70 14 L62 18 C62 18 70 8 70 8 Z" fill="#10B981" stroke="#10B981" stroke-width="1"/>
+    <path d="M62 18 L70 14 L78 18" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- SkyVee text -->
+    <text x="10" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">Sky</text>
+    <text x="52" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#10B981">V</text>
+    <text x="67" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">ee</text>
   </svg>`;
 
   // Generate photo grid HTML - 8 photos per page (4 rows x 2 columns)
@@ -406,9 +412,10 @@ export function generateReportHtml(
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 0;
+      padding: 20px 0 15px 0;
       border-bottom: 2px solid #10B981;
       margin-bottom: 20px;
+      margin-top: 10px;
     }
     .logo-left {
       display: flex;
@@ -419,9 +426,10 @@ export function generateReportHtml(
       width: auto;
     }
     .logo-right img {
-      max-height: 50px;
+      max-height: 45px;
       max-width: 120px;
       object-fit: contain;
+      margin-top: 5px;
     }
     
     /* Title section */
