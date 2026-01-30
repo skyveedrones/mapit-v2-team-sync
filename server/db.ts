@@ -2058,3 +2058,32 @@ export async function getUserPilotSettings(userId: number) {
 
   return user || null;
 }
+
+/**
+ * Update notes for a media item
+ */
+export async function updateMediaNotes(
+  mediaId: number,
+  notes: string | null
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(media)
+    .set({
+      notes: notes,
+      updatedAt: new Date(),
+    })
+    .where(eq(media.id, mediaId));
+
+  // Return the updated media item
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
+}

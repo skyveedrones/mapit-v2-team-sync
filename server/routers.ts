@@ -41,6 +41,7 @@ import {
   updateFlight,
   updateFlightMediaCount,
   updateMediaGPS,
+  updateMediaNotes,
   updateProject,
   userHasFlightAccess,
   userHasProjectAccess,
@@ -787,6 +788,39 @@ export const appRouter = router({
           longitude: input.longitude?.toString() ?? null,
           altitude: input.altitude?.toString() ?? null,
         });
+
+        return updated;
+      }),
+
+    // Update notes for a media item
+    updateNotes: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          notes: z.string().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Get the media item to verify ownership
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+
+        // Verify user has access to the project (owner or collaborator)
+        const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have permission to edit this media",
+          });
+        }
+
+        // Update the media item with new notes
+        const updated = await updateMediaNotes(input.id, input.notes);
 
         return updated;
       }),

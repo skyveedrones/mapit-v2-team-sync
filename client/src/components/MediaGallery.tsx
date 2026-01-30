@@ -90,6 +90,16 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
 
   const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
   const deleteMutation = trpc.media.delete.useMutation();
+  const updateNotesMutation = trpc.media.updateNotes.useMutation({
+    onSuccess: () => {
+      // Invalidate media list to refresh data
+      utils.media.list.invalidate({ projectId });
+      toast.success("Notes saved");
+    },
+    onError: (error) => {
+      toast.error(`Failed to save notes: ${error.message}`);
+    },
+  });
   const utils = trpc.useUtils();
 
   // Sort media based on selected option
@@ -880,26 +890,33 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   </div>
                 )}
 
-                {/* File Size */}
-                <div className="p-3 rounded-lg bg-card border border-border">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                {/* Notes - Combined tile replacing File Size and Upload Date */}
+                <div className="md:col-span-2 p-3 rounded-lg bg-card border border-border flex flex-col">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <FileImage className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">File Size</span>
+                    <span className="text-xs uppercase tracking-wide">Notes</span>
                   </div>
-                  <p className="text-sm font-medium">
-                    {(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-
-                {/* Upload Date */}
-                <div className="p-3 rounded-lg bg-card border border-border">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">Uploaded</span>
+                  <textarea
+                    className="flex-1 min-h-[80px] w-full bg-background border border-input rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    placeholder="Add notes about this media file..."
+                    value={selectedMedia.notes || ""}
+                    onChange={(e) => {
+                      // Update local state immediately for responsive UI
+                      setSelectedMedia({ ...selectedMedia, notes: e.target.value });
+                    }}
+                    onBlur={(e) => {
+                      // Save to database when user finishes editing
+                      updateNotesMutation.mutate({
+                        id: selectedMedia.id,
+                        notes: e.target.value || null,
+                      });
+                    }}
+                    disabled={!canEdit}
+                  />
+                  <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+                    <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                    <span>Uploaded {formatDate(selectedMedia.createdAt)}</span>
                   </div>
-                  <p className="text-sm font-medium">
-                    {formatDate(selectedMedia.createdAt)}
-                  </p>
                 </div>
                 </div>
               </div>

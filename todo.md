@@ -435,3 +435,11 @@
 ## Bug Fix: Video Thumbnails on Map
 - [x] Fix video thumbnails not showing in GPS marker popups
 - [x] Enable enlarge functionality for video thumbnails like photos
+
+## Media Notes Feature
+- [x] Add notes field to media table in database
+- [x] Create backend API to update media notes
+- [x] Combine File Size and Upload Date tiles into single Notes tile
+- [x] Make Notes tile same height as tiles on left
+- [x] Add text editing functionality to Notes tile
+- [x] Save notes to database when user types

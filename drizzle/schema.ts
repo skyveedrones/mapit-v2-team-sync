@@ -124,6 +124,8 @@ export const media = mysqlTable("media", {
   cameraModel: varchar("cameraModel", { length: 100 }),
   /** Thumbnail URL for quick preview */
   thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
+  /** User notes for this media file */
+  notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
