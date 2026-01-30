@@ -87,7 +87,7 @@
   --border: oklch(0.35 0.03 215);
   --input: oklch(0.25 0.025 215);
   --ring: oklch(0.670 0.156 158.01);
-  --sidebar: oklch(0.14 0.02 215);
+  --sidebar: oklch(0.14 0.02 215 / 0.85);
   --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.22 0.025 215);
   --sidebar-accent-foreground: oklch(0.98 0 0);
@@ -125,7 +125,7 @@
   --chart-3: oklch(0.507 0.093 173.06);
   --chart-4: oklch(0.400 0.070 180);
   --chart-5: oklch(0.294 0.046 215.89);
-  --sidebar: oklch(0.14 0.02 215);
+  --sidebar: oklch(0.14 0.02 215 / 0.85);
   --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.22 0.025 215);
   --sidebar-accent-foreground: oklch(0.98 0 0);
@@ -138,8 +138,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-transparent text-foreground;
     font-family: var(--font-sans);
+  }
+  html {
+    @apply bg-background;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

@@ -11,11 +11,11 @@ export function GlobalBackground() {
       <img
         src="/images/hero-drone-aerial.jpg"
         alt=""
-        className="w-full h-full object-cover opacity-20"
+        className="w-full h-full object-cover opacity-40"
         aria-hidden="true"
       />
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+      {/* Gradient Overlay - subtle darkening for text readability */}
+      <div className="absolute inset-0 bg-background/60" />
       {/* Grid Pattern Overlay */}
       <div className="absolute inset-0 grid-pattern" />
     </div>

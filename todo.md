@@ -393,3 +393,6 @@
 
 ## Bug Fix: Background Z-Index
 - [x] Fix global background z-index so it stays behind all page content
+
+## Background Image Update
+- [x] Change global background to aerial map-style image (now visible site-wide)
