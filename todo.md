@@ -443,3 +443,13 @@
 - [x] Make Notes tile same height as tiles on left
 - [x] Add text editing functionality to Notes tile
 - [x] Save notes to database when user types
+
+## Media Detail Popup Layout Reorganization
+- [x] Move file size and upload date to Captured tile
+- [x] Move camera information to Captured tile
+- [x] Move altitude information to Location tile
+- [x] Move Notes tile to be directly below the image
+- [x] Enlarge Notes tile to match image width
+- [x] Add scrollbar to popup dialog
+- [x] Shrink green video tip banner
+- [x] Adjust all tiles for symmetry and alignment

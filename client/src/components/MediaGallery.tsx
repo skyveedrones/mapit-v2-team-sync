@@ -717,7 +717,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           </DialogHeader>
 
           {selectedMedia && (
-            <div className={`flex-1 overflow-hidden ${isFullscreen ? "h-full" : ""}`}>
+            <div className={`flex-1 ${isFullscreen ? "h-full overflow-hidden" : "overflow-y-auto"}`}>
               {/* Media Preview with Navigation */}
               <div 
                 ref={imageContainerRef}
@@ -800,126 +800,122 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 )}
               </div>
 
+              {/* Tip for green screen issues - shown below video */}
+              {!isFullscreen && selectedMedia.mediaType === "video" && (
+                <div className="text-center py-1.5 px-3 bg-muted/50 rounded-lg mb-3">
+                  <p className="text-xs text-muted-foreground">
+                    If video appears green, try downloading and playing locally
+                  </p>
+                </div>
+              )}
+
+              {/* Notes - Full width below image */}
+              {!isFullscreen && (
+                <div className="mb-4">
+                  <div className="p-3 rounded-lg bg-card border border-border flex flex-col">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <FileImage className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">Notes</span>
+                    </div>
+                    <textarea
+                      className="w-full min-h-[100px] bg-background border border-input rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      placeholder="Add notes about this media file..."
+                      value={selectedMedia.notes || ""}
+                      onChange={(e) => {
+                        setSelectedMedia({ ...selectedMedia, notes: e.target.value });
+                      }}
+                      onBlur={(e) => {
+                        updateNotesMutation.mutate({
+                          id: selectedMedia.id,
+                          notes: e.target.value || null,
+                        });
+                      }}
+                      disabled={!canEdit}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Metadata Grid - Hidden in fullscreen */}
               {!isFullscreen && (
-              <div className="space-y-4">
-                {/* Tip for green screen issues - shown below video */}
-                {selectedMedia.mediaType === "video" && (
-                  <div className="text-center py-2 px-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      If video appears green, try downloading and playing locally
-                    </p>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {/* GPS Coordinates */}
-                <div className="p-3 rounded-lg bg-card border border-border">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Location</span>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Location with Altitude */}
+                  <div className="p-4 rounded-lg bg-card border border-border flex flex-col">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span className="text-xs uppercase tracking-wide">Location</span>
+                      </div>
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => {
+                            setMediaForGpsEdit(selectedMedia);
+                            setGpsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
                     </div>
-                    {canEdit && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => {
-                          setMediaForGpsEdit(selectedMedia);
-                          setGpsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
+                    {selectedMedia.latitude && selectedMedia.longitude ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          {formatCoordinate(selectedMedia.latitude, "lat")}
+                        </p>
+                        <p className="text-sm font-medium">
+                          {formatCoordinate(selectedMedia.longitude, "lng")}
+                        </p>
+                        {selectedMedia.altitude && (
+                          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
+                            <Mountain className="h-3.5 w-3.5 text-muted-foreground" />
+                            <p className="text-sm font-medium">
+                              {parseFloat(selectedMedia.altitude).toFixed(1)} m altitude
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">No GPS data</p>
                     )}
                   </div>
-                  {selectedMedia.latitude && selectedMedia.longitude ? (
-                    <>
-                      <p className="text-sm font-medium">
-                        {formatCoordinate(selectedMedia.latitude, "lat")}
-                      </p>
-                      <p className="text-sm font-medium">
-                        {formatCoordinate(selectedMedia.longitude, "lng")}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No GPS data</p>
-                  )}
-                </div>
 
-                {/* Altitude */}
-                {selectedMedia.altitude && (
-                  <div className="p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Mountain className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Altitude</span>
-                    </div>
-                    <p className="text-sm font-medium">
-                      {parseFloat(selectedMedia.altitude).toFixed(1)} m
-                    </p>
-                  </div>
-                )}
-
-                {/* Capture Date */}
-                {selectedMedia.capturedAt && (
-                  <div className="p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  {/* Captured with Camera and File Info */}
+                  <div className="p-4 rounded-lg bg-card border border-border flex flex-col">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
                       <Calendar className="h-4 w-4" />
                       <span className="text-xs uppercase tracking-wide">Captured</span>
                     </div>
-                    <p className="text-sm font-medium">
-                      {formatDate(selectedMedia.capturedAt)}
-                    </p>
-                  </div>
-                )}
-
-                {/* Camera Info */}
-                {(selectedMedia.cameraMake || selectedMedia.cameraModel) && (
-                  <div className="p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Camera className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Camera</span>
+                    <div className="space-y-1">
+                      {selectedMedia.capturedAt ? (
+                        <p className="text-sm font-medium">
+                          {formatDate(selectedMedia.capturedAt)}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No capture date</p>
+                      )}
+                      
+                      {(selectedMedia.cameraMake || selectedMedia.cameraModel) && (
+                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
+                          <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+                          <p className="text-sm font-medium">
+                            {[selectedMedia.cameraMake, selectedMedia.cameraModel]
+                              .filter(Boolean)
+                              .join(" ")}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                        <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                        <span>Uploaded {formatDate(selectedMedia.createdAt)}</span>
+                      </div>
                     </div>
-                    <p className="text-sm font-medium">
-                      {[selectedMedia.cameraMake, selectedMedia.cameraModel]
-                        .filter(Boolean)
-                        .join(" ")}
-                    </p>
-                  </div>
-                )}
-
-                {/* Notes - Combined tile replacing File Size and Upload Date */}
-                <div className="md:col-span-2 p-3 rounded-lg bg-card border border-border flex flex-col">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <FileImage className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">Notes</span>
-                  </div>
-                  <textarea
-                    className="flex-1 min-h-[80px] w-full bg-background border border-input rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    placeholder="Add notes about this media file..."
-                    value={selectedMedia.notes || ""}
-                    onChange={(e) => {
-                      // Update local state immediately for responsive UI
-                      setSelectedMedia({ ...selectedMedia, notes: e.target.value });
-                    }}
-                    onBlur={(e) => {
-                      // Save to database when user finishes editing
-                      updateNotesMutation.mutate({
-                        id: selectedMedia.id,
-                        notes: e.target.value || null,
-                      });
-                    }}
-                    disabled={!canEdit}
-                  />
-                  <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-                    <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
-                    <span>Uploaded {formatDate(selectedMedia.createdAt)}</span>
                   </div>
                 </div>
-                </div>
-              </div>
               )}
             </div>
           )}
