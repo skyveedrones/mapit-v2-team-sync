@@ -475,3 +475,7 @@
 - [x] Verify flight assignment is working in database
 - [x] Check if main project page should exclude flight-assigned media
 - [x] Fix project media gallery to only show unassigned media
+
+## Flight Map GPS Markers Fix
+- [x] Update flight detail map to show only GPS markers from that flight's media
+- [x] Filter map data by flightId instead of showing all project media

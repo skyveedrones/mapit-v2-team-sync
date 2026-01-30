@@ -43,8 +43,9 @@ interface GeotaggedMedia {
 }
 
 export default function ProjectMap() {
-  const { id } = useParams<{ id: string }>();
+  const { id, flightId: flightIdParam } = useParams<{ id: string; flightId?: string }>();
   const projectId = parseInt(id || "0", 10);
+  const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const { user } = useAuth();
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
@@ -64,9 +65,9 @@ export default function ProjectMap() {
     { enabled: projectId > 0 }
   );
 
-  // Fetch media for this project
+  // Fetch media for this project (or specific flight if flightId provided)
   const { data: mediaItems, isLoading: mediaLoading } = trpc.media.list.useQuery(
-    { projectId },
+    { projectId, flightId, includeFlightMedia: flightId === undefined },
     { enabled: projectId > 0 }
   );
 
@@ -315,7 +316,7 @@ export default function ProjectMap() {
               <p className="text-muted-foreground mb-4">
                 Upload drone photos with GPS metadata to see them on the map.
               </p>
-              <Link href={`/project/${projectId}`}>
+              <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
                 <Button>Upload Media</Button>
               </Link>
             </div>
@@ -326,14 +327,14 @@ export default function ProjectMap() {
         <div className="absolute top-4 left-4 z-10">
           <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-4 max-w-sm">
             <div className="flex items-start gap-3">
-              <Link href={`/project/${projectId}`}>
+              <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
                 <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8">
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
               <div className="flex-1 min-w-0">
                 <h1 className="text-base font-semibold truncate" style={{ fontFamily: "var(--font-display)" }}>
-                  {project.name}
+                  {flightId ? `Flight Map` : project.name}
                 </h1>
                 <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
                   <span className="flex items-center gap-1">
