@@ -531,3 +531,9 @@
 ## Homepage Feature Card Images
 - [x] Add image display to homepage feature cards
 - [x] Update card layout to show feature images
+
+## Flight PDF Report Feature
+- [ ] Add backend endpoint to generate PDF reports for individual flights
+- [ ] Add report generation UI to FlightDetail page
+- [ ] Include flight-specific media and metadata in flight reports
+- [ ] Match project report styling and layout for consistency

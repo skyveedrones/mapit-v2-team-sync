@@ -2087,3 +2087,19 @@ export async function updateMediaNotes(
 
   return updated;
 }
+
+/**
+ * Get all media for a specific flight
+ */
+export async function getMediaByFlight(flightId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(media)
+    .where(and(eq(media.flightId, flightId), eq(media.userId, userId)))
+    .orderBy(desc(media.createdAt));
+}

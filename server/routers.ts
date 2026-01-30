@@ -21,6 +21,7 @@ import {
   getFlightMedia,
   getInvitationByToken,
   getMediaById,
+  getMediaByFlight,
   getProjectById,
   getProjectCollaborators,
   getProjectFlights,
@@ -1944,6 +1945,137 @@ export const appRouter = router({
             message: "Failed to generate PDF. Please try again.",
           });
         }
+      }),
+
+    // Generate flight report
+    generateFlight: protectedProcedure
+      .input(z.object({
+        flightId: z.number(),
+        mediaIds: z.array(z.number()),
+        resolution: z.enum(["high", "medium", "low", "thumbnail"]).default("medium"),
+        mapStyle: z.enum(["roadmap", "satellite", "hybrid", "terrain"]).default("hybrid"),
+        showFlightPath: z.boolean().default(true),
+        includeWatermark: z.boolean().default(false),
+        watermarkData: z.string().optional(),
+        watermarkPosition: z.enum(["top-left", "top-right", "center", "bottom-left", "bottom-right"]).default("bottom-right"),
+        watermarkOpacity: z.number().min(10).max(100).default(70),
+        watermarkScale: z.number().min(5).max(50).default(15),
+        userLogoUrl: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Get flight with access check
+        const flight = await getFlightById(input.flightId);
+        if (!flight) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found or you don't have access",
+          });
+        }
+
+        // Get flight media
+        const allMedia = await getMediaByFlight(input.flightId, ctx.user.id) || [];
+        const selectedMedia = input.mediaIds.length > 0
+          ? allMedia.filter(m => input.mediaIds.includes(m.id))
+          : allMedia;
+
+        // Import report functions
+        const { generateReportHtml, processImageForReport, generateStaticMapUrl, RESOLUTION_PRESETS } = await import("./report");
+
+        // Prepare watermark buffer if needed
+        let watermarkBuffer: Buffer | undefined;
+        if (input.includeWatermark && input.watermarkData) {
+          watermarkBuffer = Buffer.from(input.watermarkData, "base64");
+        }
+
+        // Process media images
+        const mediaImages: { filename: string; dataUrl: string }[] = [];
+        for (const media of selectedMedia) {
+          if (media.mediaType !== "photo") continue;
+
+          try {
+            // Fetch original image
+            const response = await fetch(media.url);
+            if (!response.ok) continue;
+            const imageBuffer = Buffer.from(await response.arrayBuffer());
+
+            // Process image (resize and optionally watermark)
+            const processedBuffer = await processImageForReport(
+              imageBuffer,
+              input.resolution,
+              watermarkBuffer ? {
+                watermarkBuffer,
+                position: input.watermarkPosition,
+                opacity: input.watermarkOpacity,
+                scale: input.watermarkScale,
+              } : undefined
+            );
+
+            // Convert to base64 data URL
+            const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString("base64")}`;
+            mediaImages.push({ filename: media.filename, dataUrl });
+          } catch (error) {
+            console.error(`[Report] Failed to process media ${media.id}:`, error);
+          }
+        }
+
+        // Generate static map image
+        let mapImageDataUrl: string | null = null;
+        const gpsMedia = selectedMedia.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length > 0) {
+          const { fetchStaticMapAsDataUrl } = await import("./report");
+          mapImageDataUrl = await fetchStaticMapAsDataUrl(selectedMedia, {
+            mapStyle: input.mapStyle,
+            showFlightPath: input.showFlightPath,
+          });
+        }
+
+        // Load logos
+        const logoUrl = input.userLogoUrl;
+        let skyVeeLogoDataUrl: string | undefined;
+        try {
+          const fs = await import('fs/promises');
+          const path = await import('path');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-dark.png');
+          const logoBuffer = await fs.readFile(logoPath);
+          skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        } catch (error) {
+          console.error('[Report] Failed to load SkyVee logo:', error);
+        }
+
+        // Get the parent project for full report data
+        const project = await getProjectById(flight.projectId);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Parent project not found",
+          });
+        }
+
+        // Create a project-like object for the report generator with flight info
+        const projectForReport = {
+          ...project,
+          name: `${project.name} - ${flight.name}`,
+          dronePilot: flight.dronePilot || project.dronePilot || '',
+          faaLicenseNumber: flight.faaLicenseNumber || project.faaLicenseNumber || '',
+          laancAuthNumber: flight.laancAuthNumber || project.laancAuthNumber || '',
+        };
+
+        // Generate HTML report
+        const html = generateReportHtml(
+          projectForReport,
+          mediaImages,
+          mapImageDataUrl || null,
+          new Date(),
+          logoUrl || undefined,
+          skyVeeLogoDataUrl
+        );
+
+        return {
+          html,
+          projectName: flight.name,
+          mediaCount: mediaImages.length,
+          resolution: RESOLUTION_PRESETS[input.resolution].label,
+        };
       }),
   }),
 

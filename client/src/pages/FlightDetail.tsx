@@ -6,6 +6,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
+import { FlightReportDialog } from "@/components/FlightReportDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -34,6 +35,7 @@ import {
   ArrowLeft,
   Calendar,
   ChevronDown,
+  Download,
   FileText,
   FolderOpen,
   Image,
@@ -87,6 +89,7 @@ export default function FlightDetail() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -365,6 +368,12 @@ export default function FlightDetail() {
                     >
                       <Map className="h-4 w-4 mr-2 text-blue-500" />
                       View Map
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setReportDialogOpen(true)}
+                    >
+                      <Download className="h-4 w-4 mr-2 text-purple-500" />
+                      Download Report
                     </DropdownMenuItem>
 
                     {canEdit && (
@@ -659,6 +668,15 @@ export default function FlightDetail() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Flight Report Dialog */}
+      <FlightReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        flightId={flightId}
+        flightName={flight.name}
+        media={flight.media || []}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
