@@ -83,6 +83,8 @@ import {
   updateClientLogo,
   deleteClientLogo,
   getClientLogo,
+  updateUserPilotSettings,
+  getUserPilotSettings,
 } from "./db";
 import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
@@ -1991,6 +1993,36 @@ export const appRouter = router({
       const deletedKey = await deleteUserLogo(ctx.user.id);
       return { success: true, deletedKey };
     }),
+  }),
+
+  // ==================== User Pilot Settings ====================
+  pilotSettings: router({
+    // Get current user's pilot settings
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await getUserPilotSettings(ctx.user.id);
+      return settings;
+    }),
+
+    // Update user pilot settings
+    update: protectedProcedure
+      .input(z.object({
+        defaultDronePilot: z.string().max(255).nullable().optional(),
+        defaultFaaLicenseNumber: z.string().max(100).nullable().optional(),
+        defaultLaancAuthNumber: z.string().max(100).nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const updated = await updateUserPilotSettings(ctx.user.id, {
+          defaultDronePilot: input.defaultDronePilot,
+          defaultFaaLicenseNumber: input.defaultFaaLicenseNumber,
+          defaultLaancAuthNumber: input.defaultLaancAuthNumber,
+        });
+        return {
+          success: true,
+          defaultDronePilot: updated.defaultDronePilot,
+          defaultFaaLicenseNumber: updated.defaultFaaLicenseNumber,
+          defaultLaancAuthNumber: updated.defaultLaancAuthNumber,
+        };
+      }),
   }),
 
   // Warranty management procedures

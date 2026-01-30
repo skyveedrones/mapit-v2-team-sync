@@ -2001,3 +2001,60 @@ export async function getClientLogo(clientId: number, ownerId: number) {
     logoKey: client.logoKey,
   };
 }
+
+
+// ==================== User Pilot Settings Functions ====================
+
+/**
+ * Update user's default pilot settings
+ */
+export async function updateUserPilotSettings(
+  userId: number,
+  settings: {
+    defaultDronePilot?: string | null;
+    defaultFaaLicenseNumber?: string | null;
+    defaultLaancAuthNumber?: string | null;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({
+      defaultDronePilot: settings.defaultDronePilot,
+      defaultFaaLicenseNumber: settings.defaultFaaLicenseNumber,
+      defaultLaancAuthNumber: settings.defaultLaancAuthNumber,
+    })
+    .where(eq(users.id, userId));
+
+  const [updated] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return updated;
+}
+
+/**
+ * Get user's default pilot settings
+ */
+export async function getUserPilotSettings(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const [user] = await db
+    .select({
+      defaultDronePilot: users.defaultDronePilot,
+      defaultFaaLicenseNumber: users.defaultFaaLicenseNumber,
+      defaultLaancAuthNumber: users.defaultLaancAuthNumber,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return user || null;
+}

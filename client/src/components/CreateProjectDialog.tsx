@@ -1,6 +1,7 @@
 /**
  * Create Project Dialog
  * Modal form for creating new drone mapping projects
+ * Auto-fills pilot information from user's default settings
  */
 
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Loader2, MapPin, User } from "lucide-react";
-import { useState } from "react";
+import { Calendar, Loader2, MapPin, Plane, Shield, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface CreateProjectDialogProps {
@@ -36,14 +37,40 @@ export function CreateProjectDialog({
   const [location, setLocation] = useState("");
   const [clientName, setClientName] = useState("");
   const [flightDate, setFlightDate] = useState("");
+  const [dronePilot, setDronePilot] = useState("");
+  const [faaLicense, setFaaLicense] = useState("");
+  const [laancAuth, setLaancAuth] = useState("");
 
   const utils = trpc.useUtils();
 
+  // Fetch user's default pilot settings
+  const { data: pilotSettings } = trpc.pilotSettings.get.useQuery();
+
+  // Auto-fill pilot settings when dialog opens
+  useEffect(() => {
+    if (open && pilotSettings) {
+      setDronePilot(pilotSettings.defaultDronePilot || "");
+      setFaaLicense(pilotSettings.defaultFaaLicenseNumber || "");
+      setLaancAuth(pilotSettings.defaultLaancAuthNumber || "");
+    }
+  }, [open, pilotSettings]);
+
   const createProject = trpc.project.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Project created successfully!", {
         description: `"${name}" has been added to your projects.`,
       });
+      
+      // If pilot info was provided, update the project with it
+      if (dronePilot || faaLicense || laancAuth) {
+        updateProject.mutate({
+          id: data.id,
+          dronePilot: dronePilot || null,
+          faaLicenseNumber: faaLicense || null,
+          laancAuthNumber: laancAuth || null,
+        });
+      }
+      
       utils.project.list.invalidate();
       utils.project.count.invalidate();
       resetForm();
@@ -57,12 +84,21 @@ export function CreateProjectDialog({
     },
   });
 
+  const updateProject = trpc.project.update.useMutation({
+    onError: (error) => {
+      console.error("Failed to update pilot info:", error);
+    },
+  });
+
   const resetForm = () => {
     setName("");
     setDescription("");
     setLocation("");
     setClientName("");
     setFlightDate("");
+    setDronePilot("");
+    setFaaLicense("");
+    setLaancAuth("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -83,7 +119,7 @@ export function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-card border-border">
+      <DialogContent className="sm:max-w-[500px] bg-card border-border max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle
@@ -178,6 +214,60 @@ export function CreateProjectDialog({
               <p className="text-xs text-muted-foreground">
                 When was or will the drone flight be conducted?
               </p>
+            </div>
+
+            {/* Pilot Information Section */}
+            <div className="border-t border-border pt-4 mt-2">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <Plane className="h-4 w-4 text-emerald-500" />
+                Pilot Information
+                {pilotSettings?.defaultDronePilot && (
+                  <span className="text-xs text-muted-foreground font-normal">(auto-filled from settings)</span>
+                )}
+              </h4>
+              
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="dronePilot" className="text-sm font-medium">
+                    Drone Pilot
+                  </Label>
+                  <Input
+                    id="dronePilot"
+                    placeholder="e.g., John Smith"
+                    value={dronePilot}
+                    onChange={(e) => setDronePilot(e.target.value)}
+                    className="bg-background border-border"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="faaLicense" className="text-sm font-medium flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                      FAA License #
+                    </Label>
+                    <Input
+                      id="faaLicense"
+                      placeholder="e.g., FA12345678"
+                      value={faaLicense}
+                      onChange={(e) => setFaaLicense(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="laancAuth" className="text-sm font-medium">
+                      LAANC Auth #
+                    </Label>
+                    <Input
+                      id="laancAuth"
+                      placeholder="e.g., LAANC-2024-001"
+                      value={laancAuth}
+                      onChange={(e) => setLaancAuth(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -406,3 +406,9 @@
 - [x] Add Drone Pilot field to projects
 - [x] Add FAA License # field to projects
 - [x] Add LAANC Authorization # field to projects
+
+## Default Pilot Info & Report Enhancement
+- [x] Add pilot info fields to user profile (dronePilot, faaLicenseNumber, laancAuthNumber)
+- [x] Create user settings page for managing default pilot info
+- [x] Auto-fill pilot info when creating new projects from user defaults
+- [x] Include pilot credentials in PDF report generator output

@@ -19,6 +19,7 @@ import ClientProjects from "./pages/ClientProjects";
 import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
 import ClientInviteAccept from "./pages/ClientInviteAccept";
+import Settings from "./pages/Settings";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -87,6 +88,11 @@ function Router() {
       <Route path="/features/gps-data-export" component={GpsDataExport} />
       <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
       <Route path="/features/install-as-app" component={InstallAsApp} />
+      
+      {/* Settings */}
+      <Route path="/settings">
+        {() => <ProtectedRoute component={Settings} />}
+      </Route>
       
       {/* Client management */}
       <Route path="/clients">

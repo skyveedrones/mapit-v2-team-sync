@@ -378,11 +378,17 @@ export function generateReportHtml(
   <h2 style="margin-top: 20px;">Project Information</h2>
   <div class="info-row"><span class="info-label">Description:</span> <span class="info-value">${project.description || "N/A"}</span></div>
   <div class="info-row"><span class="info-label">Location:</span> <span class="info-value">${project.location || "N/A"}</span></div>
-  <div class="info-row"><span class="info-label">Stage:</span> <span class="info-value">${project.status || "N/A"}</span></div>
-  <div class="info-row"><span class="info-label">Project Type:</span> <span class="info-value">N/A</span></div>
-  <div class="info-row"><span class="info-label">Created By:</span> <span class="info-value">N/A</span></div>
-  <div class="info-row"><span class="info-label">Project Manager:</span> <span class="info-value">N/A</span></div>
+  <div class="info-row"><span class="info-label">Client:</span> <span class="info-value">${project.clientName || "N/A"}</span></div>
+  <div class="info-row"><span class="info-label">Flight Date:</span> <span class="info-value">${formatDate(project.flightDate)}</span></div>
+  <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${project.status || "N/A"}</span></div>
   <div class="info-row"><span class="info-label">Created Date:</span> <span class="info-value">${formatDate(project.createdAt)}</span></div>
+  
+  ${(project.dronePilot || project.faaLicenseNumber || project.laancAuthNumber) ? `
+  <h2 style="margin-top: 25px;">Pilot Information</h2>
+  <div class="info-row"><span class="info-label">Drone Pilot:</span> <span class="info-value">${project.dronePilot || "N/A"}</span></div>
+  <div class="info-row"><span class="info-label">FAA License #:</span> <span class="info-value">${project.faaLicenseNumber || "N/A"}</span></div>
+  <div class="info-row"><span class="info-label">LAANC Authorization #:</span> <span class="info-value">${project.laancAuthNumber || "N/A"}</span></div>
+  ` : ""}
   
   ${mapHtml}
   

@@ -25,6 +25,12 @@ export const users = mysqlTable("users", {
   watermarkUrl: varchar("watermarkUrl", { length: 500 }),
   /** S3 storage key for the watermark */
   watermarkKey: varchar("watermarkKey", { length: 500 }),
+  /** Default drone pilot name for new projects */
+  defaultDronePilot: varchar("defaultDronePilot", { length: 255 }),
+  /** Default FAA license number for new projects */
+  defaultFaaLicenseNumber: varchar("defaultFaaLicenseNumber", { length: 100 }),
+  /** Default LAANC authorization number for new projects */
+  defaultLaancAuthNumber: varchar("defaultLaancAuthNumber", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
