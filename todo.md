@@ -412,3 +412,14 @@
 - [x] Create user settings page for managing default pilot info
 - [x] Auto-fill pilot info when creating new projects from user defaults
 - [x] Include pilot credentials in PDF report generator output
+
+## PDF Report Layout Redesign
+- [ ] Remove blank sections, move data up for compact layout
+- [ ] Photo grid: 8 photos per page (4 rows × 2 columns)
+- [ ] SkyVee logo top left corner
+- [ ] Client/project logo top right corner (symmetrical size)
+- [ ] Verify project information populates correct fields
+- [ ] Polish professional design
+
+## PDF Report Layout Fix
+- [x] Fix Project Details section - align horizontally like on project page
