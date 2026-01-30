@@ -512,3 +512,7 @@
 ## PDF Report Photo Size Fix
 - [x] Increase photo size - photos are too small
 - [x] Reduce photos per page to allow larger display
+
+## Flight Upload Bug - Photos Going to Main Project (Again)
+- [x] Investigate why photos from Add Flights page upload to main project instead of flight
+- [x] Fix flight ID assignment in upload process
