@@ -380,3 +380,6 @@
   - [x] View/manage invited users list
   - [x] Delete client option
 - [x] Update client cards to display logo instead of building icon (already implemented)
+
+## Bug Fix: Client Portal Invite Link 404 Error
+- [x] Fix invite acceptance route - users getting 404 when clicking email invite link

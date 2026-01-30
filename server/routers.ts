@@ -2668,6 +2668,41 @@ export const appRouter = router({
         return project;
       }),
 
+    // Get client invitation details by token (public - for showing invitation info before login)
+    getInvitationByToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const invitationData = await getClientInvitationByToken(input.token);
+        
+        if (!invitationData) {
+          return null;
+        }
+
+        const { invitation, client } = invitationData;
+        
+        // Get inviter details
+        const inviter = await getUserById(invitation.invitedBy);
+
+        return {
+          invitation: {
+            id: invitation.id,
+            email: invitation.email,
+            role: invitation.role,
+            status: invitation.status,
+            expiresAt: invitation.expiresAt,
+          },
+          client: {
+            id: client.id,
+            name: client.name,
+            logoUrl: client.logoUrl,
+          },
+          inviter: inviter ? {
+            id: inviter.id,
+            name: inviter.name,
+          } : null,
+        };
+      }),
+
     // Get media for a project in client portal (read-only)
     getPortalProjectMedia: protectedProcedure
       .input(z.object({ projectId: z.number() }))

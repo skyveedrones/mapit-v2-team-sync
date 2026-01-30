@@ -17,6 +17,7 @@ import Clients from "./pages/Clients";
 import ClientProjects from "./pages/ClientProjects";
 import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
+import ClientInviteAccept from "./pages/ClientInviteAccept";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -105,8 +106,9 @@ function Router() {
         {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
       
-      {/* Invitation acceptance page */}
+      {/* Invitation acceptance pages */}
       <Route path="/invite/:token" component={InviteAccept} />
+      <Route path="/client-invite/:token" component={ClientInviteAccept} />
       
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
