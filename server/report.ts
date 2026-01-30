@@ -295,11 +295,11 @@ export function generateReportHtml(
     ? `<img src="${skyVeeLogoDataUrl}" alt="SkyVee" class="skyvee-logo-img" />`
     : `<span class="skyvee-logo-text">SkyVee</span>`;
 
-  // Generate photo grid HTML - 8 photos per page (4 rows x 2 columns)
+  // Generate photo grid HTML - 6 photos per page (3 rows x 2 columns)
   const generatePhotoPages = () => {
     if (mediaImages.length === 0) return "";
     
-    const photosPerPage = 8;
+    const photosPerPage = 6;
     const pages: string[] = [];
     
     for (let i = 0; i < mediaImages.length; i += photosPerPage) {
@@ -543,10 +543,10 @@ export function generateReportHtml(
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 15px;
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
       height: calc(100vh - 80px);
-      padding: 0 30px;
+      padding: 0 20px;
     }
     .photo-cell {
       display: flex;
@@ -555,24 +555,22 @@ export function generateReportHtml(
       border-radius: 4px;
       overflow: hidden;
       background: #fafafa;
-      aspect-ratio: 1 / 1;
-      max-height: 100%;
     }
     .photo-cell img {
       width: 100%;
-      height: calc(100% - 20px);
+      height: calc(100% - 22px);
       object-fit: cover;
     }
     .photo-label {
-      font-size: 7px;
+      font-size: 8px;
       color: #666;
       text-align: center;
-      padding: 3px;
+      padding: 4px;
       background: #f5f5f5;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      height: 20px;
+      height: 22px;
       line-height: 14px;
     }
     

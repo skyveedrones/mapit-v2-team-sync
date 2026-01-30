@@ -508,3 +508,7 @@
 - [x] Make media photos more square-shaped
 - [x] Reduce photo width
 - [x] Create equal white spacing on the page
+
+## PDF Report Photo Size Fix
+- [x] Increase photo size - photos are too small
+- [x] Reduce photos per page to allow larger display
