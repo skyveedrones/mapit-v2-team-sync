@@ -89,12 +89,12 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
-  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
+  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId, flightId });
   const deleteMutation = trpc.media.delete.useMutation();
   const updateNotesMutation = trpc.media.updateNotes.useMutation({
     onSuccess: () => {
       // Invalidate media list to refresh data
-      utils.media.list.invalidate({ projectId });
+      utils.media.list.invalidate({ projectId, flightId });
       toast.success("Notes saved");
     },
     onError: (error) => {
@@ -1022,7 +1022,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         selectedMedia={selectedMediaItems}
         projectId={projectId}
         onWatermarkApplied={() => {
-          utils.media.list.invalidate({ projectId });
+          utils.media.list.invalidate({ projectId, flightId });
           setSelectedIds(new Set());
         }}
       />

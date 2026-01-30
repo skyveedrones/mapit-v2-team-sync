@@ -465,3 +465,8 @@
 ## Flight Upload Bug
 - [x] Fix uploaded photos being assigned to wrong flight
 - [x] Ensure flight ID is correctly passed and stored during upload
+
+## Flight Upload Still Not Working
+- [x] Debug why uploads from Flight Detail page still go to main project
+- [x] Verify flightId is being passed correctly through upload flow
+- [x] Check if there's a caching or invalidation issue

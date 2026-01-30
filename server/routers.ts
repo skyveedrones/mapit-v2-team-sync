@@ -472,7 +472,7 @@ export const appRouter = router({
   media: router({
     // List all media for a project (owner or collaborator)
     list: protectedProcedure
-      .input(z.object({ projectId: z.number() }))
+      .input(z.object({ projectId: z.number(), flightId: z.number().optional() }))
       .query(async ({ ctx, input }) => {
         // Check if user has access (owner or collaborator)
         const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
@@ -485,6 +485,12 @@ export const appRouter = router({
         
         // Use the access-aware function to get media
         const media = await getProjectMediaWithAccess(input.projectId, ctx.user.id);
+        
+        // Filter by flight if flightId provided
+        if (input.flightId !== undefined) {
+          return (media || []).filter(m => m.flightId === input.flightId);
+        }
+        
         return media || [];
       }),
 
