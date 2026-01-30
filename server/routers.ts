@@ -107,6 +107,9 @@ const updateProjectSchema = z.object({
   status: z.enum(["active", "completed", "archived"]).optional(),
   flightDate: z.date().nullable().optional(),
   coverImage: z.string().max(500).nullable().optional(),
+  dronePilot: z.string().max(255).nullable().optional(),
+  faaLicenseNumber: z.string().max(100).nullable().optional(),
+  laancAuthNumber: z.string().max(100).nullable().optional(),
 });
 
 // Helper function to extract EXIF GPS data from image buffer

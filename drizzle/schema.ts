@@ -67,6 +67,12 @@ export const projects = mysqlTable("projects", {
   logoKey: varchar("logoKey", { length: 500 }),
   /** Foreign key to clients table (optional - project can be assigned to a client) */
   clientId: int("clientId"),
+  /** Drone pilot name */
+  dronePilot: varchar("dronePilot", { length: 255 }),
+  /** FAA License number */
+  faaLicenseNumber: varchar("faaLicenseNumber", { length: 100 }),
+  /** LAANC Authorization number */
+  laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

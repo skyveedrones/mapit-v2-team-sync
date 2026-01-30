@@ -396,3 +396,13 @@
 
 ## Background Image Update
 - [x] Change global background to aerial map-style image (now visible site-wide)
+
+## Photo Zoom Feature
+- [ ] Create lightbox/zoom component for images
+- [ ] Integrate zoom feature into media gallery
+- [ ] Allow users to click photos to view full-size in modal
+
+## Project Information Fields
+- [x] Add Drone Pilot field to projects
+- [x] Add FAA License # field to projects
+- [x] Add LAANC Authorization # field to projects

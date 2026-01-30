@@ -71,6 +71,13 @@
       "when": 1769727444592,
       "tag": "0009_closed_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1769739753316,
+      "tag": "0010_salty_the_leader",
+      "breakpoints": true
     }
   ]
 }

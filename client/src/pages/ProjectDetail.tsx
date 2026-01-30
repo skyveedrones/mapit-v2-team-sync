@@ -396,6 +396,28 @@ export default function ProjectDetail() {
                       <span className="text-muted-foreground">Media:</span>
                       <span className="font-medium">{project.mediaCount} items</span>
                     </div>
+                    {/* Drone Pilot Info */}
+                    {project.dronePilot && (
+                      <div className="flex items-center gap-2">
+                        <Plane className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">Pilot:</span>
+                        <span className="font-medium">{project.dronePilot}</span>
+                      </div>
+                    )}
+                    {project.faaLicenseNumber && (
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">FAA License:</span>
+                        <span className="font-medium">{project.faaLicenseNumber}</span>
+                      </div>
+                    )}
+                    {project.laancAuthNumber && (
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span className="text-muted-foreground">LAANC Auth:</span>
+                        <span className="font-medium">{project.laancAuthNumber}</span>
+                      </div>
+                    )}
                     {/* Warranty Info */}
                     {project.warrantyEndDate && (
                       <div className="flex items-center gap-2">

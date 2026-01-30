@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
-import { Calendar, Loader2, MapPin, Shield, User } from "lucide-react";
+import { Calendar, Loader2, MapPin, Plane, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,6 +49,9 @@ export function EditProjectDialog({
   const [flightDate, setFlightDate] = useState("");
   const [warrantyStartDate, setWarrantyStartDate] = useState("");
   const [warrantyEndDate, setWarrantyEndDate] = useState("");
+  const [dronePilot, setDronePilot] = useState("");
+  const [faaLicenseNumber, setFaaLicenseNumber] = useState("");
+  const [laancAuthNumber, setLaancAuthNumber] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -75,6 +78,9 @@ export function EditProjectDialog({
           ? new Date(project.warrantyEndDate).toISOString().split("T")[0]
           : ""
       );
+      setDronePilot(project.dronePilot || "");
+      setFaaLicenseNumber(project.faaLicenseNumber || "");
+      setLaancAuthNumber(project.laancAuthNumber || "");
     }
   }, [project]);
 
@@ -130,6 +136,9 @@ export function EditProjectDialog({
       clientName: clientName.trim() || null,
       status,
       flightDate: flightDate ? new Date(flightDate) : null,
+      dronePilot: dronePilot.trim() || null,
+      faaLicenseNumber: faaLicenseNumber.trim() || null,
+      laancAuthNumber: laancAuthNumber.trim() || null,
     });
 
     // Update warranty dates separately
@@ -248,6 +257,58 @@ export function EditProjectDialog({
                 onChange={(e) => setFlightDate(e.target.value)}
                 className="bg-background border-border"
               />
+            </div>
+
+            {/* Drone Pilot Section */}
+            <div className="border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Plane className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Drone Pilot Information</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Record pilot credentials and flight authorizations.
+              </p>
+              
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-dronePilot" className="text-sm font-medium">
+                    Drone Pilot Name
+                  </Label>
+                  <Input
+                    id="edit-dronePilot"
+                    placeholder="e.g., John Smith"
+                    value={dronePilot}
+                    onChange={(e) => setDronePilot(e.target.value)}
+                    className="bg-background border-border"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-faaLicense" className="text-sm font-medium">
+                      FAA License #
+                    </Label>
+                    <Input
+                      id="edit-faaLicense"
+                      placeholder="e.g., FA12345678"
+                      value={faaLicenseNumber}
+                      onChange={(e) => setFaaLicenseNumber(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-laancAuth" className="text-sm font-medium">
+                      LAANC Auth #
+                    </Label>
+                    <Input
+                      id="edit-laancAuth"
+                      placeholder="e.g., LAANC-2024-001"
+                      value={laancAuthNumber}
+                      onChange={(e) => setLaancAuthNumber(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Warranty Section */}
