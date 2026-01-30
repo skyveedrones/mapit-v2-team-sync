@@ -946,7 +946,7 @@ export const appRouter = router({
         // Send the invitation email
         const emailResult = await sendProjectInvitationEmail({
           to: input.email,
-          inviterName: ctx.user.name || 'A SkyVee user',
+          inviterName: ctx.user.name || 'A Mapit user',
           projectName: project.name,
           role: input.role,
           inviteUrl: acceptUrl,
@@ -2755,7 +2755,7 @@ export const appRouter = router({
         
         const emailResult = await sendClientInvitationEmail({
           to: input.email,
-          inviterName: ctx.user.name || 'SkyVee User',
+          inviterName: ctx.user.name || 'Mapit User',
           clientName: client.name,
           role: input.role,
           inviteUrl,

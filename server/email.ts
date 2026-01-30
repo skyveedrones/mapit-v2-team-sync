@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// SkyVee brand colors
+// Mapit brand colors
 const BRAND_COLORS = {
   primary: '#10b981', // Emerald green
   background: '#0a0a0a',
@@ -14,7 +14,7 @@ const BRAND_COLORS = {
 };
 
 /**
- * Generate the SkyVee branded email HTML template
+ * Generate the Mapit branded email HTML template
  */
 function generateEmailTemplate(content: {
   preheader: string;
@@ -154,7 +154,7 @@ function generateEmailTemplate(content: {
     <div class="card">
       <!-- Logo -->
       <div class="logo">
-        <span class="logo-text">Sky<span class="logo-accent">Vee</span></span>
+        <span class="logo-text">Map<span class="logo-accent">it</span></span>
       </div>
       
       <!-- Title -->
@@ -177,7 +177,7 @@ function generateEmailTemplate(content: {
       <!-- Footer -->
       <div class="footer">
         ${content.footer || `
-        <p>This email was sent by <a href="https://skyveedrones.com">SkyVee Drone Mapping</a>.</p>
+        <p>This email was sent by <a href="https://www.skyveedrones.com">Mapit by SkyVee Drones</a>.</p>
         <p>If you didn't expect this email, you can safely ignore it.</p>
         `}
       </div>
@@ -217,15 +217,15 @@ export async function sendProjectInvitationEmail(params: {
     footer: `
       <p>This invitation will expire in 7 days.</p>
       <p>If you don't want to join this project, you can ignore this email.</p>
-      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
     `,
   });
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
       to: [to],
-      subject: `${inviterName} invited you to "${projectName}" on SkyVee`,
+      subject: `${inviterName} invited you to "${projectName}" on Mapit`,
       html,
     });
 
@@ -253,8 +253,8 @@ export async function sendWelcomeEmail(params: {
   const { to, userName, projectName, projectUrl } = params;
   
   const html = generateEmailTemplate({
-    preheader: `Welcome to SkyVee! You now have access to "${projectName}"`,
-    title: 'Welcome to SkyVee!',
+    preheader: `Welcome to Mapit! You now have access to "${projectName}"`,
+    title: 'Welcome to Mapit!',
     body: `
       <p>Hi <span class="highlight">${userName}</span>,</p>
       <p>You've successfully joined the drone mapping project:</p>
@@ -265,15 +265,15 @@ export async function sendWelcomeEmail(params: {
     ctaUrl: projectUrl,
     footer: `
       <p>Need help? Visit our <a href="https://skyveedrones.com/help">Help Center</a>.</p>
-      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
     `,
   });
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
       to: [to],
-      subject: `Welcome to SkyVee - You now have access to "${projectName}"`,
+      subject: `Welcome to Mapit - You now have access to "${projectName}"`,
       html,
     });
 
@@ -316,7 +316,7 @@ export async function sendTestEmail(params: {
   const { to } = params;
   
   const html = generateEmailTemplate({
-    preheader: 'This is a test email from SkyVee',
+    preheader: 'This is a test email from Mapit',
     title: 'Test Email Successful!',
     body: `
       <p>Congratulations! Your email configuration is working correctly.</p>
@@ -332,15 +332,15 @@ export async function sendTestEmail(params: {
     ctaUrl: 'https://skyveedrones.com/dashboard',
     footer: `
       <p>This was a test email sent at ${new Date().toLocaleString()}.</p>
-      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
     `,
   });
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
       to: [to],
-      subject: 'SkyVee Test Email - Configuration Verified',
+      subject: 'Mapit Test Email - Configuration Verified',
       html,
     });
 
@@ -409,9 +409,9 @@ export async function sendWarrantyReminderEmail(params: {
     ctaText: 'View Project',
     ctaUrl: projectUrl,
     footer: `
-      <p>This is an automated warranty reminder from SkyVee.</p>
+      <p>This is an automated warranty reminder from Mapit.</p>
       <p>To manage your reminder settings, visit the project settings.</p>
-      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
     `,
   });
 
@@ -419,7 +419,7 @@ export async function sendWarrantyReminderEmail(params: {
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
       to: [to],
       subject,
       html,
@@ -454,7 +454,7 @@ export async function sendClientInvitationEmail(params: {
     : 'view projects';
   
   const html = generateEmailTemplate({
-    preheader: `${inviterName} has invited you to access the ${clientName} client portal on SkyVee`,
+    preheader: `${inviterName} has invited you to access the ${clientName} client portal on Mapit`,
     title: 'Client Portal Access',
     body: `
       <p><span class="highlight">${inviterName}</span> has invited you to access the client portal for:</p>
@@ -467,13 +467,13 @@ export async function sendClientInvitationEmail(params: {
     footer: `
       <p>This invitation will expire in 7 days.</p>
       <p>If you don't want to join this portal, you can ignore this email.</p>
-      <p style="margin-top: 16px;">— The <a href="https://skyveedrones.com">SkyVee</a> Team</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
     `,
   });
 
   try {
     const { error } = await resend.emails.send({
-      from: 'SkyVee <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
       to: [to],
       subject: `${inviterName} invited you to the ${clientName} portal on SkyVee`,
       html,
