@@ -225,6 +225,18 @@ export default function ProjectMap() {
     });
     map.fitBounds(bounds, 50);
 
+    // Force map refresh after a short delay to ensure all markers are properly rendered
+    // This fixes issues where markers don't appear on first load
+    setTimeout(() => {
+      if (mapRef.current && geotaggedMedia.length > 0) {
+        const refreshBounds = new google.maps.LatLngBounds();
+        geotaggedMedia.forEach(m => {
+          refreshBounds.extend({ lat: m.latitude, lng: m.longitude });
+        });
+        mapRef.current.fitBounds(refreshBounds, 50);
+      }
+    }, 300);
+
   }, [mapReady, geotaggedMedia, showFlightPath]);
 
   // Handle map ready
