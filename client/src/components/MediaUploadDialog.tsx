@@ -84,7 +84,7 @@ const ACCEPTED_TYPES = [
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks for large file uploads
-const STORAGE_KEY = "skyvee_pending_uploads";
+const STORAGE_KEY = "mapit_pending_uploads";
 const UPLOAD_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Format bytes to human readable

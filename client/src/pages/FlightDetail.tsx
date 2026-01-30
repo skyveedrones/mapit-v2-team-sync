@@ -195,8 +195,8 @@ export default function FlightDetail() {
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
               <img
-                src="/images/skyvee-logo-white.png"
-                alt="SkyVee"
+                src="/images/mapit-logo-white.png"
+                alt="Mapit"
                 className="h-8 w-auto"
               />
             </Link>
@@ -219,8 +219,8 @@ export default function FlightDetail() {
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
               <img
-                src="/images/skyvee-logo-white.png"
-                alt="SkyVee"
+                src="/images/mapit-logo-white.png"
+                alt="Mapit"
                 className="h-8 w-auto"
               />
             </Link>
@@ -265,8 +265,8 @@ export default function FlightDetail() {
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <img
-              src="/images/skyvee-logo-white.png"
-              alt="SkyVee"
+              src="/images/mapit-logo-white.png"
+              alt="Mapit"
               className="h-8 w-auto"
             />
           </Link>

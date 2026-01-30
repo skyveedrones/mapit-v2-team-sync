@@ -1,5 +1,5 @@
 /**
- * SkyVee Dashboard - Protected page for authenticated users
+ * Mapit Dashboard - Protected page for authenticated users
  * Shows user projects with simplified action menu
  */
 

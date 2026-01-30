@@ -1,5 +1,5 @@
 /**
- * SkyVee Drone Mapping - Home Page
+ * Mapit - Home Page
  * Design: Aurora Borealis Theme
  * - Dark forest green interface with lime/neon green accents
  * - Colors: Spearmint #117660, Forest Green #09323B, Lime Green #04B16F, Neon Green #14E114
@@ -114,18 +114,13 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
-          <a 
-            href="https://www.skyveedrones.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
+          <div className="flex items-center gap-2">
             <img
-              src="/images/skyvee-logo-white.png"
-              alt="SkyVee"
-              className="h-8 w-auto"
+              src="/images/mapit-logo-white.png"
+              alt="Mapit"
+              className="h-10 w-auto"
             />
-          </a>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
@@ -247,8 +242,8 @@ export default function Home() {
           >
             <motion.div variants={fadeInUp} className="mb-8">
               <img
-                src="/images/skyvee-logo-white.png"
-                alt="SkyVee"
+                src="/images/mapit-logo-white.png"
+                alt="Mapit"
                 className="h-24 md:h-32 w-auto mx-auto"
               />
             </motion.div>
@@ -440,13 +435,13 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <img
-                src="/images/skyvee-logo-white.png"
-                alt="SkyVee"
+                src="/images/mapit-logo-white.png"
+                alt="Mapit"
                 className="h-6 w-auto opacity-60"
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 SkyVee Drones. All rights reserved.
+              © 2026 Mapit. All rights reserved.
             </p>
           </div>
         </div>

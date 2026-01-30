@@ -540,3 +540,10 @@
 
 ## Hero Feature Image Update
 - [x] Replace GPS Data Export feature image with darker image that matches site theme
+
+## Rebranding to Mapit
+- [x] Generate Mapit logo with green dotted "i" (use MAPit font weight, smaller dot)
+- [x] Update all text references from SkyVee to Mapit
+- [x] Update logo files and favicon
+- [x] Update page titles and metadata
+- [x] Test all branding changes across the site
