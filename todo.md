@@ -383,3 +383,6 @@
 
 ## Bug Fix: Client Portal Invite Link 404 Error
 - [x] Fix invite acceptance route - users getting 404 when clicking email invite link
+
+## Dashboard UI Changes
+- [x] Remove View Maps button from Dashboard action buttons

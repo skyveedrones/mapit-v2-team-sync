@@ -28,7 +28,6 @@ import {
   Download,
   FolderOpen,
   FolderPlus,
-  Map,
   Plus,
   Settings,
   Users,
@@ -85,17 +84,6 @@ export default function Dashboard() {
     setDeleteDialogOpen(true);
   };
 
-  // Navigate to first project's map if available
-  const handleViewMaps = () => {
-    if (projects && projects.length > 0) {
-      setLocation(`/project/${projects[0].id}/map`);
-    } else {
-      toast.info("No projects yet", {
-        description: "Create a project first to view maps.",
-      });
-    }
-  };
-
   return (
     <DashboardLayout>
       <motion.div
@@ -134,10 +122,6 @@ export default function Dashboard() {
                   New Project
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleViewMaps}>
-                  <Map className="h-4 w-4 mr-2" />
-                  View Maps
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleComingSoon}>
                   <Download className="h-4 w-4 mr-2" />
                   Export Data
