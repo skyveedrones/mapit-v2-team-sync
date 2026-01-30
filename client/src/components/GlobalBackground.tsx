@@ -6,7 +6,7 @@
 
 export function GlobalBackground() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none">
+    <div className="fixed inset-0 -z-10 pointer-events-none">
       {/* Background Image */}
       <img
         src="/images/hero-drone-aerial.jpg"

@@ -390,3 +390,6 @@
 ## Site-wide Background Enhancement
 - [x] Add dynamic background graphic from Homepage to all pages
 - [x] Keep dark color scheme consistent
+
+## Bug Fix: Background Z-Index
+- [x] Fix global background z-index so it stays behind all page content
