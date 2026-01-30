@@ -497,3 +497,6 @@
 - [x] Use the actual SkyVee logo image from home page instead of SVG
 - [x] Make client logo (Forney) bigger in upper right
 - [x] Add more spacing between client logo and edge of form
+
+## PDF Report Logo Color Fix
+- [x] Use dark/black version of SkyVee logo for visibility on white PDF background

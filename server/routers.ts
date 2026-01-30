@@ -1886,7 +1886,7 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-white.png');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-dark.png');
           const logoBuffer = await fs.readFile(logoPath);
           skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
