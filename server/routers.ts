@@ -472,7 +472,7 @@ export const appRouter = router({
   media: router({
     // List all media for a project (owner or collaborator)
     list: protectedProcedure
-      .input(z.object({ projectId: z.number(), flightId: z.number().optional() }))
+      .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
       .query(async ({ ctx, input }) => {
         // Check if user has access (owner or collaborator)
         const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
@@ -489,6 +489,12 @@ export const appRouter = router({
         // Filter by flight if flightId provided
         if (input.flightId !== undefined) {
           return (media || []).filter(m => m.flightId === input.flightId);
+        }
+        
+        // By default, exclude media assigned to flights (show only unassigned media on project page)
+        // Unless includeFlightMedia is explicitly set to true
+        if (!input.includeFlightMedia) {
+          return (media || []).filter(m => m.flightId === null);
         }
         
         return media || [];

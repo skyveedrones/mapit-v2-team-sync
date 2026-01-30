@@ -470,3 +470,8 @@
 - [x] Debug why uploads from Flight Detail page still go to main project
 - [x] Verify flightId is being passed correctly through upload flow
 - [x] Check if there's a caching or invalidation issue
+
+## Flight Upload Issue - Media Still Showing on Main Project Page
+- [x] Verify flight assignment is working in database
+- [x] Check if main project page should exclude flight-assigned media
+- [x] Fix project media gallery to only show unassigned media
