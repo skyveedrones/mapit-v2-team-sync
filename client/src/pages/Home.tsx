@@ -348,7 +348,7 @@ export default function Home() {
               <Link key={feature.title} href={feature.link}>
                 <motion.div
                   variants={fadeInUp}
-                  className="glow-card p-6 cursor-pointer group h-full"
+                  className="glow-card overflow-hidden cursor-pointer group h-full"
                   onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -357,20 +357,34 @@ export default function Home() {
                     e.currentTarget.style.setProperty("--mouse-y", `${y}%`);
                   }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                      <feature.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3
-                        className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {feature.description}
-                      </p>
+                  {/* Feature Image */}
+                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  {/* Feature Content */}
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                        <feature.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3
+                          className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </motion.div>

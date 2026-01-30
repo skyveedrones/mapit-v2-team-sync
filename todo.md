@@ -527,3 +527,7 @@
 - [x] Find and update GPS Data Export feature page image
 - [x] Find and update PDF Map Overlay feature page image
 - [x] Find and update Install as App feature page image
+
+## Homepage Feature Card Images
+- [x] Add image display to homepage feature cards
+- [x] Update card layout to show feature images
