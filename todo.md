@@ -485,3 +485,6 @@
 - [x] Update flight creation dialog with pilot information inputs
 - [x] Display pilot information on flight detail page
 - [x] Allow editing pilot information on existing flights
+
+## SkyVee Logo Link Update
+- [x] Change SkyVee logo link to point to www.skyveedrones.com
