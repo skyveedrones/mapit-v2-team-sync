@@ -617,7 +617,11 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
 
             {/* Media type badge */}
             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-              <div className="p-1.5 rounded-full bg-black/50 backdrop-blur-sm">
+              <div className={`p-1.5 rounded-full backdrop-blur-sm ${
+                item.mediaType === "video" 
+                  ? "bg-red-500/90" 
+                  : "bg-[#04B16F]/90"
+              }`}>
                 {item.mediaType === "video" ? (
                   <FileVideo className="h-4 w-4 text-white" />
                 ) : (

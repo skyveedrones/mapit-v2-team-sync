@@ -423,3 +423,11 @@
 
 ## PDF Report Layout Fix
 - [x] Fix Project Details section - align horizontally like on project page
+
+## Bug Fix: Media Upload NaN Error
+- [x] Fix media upload to convert NaN GPS values to null before database insertion
+
+## Media Thumbnail Icon Styling
+- [x] Replace white photo/video icons with stylish colored icons
+- [x] Photo icon - use brand green color (#04B16F)
+- [x] Video icon - use red color
