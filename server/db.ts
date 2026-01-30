@@ -2089,6 +2089,35 @@ export async function updateMediaNotes(
 }
 
 /**
+ * Update filename for a media item
+ */
+export async function updateMediaFilename(
+  mediaId: number,
+  filename: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(media)
+    .set({
+      filename: filename,
+      updatedAt: new Date(),
+    })
+    .where(eq(media.id, mediaId));
+
+  // Return the updated media item
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
+}
+
+/**
  * Get all media for a specific flight
  */
 export async function getMediaByFlight(flightId: number, userId: number) {

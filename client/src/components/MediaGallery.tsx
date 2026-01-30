@@ -78,6 +78,9 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [gpsEditDialogOpen, setGpsEditDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [mediaToRename, setMediaToRename] = useState<Media | null>(null);
+  const [newFilename, setNewFilename] = useState("");
   const [mediaForGpsEdit, setMediaForGpsEdit] = useState<Media | null>(null);
   
   // Fullscreen and zoom state
@@ -101,6 +104,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       toast.error(`Failed to save notes: ${error.message}`);
     },
   });
+  const renameMutation = trpc.media.renameFile.useMutation();
   const utils = trpc.useUtils();
 
   // Sort media based on selected option
@@ -313,6 +317,32 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       await utils.project.list.invalidate();
     } catch (error) {
       toast.error("Failed to delete media");
+    }
+  };
+
+  // Handle rename
+  const handleRename = async () => {
+    if (!mediaToRename || !newFilename.trim()) return;
+
+    try {
+      await renameMutation.mutateAsync({
+        id: mediaToRename.id,
+        filename: newFilename.trim(),
+      });
+      toast.success("Media renamed successfully");
+      setRenameDialogOpen(false);
+      setMediaToRename(null);
+      setNewFilename("");
+      // Update selected media if it's the one being renamed
+      if (selectedMedia?.id === mediaToRename.id) {
+        setSelectedMedia({ ...selectedMedia, filename: newFilename.trim() });
+      }
+      // Invalidate queries
+      await utils.media.list.invalidate({ projectId });
+      await utils.project.get.invalidate({ id: projectId });
+      await utils.project.list.invalidate();
+    } catch (error) {
+      toast.error("Failed to rename media");
     }
   };
 
@@ -667,9 +697,25 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         >
           <DialogHeader className={`flex-shrink-0 ${isFullscreen ? "absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4" : ""}`}>
             <div className="flex items-center justify-between pr-8">
-              <DialogTitle className={`truncate ${isFullscreen ? "text-white" : ""}`}>
-                {selectedMedia?.filename}
-              </DialogTitle>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <DialogTitle className={`truncate ${isFullscreen ? "text-white" : ""}`}>
+                  {selectedMedia?.filename}
+                </DialogTitle>
+                {canEdit && !isFullscreen && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 flex-shrink-0"
+                    onClick={() => {
+                      setMediaToRename(selectedMedia);
+                      setNewFilename(selectedMedia?.filename || "");
+                      setRenameDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                 {sortedMedia.length > 1 && (
                   <span className={`text-sm ${isFullscreen ? "text-white/80" : "text-muted-foreground"}`}>
@@ -1040,6 +1086,44 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           }
         }}
       />
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Media File</DialogTitle>
+            <DialogDescription>
+              Enter a new filename for "{mediaToRename?.filename}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <input
+              type="text"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              value={newFilename}
+              onChange={(e) => setNewFilename(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newFilename.trim()) {
+                  handleRename();
+                }
+              }}
+              placeholder="Enter new filename"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRename}
+              disabled={renameMutation.isPending || !newFilename.trim()}
+            >
+              {renameMutation.isPending ? "Renaming..." : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
