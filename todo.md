@@ -503,3 +503,8 @@
 
 ## PDF Report SkyVee Logo Spacing
 - [x] Add left margin to SkyVee logo to match Forney logo spacing on right
+
+## PDF Report Photo Layout
+- [x] Make media photos more square-shaped
+- [x] Reduce photo width
+- [x] Create equal white spacing on the page

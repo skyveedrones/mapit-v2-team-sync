@@ -544,8 +544,9 @@ export function generateReportHtml(
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       grid-template-rows: repeat(4, 1fr);
-      gap: 6px;
+      gap: 15px;
       height: calc(100vh - 80px);
+      padding: 0 30px;
     }
     .photo-cell {
       display: flex;
@@ -554,22 +555,24 @@ export function generateReportHtml(
       border-radius: 4px;
       overflow: hidden;
       background: #fafafa;
+      aspect-ratio: 1 / 1;
+      max-height: 100%;
     }
     .photo-cell img {
       width: 100%;
-      height: calc(100% - 18px);
+      height: calc(100% - 20px);
       object-fit: cover;
     }
     .photo-label {
       font-size: 7px;
       color: #666;
       text-align: center;
-      padding: 2px;
+      padding: 3px;
       background: #f5f5f5;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      height: 18px;
+      height: 20px;
       line-height: 14px;
     }
     
