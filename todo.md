@@ -386,3 +386,7 @@
 
 ## Dashboard UI Changes
 - [x] Remove View Maps button from Dashboard action buttons
+
+## Site-wide Background Enhancement
+- [x] Add dynamic background graphic from Homepage to all pages
+- [x] Keep dark color scheme consistent

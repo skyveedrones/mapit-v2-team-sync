@@ -89,6 +89,7 @@ export default function DashboardLayout({
           "--sidebar-width": `${sidebarWidth}px`,
         } as CSSProperties
       }
+      className="relative z-10"
     >
       <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
         {children}

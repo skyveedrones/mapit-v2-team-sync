@@ -233,20 +233,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/images/hero-drone-aerial.jpg"
-            alt="Aerial view"
-            className="w-full h-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
-        </div>
-
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 grid-pattern z-10" />
-
-        <div className="container relative z-20 text-center py-20">
+        <div className="container relative z-10 text-center py-20">
           <motion.div
             initial="hidden"
             animate="visible"
