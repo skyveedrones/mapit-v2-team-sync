@@ -540,6 +540,7 @@ export const appRouter = router({
       .input(z.object({
         uploadId: z.string(),
         projectId: z.number(),
+        flightId: z.number().optional(),
         filename: z.string(),
         mimeType: z.string(),
         fileSize: z.number(),
@@ -605,6 +606,11 @@ export const appRouter = router({
           thumbnailUrl,
         });
 
+        // Assign to flight if flightId provided
+        if (input.flightId) {
+          await assignMediaToFlight(mediaItem.id, input.flightId);
+        }
+
         return mediaItem;
       }),
 
@@ -612,6 +618,7 @@ export const appRouter = router({
     upload: protectedProcedure
       .input(z.object({
         projectId: z.number(),
+        flightId: z.number().optional(),
         filename: z.string(),
         mimeType: z.string(),
         fileData: z.string(), // Base64 encoded file data
@@ -680,6 +687,11 @@ export const appRouter = router({
           cameraModel: exifData.cameraModel,
           thumbnailUrl,
         });
+
+        // Assign to flight if flightId provided
+        if (input.flightId) {
+          await assignMediaToFlight(mediaItem.id, input.flightId);
+        }
 
         return mediaItem;
       }),

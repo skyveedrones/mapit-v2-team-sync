@@ -461,3 +461,7 @@
 
 ## Media Popup Scroll Reset
 - [x] Reset popup scroll position to top when opening media detail dialog
+
+## Flight Upload Bug
+- [x] Fix uploaded photos being assigned to wrong flight
+- [x] Ensure flight ID is correctly passed and stored during upload

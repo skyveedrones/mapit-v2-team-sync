@@ -584,6 +584,7 @@ export function MediaUploadDialog({
     await finalizeChunkedUploadMutation.mutateAsync({
       uploadId,
       projectId,
+      flightId,
       filename: file.name,
       mimeType: file.type,
       fileSize: file.size,
@@ -852,6 +853,7 @@ export function MediaUploadDialog({
 
           await uploadMutation.mutateAsync({
             projectId,
+            flightId,
             filename: fileItem.file.name,
             mimeType: fileItem.file.type,
             fileData: base64Data,
