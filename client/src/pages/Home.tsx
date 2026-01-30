@@ -114,13 +114,13 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
             <img
-              src="/images/mapit-logo-white.png"
-              alt="Mapit"
+              src="/images/skyvee-logo-white.png"
+              alt="SkyVee Drones"
               className="h-10 w-auto"
             />
-          </div>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
@@ -244,13 +244,13 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-white.png"
                 alt="Mapit"
-                className="h-24 md:h-32 w-auto mx-auto"
+                className="h-32 md:h-40 lg:h-48 w-auto mx-auto"
               />
             </motion.div>
 
             <motion.h1
               variants={fadeInUp}
-              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-6"
               style={{ fontFamily: "var(--font-display)" }}
             >
               ELEVATE YOUR VISION
