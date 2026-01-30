@@ -87,6 +87,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
 
   const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
   const deleteMutation = trpc.media.delete.useMutation();
@@ -195,9 +196,13 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     }
   }, [isFullscreen, handleResetZoom]);
 
-  // Reset zoom when changing media
+  // Reset zoom and scroll when changing media
   useEffect(() => {
     handleResetZoom();
+    // Scroll to top when opening or changing media
+    if (selectedMedia && dialogContentRef.current) {
+      dialogContentRef.current.scrollTop = 0;
+    }
   }, [selectedMedia?.id, handleResetZoom]);
 
   // Handle mouse wheel zoom
@@ -717,7 +722,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           </DialogHeader>
 
           {selectedMedia && (
-            <div className={`flex-1 ${isFullscreen ? "h-full overflow-hidden" : "overflow-y-auto"}`}>
+            <div ref={dialogContentRef} className={`flex-1 ${isFullscreen ? "h-full overflow-hidden" : "overflow-y-auto"}`}>
               {/* Media Preview with Navigation */}
               <div 
                 ref={imageContainerRef}

@@ -458,3 +458,6 @@
 - [x] Enable zoom controls for video playback
 - [x] Apply zoom transformation to video element
 - [x] Support pan/drag functionality for zoomed videos
+
+## Media Popup Scroll Reset
+- [x] Reset popup scroll position to top when opening media detail dialog
