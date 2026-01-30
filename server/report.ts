@@ -414,6 +414,7 @@ export function generateReportHtml(
     .logo-left {
       display: flex;
       align-items: center;
+      padding-left: 15px;
     }
     .logo-left .skyvee-logo-img {
       height: 50px;

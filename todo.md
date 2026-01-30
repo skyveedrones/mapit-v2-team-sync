@@ -500,3 +500,6 @@
 
 ## PDF Report Logo Color Fix
 - [x] Use dark/black version of SkyVee logo for visibility on white PDF background
+
+## PDF Report SkyVee Logo Spacing
+- [x] Add left margin to SkyVee logo to match Forney logo spacing on right
