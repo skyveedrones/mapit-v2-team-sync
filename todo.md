@@ -537,3 +537,6 @@
 - [ ] Add report generation UI to FlightDetail page
 - [ ] Include flight-specific media and metadata in flight reports
 - [ ] Match project report styling and layout for consistency
+
+## Hero Feature Image Update
+- [x] Replace GPS Data Export feature image with darker image that matches site theme
