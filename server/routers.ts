@@ -1881,13 +1881,26 @@ export const appRouter = router({
         // Use project logo if available, otherwise fall back to user-provided logo
         const logoUrl = project.logoUrl || input.userLogoUrl;
 
+        // Load SkyVee logo as base64 data URL
+        let skyVeeLogoDataUrl: string | undefined;
+        try {
+          const fs = await import('fs/promises');
+          const path = await import('path');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-white.png');
+          const logoBuffer = await fs.readFile(logoPath);
+          skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        } catch (error) {
+          console.error('[Report] Failed to load SkyVee logo:', error);
+        }
+
         // Generate HTML report
         const html = generateReportHtml(
           project,
           mediaImages,
           mapImageDataUrl,
           new Date(),
-          logoUrl
+          logoUrl,
+          skyVeeLogoDataUrl
         );
 
         return {

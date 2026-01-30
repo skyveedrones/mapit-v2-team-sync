@@ -492,3 +492,8 @@
 ## Report Download Page Logo Fix
 - [x] Fix SkyVee logo "V" on report download page
 - [x] Lower the logo position to not be crowded at top of page
+
+## Report Logo Fix - Use Home Page Logo
+- [x] Use the actual SkyVee logo image from home page instead of SVG
+- [x] Make client logo (Forney) bigger in upper right
+- [x] Add more spacing between client logo and edge of form

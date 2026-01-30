@@ -278,7 +278,8 @@ export function generateReportHtml(
   mediaImages: { filename: string; dataUrl: string }[],
   mapImageDataUrl: string | null,
   generatedAt: Date,
-  userLogoUrl?: string
+  userLogoUrl?: string,
+  skyVeeLogoDataUrl?: string
 ): string {
   const formatDate = (date: Date | null) => {
     if (!date) return "N/A";
@@ -289,17 +290,10 @@ export function generateReportHtml(
     });
   };
 
-  // SkyVee logo as inline SVG for consistent rendering
-  // The V is a stylized checkmark/bird shape pointing upward
-  const skyVeeLogo = `<svg width="140" height="45" viewBox="0 0 140 45" xmlns="http://www.w3.org/2000/svg">
-    <!-- SkyVee green V/checkmark logo mark -->
-    <path d="M70 8 C70 8 78 18 78 18 L70 14 L62 18 C62 18 70 8 70 8 Z" fill="#10B981" stroke="#10B981" stroke-width="1"/>
-    <path d="M62 18 L70 14 L78 18" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- SkyVee text -->
-    <text x="10" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">Sky</text>
-    <text x="52" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#10B981">V</text>
-    <text x="67" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">ee</text>
-  </svg>`;
+  // SkyVee logo - use the actual logo image if provided, otherwise use text fallback
+  const skyVeeLogo = skyVeeLogoDataUrl 
+    ? `<img src="${skyVeeLogoDataUrl}" alt="SkyVee" class="skyvee-logo-img" />`
+    : `<span class="skyvee-logo-text">SkyVee</span>`;
 
   // Generate photo grid HTML - 8 photos per page (4 rows x 2 columns)
   const generatePhotoPages = () => {
@@ -421,15 +415,22 @@ export function generateReportHtml(
       display: flex;
       align-items: center;
     }
-    .logo-left svg {
-      height: 40px;
+    .logo-left .skyvee-logo-img {
+      height: 50px;
       width: auto;
     }
+    .logo-left .skyvee-logo-text {
+      font-size: 24px;
+      font-weight: bold;
+      color: #10B981;
+    }
+    .logo-right {
+      padding-right: 15px;
+    }
     .logo-right img {
-      max-height: 45px;
-      max-width: 120px;
+      max-height: 70px;
+      max-width: 180px;
       object-fit: contain;
-      margin-top: 5px;
     }
     
     /* Title section */
