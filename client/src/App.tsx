@@ -61,9 +61,25 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+/**
+ * ScrollToTop Component
+ * Scrolls to top of page when route changes
+ */
+function ScrollToTop() {
+  const [location] = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
@@ -120,7 +136,8 @@ function Router() {
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </>
   );
 }
 

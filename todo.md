@@ -516,3 +516,6 @@
 ## Flight Upload Bug - Photos Going to Main Project (Again)
 - [x] Investigate why photos from Add Flights page upload to main project instead of flight
 - [x] Fix flight ID assignment in upload process
+
+## Feature Page Scroll Fix
+- [x] Fix feature pages to scroll to top when navigating from homepage hero tiles
