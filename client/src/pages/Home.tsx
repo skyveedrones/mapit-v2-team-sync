@@ -261,7 +261,7 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="Mapit"
-                className="h-28 md:h-36 lg:h-40 w-auto mx-auto"
+                className="h-56 md:h-72 lg:h-80 w-auto mx-auto"
               />
             </motion.div>
 

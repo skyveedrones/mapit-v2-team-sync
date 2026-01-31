@@ -131,3 +131,7 @@
 - [x] Update index.html with new favicon (already configured)
 - [x] Update PWA manifest with new icon (already configured)
 - [x] Test icon displays correctly in browser tab and when installed as app
+
+## Enlarge Homepage Logo
+- [x] Update Home.tsx to make Mapit logo 2x larger
+- [x] Test logo size on homepage
