@@ -281,7 +281,7 @@ export default function Home() {
               project planning, monitoring, and decision-making.
             </motion.p>
 
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {isAuthenticated ? (
                 <Button
                   size="lg"
@@ -301,6 +301,14 @@ export default function Home() {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                onClick={() => setLocation("/pricing")}
+              >
+                View Pricing
+              </Button>
             </motion.div>
           </motion.div>
         </div>

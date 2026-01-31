@@ -51,3 +51,29 @@
 - [x] Style pricing cards with Mapit branding (green accents)
 - [x] Add annual/monthly toggle
 - [x] Test pricing page responsiveness
+
+## Pricing Page Link Placement
+- [x] Add "View Pricing" CTA button to homepage hero section
+- [ ] Create footer component with pricing link
+- [ ] Add footer to all pages (Home, Dashboard, Pricing, etc.)
+- [ ] Add upgrade prompts in dashboard when users hit plan limits
+- [ ] Test all pricing links work correctly
+
+## Stripe Payment Integration
+- [x] Add Stripe feature to project using webdev_add_feature
+- [x] Configure Stripe API keys (test and production)
+- [x] Create subscription plans configuration file
+- [ ] Create subscription products in Stripe dashboard
+- [ ] Implement checkout flow on pricing page
+- [ ] Add webhook handlers for subscription events
+- [ ] Create subscription management page in dashboard
+- [ ] Test payment flow with Stripe test cards
+
+## Feature Gating & Plan Limits
+- [x] Add subscription tier field to user table
+- [x] Create plan limits configuration (projects, storage, team members)
+- [ ] Implement middleware to check plan limits before actions
+- [ ] Add upgrade prompts when users hit limits
+- [ ] Show current plan and usage in dashboard
+- [ ] Add "Upgrade" buttons throughout app
+- [ ] Test all plan limit enforcement

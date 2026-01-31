@@ -31,6 +31,22 @@ export const users = mysqlTable("users", {
   defaultFaaLicenseNumber: varchar("defaultFaaLicenseNumber", { length: 100 }),
   /** Default LAANC authorization number for new projects */
   defaultLaancAuthNumber: varchar("defaultLaancAuthNumber", { length: 100 }),
+  /** Stripe customer ID for billing */
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  /** Stripe subscription ID for active subscription */
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  /** Current subscription plan tier */
+  subscriptionTier: mysqlEnum("subscriptionTier", ["free", "starter", "professional", "business", "enterprise"]).default("free").notNull(),
+  /** Subscription status */
+  subscriptionStatus: mysqlEnum("subscriptionStatus", ["active", "canceled", "past_due", "trialing", "incomplete"]),
+  /** Subscription billing period (monthly or annual) */
+  billingPeriod: mysqlEnum("billingPeriod", ["monthly", "annual"]),
+  /** Current billing period start date */
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  /** Current billing period end date */
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  /** Whether subscription will cancel at period end */
+  cancelAtPeriodEnd: mysqlEnum("cancelAtPeriodEnd", ["yes", "no"]).default("no"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
