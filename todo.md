@@ -98,3 +98,8 @@
 - [x] Update all website pages to use correct dark logo
 - [x] Update PDF report generator to use white background logo
 - [x] Verify both logos display correctly
+
+## Add Green Glow Effect to Logos
+- [x] Add glowing green effect around GPS marker in dark logo (mapit-logo-new.png)
+- [x] Add glowing green effect around GPS marker in light logo (mapit-logo-light.png)
+- [x] Test both logos with glow effect
