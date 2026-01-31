@@ -497,16 +497,18 @@ export function generateReportHtml(
     
     /* Map section */
     .map-section {
-      margin: 20px 0;
+      margin: 15px 0;
     }
     .map-container {
       border: 1px solid #ddd;
       border-radius: 6px;
       overflow: hidden;
+      max-width: 100%;
     }
     .map-container img {
       width: 100%;
-      height: auto;
+      max-height: 280px;
+      object-fit: contain;
       display: block;
     }
     .map-caption {

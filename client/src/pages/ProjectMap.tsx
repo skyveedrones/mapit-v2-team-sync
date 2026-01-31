@@ -66,8 +66,10 @@ export default function ProjectMap() {
   );
 
   // Fetch media for this project (or specific flight if flightId provided)
+  // When viewing project map (no flightId), only show project-level media (not flight media)
+  // When viewing flight map (with flightId), show only that flight's media
   const { data: mediaItems, isLoading: mediaLoading } = trpc.media.list.useQuery(
-    { projectId, flightId, includeFlightMedia: flightId === undefined },
+    { projectId, flightId, includeFlightMedia: false },
     { enabled: projectId > 0 }
   );
 
@@ -159,13 +161,36 @@ export default function ProjectMap() {
         // Create info window content
         const content = document.createElement("div");
         content.className = "p-2 max-w-xs";
-        const imageUrl = media.thumbnailUrl || media.url;
+        const isVideo = media.mediaType === 'video';
+        const imageUrl = media.thumbnailUrl || (isVideo ? '' : media.url);
+        
+        // For videos, show thumbnail or video icon; for photos, show image
+        let mediaContent = '';
+        if (isVideo) {
+          if (media.thumbnailUrl) {
+            mediaContent = `<img src="${media.thumbnailUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" />`;
+          } else {
+            mediaContent = `<div class="w-full h-32 bg-gray-800 rounded mb-2 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>`;
+          }
+        } else {
+          if (imageUrl) {
+            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />`;
+          } else {
+            mediaContent = `<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">No Thumbnail</span></div>`;
+          }
+        }
+        
+        // Different icon for video (play) vs photo (expand)
+        const buttonIcon = isVideo 
+          ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+        
         content.innerHTML = `
           <div class="font-semibold text-sm mb-1">${media.filename}</div>
           <div class="relative">
-            ${media.thumbnailUrl ? `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">No Thumbnail</span></div>'}
-            <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${media.mediaType === 'video' ? 'Play video' : 'Enlarge image'}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+            ${mediaContent}
+            <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${isVideo ? 'Play video' : 'Enlarge image'}">
+              ${buttonIcon}
             </button>
           </div>
           <div class="text-xs text-gray-600">
@@ -591,7 +616,7 @@ export default function ProjectMap() {
         </div>
       )}
 
-      {/* Fullscreen Image Viewer Modal */}
+      {/* Fullscreen Image/Video Viewer Modal */}
       {enlargedImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
@@ -600,17 +625,26 @@ export default function ProjectMap() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 h-10 w-10 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 h-10 w-10 text-white hover:bg-white/20 z-10"
             onClick={() => setEnlargedImage(null)}
           >
             <X className="h-6 w-6" />
           </Button>
           <div className="max-w-[90vw] max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={enlargedImage.url}
-              alt={enlargedImage.filename}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
+            {enlargedImage.mediaType === 'video' ? (
+              <video
+                src={enlargedImage.url}
+                controls
+                autoPlay
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              />
+            ) : (
+              <img
+                src={enlargedImage.url}
+                alt={enlargedImage.filename}
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              />
+            )}
             <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
               <h3 className="font-semibold text-sm mb-1">{enlargedImage.filename}</h3>
               <div className="text-xs text-gray-300 flex flex-wrap gap-4">

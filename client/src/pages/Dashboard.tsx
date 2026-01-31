@@ -28,6 +28,7 @@ import {
   Download,
   FolderOpen,
   FolderPlus,
+  LogOut,
   Plus,
   Settings,
   Users,
@@ -52,7 +53,7 @@ const staggerContainer = {
 };
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -130,6 +131,11 @@ export default function Dashboard() {
                 <DropdownMenuItem onClick={handleComingSoon}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

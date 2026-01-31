@@ -1,8 +1,8 @@
 # Project TODO
 
-## Rename Media Files Feature
-- [x] Add backend tRPC procedure to rename media files
-- [x] Add rename button/icon to media items in UI
-- [x] Create rename dialog with input field
-- [x] Update media filename in database and UI after rename
-- [x] Add validation to prevent empty or invalid filenames
+## Bug Fixes - January 30, 2026
+- [x] Item 1: Fix video GPS markers not showing thumbnail and not opening video player on click
+- [x] Item 2: Fix flight GPS markers appearing when switching to fullscreen on project map
+- [x] Item 3: Make flight page map always visible (like parent project page)
+- [x] Item 4: Add "Logout" option to Actions dropdown on dashboard
+- [x] Item 5: Reduce PDF map size to fit on page 1

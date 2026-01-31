@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { FlightReportDialog } from "@/components/FlightReportDialog";
@@ -487,6 +488,15 @@ export default function FlightDetail() {
                   </CardContent>
                 </Card>
               )}
+            </motion.div>
+
+            {/* Flight Map Section */}
+            <motion.div variants={fadeInUp} className="mb-8">
+              <EmbeddedProjectMap
+                projectId={projectId}
+                projectName={flight.name}
+                flightId={flightId}
+              />
             </motion.div>
 
             {/* Media Section */}

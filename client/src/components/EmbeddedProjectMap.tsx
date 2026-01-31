@@ -16,16 +16,17 @@ import { Link } from "wouter";
 interface EmbeddedProjectMapProps {
   projectId: number;
   projectName: string;
+  flightId?: number;
 }
 
-export function EmbeddedProjectMap({ projectId, projectName }: EmbeddedProjectMapProps) {
+export function EmbeddedProjectMap({ projectId, projectName, flightId }: EmbeddedProjectMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
-  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId });
+  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId, flightId });
 
   // Filter media with GPS coordinates
   const mediaWithGPS = mediaList?.filter(
@@ -197,7 +198,7 @@ export function EmbeddedProjectMap({ projectId, projectName }: EmbeddedProjectMa
             )}
           </h2>
           {mediaWithGPS.length > 0 && (
-            <Link href={`/project/${projectId}/map`}>
+            <Link href={flightId ? `/project/${projectId}/flight/${flightId}/map` : `/project/${projectId}/map`}>
               <Button variant="outline" size="sm">
                 <Expand className="h-4 w-4 mr-2" />
                 Full Screen
