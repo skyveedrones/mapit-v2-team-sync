@@ -102,12 +102,14 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
         lng: parseFloat(media.longitude!),
       };
 
-      // Create custom marker element with number
+      // Create custom marker element with number and color based on media type
+      const isVideo = media.mediaType === 'video';
+      const markerColor = isVideo ? '#ef4444' : '#10B981'; // Red for videos, green for photos
       const markerElement = document.createElement("div");
       markerElement.className = "marker-container";
       markerElement.innerHTML = `
         <div style="
-          background: #10B981;
+          background: ${markerColor};
           color: white;
           border-radius: 50%;
           width: 28px;
@@ -133,13 +135,23 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
       // Add click listener for info window
       marker.addListener("click", () => {
         setSelectedMedia(media);
+        
+        // Handle video vs photo display
+        let mediaDisplay = '';
+        if (isVideo) {
+          if (media.thumbnailUrl) {
+            mediaDisplay = `<img src="${media.thumbnailUrl}" alt="${media.filename}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" />`;
+          } else {
+            mediaDisplay = `<div style="width: 100%; height: 120px; background: #1f2937; border-radius: 4px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>`;
+          }
+        } else {
+          const imageUrl = media.thumbnailUrl || media.url;
+          mediaDisplay = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='${media.url}'" />`;
+        }
+        
         const content = `
           <div style="max-width: 200px; padding: 8px;">
-            <img 
-              src="${media.url}" 
-              alt="${media.filename}"
-              style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;"
-            />
+            ${mediaDisplay}
             <p style="font-weight: 600; font-size: 12px; margin: 0 0 4px 0; color: #333;">${media.filename}</p>
             <p style="font-size: 11px; color: #666; margin: 0;">
               ${parseFloat(media.latitude!).toFixed(6)}°, ${parseFloat(media.longitude!).toFixed(6)}°

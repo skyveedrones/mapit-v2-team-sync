@@ -333,13 +333,13 @@ export function generateReportHtml(
 
   // SVG icons for inline use
   const icons = {
-    location: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-    user: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    calendar: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-    image: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
-    plane: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>`,
-    shield: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-    status: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    location: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    user: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    calendar: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    image: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+    plane: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>`,
+    shield: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    status: `<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
   };
 
   // Build project info items - horizontal layout with icons
@@ -385,7 +385,7 @@ export function generateReportHtml(
   <meta charset="UTF-8">
   <style>
     @page {
-      margin: 0.5in;
+      margin: 0.3in 0.4in;
       size: letter;
     }
     * {
@@ -407,7 +407,7 @@ export function generateReportHtml(
       justify-content: space-between;
       align-items: center;
       padding: 20px 0 15px 0;
-      border-bottom: 2px solid #10B981;
+      border-bottom: 2px solid #000000;
       margin-bottom: 20px;
       margin-top: 10px;
     }
@@ -417,13 +417,13 @@ export function generateReportHtml(
       padding-left: 15px;
     }
     .logo-left .skyvee-logo-img {
-      height: 50px;
+      height: 70px;
       width: auto;
     }
     .logo-left .skyvee-logo-text {
-      font-size: 24px;
+      font-size: 32px;
       font-weight: bold;
-      color: #10B981;
+      color: #000000;
     }
     .logo-right {
       padding-right: 15px;
@@ -457,7 +457,7 @@ export function generateReportHtml(
     .section-header {
       font-size: 13px;
       font-weight: 600;
-      color: #10B981;
+      color: #000000;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 10px;
@@ -507,7 +507,7 @@ export function generateReportHtml(
     }
     .map-container img {
       width: 100%;
-      max-height: 280px;
+      max-height: 420px;
       object-fit: contain;
       display: block;
     }
@@ -534,7 +534,7 @@ export function generateReportHtml(
     .section-title {
       font-size: 13px;
       font-weight: 600;
-      color: #10B981;
+      color: #000000;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }

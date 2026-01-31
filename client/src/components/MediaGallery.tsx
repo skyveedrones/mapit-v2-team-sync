@@ -591,7 +591,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
 
       {/* Media Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {sortedMedia.map((item) => (
+        {sortedMedia.map((item, index) => (
           <div
             key={item.id}
             className={`group relative aspect-square rounded-lg overflow-hidden bg-card border cursor-pointer transition-all ${
@@ -626,6 +626,18 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted">
                 <FileVideo className="h-12 w-12 text-muted-foreground" />
+              </div>
+            )}
+
+            {/* GPS Marker Number Badge - Top Right */}
+            {item.latitude && item.longitude && (
+              <div className="absolute top-2 right-2 z-10 pointer-events-none">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-white" style={{
+                  background: item.mediaType === 'video' ? '#ef4444' : '#10B981',
+                  color: 'white'
+                }}>
+                  {index + 1}
+                </div>
               </div>
             )}
 
