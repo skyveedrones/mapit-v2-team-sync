@@ -92,7 +92,9 @@ export function ProjectLogoDialog({
       });
 
       toast.success("Project logo uploaded successfully");
-      utils.project.get.invalidate({ id: projectId });
+      // Force refetch to ensure new logo displays immediately
+      await utils.project.get.invalidate({ id: projectId });
+      await utils.project.get.refetch({ id: projectId });
       handleClose(false);
     } catch (error) {
       console.error("Upload error:", error);
@@ -107,7 +109,9 @@ export function ProjectLogoDialog({
     try {
       await deleteMutation.mutateAsync({ projectId });
       toast.success("Project logo removed");
-      utils.project.get.invalidate({ id: projectId });
+      // Force refetch to ensure logo removal displays immediately
+      await utils.project.get.invalidate({ id: projectId });
+      await utils.project.get.refetch({ id: projectId });
       handleClose(false);
     } catch (error) {
       console.error("Delete error:", error);

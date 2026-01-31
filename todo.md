@@ -135,3 +135,11 @@
 ## Enlarge Homepage Logo
 - [x] Update Home.tsx to make Mapit logo 2x larger
 - [x] Test logo size on homepage
+
+## Fix Company Logo Upload Not Updating
+- [x] Investigate logo upload functionality in project settings
+- [x] Check if logo URL is being updated in database after upload
+- [x] Check if frontend is invalidating cache/refetching after upload
+- [x] Fix logo display to show newly uploaded logo immediately (added refetch after invalidate)
+- [x] Fix complete - added refetch() after invalidate() to force immediate update
+- [ ] Test logo upload and display on published site
