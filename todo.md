@@ -80,3 +80,14 @@
 
 ## Pricing FAQ Update
 - [x] Remove nonprofit and education discount question from pricing FAQ
+
+## Sitewide Logo Update
+- [x] Copy new logo file to project images directory
+- [x] Update logo on homepage (Home.tsx)
+- [x] Update logo in PDF report generator (server/report.ts)
+- [x] Update logo in email templates (text-based logo, no image file needed)
+- [x] Update logo on pricing page (Pricing.tsx)
+- [x] Update logo in navigation/header components (Home.tsx has nav)
+- [x] Update logo in dashboard layout (no logo in DashboardLayout)
+- [x] Update logo in all remaining pages (FlightDetail, ProjectDetail, InviteAccept, Footer)
+- [x] Test all pages to verify new logo displays correctly

@@ -196,7 +196,7 @@ export default function FlightDetail() {
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-new.png"
                 alt="Mapit"
                 className="h-8 w-auto"
               />
@@ -220,7 +220,7 @@ export default function FlightDetail() {
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-new.png"
                 alt="Mapit"
                 className="h-8 w-auto"
               />
@@ -266,7 +266,7 @@ export default function FlightDetail() {
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <img
-              src="/images/mapit-logo-white.png"
+              src="/images/mapit-logo-new.png"
               alt="Mapit"
               className="h-8 w-auto"
             />

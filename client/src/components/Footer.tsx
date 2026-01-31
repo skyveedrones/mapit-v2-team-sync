@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-new.png"
                 alt="Mapit"
                 className="h-8 w-auto"
               />

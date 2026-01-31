@@ -259,7 +259,7 @@ export default function Home() {
           >
             <motion.div variants={fadeInUp} className="mb-8">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-new.png"
                 alt="Mapit"
                 className="h-28 md:h-36 lg:h-40 w-auto mx-auto"
               />
@@ -460,7 +460,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-new.png"
                 alt="Mapit"
                 className="h-6 w-auto opacity-60"
               />

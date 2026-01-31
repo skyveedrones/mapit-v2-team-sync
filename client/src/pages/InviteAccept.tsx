@@ -116,7 +116,7 @@ export default function InviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/mapit-logo-white.png" alt="Mapit" className="h-8 w-auto" />
+              <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -162,7 +162,7 @@ export default function InviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/mapit-logo-white.png" alt="Mapit" className="h-8 w-auto" />
+              <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -205,7 +205,7 @@ export default function InviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/mapit-logo-white.png" alt="Mapit" className="h-8 w-auto" />
+              <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -248,7 +248,7 @@ export default function InviteAccept() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/images/mapit-logo-white.png" alt="Mapit" className="h-8 w-auto" />
+            <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-8 w-auto" />
           </Link>
         </div>
       </nav>

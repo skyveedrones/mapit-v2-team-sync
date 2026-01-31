@@ -113,7 +113,7 @@ export default function Pricing() {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <img
-              src="/images/mapit-logo-white.png"
+              src="/images/mapit-logo-new.png"
               alt="Mapit"
               className="h-8"
             />
