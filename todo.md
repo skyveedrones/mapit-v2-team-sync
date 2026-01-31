@@ -103,3 +103,9 @@
 - [x] Add glowing green effect around GPS marker in dark logo (mapit-logo-new.png)
 - [x] Add glowing green effect around GPS marker in light logo (mapit-logo-light.png)
 - [x] Test both logos with glow effect
+
+## Update Install as App Feature Image
+- [x] Search for technology-focused PWA/app installation images
+- [x] Download and save new image to public/images directory
+- [x] Update Home.tsx to use new feature image
+- [x] Test homepage to verify new image displays correctly
