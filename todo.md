@@ -32,3 +32,4 @@
 
 ## Video Thumbnail Bug Fix
 - [x] Fix video thumbnails not displaying in info window popup on enlarged/fullscreen map
+- [x] Fix video thumbnails in Selected Media Preview popup (bottom right corner)

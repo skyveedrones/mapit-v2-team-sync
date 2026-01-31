@@ -663,8 +663,45 @@ export default function ProjectMap() {
                 </Button>
               </div>
             ) : (
-              <div className="w-24 h-18 bg-muted rounded flex items-center justify-center">
-                <Video className="h-6 w-6 text-muted-foreground" />
+              <div className="relative">
+                {selectedMedia.thumbnailUrl ? (
+                  <>
+                    <img
+                      src={selectedMedia.thumbnailUrl}
+                      alt={selectedMedia.filename}
+                      className="w-24 h-18 object-cover rounded cursor-pointer"
+                      onClick={() => setEnlargedImage(selectedMedia)}
+                      onError={(e) => {
+                        // Hide image and show video icon if thumbnail fails
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                    <div className="w-24 h-18 bg-muted rounded items-center justify-center hidden">
+                      <Video className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
+                        <Video className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute bottom-1 right-1 h-5 w-5 bg-black/60 hover:bg-black/80 border-0"
+                      onClick={() => setEnlargedImage(selectedMedia)}
+                      title="Play video"
+                    >
+                      <Maximize2 className="h-3 w-3 text-white" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="w-24 h-18 bg-muted rounded flex items-center justify-center cursor-pointer" onClick={() => setEnlargedImage(selectedMedia)}>
+                    <Video className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                )}
               </div>
             )}
             <div className="flex-1 min-w-0">
