@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 // Geotagged media item with required GPS coordinates
 interface GeotaggedMedia {
@@ -51,6 +52,7 @@ export default function ProjectMap() {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const markerClustererRef = useRef<MarkerClusterer | null>(null);
 
   const [showFlightPath, setShowFlightPath] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<GeotaggedMedia | null>(null);
@@ -129,6 +131,12 @@ export default function ProjectMap() {
     if (!mapReady || !mapRef.current || geotaggedMedia.length === 0) return;
 
     const map = mapRef.current;
+
+    // Clear existing marker clusterer
+    if (markerClustererRef.current) {
+      markerClustererRef.current.clearMarkers();
+      markerClustererRef.current = null;
+    }
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.map = null);
@@ -217,6 +225,34 @@ export default function ProjectMap() {
 
       markersRef.current.push(marker);
     });
+
+    // Initialize marker clusterer with custom styling
+    if (markersRef.current.length > 0) {
+      markerClustererRef.current = new MarkerClusterer({
+        map,
+        markers: markersRef.current,
+        renderer: {
+          render: ({ count, position }) => {
+            // Create custom cluster marker with green styling
+            const svg = `
+              <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="22" fill="#10B981" opacity="0.9" stroke="white" stroke-width="3"/>
+                <text x="25" y="25" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="bold" fill="white">${count}</text>
+              </svg>
+            `;
+            const clusterIcon = document.createElement('div');
+            clusterIcon.innerHTML = svg;
+            clusterIcon.className = 'transform hover:scale-110 transition-transform cursor-pointer';
+            
+            return new google.maps.marker.AdvancedMarkerElement({
+              position,
+              content: clusterIcon,
+              zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+            });
+          },
+        },
+      });
+    }
 
     // Draw flight path polyline
     if (geotaggedMedia.length > 1 && showFlightPath) {

@@ -12,6 +12,7 @@ import { Media } from "../../../drizzle/schema";
 import { Expand, MapPin, Navigation } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Link } from "wouter";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 interface EmbeddedProjectMapProps {
   projectId: number;
@@ -24,6 +25,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
+  const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
   const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId, flightId });
@@ -49,6 +51,12 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
   // Handle map ready - add markers and flight path
   const handleMapReady = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
+
+    // Clear existing marker clusterer
+    if (markerClustererRef.current) {
+      markerClustererRef.current.clearMarkers();
+      markerClustererRef.current = null;
+    }
 
     // Clear existing markers
     markersRef.current.forEach((marker) => (marker.map = null));
@@ -144,6 +152,34 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
 
       markersRef.current.push(marker);
     });
+
+    // Initialize marker clusterer with custom styling
+    if (markersRef.current.length > 0) {
+      markerClustererRef.current = new MarkerClusterer({
+        map,
+        markers: markersRef.current,
+        renderer: {
+          render: ({ count, position }) => {
+            // Create custom cluster marker with green styling
+            const svg = `
+              <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="22" fill="#10B981" opacity="0.9" stroke="white" stroke-width="3"/>
+                <text x="25" y="25" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="bold" fill="white">${count}</text>
+              </svg>
+            `;
+            const clusterIcon = document.createElement('div');
+            clusterIcon.innerHTML = svg;
+            clusterIcon.className = 'transform hover:scale-110 transition-transform cursor-pointer';
+            
+            return new google.maps.marker.AdvancedMarkerElement({
+              position,
+              content: clusterIcon,
+              zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+            });
+          },
+        },
+      });
+    }
 
     // Fit bounds to show all markers
     if (mediaWithGPS.length > 1) {
