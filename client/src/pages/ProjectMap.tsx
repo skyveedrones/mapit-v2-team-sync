@@ -172,13 +172,31 @@ export default function ProjectMap() {
         const isVideo = media.mediaType === 'video';
         const imageUrl = media.thumbnailUrl || (isVideo ? '' : media.url);
         
+        // Debug logging for video thumbnails
+        if (isVideo) {
+          console.log('Video marker clicked:', {
+            id: media.id,
+            filename: media.filename,
+            thumbnailUrl: media.thumbnailUrl,
+            url: media.url,
+            hasThumbnail: !!media.thumbnailUrl
+          });
+        }
+        
         // For videos, show thumbnail or video icon; for photos, show image
         let mediaContent = '';
         if (isVideo) {
           if (media.thumbnailUrl) {
+            console.log('Rendering video with thumbnail:', media.thumbnailUrl);
             mediaContent = `
               <div class="relative w-full h-32 bg-gray-900 rounded mb-2">
-                <img src="${media.thumbnailUrl}" alt="${media.filename}" class="w-full h-full object-cover rounded" />
+                <img 
+                  src="${media.thumbnailUrl}" 
+                  alt="${media.filename}" 
+                  class="w-full h-full object-cover rounded" 
+                  onerror="console.error('Failed to load video thumbnail:', this.src);"
+                  onload="console.log('Video thumbnail loaded successfully');"
+                />
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div class="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -186,6 +204,7 @@ export default function ProjectMap() {
                 </div>
               </div>`;
           } else {
+            console.log('Video has no thumbnail, showing placeholder');
             mediaContent = `
               <div class="w-full h-32 bg-gray-900 rounded mb-2 flex flex-col items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

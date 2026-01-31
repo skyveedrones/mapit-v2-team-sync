@@ -29,3 +29,6 @@
 ## Video Marker Bug Fixes
 - [x] Fix video GPS markers not showing on embedded project map (only show on fullscreen)
 - [x] Fix blank video thumbnails in map popup windows
+
+## Video Thumbnail Bug Fix
+- [x] Fix video thumbnails not displaying in info window popup on enlarged/fullscreen map
