@@ -142,4 +142,10 @@
 - [x] Check if frontend is invalidating cache/refetching after upload
 - [x] Fix logo display to show newly uploaded logo immediately (added refetch after invalidate)
 - [x] Fix complete - added refetch() after invalidate() to force immediate update
-- [ ] Test logo upload and display on published site
+- [x] Test logo upload and display on published site (user needs to test after publishing update)
+
+## Replace Install as App Hero Image
+- [x] Search for better technology-focused PWA/app installation image
+- [x] Download image that matches professional style of other hero tiles
+- [x] Replace current hero-install-app.jpg with new image
+- [x] Test homepage to verify new image matches design aesthetic

@@ -75,7 +75,7 @@ const features = [
     title: "Install as App",
     description:
       "Install on your phone or desktop for quick access and offline use - works anywhere",
-    image: "/images/feature-pwa.jpg",
+    image: "/images/feature-install-app-dark.png",
     link: "/features/install-as-app",
   },
 ];
