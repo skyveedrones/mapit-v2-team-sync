@@ -1920,7 +1920,7 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-new.png');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-light.png');
           const logoBuffer = await fs.readFile(logoPath);
           skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
@@ -2068,7 +2068,7 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-new.png');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-light.png');
           const logoBuffer = await fs.readFile(logoPath);
           skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {

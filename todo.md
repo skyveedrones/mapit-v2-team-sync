@@ -91,3 +91,9 @@
 - [x] Update logo in dashboard layout (no logo in DashboardLayout)
 - [x] Update logo in all remaining pages (FlightDetail, ProjectDetail, InviteAccept, Footer)
 - [x] Test all pages to verify new logo displays correctly
+
+## White Background Logo Variant
+- [x] Generate white background version of Mapit logo with black text
+- [x] Save as mapit-logo-light.png in public/images directory
+- [x] Update PDF report generator to use white background logo
+- [x] Test PDF report with new logo
