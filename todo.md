@@ -81,7 +81,7 @@
 ## Pricing FAQ Update
 - [x] Remove nonprofit and education discount question from pricing FAQ
 
-## Sitewide Logo Update
+## Sitewide Logo Update (First Version)
 - [x] Copy new logo file to project images directory
 - [x] Update logo on homepage (Home.tsx)
 - [x] Update logo in PDF report generator (server/report.ts)
@@ -92,8 +92,9 @@
 - [x] Update logo in all remaining pages (FlightDetail, ProjectDetail, InviteAccept, Footer)
 - [x] Test all pages to verify new logo displays correctly
 
-## White Background Logo Variant
-- [x] Generate white background version of Mapit logo with black text
-- [x] Save as mapit-logo-light.png in public/images directory
+## Correct Logo Implementation
+- [x] Copy user's provided logo file (94c23f30-feb1-11f0-9ce0-0f97ad92cf8e(1).webp) to mapit-logo-new.png
+- [x] Create white background version with black text for PDF reports (mapit-logo-light.png)
+- [x] Update all website pages to use correct dark logo
 - [x] Update PDF report generator to use white background logo
-- [x] Test PDF report with new logo
+- [x] Verify both logos display correctly
