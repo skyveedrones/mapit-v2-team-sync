@@ -242,9 +242,9 @@ export default function Home() {
           >
             <motion.div variants={fadeInUp} className="mb-8">
               <img
-                src="/images/mapit-logo-white.png"
+                src="/images/mapit-logo-dark.png"
                 alt="Mapit"
-                className="h-28 md:h-36 lg:h-40 w-auto mx-auto"
+                className="h-28 md:h-36 lg:h-40 w-auto mx-auto rounded-xl"
               />
             </motion.div>
 

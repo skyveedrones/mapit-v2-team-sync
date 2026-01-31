@@ -33,3 +33,6 @@
 ## Video Thumbnail Bug Fix
 - [x] Fix video thumbnails not displaying in info window popup on enlarged/fullscreen map
 - [x] Fix video thumbnails in Selected Media Preview popup (bottom right corner)
+
+## Logo Display Fix
+- [x] Fix Mapit logo showing checkered transparency pattern on homepage - created new logo with solid dark background
