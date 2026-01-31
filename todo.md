@@ -22,3 +22,6 @@
 
 ## Logo Update
 - [x] Remove black square background from Mapit logo and make it transparent
+
+## UI Update
+- [x] Remove GPS marker numbers from media gallery thumbnails

@@ -656,17 +656,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               </div>
             )}
 
-            {/* GPS Marker Number Badge - Top Right */}
-            {item.latitude && item.longitude && gpsMarkerNumbers.has(item.id) && (
-              <div className="absolute top-2 right-2 z-10 pointer-events-none">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-white" style={{
-                  background: item.mediaType === 'video' ? '#ef4444' : '#10B981',
-                  color: 'white'
-                }}>
-                  {gpsMarkerNumbers.get(item.id)}
-                </div>
-              </div>
-            )}
+            {/* GPS Marker Number Badge - Removed per user request */}
 
             {/* Selection Checkbox - Always visible */}
             {canEdit && (
