@@ -39,3 +39,6 @@
 
 ## Logo Revert
 - [x] Revert Mapit logo back to original version (mapit-logo-white.png)
+
+## Logo Restoration
+- [x] Restore Mapit logo to correct version with solid black background
