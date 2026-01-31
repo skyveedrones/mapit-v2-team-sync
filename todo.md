@@ -109,3 +109,25 @@
 - [x] Download and save new image to public/images directory
 - [x] Update Home.tsx to use new feature image
 - [x] Test homepage to verify new image displays correctly
+
+## Fix Missing Media on Published Website
+- [x] Investigate why photos and videos aren't displaying on published site
+- [x] Check S3 storage configuration and file paths
+- [x] Verify media upload functionality stores files correctly
+- [x] Check if media URLs are being generated correctly
+- [x] Root cause: Development and production use different S3 buckets
+- [x] Create migration script to copy media from dev S3 to production S3
+- [x] Run migration script to transfer all media files
+- [x] Result: All files failed with 403 Forbidden - dev storage is isolated
+- [x] Recommendation: User chose Option 1 - re-upload through published site
+- [ ] Create download script to save all media files locally organized by project
+- [ ] Provide instructions for bulk re-upload to published site
+
+## Create PWA Favicon/App Icon
+- [x] Create square icon (512x512) with white background
+- [x] Extract green GPS marker from Mapit logo and center it
+- [x] Add "MAPIT" text below the marker
+- [x] Save as favicon and PWA icon files (512px, 192px, 32px)
+- [x] Update index.html with new favicon (already configured)
+- [x] Update PWA manifest with new icon (already configured)
+- [x] Test icon displays correctly in browser tab and when installed as app
