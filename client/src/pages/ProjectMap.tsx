@@ -189,16 +189,16 @@ export default function ProjectMap() {
           if (media.thumbnailUrl) {
             console.log('Rendering video with thumbnail:', media.thumbnailUrl);
             mediaContent = `
-              <div class="relative w-full h-32 bg-gray-900 rounded mb-2">
+              <div style="position: relative; width: 100%; height: 128px; background: #111827; border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
                 <img 
                   src="${media.thumbnailUrl}" 
                   alt="${media.filename}" 
-                  class="w-full h-full object-cover rounded" 
+                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" 
                   onerror="console.error('Failed to load video thumbnail:', this.src);"
                   onload="console.log('Video thumbnail loaded successfully');"
                 />
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div class="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                  <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function ProjectMap() {
           } else {
             console.log('Video has no thumbnail, showing placeholder');
             mediaContent = `
-              <div class="w-full h-32 bg-gray-900 rounded mb-2 flex flex-col items-center justify-center gap-2">
+              <div style="width: 100%; height: 128px; background: #111827; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
                   <line x1="7" y1="2" x2="7" y2="22"></line>
@@ -217,14 +217,14 @@ export default function ProjectMap() {
                   <line x1="17" y1="17" x2="22" y2="17"></line>
                   <line x1="17" y1="7" x2="22" y2="7"></line>
                 </svg>
-                <span class="text-gray-400 text-xs">Video</span>
+                <span style="color: #9ca3af; font-size: 12px;">Video</span>
               </div>`;
           }
         } else {
           if (imageUrl) {
-            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='${media.url}'" />`;
+            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 128px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='${media.url}'" />`;
           } else {
-            mediaContent = `<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><span class="text-gray-500">No Thumbnail</span></div>`;
+            mediaContent = `<div style="width: 100%; height: 128px; background: #e5e7eb; border-radius: 4px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Thumbnail</span></div>`;
           }
         }
         
