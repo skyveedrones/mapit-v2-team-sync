@@ -149,3 +149,9 @@
 - [x] Download image that matches professional style of other hero tiles
 - [x] Replace current hero-install-app.jpg with new image
 - [x] Test homepage to verify new image matches design aesthetic
+
+## Update Hero Popup Feature Images
+- [x] Review current popup feature page implementation
+- [x] Identify which images are used in popups vs homepage tiles
+- [x] Update popup images to match hero tile quality
+- [x] Test all feature popups display correctly

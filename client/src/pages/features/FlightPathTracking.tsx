@@ -187,31 +187,12 @@ export default function FlightPathTracking() {
               transition={{ delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border shadow-2xl">
-                <div className="w-full h-full relative bg-gradient-to-br from-emerald-100 to-blue-100 p-8">
-                  {/* Simulated flight path */}
-                  <svg className="w-full h-full" viewBox="0 0 400 200">
-                    {/* Flight path line */}
-                    <path
-                      d="M 50 150 Q 100 50 150 100 T 250 80 T 350 120"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="3"
-                      strokeDasharray="5,5"
-                    />
-                    {/* Photo markers */}
-                    <circle cx="50" cy="150" r="8" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="100" cy="75" r="6" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="150" cy="100" r="6" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="200" cy="70" r="6" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="250" cy="80" r="6" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="300" cy="95" r="6" fill="#22c55e" stroke="white" strokeWidth="2" />
-                    <circle cx="350" cy="120" r="8" fill="#ef4444" stroke="white" strokeWidth="2" />
-                    {/* Labels */}
-                    <text x="50" y="175" textAnchor="middle" className="text-xs fill-gray-600">Start</text>
-                    <text x="350" y="145" textAnchor="middle" className="text-xs fill-gray-600">End</text>
-                  </svg>
-                </div>
+              <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/feature-flightpath-new.jpg"
+                  alt="Flight Path Tracking - Automated drone route visualization"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </motion.div>
           </div>

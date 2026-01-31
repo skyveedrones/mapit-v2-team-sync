@@ -191,24 +191,12 @@ export default function PdfMapOverlay() {
               transition={{ delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border shadow-2xl">
-                <div className="w-full h-full relative">
-                  {/* Simulated overlay visualization */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-emerald-700/30" />
-                  <div className="absolute inset-4 border-2 border-dashed border-primary/50 rounded-lg flex items-center justify-center">
-                    <div className="text-center p-4">
-                      <Layers className="h-12 w-12 text-primary mx-auto mb-4" />
-                      <p className="text-sm text-muted-foreground">
-                        Blueprint overlay on aerial imagery
-                      </p>
-                    </div>
-                  </div>
-                  {/* Corner markers */}
-                  <div className="absolute top-2 left-2 w-4 h-4 bg-primary rounded-full" />
-                  <div className="absolute top-2 right-2 w-4 h-4 bg-primary rounded-full" />
-                  <div className="absolute bottom-2 left-2 w-4 h-4 bg-primary rounded-full" />
-                  <div className="absolute bottom-2 right-2 w-4 h-4 bg-primary rounded-full" />
-                </div>
+              <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/feature-overlay-new.jpg"
+                  alt="PDF Map Overlay - Blueprint overlay on aerial imagery"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </motion.div>
           </div>

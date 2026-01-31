@@ -186,28 +186,12 @@ export default function GpsDataExport() {
               transition={{ delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border shadow-2xl">
+              <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
                 <img
                   src="/images/feature-export-new.png"
-                  alt="GPS Data Export"
+                  alt="GPS Data Export - Multiple export formats"
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="flex gap-2">
-                    {exportFormats.map((format) => (
-                      <div
-                        key={format.title}
-                        className="px-3 py-1 rounded-full bg-background/90 text-sm font-medium"
-                      >
-                        {format.title}
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </motion.div>
           </div>

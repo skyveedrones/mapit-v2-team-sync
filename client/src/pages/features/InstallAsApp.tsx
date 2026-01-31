@@ -193,18 +193,12 @@ export default function InstallAsApp() {
               transition={{ delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border shadow-2xl flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="flex justify-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <Smartphone className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <Monitor className="h-8 w-8 text-primary" />
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground">Works on all devices</p>
-                </div>
+              <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/feature-install-app-dark.png"
+                  alt="Install as App - Progressive Web App on all devices"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </motion.div>
           </div>

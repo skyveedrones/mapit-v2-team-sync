@@ -183,14 +183,12 @@ export default function EasyUpload() {
               transition={{ delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted border-2 border-dashed border-primary/50 shadow-2xl flex items-center justify-center">
-                <div className="text-center p-8">
-                  <Upload className="h-16 w-16 text-primary mx-auto mb-4" />
-                  <p className="text-lg font-medium mb-2">Drag & Drop Files Here</p>
-                  <p className="text-sm text-muted-foreground">
-                    or click to browse
-                  </p>
-                </div>
+              <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/feature-upload-new.jpg"
+                  alt="Easy Upload - Drone photo upload interface"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </motion.div>
           </div>
