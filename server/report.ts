@@ -553,7 +553,7 @@ export function generateReportHtml(
     .photo-cell {
       display: flex;
       flex-direction: column;
-      border: 1px solid #e5e5e5;
+      border: 2px solid #333333;
       border-radius: 4px;
       overflow: hidden;
       background: #fafafa;

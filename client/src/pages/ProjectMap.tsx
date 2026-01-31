@@ -176,9 +176,29 @@ export default function ProjectMap() {
         let mediaContent = '';
         if (isVideo) {
           if (media.thumbnailUrl) {
-            mediaContent = `<img src="${media.thumbnailUrl}" alt="${media.filename}" class="w-full h-32 object-cover rounded mb-2" />`;
+            mediaContent = `
+              <div class="relative w-full h-32 bg-gray-900 rounded mb-2">
+                <img src="${media.thumbnailUrl}" alt="${media.filename}" class="w-full h-full object-cover rounded" />
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div class="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                </div>
+              </div>`;
           } else {
-            mediaContent = `<div class="w-full h-32 bg-gray-800 rounded mb-2 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>`;
+            mediaContent = `
+              <div class="w-full h-32 bg-gray-900 rounded mb-2 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                  <line x1="7" y1="2" x2="7" y2="22"></line>
+                  <line x1="17" y1="2" x2="17" y2="22"></line>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <line x1="2" y1="7" x2="7" y2="7"></line>
+                  <line x1="2" y1="17" x2="7" y2="17"></line>
+                  <line x1="17" y1="17" x2="22" y2="17"></line>
+                  <line x1="17" y1="7" x2="22" y2="7"></line>
+                </svg>
+              </div>`;
           }
         } else {
           if (imageUrl) {

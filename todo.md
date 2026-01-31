@@ -14,3 +14,8 @@
 - [x] Reduce PDF report top and bottom margins
 - [x] Enlarge Mapit logo in PDF report
 - [x] Change all green font to black in PDF report
+
+## Additional Bug Fixes
+- [x] Fix video thumbnails showing blank in fullscreen map info windows
+- [x] Add borders around photo tiles in PDF report
+- [x] Fix media gallery numbering to match GPS marker order (currently breaks when sorting changes)

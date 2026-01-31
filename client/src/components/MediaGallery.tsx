@@ -107,6 +107,33 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const renameMutation = trpc.media.renameFile.useMutation();
   const utils = trpc.useUtils();
 
+  // Create GPS marker number mapping based on capture time (flight path order)
+  // This ensures numbers stay consistent with map markers regardless of gallery sorting
+  const gpsMarkerNumbers = useMemo(() => {
+    if (!mediaList) return new Map<number, number>();
+    
+    // Get only media with GPS coordinates
+    const gpsMedia = mediaList.filter(m => m.latitude && m.longitude);
+    
+    // Sort by capture time to match map marker order
+    const sortedByCapture = [...gpsMedia].sort((a, b) => {
+      if (a.capturedAt && b.capturedAt) {
+        return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
+      }
+      if (a.capturedAt && !b.capturedAt) return -1;
+      if (!a.capturedAt && b.capturedAt) return 1;
+      return a.filename.localeCompare(b.filename);
+    });
+    
+    // Create mapping: media ID -> marker number
+    const numberMap = new Map<number, number>();
+    sortedByCapture.forEach((media, index) => {
+      numberMap.set(media.id, index + 1);
+    });
+    
+    return numberMap;
+  }, [mediaList]);
+
   // Sort media based on selected option
   const sortedMedia = useMemo(() => {
     if (!mediaList) return [];
@@ -630,13 +657,13 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             )}
 
             {/* GPS Marker Number Badge - Top Right */}
-            {item.latitude && item.longitude && (
+            {item.latitude && item.longitude && gpsMarkerNumbers.has(item.id) && (
               <div className="absolute top-2 right-2 z-10 pointer-events-none">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-white" style={{
                   background: item.mediaType === 'video' ? '#ef4444' : '#10B981',
                   color: 'white'
                 }}>
-                  {index + 1}
+                  {gpsMarkerNumbers.get(item.id)}
                 </div>
               </div>
             )}
