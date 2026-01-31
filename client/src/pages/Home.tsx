@@ -124,6 +124,13 @@ export default function Home() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
+            <Button
+              variant="ghost"
+              className="text-foreground hover:text-primary"
+              onClick={() => setLocation("/pricing")}
+            >
+              Pricing
+            </Button>
             {isAuthenticated && user ? (
               <>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -186,6 +193,16 @@ export default function Home() {
             className="md:hidden border-t border-border bg-background"
           >
             <div className="container py-4 flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                className="w-full text-foreground"
+                onClick={() => {
+                  setLocation("/pricing");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Pricing
+              </Button>
               {isAuthenticated && user ? (
                 <>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">

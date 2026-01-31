@@ -42,3 +42,12 @@
 
 ## Logo Restoration
 - [x] Restore Mapit logo to correct version with solid black background
+
+## Pricing Page Implementation
+- [x] Create Pricing.tsx page component with 4 subscription tiers
+- [x] Add feature comparison table
+- [x] Add pricing route to App.tsx
+- [x] Add Pricing link to navigation
+- [x] Style pricing cards with Mapit branding (green accents)
+- [x] Add annual/monthly toggle
+- [x] Test pricing page responsiveness

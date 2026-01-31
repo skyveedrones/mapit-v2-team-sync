@@ -20,6 +20,7 @@ import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
 import ClientInviteAccept from "./pages/ClientInviteAccept";
 import Settings from "./pages/Settings";
+import Pricing from "./pages/Pricing";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -81,6 +82,7 @@ function Router() {
       <ScrollToTop />
       <Switch>
       <Route path="/" component={Home} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
