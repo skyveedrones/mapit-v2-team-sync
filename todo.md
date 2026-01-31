@@ -25,3 +25,7 @@
 
 ## UI Update
 - [x] Remove GPS marker numbers from media gallery thumbnails
+
+## Video Marker Bug Fixes
+- [x] Fix video GPS markers not showing on embedded project map (only show on fullscreen)
+- [x] Fix blank video thumbnails in map popup windows
