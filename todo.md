@@ -36,3 +36,6 @@
 
 ## Logo Display Fix
 - [x] Fix Mapit logo showing checkered transparency pattern on homepage - created new logo with solid dark background
+
+## Logo Revert
+- [x] Revert Mapit logo back to original version (mapit-logo-white.png)
