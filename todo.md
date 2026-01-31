@@ -155,3 +155,10 @@
 - [x] Identify which images are used in popups vs homepage tiles
 - [x] Update popup images to match hero tile quality
 - [x] Test all feature popups display correctly
+
+## Fix Project Media Section Issues
+- [x] Investigate why media thumbnails are not displaying (showing dark placeholders)
+- [x] Fix button overlap between Media Action dropdown and Newest First sort button
+- [x] Ensure photo thumbnails display correctly
+- [x] Ensure video thumbnails display correctly
+- [x] Test media display on mobile view

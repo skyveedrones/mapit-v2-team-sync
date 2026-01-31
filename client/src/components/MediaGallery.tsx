@@ -481,9 +481,9 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   return (
     <>
       {/* Action Bar */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         {/* Left side - Media Action dropdown */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {canEdit && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -635,13 +635,19 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
-            ) : item.thumbnailUrl ? (
+            ) : (
               <div className="relative w-full h-full">
                 <img
-                  src={item.thumbnailUrl}
+                  src={item.thumbnailUrl || item.url}
                   alt={item.filename}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    // Fallback to full video URL if thumbnail fails
+                    if (e.currentTarget.src !== item.url) {
+                      e.currentTarget.src = item.url;
+                    }
+                  }}
                 />
                 {/* Video play icon overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -649,10 +655,6 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1" />
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted">
-                <FileVideo className="h-12 w-12 text-muted-foreground" />
               </div>
             )}
 
