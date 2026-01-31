@@ -272,15 +272,6 @@ export default function Pricing() {
 
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                Do you offer discounts for nonprofits or education?
-              </h3>
-              <p className="text-slate-400">
-                Yes! We offer special pricing for educational institutions and nonprofit organizations. Contact our sales team for more information.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
                 What happens to my data if I cancel?
               </h3>
               <p className="text-slate-400">

@@ -77,3 +77,6 @@
 - [ ] Show current plan and usage in dashboard
 - [ ] Add "Upgrade" buttons throughout app
 - [ ] Test all plan limit enforcement
+
+## Pricing FAQ Update
+- [x] Remove nonprofit and education discount question from pricing FAQ
