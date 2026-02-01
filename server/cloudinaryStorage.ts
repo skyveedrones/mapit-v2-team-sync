@@ -45,7 +45,7 @@ function sleep(ms: number): Promise<void> {
  * 
  * @param fileBuffer - The file data as a Buffer
  * @param options - Upload options
- * @param retries - Number of retries (default 3)
+ * @param retries - Number of retries (default 5)
  * @returns Upload result with URLs and metadata
  */
 export async function cloudinaryUpload(
@@ -56,30 +56,40 @@ export async function cloudinaryUpload(
     resourceType?: 'image' | 'video' | 'auto' | 'raw';
     transformation?: object;
   },
-  retries: number = 3
+  retries: number = 5
 ): Promise<CloudinaryUploadResult> {
   let lastError: Error | null = null;
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const result = await uploadWithTimeout(fileBuffer, options, 120000); // 2 minute timeout
+      const result = await uploadWithTimeout(fileBuffer, options, 60000); // 60 second timeout
       return result;
     } catch (error: any) {
       lastError = error;
       console.error(`[Cloudinary] Upload attempt ${attempt}/${retries} failed:`, error.message);
       
-      // If it's a socket/connection error, retry after a delay
-      if (error.message?.includes('socket') || error.message?.includes('ECONNRESET') || error.message?.includes('timeout')) {
-        if (attempt < retries) {
-          const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
-          console.log(`[Cloudinary] Retrying in ${delay}ms...`);
-          await sleep(delay);
-          continue;
-        }
+      // Check if it's a retryable connection error
+      const isRetryable = 
+        error.message?.includes('socket') ||
+        error.message?.includes('ECONNRESET') ||
+        error.message?.includes('ETIMEDOUT') ||
+        error.message?.includes('ENOTFOUND') ||
+        error.message?.includes('ECONNREFUSED') ||
+        error.message?.includes('timeout') ||
+        error.message?.includes('hang up');
+      
+      if (isRetryable && attempt < retries) {
+        // True exponential backoff: 1s, 2s, 4s, 8s, 16s
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[Cloudinary] Connection error detected. Retrying in ${delay}ms... (attempt ${attempt + 1}/${retries})`);
+        await sleep(delay);
+        continue;
       }
       
-      // For other errors, throw immediately
-      throw error;
+      // For non-retryable errors or last attempt, throw immediately
+      if (!isRetryable || attempt === retries) {
+        throw error;
+      }
     }
   }
   
@@ -109,7 +119,7 @@ async function uploadWithTimeout(
       resource_type: options.resourceType || 'auto',
       use_filename: true,
       unique_filename: true,
-      timeout: 120000, // Cloudinary SDK timeout
+      timeout: 60000, // Cloudinary SDK timeout (60 seconds)
     };
 
     if (options.filename) {
@@ -146,7 +156,23 @@ async function uploadWithTimeout(
         
         if (error) {
           console.error('[Cloudinary] Upload error:', error);
-          reject(new Error(`Cloudinary upload failed: ${error.message}`));
+          
+          // Provide clearer error messages for common issues
+          let errorMessage = error.message || 'Unknown error';
+          
+          if (errorMessage.includes('File size too large')) {
+            const match = errorMessage.match(/Maximum is (\d+)/);
+            const maxSize = match ? parseInt(match[1]) / (1024 * 1024) : 10;
+            errorMessage = `File size exceeds ${maxSize}MB limit. Please compress the file or upgrade your Cloudinary plan.`;
+          } else if (errorMessage.includes('socket') || errorMessage.includes('hang up')) {
+            errorMessage = 'Connection error. Retrying...';
+          } else if (errorMessage.includes('timeout')) {
+            errorMessage = 'Upload timeout. Please check your connection and try again.';
+          } else if (errorMessage.includes('Invalid image')) {
+            errorMessage = 'Invalid or corrupted file. Please try a different file.';
+          }
+          
+          reject(new Error(errorMessage));
           return;
         }
 

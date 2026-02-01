@@ -250,3 +250,10 @@
 - [x] Seed Water Line Mapping pre-built template only
 - [x] Write vitest tests for template functionality
 - [x] Test template creation and usage flow
+
+## Fix Cloudinary Socket Hang Up Error
+- [x] Investigate current Cloudinary upload retry logic
+- [x] Improve retry mechanism with better backoff strategy
+- [x] Add connection timeout handling
+- [x] Add better error messages for users
+- [x] Test media upload with improved error handling
