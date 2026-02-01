@@ -19,6 +19,7 @@ import {
   Download,
   Layers,
   Smartphone,
+  FileText,
   ChevronRight,
   Menu,
   X,
@@ -77,6 +78,14 @@ const features = [
       "Install on your phone or desktop for quick access and offline use - works anywhere",
     image: "/images/feature-install-app-dark.png",
     link: "/features/install-as-app",
+  },
+  {
+    icon: FileText,
+    title: "Project Templates",
+    description:
+      "Save project configurations as templates and create new projects in seconds with pre-filled settings",
+    image: "/images/feature-templates.jpg",
+    link: "/features/project-templates",
   },
 ];
 

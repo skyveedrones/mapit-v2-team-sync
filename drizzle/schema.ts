@@ -333,3 +333,32 @@ export const clientInvitations = mysqlTable("client_invitations", {
 
 export type ClientInvitation = typeof clientInvitations.$inferSelect;
 export type InsertClientInvitation = typeof clientInvitations.$inferInsert;
+
+/**
+ * Project templates table for saving reusable project configurations.
+ * Templates store default values for project fields to speed up project creation.
+ */
+export const projectTemplates = mysqlTable("project_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to users table (template owner) */
+  userId: int("userId").notNull(),
+  /** Template name */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Template description */
+  description: text("description"),
+  /** Template category (e.g., "Municipal Infrastructure", "Road Construction") */
+  category: varchar("category", { length: 100 }),
+  /** Whether this is a system template (pre-built) or user-created */
+  isSystem: mysqlEnum("isSystem", ["yes", "no"]).default("no").notNull(),
+  /** Template configuration stored as JSON */
+  config: text("config").notNull(),
+  /** Number of times this template has been used */
+  useCount: int("useCount").default(0).notNull(),
+  /** Last time this template was used */
+  lastUsedAt: timestamp("lastUsedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectTemplate = typeof projectTemplates.$inferSelect;
+export type InsertProjectTemplate = typeof projectTemplates.$inferInsert;

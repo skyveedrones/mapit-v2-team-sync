@@ -3051,6 +3051,128 @@ export const appRouter = router({
         return getProjectMedia(input.projectId, project.userId);
       }),
   }),
+
+  // Project templates
+  template: router({
+    // List all templates for the current user
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const { getTemplates } = await import("./templateDb");
+      return getTemplates(ctx.user.id);
+    }),
+
+    // Get a single template by ID
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getTemplateById } = await import("./templateDb");
+        const template = await getTemplateById(input.id, ctx.user.id);
+        if (!template) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Template not found",
+          });
+        }
+        return template;
+      }),
+
+    // Create a new template
+    create: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(255),
+          description: z.string().optional(),
+          category: z.string().optional(),
+          config: z.any(), // TemplateConfig object
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { createTemplate } = await import("./templateDb");
+        return createTemplate({
+          userId: ctx.user.id,
+          name: input.name,
+          description: input.description,
+          category: input.category,
+          config: input.config,
+        });
+      }),
+
+    // Update an existing template
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().min(1).max(255).optional(),
+          description: z.string().optional(),
+          category: z.string().optional(),
+          config: z.any().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { updateTemplate } = await import("./templateDb");
+        return updateTemplate(input.id, ctx.user.id, {
+          name: input.name,
+          description: input.description,
+          category: input.category,
+          config: input.config,
+        });
+      }),
+
+    // Delete a template
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteTemplate } = await import("./templateDb");
+        await deleteTemplate(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Create a project from a template
+    createProjectFromTemplate: protectedProcedure
+      .input(
+        z.object({
+          templateId: z.number(),
+          name: z.string().min(1).max(255),
+          location: z.string().optional(),
+          clientName: z.string().optional(),
+          flightDate: z.string().optional(),
+          overrides: z.any().optional(), // Additional field overrides
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getTemplateById, incrementTemplateUse, parseTemplateConfig } = await import("./templateDb");
+        
+        // Get the template
+        const template = await getTemplateById(input.templateId, ctx.user.id);
+        if (!template) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Template not found",
+          });
+        }
+
+        // Parse template config
+        const config = parseTemplateConfig(template.config);
+
+        // Create project with template defaults and user overrides
+        const project = await createProject({
+          userId: ctx.user.id,
+          name: input.name,
+          description: config.description || input.overrides?.description,
+          location: input.location || config.location,
+          clientName: input.clientName || config.clientName,
+          status: config.status || "active",
+          flightDate: input.flightDate ? new Date(input.flightDate) : undefined,
+          dronePilot: config.dronePilot || input.overrides?.dronePilot,
+          faaLicenseNumber: config.faaLicenseNumber || input.overrides?.faaLicenseNumber,
+          laancAuthNumber: config.laancAuthNumber || input.overrides?.laancAuthNumber,
+        });
+
+        // Increment template use count
+        await incrementTemplateUse(input.templateId, ctx.user.id);
+
+        return project;
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

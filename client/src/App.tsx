@@ -29,6 +29,7 @@ import FlightPathTracking from "./pages/features/FlightPathTracking";
 import GpsDataExport from "./pages/features/GpsDataExport";
 import PdfMapOverlay from "./pages/features/PdfMapOverlay";
 import InstallAsApp from "./pages/features/InstallAsApp";
+import ProjectTemplates from "./pages/features/ProjectTemplates";
 
 /**
  * Protected Route Component
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/features/gps-data-export" component={GpsDataExport} />
       <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
       <Route path="/features/install-as-app" component={InstallAsApp} />
+      <Route path="/features/project-templates" component={ProjectTemplates} />
       
       {/* Settings */}
       <Route path="/settings">

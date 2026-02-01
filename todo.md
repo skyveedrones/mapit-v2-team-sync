@@ -233,3 +233,15 @@
 - [ ] Test cross-browser compatibility (only Chromium tested)
 - [x] Check for console errors
 - [x] Verify all links work
+
+## Implement Project Templates Feature
+- [x] Add Project Templates hero card to homepage with technology image
+- [x] Design database schema for project templates table
+- [x] Create migration for templates table
+- [x] Add template CRUD endpoints in backend
+- [ ] Create template management page in Settings
+- [ ] Update project creation dialog to support templates
+- [ ] Add "Save as Template" option to existing projects
+- [ ] Create pre-built templates (Water Line, Road Construction, Utility, Site Survey)
+- [ ] Write vitest tests for template functionality
+- [ ] Test template creation and usage flow
