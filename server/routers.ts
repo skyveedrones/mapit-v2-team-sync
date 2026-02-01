@@ -2150,9 +2150,9 @@ export const appRouter = router({
           });
         }
 
-        // Generate unique file key
+        // Generate unique file key - use user ID prefix for proper S3 access
         const ext = input.filename.split(".").pop() || "png";
-        const fileKey = `projects/${input.projectId}/logo/${nanoid()}.${ext}`;
+        const fileKey = `${ctx.user.id}/project-logos/${input.projectId}-${nanoid()}.${ext}`;
 
         // Upload to S3
         const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
