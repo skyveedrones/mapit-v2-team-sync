@@ -411,32 +411,18 @@ export const appRouter = router({
         // First check if user is owner
         const ownedProject = await getUserProject(input.id, ctx.user.id);
         if (ownedProject) {
-          // Generate signed URL for logo if present
+          // For Cloudinary URLs (res.cloudinary.com), use directly
+          // For old S3 URLs, they won't work anymore so just use what's stored
           let logoUrl = ownedProject.logoUrl;
-          if (ownedProject.logoKey) {
-            try {
-              const signedUrl = await storageGet(ownedProject.logoKey);
-              logoUrl = signedUrl.url;
-            } catch (e) {
-              console.error('Failed to get signed logo URL:', e);
-            }
-          }
+          // No need to generate signed URLs - Cloudinary URLs are public
           return { ...ownedProject, logoUrl, accessRole: 'owner' as const };
         }
         
         // Check if user is a collaborator
         const sharedProject = await getProjectWithAccess(input.id, ctx.user.id);
         if (sharedProject) {
-          // Generate signed URL for logo if present
+          // For Cloudinary URLs, use directly - no signed URL needed
           let logoUrl = sharedProject.logoUrl;
-          if (sharedProject.logoKey) {
-            try {
-              const signedUrl = await storageGet(sharedProject.logoKey);
-              logoUrl = signedUrl.url;
-            } catch (e) {
-              console.error('Failed to get signed logo URL:', e);
-            }
-          }
           return { ...sharedProject, logoUrl };
         }
         

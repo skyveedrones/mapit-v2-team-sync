@@ -210,3 +210,9 @@
 - [x] Identify root cause of Cloudinary upload failure (socket hang up)
 - [x] Fix the upload issue (added retry logic and base64 upload method)
 - [ ] Test media image upload
+
+## Fix Project Logo Not Updating
+- [x] Check server logs for logo upload status
+- [x] Verify Cloudinary logo upload is working
+- [x] Check if old S3 URL is still being returned (was overwriting with storageGet)
+- [x] Fix logo display to use new Cloudinary URL directly
