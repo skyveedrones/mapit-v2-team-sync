@@ -290,3 +290,7 @@
 - [x] Blur pilot name, FAA license, LAANC auth, and client information
 - [x] Save the edited image
 - [x] Test the blurred image on homepage
+
+## Replace Template Hero Image with User Screenshot
+- [x] Copy user's screenshot to public/images folder
+- [x] Test new image on homepage
