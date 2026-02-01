@@ -84,17 +84,26 @@ export function ProjectLogoDialog({
         reader.readAsDataURL(logoFile);
       });
 
-      await uploadMutation.mutateAsync({
+      const result = await uploadMutation.mutateAsync({
         projectId,
         fileData,
         filename: logoFile.name,
         mimeType: logoFile.type,
       });
 
+      // Optimistically update the cache with new logo URL
+      utils.project.get.setData({ id: projectId }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          logoUrl: result.logoUrl || old.logoUrl,
+          logoKey: result.logoKey || old.logoKey,
+        };
+      });
+
       toast.success("Project logo uploaded successfully");
       // Force refetch to ensure new logo displays immediately
       await utils.project.get.invalidate({ id: projectId });
-      await utils.project.get.refetch({ id: projectId });
       handleClose(false);
     } catch (error) {
       console.error("Upload error:", error);
@@ -108,10 +117,20 @@ export function ProjectLogoDialog({
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync({ projectId });
+
+      // Optimistically update the cache to remove logo
+      utils.project.get.setData({ id: projectId }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          logoUrl: null,
+          logoKey: null,
+        };
+      });
+
       toast.success("Project logo removed");
       // Force refetch to ensure logo removal displays immediately
       await utils.project.get.invalidate({ id: projectId });
-      await utils.project.get.refetch({ id: projectId });
       handleClose(false);
     } catch (error) {
       console.error("Delete error:", error);

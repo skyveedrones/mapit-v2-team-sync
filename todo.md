@@ -162,3 +162,10 @@
 - [x] Ensure photo thumbnails display correctly
 - [x] Ensure video thumbnails display correctly
 - [x] Test media display on mobile view
+
+## Fix Project Logo Upload
+- [x] Investigate ProjectLogoDialog component implementation
+- [x] Check logo upload backend endpoint and S3 storage
+- [x] Verify database update for logoUrl field
+- [x] Fix cache invalidation to refresh logo display
+- [x] Test logo upload and display persistence
