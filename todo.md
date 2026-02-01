@@ -181,5 +181,6 @@
 ## Fix Logo S3 Storage Path
 - [x] Identified 403 error from CloudFront - wrong S3 path prefix
 - [x] Changed logo upload path from projects/{id}/logo to {userId}/project-logos
-- [ ] Test new logo upload with corrected path
+- [x] Test new logo upload with corrected path
+- [x] Changed to use signed URLs instead of direct CloudFront URLs
 - [ ] Verify logo displays correctly after upload

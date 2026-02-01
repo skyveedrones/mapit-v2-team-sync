@@ -410,13 +410,33 @@ export const appRouter = router({
         // First check if user is owner
         const ownedProject = await getUserProject(input.id, ctx.user.id);
         if (ownedProject) {
-          return { ...ownedProject, accessRole: 'owner' as const };
+          // Generate signed URL for logo if present
+          let logoUrl = ownedProject.logoUrl;
+          if (ownedProject.logoKey) {
+            try {
+              const signedUrl = await storageGet(ownedProject.logoKey);
+              logoUrl = signedUrl.url;
+            } catch (e) {
+              console.error('Failed to get signed logo URL:', e);
+            }
+          }
+          return { ...ownedProject, logoUrl, accessRole: 'owner' as const };
         }
         
         // Check if user is a collaborator
         const sharedProject = await getProjectWithAccess(input.id, ctx.user.id);
         if (sharedProject) {
-          return sharedProject;
+          // Generate signed URL for logo if present
+          let logoUrl = sharedProject.logoUrl;
+          if (sharedProject.logoKey) {
+            try {
+              const signedUrl = await storageGet(sharedProject.logoKey);
+              logoUrl = signedUrl.url;
+            } catch (e) {
+              console.error('Failed to get signed logo URL:', e);
+            }
+          }
+          return { ...sharedProject, logoUrl };
         }
         
         throw new TRPCError({
