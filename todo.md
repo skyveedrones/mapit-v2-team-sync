@@ -334,3 +334,9 @@
 - [x] Add welcome email sending to client invite acceptance endpoint
 - [x] Test welcome email is sent when client accepts invite
 - [x] Verify email content displays correctly
+
+## Fix Project Sharing Bug
+- [x] Investigate why invited users don't see shared project after accepting invitation
+- [x] Fix project invitation acceptance logic (updated project.list endpoint to include collaborator projects)
+- [x] Test project sharing flow end-to-end (4 passing tests)
+- [x] Verify invited user sees project in their dashboard

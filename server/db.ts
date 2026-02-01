@@ -218,7 +218,7 @@ export async function deleteProject(projectId: number, userId: number) {
 }
 
 /**
- * Get project count for a user
+ * Get project count for a user (owned + shared + client projects)
  */
 export async function getUserProjectCount(userId: number) {
   const db = await getDb();
@@ -226,12 +226,29 @@ export async function getUserProjectCount(userId: number) {
     throw new Error("Database not available");
   }
 
-  const result = await db
+  // Get owned projects count
+  const ownedProjects = await db
     .select()
     .from(projects)
     .where(eq(projects.userId, userId));
 
-  return result.length;
+  // Get shared projects count (where user is a collaborator)
+  const sharedProjects = await db
+    .select({ projectId: projectCollaborators.projectId })
+    .from(projectCollaborators)
+    .where(eq(projectCollaborators.userId, userId));
+
+  // Get client projects count
+  const clientProjects = await getUserClientProjects(userId);
+
+  // Combine and deduplicate
+  const allProjectIds = new Set([
+    ...ownedProjects.map(p => p.id),
+    ...sharedProjects.map(p => p.projectId),
+    ...clientProjects.map(p => p.id),
+  ]);
+
+  return allProjectIds.size;
 }
 
 /**

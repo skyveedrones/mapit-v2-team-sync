@@ -397,14 +397,16 @@ export const appRouter = router({
   project: router({
     // List all projects for the current user
     list: protectedProcedure.query(async ({ ctx }) => {
-      // Get projects owned by the user
-      const ownedProjects = await getUserProjects(ctx.user.id);
+      // Get projects owned by the user and shared with them (collaborator)
+      const { owned: ownedProjects, shared: sharedProjects } = await getUserAccessibleProjects(ctx.user.id);
       
       // Get projects accessible through client memberships
       const clientProjects = await getUserClientProjects(ctx.user.id);
       
-      // Combine and deduplicate (in case a user owns a project that's also assigned to their client)
-      const allProjects = [...ownedProjects, ...clientProjects];
+      // Combine all three sources: owned, shared (collaborator), and client projects
+      const allProjects = [...ownedProjects, ...sharedProjects, ...clientProjects];
+      
+      // Deduplicate by project ID
       const uniqueProjects = Array.from(
         new Map(allProjects.map(p => [p.id, p])).values()
       );
