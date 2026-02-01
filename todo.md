@@ -278,3 +278,9 @@
 - [x] Update template creation to include company logo
 - [x] Update project creation from template to apply logo
 - [x] Test creating project from Water Line Mapping template with logo
+
+## Update Homepage Template Card Image
+- [x] Find the homepage template hero card
+- [x] Create/capture screenshot of actual MapIt template UI
+- [x] Update image reference in homepage
+- [x] Test image display
