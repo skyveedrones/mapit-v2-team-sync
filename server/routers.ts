@@ -91,6 +91,7 @@ import {
 } from "./db";
 import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
+import { cloudinaryUploadImage, cloudinaryUploadVideo, cloudinaryThumbnailUrl } from "./cloudinaryStorage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
 
@@ -590,11 +591,11 @@ export const appRouter = router({
           });
         }
 
-        // Generate unique file key for final file
+        // Generate unique file key for reference
         const uniqueId = nanoid(12);
-        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const folder = `mapit/projects/${input.projectId}/media`;
 
-        // Fetch and combine all chunks
+        // Fetch and combine all chunks from S3 temp storage
         const totalChunks = Math.ceil(input.fileSize / (2 * 1024 * 1024)); // 2MB chunks (must match client)
         const chunks: Buffer[] = [];
         
@@ -609,16 +610,36 @@ export const appRouter = router({
         // Combine chunks
         const combinedBuffer = Buffer.concat(chunks);
 
-        // Upload combined file to S3
-        const { url } = await storagePut(fileKey, combinedBuffer, input.mimeType);
-
-        // Upload thumbnail if provided
+        // Upload to Cloudinary
+        let url: string;
+        let fileKey: string;
         let thumbnailUrl: string | null = null;
-        if (input.thumbnailData) {
+
+        const isVideo = input.mimeType.startsWith("video/");
+        const isImage = input.mimeType.startsWith("image/");
+
+        if (isImage) {
+          const result = await cloudinaryUploadImage(combinedBuffer, folder, `${uniqueId}-${input.filename}`);
+          url = result.secureUrl;
+          fileKey = result.publicId;
+          thumbnailUrl = result.thumbnailUrl;
+        } else if (isVideo) {
+          const result = await cloudinaryUploadVideo(combinedBuffer, folder, `${uniqueId}-${input.filename}`);
+          url = result.secureUrl;
+          fileKey = result.publicId;
+          thumbnailUrl = result.thumbnailUrl;
+        } else {
+          // For other file types, fall back to S3
+          fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+          const result = await storagePut(fileKey, combinedBuffer, input.mimeType);
+          url = result.url;
+        }
+
+        // If client provided a thumbnail (for videos), use it instead
+        if (input.thumbnailData && isVideo) {
           const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
-          const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
-          const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
-          thumbnailUrl = thumbnailResult.url;
+          const thumbResult = await cloudinaryUploadImage(thumbnailBuffer, `mapit/projects/${input.projectId}/thumbnails`, `${uniqueId}-thumb`);
+          thumbnailUrl = thumbResult.secureUrl;
         }
 
         // Create media record in database
@@ -686,21 +707,40 @@ export const appRouter = router({
           exifData = extractExifData(buffer);
         }
 
-        // Generate unique file key
-        const fileExtension = input.filename.split(".").pop() || "bin";
+        // Generate unique file key for reference
         const uniqueId = nanoid(12);
-        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const folder = `mapit/projects/${input.projectId}/media`;
 
-        // Upload to S3
-        const { url } = await storagePut(fileKey, buffer, input.mimeType);
-
-        // Upload thumbnail if provided (for videos)
+        // Upload to Cloudinary
+        let url: string;
+        let fileKey: string;
         let thumbnailUrl: string | null = null;
-        if (input.thumbnailData) {
+
+        const isVideo = input.mimeType.startsWith("video/");
+        const isImage = input.mimeType.startsWith("image/");
+
+        if (isImage) {
+          const result = await cloudinaryUploadImage(buffer, folder, `${uniqueId}-${input.filename}`);
+          url = result.secureUrl;
+          fileKey = result.publicId;
+          thumbnailUrl = result.thumbnailUrl;
+        } else if (isVideo) {
+          const result = await cloudinaryUploadVideo(buffer, folder, `${uniqueId}-${input.filename}`);
+          url = result.secureUrl;
+          fileKey = result.publicId;
+          thumbnailUrl = result.thumbnailUrl;
+        } else {
+          // For other file types, fall back to S3
+          fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+          const result = await storagePut(fileKey, buffer, input.mimeType);
+          url = result.url;
+        }
+
+        // If client provided a thumbnail (for videos), use it instead
+        if (input.thumbnailData && isVideo) {
           const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
-          const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
-          const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
-          thumbnailUrl = thumbnailResult.url;
+          const thumbResult = await cloudinaryUploadImage(thumbnailBuffer, `mapit/projects/${input.projectId}/thumbnails`, `${uniqueId}-thumb`);
+          thumbnailUrl = thumbResult.secureUrl;
         }
 
         // Create media record in database
@@ -2170,12 +2210,11 @@ export const appRouter = router({
           });
         }
 
-        // Generate unique file key - use user ID prefix for proper S3 access
-        const ext = input.filename.split(".").pop() || "png";
-        const fileKey = `${ctx.user.id}/project-logos/${input.projectId}-${nanoid()}.${ext}`;
-
-        // Upload to S3
-        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        // Upload to Cloudinary
+        const folder = `mapit/project-logos/${input.projectId}`;
+        const result = await cloudinaryUploadImage(fileBuffer, folder, `logo-${nanoid()}`);
+        const url = result.secureUrl;
+        const fileKey = result.publicId;
 
         // Update project record
         const updated = await updateProjectLogo(input.projectId, ctx.user.id, url, fileKey);
@@ -2237,12 +2276,11 @@ export const appRouter = router({
           // The old logo will be replaced
         }
 
-        // Generate unique file key
-        const ext = input.filename.split(".").pop() || "png";
-        const fileKey = `logos/${ctx.user.id}/${nanoid()}.${ext}`;
-
-        // Upload to S3
-        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        // Upload to Cloudinary
+        const folder = `mapit/user-logos/${ctx.user.id}`;
+        const result = await cloudinaryUploadImage(fileBuffer, folder, `logo-${nanoid()}`);
+        const url = result.secureUrl;
+        const fileKey = result.publicId;
 
         // Update user record
         const updated = await updateUserLogo(ctx.user.id, url, fileKey);
@@ -2670,12 +2708,11 @@ export const appRouter = router({
           });
         }
 
-        // Generate unique file key
-        const ext = input.filename.split(".").pop() || "png";
-        const fileKey = `clients/${input.clientId}/logo/${nanoid()}.${ext}`;
-
-        // Upload to S3
-        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        // Upload to Cloudinary
+        const folder = `mapit/client-logos/${input.clientId}`;
+        const result = await cloudinaryUploadImage(fileBuffer, folder, `logo-${nanoid()}`);
+        const url = result.secureUrl;
+        const fileKey = result.publicId;
 
         // Update client record
         const updated = await updateClientLogo(input.clientId, ctx.user.id, url, fileKey);

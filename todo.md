@@ -194,3 +194,13 @@
 - [ ] Update frontend to use proxy URLs
 - [x] Create support ticket for Manus storage team
 - [ ] Test image display with proxy
+
+## Cloudinary Storage Integration
+- [x] Install Cloudinary Node.js SDK
+- [x] Configure Cloudinary credentials as environment variables
+- [x] Create Cloudinary storage helper module
+- [x] Update media upload endpoint to use Cloudinary
+- [x] Update logo upload endpoint to use Cloudinary (project, user, client)
+- [x] Test image uploads with Cloudinary
+- [x] Test video uploads with Cloudinary
+- [x] Verify thumbnails are auto-generated
