@@ -31,6 +31,7 @@ import {
 import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import * as tus from "tus-js-client";
+import { compressImage, needsCompression, exceedsLimit, CLOUDINARY_MAX_SIZE } from "@/lib/compression";
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -348,17 +349,44 @@ export function MediaUploadDialog({
   const addFiles = useCallback(async (newFiles: FileList | File[]) => {
     const filesToAdd: FileToUpload[] = [];
     
-    for (const file of Array.from(newFiles)) {
+    for (let file of Array.from(newFiles)) {
       const error = validateFile(file);
+      
+      // Compress images if they're too large
+      if (!error && file.type.startsWith("image/") && needsCompression(file)) {
+        const originalSize = file.size;
+        toast.info(`Compressing ${file.name}...`);
+        
+        try {
+          file = await compressImage(file);
+          const savedBytes = originalSize - file.size;
+          const savedPercent = Math.round((savedBytes / originalSize) * 100);
+          toast.success(`Compressed ${file.name} by ${savedPercent}%`);
+        } catch (err) {
+          console.error('[Upload] Compression failed:', err);
+          toast.warning(`Could not compress ${file.name}, uploading original`);
+        }
+      }
+      
+      // Check if file still exceeds limit after compression
+      let finalError = error;
+      if (!error && exceedsLimit(file)) {
+        if (file.type.startsWith("image/")) {
+          finalError = `Image too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}.`;
+        } else if (file.type.startsWith("video/")) {
+          finalError = `Video too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}. Please compress externally.`;
+        }
+      }
+      
       const fileItem: FileToUpload = {
         file,
-        status: error ? "error" : "pending",
+        status: finalError ? "error" : "pending",
         progress: 0,
-        error: error || undefined,
+        error: finalError || undefined,
       };
       
       // Check for H.265 codec in video files
-      if (!error && file.type.startsWith("video/")) {
+      if (!finalError && file.type.startsWith("video/")) {
         const isH265 = await detectH265Codec(file);
         if (isH265) {
           fileItem.isH265 = true;
@@ -996,7 +1024,8 @@ export function MediaUploadDialog({
               Drag and drop files here, or click to browse
             </p>
             <p className="text-xs text-muted-foreground mb-4">
-              Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos (max 1GB)
+              Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos<br />
+              <span className="text-primary">Images are automatically compressed if needed (10MB upload limit)</span>
             </p>
             <input
               type="file"

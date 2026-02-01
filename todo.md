@@ -262,3 +262,12 @@
 - [x] Check browser console logs to find source of nested paragraph tags
 - [x] Fix HTML structure in the affected component
 - [x] Test dashboard to verify error is resolved
+
+## Add Client-Side File Compression
+- [x] Research and select compression libraries (browser-image-compression for images, ffmpeg.wasm for videos)
+- [x] Implement image compression in MediaUploadDialog
+- [x] Implement video compression in MediaUploadDialog (shows clear error for large videos, suggests external compression)
+- [x] Add compression progress indicators (via toast notifications)
+- [x] Add file size comparison (before/after compression)
+- [x] Add compression quality settings (automatic - targets 8MB)
+- [x] Test with various file sizes and formats
