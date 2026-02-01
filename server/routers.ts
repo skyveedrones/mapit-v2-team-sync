@@ -90,7 +90,7 @@ import {
   updateUserPilotSettings,
   getUserPilotSettings,
 } from "./db";
-import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail } from "./email";
+import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 import { cloudinaryUploadImage, cloudinaryUploadVideo, cloudinaryThumbnailUrl } from "./cloudinaryStorage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
@@ -2888,6 +2888,34 @@ export const appRouter = router({
             message: result.error || "Failed to accept invitation",
           });
         }
+        
+        // Send welcome email to the new client user
+        if (result.client) {
+          try {
+            // Get the number of projects assigned to this client
+            const projects = await getClientProjects(result.client.id);
+            const projectCount = projects.length;
+            
+            // Get the dashboard URL
+            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+            const dashboardUrl = `${baseUrl}/dashboard`;
+            
+            // Send welcome email (only if user has email)
+            if (ctx.user.email) {
+              await sendClientWelcomeEmail({
+                to: ctx.user.email,
+                userName: ctx.user.name || 'there',
+                clientName: result.client.name,
+                projectCount,
+                dashboardUrl,
+              });
+            }
+          } catch (emailError) {
+            // Log error but don't fail the invitation acceptance
+            console.error('[Client Welcome] Failed to send welcome email:', emailError);
+          }
+        }
+        
         return result;
       }),
 

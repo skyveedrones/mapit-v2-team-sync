@@ -328,3 +328,9 @@
 - [x] Add visual indicator showing user is in client-only mode ("Client View" badge in project detail header)
 - [ ] Test with owner user (should see all features)
 - [ ] Test with client user (should see read-only view)
+
+## Implement Client Welcome Email
+- [x] Design welcome email content and template
+- [x] Add welcome email sending to client invite acceptance endpoint
+- [x] Test welcome email is sent when client accepts invite
+- [x] Verify email content displays correctly

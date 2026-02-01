@@ -490,3 +490,63 @@ export async function sendClientInvitationEmail(params: {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+/**
+ * Send a welcome email to new client portal users
+ */
+export async function sendClientWelcomeEmail(params: {
+  to: string;
+  userName: string;
+  clientName: string;
+  projectCount: number;
+  dashboardUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { to, userName, clientName, projectCount, dashboardUrl } = params;
+  
+  const html = generateEmailTemplate({
+    preheader: `Welcome to Mapit! You now have access to ${projectCount} project${projectCount !== 1 ? 's' : ''} for ${clientName}`,
+    title: 'Welcome to Your Client Portal!',
+    body: `
+      <p>Hi <span class="highlight">${userName}</span>,</p>
+      <p>Welcome to Mapit! You've been granted access to the client portal for <span class="highlight">${clientName}</span>.</p>
+      <p>You now have access to <strong>${projectCount} drone mapping project${projectCount !== 1 ? 's' : ''}</strong> with the following features:</p>
+      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0; line-height: 1.8;">
+        <li><strong>Interactive Maps:</strong> View project locations with GPS-tagged media on Google Maps</li>
+        <li><strong>Media Gallery:</strong> Browse and download all project photos and videos</li>
+        <li><strong>Flight Path Tracking:</strong> See the drone's flight path connecting sequential GPS points</li>
+        <li><strong>GPS Data Export:</strong> Export location data in KML, CSV, GeoJSON, and GPX formats</li>
+        <li><strong>PDF Reports:</strong> Generate professional reports with maps and project details</li>
+      </ul>
+      <p>Your access is <strong>view-only</strong>, so you can explore all project data without worrying about making changes. Click below to get started!</p>
+    `,
+    ctaText: 'View Your Projects',
+    ctaUrl: dashboardUrl,
+    footer: `
+      <p><strong>Need Help?</strong></p>
+      <p style="margin-bottom: 12px;">• Click any project to see its interactive map and media gallery</p>
+      <p style="margin-bottom: 12px;">• Use the "Media Action" menu to download photos and videos</p>
+      <p style="margin-bottom: 12px;">• Generate reports from the "Project Actions" menu</p>
+      <p style="margin-top: 16px;">Questions? Contact your project manager at ${clientName}.</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
+    `,
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      to: [to],
+      subject: `Welcome to Mapit - ${clientName} Client Portal Access`,
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Failed to send client welcome email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Error sending client welcome email:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
