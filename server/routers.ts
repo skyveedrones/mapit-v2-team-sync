@@ -2476,7 +2476,7 @@ export const appRouter = router({
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
 
-        const baseUrl = process.env.VITE_APP_URL || "https://skyveedrones.com";
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
         const result = await sendWarrantyReminderEmail({
@@ -2522,7 +2522,7 @@ export const appRouter = router({
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
 
-        const baseUrl = process.env.VITE_APP_URL || "https://skyveedrones.com";
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
         const result = await sendWarrantyReminderEmail({
@@ -2826,7 +2826,7 @@ export const appRouter = router({
         });
 
         // Send invitation email
-        const baseUrl = process.env.VITE_APP_URL || 'https://skyveedrones.com';
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
         const inviteUrl = `${baseUrl}/client-invite/${token}`;
         
         const emailResult = await sendClientInvitationEmail({

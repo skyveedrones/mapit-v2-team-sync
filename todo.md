@@ -305,3 +305,9 @@
 ## Restore Template Hero Card Image
 - [x] Copy user's screenshot to public/images/feature-templates.jpg
 - [x] Verify image displays on homepage
+
+## Fix Client Portal Invite Link 404 Error
+- [x] Find where client invite emails are sent and portal links are generated
+- [x] Check if client portal route exists in App.tsx
+- [x] Fix the portal URL to use correct domain instead of skyveedrones.com
+- [ ] Test invite email and portal access flow (pending user test from published site)
