@@ -37,6 +37,7 @@ import {
   getUserProject,
   getUserProjectCount,
   getUserProjects,
+  getUserClientProjects,
   removeProjectCollaborator,
   revokeProjectInvitation,
   updateFlight,
@@ -396,7 +397,22 @@ export const appRouter = router({
   project: router({
     // List all projects for the current user
     list: protectedProcedure.query(async ({ ctx }) => {
-      return getUserProjects(ctx.user.id);
+      // Get projects owned by the user
+      const ownedProjects = await getUserProjects(ctx.user.id);
+      
+      // Get projects accessible through client memberships
+      const clientProjects = await getUserClientProjects(ctx.user.id);
+      
+      // Combine and deduplicate (in case a user owns a project that's also assigned to their client)
+      const allProjects = [...ownedProjects, ...clientProjects];
+      const uniqueProjects = Array.from(
+        new Map(allProjects.map(p => [p.id, p])).values()
+      );
+      
+      // Sort by updatedAt descending
+      return uniqueProjects.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
     }),
 
     // Get project count for the current user
@@ -426,9 +442,19 @@ export const appRouter = router({
           return { ...sharedProject, logoUrl };
         }
         
+        // Check if user is a client user with access to this project
+        const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.id);
+        if (hasClientAccess) {
+          const project = await getProjectById(input.id);
+          if (project) {
+            let logoUrl = project.logoUrl;
+            return { ...project, logoUrl, accessRole: 'client' as const };
+          }
+        }
+        
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Project not found",
+          message: "Project not found or you don't have access",
         });
       }),
 
@@ -483,9 +509,11 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
       .query(async ({ ctx, input }) => {
-        // Check if user has access (owner or collaborator)
+        // Check if user has access (owner, collaborator, or client user)
         const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
-        if (!hasAccess) {
+        const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
+        
+        if (!hasAccess && !hasClientAccess) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",

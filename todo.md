@@ -311,3 +311,9 @@
 - [x] Check if client portal route exists in App.tsx
 - [x] Fix the portal URL to use correct domain instead of skyveedrones.com
 - [ ] Test invite email and portal access flow (pending user test from published site)
+
+## Fix Client User Project Access
+- [x] Check how client users are added to database after accepting invite
+- [x] Check project access permission logic for client users
+- [x] Fix project access to allow client users to view assigned projects
+- [x] Test client user can login and access projects

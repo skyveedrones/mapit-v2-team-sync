@@ -1,4 +1,4 @@
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1600,6 +1600,35 @@ export async function getClientProjects(clientId: number) {
     .select()
     .from(projects)
     .where(eq(projects.clientId, clientId))
+    .orderBy(desc(projects.updatedAt));
+}
+
+/**
+ * Get all projects accessible to a user through their client memberships
+ */
+export async function getUserClientProjects(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get all clients the user belongs to
+  const userClients = await db
+    .select({ clientId: clientUsers.clientId })
+    .from(clientUsers)
+    .where(eq(clientUsers.userId, userId));
+
+  if (userClients.length === 0) {
+    return [];
+  }
+
+  const clientIds = userClients.map(uc => uc.clientId);
+
+  // Get all projects assigned to those clients
+  return db
+    .select()
+    .from(projects)
+    .where(inArray(projects.clientId, clientIds))
     .orderBy(desc(projects.updatedAt));
 }
 
