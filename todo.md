@@ -301,3 +301,7 @@
 
 ## Edit Template Hero Card Description
 - [x] Update Project Templates card text to remove "with pre-filled settings"
+
+## Restore Template Hero Card Image
+- [x] Copy user's screenshot to public/images/feature-templates.jpg
+- [x] Verify image displays on homepage
