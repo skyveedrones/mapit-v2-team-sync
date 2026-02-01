@@ -204,3 +204,9 @@
 - [x] Test image uploads with Cloudinary
 - [x] Test video uploads with Cloudinary
 - [x] Verify thumbnails are auto-generated
+
+## Fix Cloudinary Socket Error
+- [x] Check server logs for socket error details
+- [x] Identify root cause of Cloudinary upload failure (socket hang up)
+- [x] Fix the upload issue (added retry logic and base64 upload method)
+- [ ] Test media image upload

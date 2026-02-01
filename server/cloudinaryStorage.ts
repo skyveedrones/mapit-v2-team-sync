@@ -8,6 +8,7 @@
  * - Image uploads with automatic optimization
  * - Video uploads with automatic thumbnail generation
  * - Automatic format conversion and CDN delivery
+ * - Retry logic for connection issues
  */
 
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
@@ -33,10 +34,18 @@ export interface CloudinaryUploadResult {
 }
 
 /**
- * Upload a file to Cloudinary
+ * Sleep helper for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Upload a file to Cloudinary with retry logic
  * 
  * @param fileBuffer - The file data as a Buffer
  * @param options - Upload options
+ * @param retries - Number of retries (default 3)
  * @returns Upload result with URLs and metadata
  */
 export async function cloudinaryUpload(
@@ -46,14 +55,61 @@ export async function cloudinaryUpload(
     filename?: string;
     resourceType?: 'image' | 'video' | 'auto' | 'raw';
     transformation?: object;
+  },
+  retries: number = 3
+): Promise<CloudinaryUploadResult> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const result = await uploadWithTimeout(fileBuffer, options, 120000); // 2 minute timeout
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      console.error(`[Cloudinary] Upload attempt ${attempt}/${retries} failed:`, error.message);
+      
+      // If it's a socket/connection error, retry after a delay
+      if (error.message?.includes('socket') || error.message?.includes('ECONNRESET') || error.message?.includes('timeout')) {
+        if (attempt < retries) {
+          const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+          console.log(`[Cloudinary] Retrying in ${delay}ms...`);
+          await sleep(delay);
+          continue;
+        }
+      }
+      
+      // For other errors, throw immediately
+      throw error;
+    }
   }
+  
+  throw lastError || new Error('Cloudinary upload failed after retries');
+}
+
+/**
+ * Upload with timeout wrapper
+ */
+async function uploadWithTimeout(
+  fileBuffer: Buffer,
+  options: {
+    folder: string;
+    filename?: string;
+    resourceType?: 'image' | 'video' | 'auto' | 'raw';
+    transformation?: object;
+  },
+  timeoutMs: number
 ): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Cloudinary upload timeout'));
+    }, timeoutMs);
+
     const uploadOptions: any = {
       folder: options.folder,
       resource_type: options.resourceType || 'auto',
       use_filename: true,
       unique_filename: true,
+      timeout: 120000, // Cloudinary SDK timeout
     };
 
     if (options.filename) {
@@ -76,9 +132,18 @@ export async function cloudinaryUpload(
       uploadOptions.eager_async = true;
     }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
+    // Convert buffer to base64 data URI for more reliable upload
+    const mimeType = options.resourceType === 'video' ? 'video/mp4' : 'image/jpeg';
+    const base64Data = fileBuffer.toString('base64');
+    const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+    // Use upload instead of upload_stream for better reliability
+    cloudinary.uploader.upload(
+      dataUri,
       uploadOptions,
       (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+        clearTimeout(timeout);
+        
         if (error) {
           console.error('[Cloudinary] Upload error:', error);
           reject(new Error(`Cloudinary upload failed: ${error.message}`));
@@ -125,8 +190,6 @@ export async function cloudinaryUpload(
         });
       }
     );
-
-    uploadStream.end(fileBuffer);
   });
 }
 
