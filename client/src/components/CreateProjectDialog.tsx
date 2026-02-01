@@ -17,9 +17,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Loader2, MapPin, Plane, Shield, User } from "lucide-react";
+import { Calendar, Loader2, MapPin, Plane, Shield, User, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -40,11 +47,15 @@ export function CreateProjectDialog({
   const [dronePilot, setDronePilot] = useState("");
   const [faaLicense, setFaaLicense] = useState("");
   const [laancAuth, setLaancAuth] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   const utils = trpc.useUtils();
 
   // Fetch user's default pilot settings
   const { data: pilotSettings } = trpc.pilotSettings.get.useQuery();
+  
+  // Fetch available templates
+  const { data: templates } = trpc.template.list.useQuery();
 
   // Auto-fill pilot settings when dialog opens
   useEffect(() => {
@@ -54,6 +65,39 @@ export function CreateProjectDialog({
       setLaancAuth(pilotSettings.defaultLaancAuthNumber || "");
     }
   }, [open, pilotSettings]);
+  
+  // Auto-fill form when template is selected
+  useEffect(() => {
+    if (selectedTemplateId && selectedTemplateId !== "none" && templates) {
+      const template = templates.find((t: any) => t.id === parseInt(selectedTemplateId));
+      if (template && template.config) {
+        try {
+          const values = JSON.parse(template.config);
+          if (values.clientName) setClientName(values.clientName);
+          if (values.location) setLocation(values.location);
+          if (values.dronePilot) setDronePilot(values.dronePilot);
+          if (values.faaLicenseNumber) setFaaLicense(values.faaLicenseNumber);
+          if (values.laancAuthNumber) setLaancAuth(values.laancAuthNumber);
+          
+          toast.success("Template applied!", {
+            description: `Fields auto-filled from "${template.name}" template.`,
+          });
+        } catch (error) {
+          console.error("Failed to parse template config:", error);
+          toast.error("Failed to apply template");
+        }
+      }
+    } else if (selectedTemplateId === "none") {
+      // Reset to default pilot settings when "none" is selected
+      if (pilotSettings) {
+        setDronePilot(pilotSettings.defaultDronePilot || "");
+        setFaaLicense(pilotSettings.defaultFaaLicenseNumber || "");
+        setLaancAuth(pilotSettings.defaultLaancAuthNumber || "");
+      }
+      setClientName("");
+      setLocation("");
+    }
+  }, [selectedTemplateId, templates, pilotSettings]);
 
   const createProject = trpc.project.create.useMutation({
     onSuccess: (data) => {
@@ -99,6 +143,7 @@ export function CreateProjectDialog({
     setDronePilot("");
     setFaaLicense("");
     setLaancAuth("");
+    setSelectedTemplateId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -135,6 +180,35 @@ export function CreateProjectDialog({
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/* Template Selection */}
+            {templates && templates.length > 0 && (
+              <div className="grid gap-2 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
+                <Label htmlFor="template" className="text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-emerald-500" />
+                  Use Template (Optional)
+                </Label>
+                <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Select a template to auto-fill fields..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None - Start from scratch</SelectItem>
+                    {templates.map((template: any) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                        {template.category && (
+                          <span className="text-xs text-muted-foreground ml-2">({template.category})</span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Templates auto-fill common fields to save time. You can still edit any field after applying.
+                </p>
+              </div>
+            )}
+            
             {/* Project Name - Required */}
             <div className="grid gap-2">
               <Label htmlFor="name" className="text-sm font-medium">

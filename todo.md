@@ -239,9 +239,14 @@
 - [x] Design database schema for project templates table
 - [x] Create migration for templates table
 - [x] Add template CRUD endpoints in backend
-- [ ] Create template management page in Settings
-- [ ] Update project creation dialog to support templates
-- [ ] Add "Save as Template" option to existing projects
-- [ ] Create pre-built templates (Water Line, Road Construction, Utility, Site Survey)
-- [ ] Write vitest tests for template functionality
-- [ ] Test template creation and usage flow
+- [x] Create template management page in Settings
+  - [x] Build template list view with create/edit/delete actions
+  - [x] Create template form dialog for creating/editing templates
+  - [x] Add template preview functionality
+- [x] Update project creation dialog to support templates
+  - [x] Add template selection dropdown
+  - [x] Auto-fill form fields when template is selected
+  - [x] Allow manual override of template values
+- [x] Seed Water Line Mapping pre-built template only
+- [x] Write vitest tests for template functionality
+- [x] Test template creation and usage flow
