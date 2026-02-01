@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useClientAccess } from "@/hooks/useClientAccess";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import DashboardLayout from "@/components/DashboardLayout";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
@@ -54,6 +55,7 @@ const staggerContainer = {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { isClientOnly } = useClientAccess();
   const [, setLocation] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -118,11 +120,15 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  New Project
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {!isClientOnly && (
+                  <>
+                    <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      New Project
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={handleComingSoon}>
                   <Download className="h-4 w-4 mr-2" />
                   Export Data
@@ -192,13 +198,15 @@ export default function Dashboard() {
                 <p className="text-muted-foreground mb-4 max-w-md mx-auto">
                   Create your first drone mapping project to start organizing and visualizing your aerial footage.
                 </p>
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Project
-                </Button>
+                {!isClientOnly && (
+                  <Button
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    onClick={() => setCreateDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Project
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

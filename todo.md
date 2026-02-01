@@ -317,3 +317,14 @@
 - [x] Check project access permission logic for client users
 - [x] Fix project access to allow client users to view assigned projects
 - [x] Test client user can login and access projects
+
+## Implement Client-Only View Mode
+- [x] Add helper function to detect if user is a client-only user (not owner)
+- [x] Create useClientAccess hook for checking client permissions in UI
+- [x] Hide admin features in project list (edit, delete buttons)
+- [x] Hide admin features in project detail page (edit project info, delete project, upload media, new flight)
+- [x] Hide admin features in media view (delete media, edit metadata, upload, watermark)
+- [x] Keep view and download capabilities visible for client users (download, sort, select, view details)
+- [x] Add visual indicator showing user is in client-only mode ("Client View" badge in project detail header)
+- [ ] Test with owner user (should see all features)
+- [ ] Test with client user (should see read-only view)

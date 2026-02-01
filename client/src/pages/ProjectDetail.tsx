@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useClientAccess } from "@/hooks/useClientAccess";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
@@ -89,6 +90,9 @@ export default function ProjectDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
+  
+  // Check user access permissions for this project
+  const { isClientOnly, canEdit, canDelete } = useClientAccess(projectId);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -210,11 +214,8 @@ export default function ProjectDetail() {
 
   const hasMedia = mediaList && mediaList.length > 0;
   
-  // Check if user is owner or collaborator
-  const isOwner = (project as any).accessRole === 'owner';
-  const isEditor = (project as any).accessRole === 'editor';
-  const isViewer = (project as any).accessRole === 'viewer';
-  const canEdit = isOwner || isEditor;
+  // For display purposes: show badge if user is client-only
+  const isOwner = !isClientOnly;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -297,10 +298,10 @@ export default function ProjectDetail() {
 
                 <div className="flex items-center gap-3">
                   {/* Show access role badge for shared projects */}
-                  {!isOwner && (
+                  {isClientOnly && (
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
                       <Users className="h-3 w-3 inline mr-1" />
-                      {isEditor ? 'Editor' : 'Viewer'}
+                      Client View
                     </span>
                   )}
                   

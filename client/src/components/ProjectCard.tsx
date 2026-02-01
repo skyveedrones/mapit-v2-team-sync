@@ -30,6 +30,7 @@ import {
   User,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useClientAccess } from "@/hooks/useClientAccess";
 
 interface ProjectCardProps {
   project: Project;
@@ -51,6 +52,7 @@ const statusLabels = {
 
 export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
   const [, setLocation] = useLocation();
+  const { canEdit, canDelete } = useClientAccess(project.id);
   
   const formattedDate = project.flightDate
     ? new Date(project.flightDate).toLocaleDateString("en-US", {
@@ -105,9 +107,10 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           </span>
         </div>
 
-        {/* Actions Menu */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <DropdownMenu>
+        {/* Actions Menu - Only show for owners */}
+        {(canEdit || canDelete) && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
@@ -138,8 +141,9 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
                 Delete Project
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       <CardHeader className="pb-2">
