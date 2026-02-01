@@ -294,3 +294,7 @@
 ## Replace Template Hero Image with User Screenshot
 - [x] Copy user's screenshot to public/images folder
 - [x] Test new image on homepage
+
+## Remove Install as App Hero Card from Homepage
+- [x] Remove Install as App feature card from Home.tsx
+- [x] Test homepage layout after removal

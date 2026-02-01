@@ -18,7 +18,6 @@ import {
   Route,
   Download,
   Layers,
-  Smartphone,
   FileText,
   ChevronRight,
   Menu,
@@ -71,14 +70,7 @@ const features = [
     image: "/images/feature-overlay-new.jpg",
     link: "/features/pdf-map-overlay",
   },
-  {
-    icon: Smartphone,
-    title: "Install as App",
-    description:
-      "Install on your phone or desktop for quick access and offline use - works anywhere",
-    image: "/images/feature-install-app-dark.png",
-    link: "/features/install-as-app",
-  },
+
   {
     icon: FileText,
     title: "Project Templates",
