@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
+import { imageProxyRouter } from "../imageProxy";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -54,6 +55,9 @@ async function startServer() {
   
   // TUS video upload routes (before body parser to handle raw streams)
   app.use("/api", tusRouter);
+  
+  // Image proxy routes for bypassing CloudFront 403 errors
+  app.use("/api", imageProxyRouter);
   
   // tRPC API
   app.use(

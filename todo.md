@@ -184,3 +184,13 @@
 - [x] Test new logo upload with corrected path
 - [x] Changed to use signed URLs instead of direct CloudFront URLs
 - [ ] Verify logo displays correctly after upload
+
+## Fix Logo and Media Images Not Displaying
+- [x] Check network logs for image loading errors
+- [x] Verify signed URL generation is working correctly
+- [x] Test storage access for newly uploaded images
+- [x] Identified CloudFront 403 issue after publish
+- [ ] Create server-side image proxy endpoint
+- [ ] Update frontend to use proxy URLs
+- [x] Create support ticket for Manus storage team
+- [ ] Test image display with proxy
