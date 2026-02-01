@@ -267,7 +267,7 @@ export default function ProjectDetail() {
                     <div className="flex-shrink-0">
                       <img
                         key={project.logoUrl}
-                        src={project.logoUrl}
+                        src={`${project.logoUrl}?t=${project.updatedAt}`}
                         alt="Project Logo"
                         className="h-16 w-16 md:h-20 md:w-20 object-contain rounded-lg border border-border bg-card p-1"
                       />

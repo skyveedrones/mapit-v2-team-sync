@@ -167,7 +167,7 @@ export function ProjectLogoDialog({
               <p className="text-sm font-medium">Current Logo</p>
               <div className="relative inline-block">
                 <img
-                  src={currentLogoUrl}
+                  src={`${currentLogoUrl}?t=${Date.now()}`}
                   alt="Current project logo"
                   className="max-h-24 rounded border border-border bg-white/10 p-2"
                 />

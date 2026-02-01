@@ -169,3 +169,11 @@
 - [x] Verify database update for logoUrl field
 - [x] Fix cache invalidation to refresh logo display
 - [x] Test logo upload and display persistence
+
+## Debug Logo Upload Replacement Issue
+- [x] Check browser console for upload errors
+- [x] Verify S3 upload is completing successfully
+- [x] Check if database logoUrl is updating
+- [x] Verify cache invalidation is working
+- [x] Test if image src is updating in DOM
+- [x] Fix logo replacement to work immediately
