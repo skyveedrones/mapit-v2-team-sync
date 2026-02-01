@@ -3165,6 +3165,8 @@ export const appRouter = router({
           dronePilot: config.dronePilot || input.overrides?.dronePilot,
           faaLicenseNumber: config.faaLicenseNumber || input.overrides?.faaLicenseNumber,
           laancAuthNumber: config.laancAuthNumber || input.overrides?.laancAuthNumber,
+          logoUrl: config.logoUrl || input.overrides?.logoUrl,
+          logoKey: config.logoKey || input.overrides?.logoKey,
         });
 
         // Increment template use count

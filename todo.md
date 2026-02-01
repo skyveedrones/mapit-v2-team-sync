@@ -271,3 +271,10 @@
 - [x] Add file size comparison (before/after compression)
 - [x] Add compression quality settings (automatic - targets 8MB)
 - [x] Test with various file sizes and formats
+
+## Fix Template Company Logo
+- [x] Investigate how templates store company logo data
+- [x] Check if logo field is in template config schema
+- [x] Update template creation to include company logo
+- [x] Update project creation from template to apply logo
+- [x] Test creating project from Water Line Mapping template with logo

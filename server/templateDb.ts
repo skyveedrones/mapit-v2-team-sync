@@ -14,6 +14,8 @@ export interface TemplateConfig {
   dronePilot?: string;
   faaLicenseNumber?: string;
   laancAuthNumber?: string;
+  logoUrl?: string;
+  logoKey?: string;
   
   // Warranty settings
   warrantyPeriodMonths?: number;
