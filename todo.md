@@ -284,3 +284,9 @@
 - [x] Create/capture screenshot of actual MapIt template UI
 - [x] Update image reference in homepage
 - [x] Test image display
+
+## Blur Sensitive Information from Template Hero Image
+- [x] Load the template screenshot image
+- [x] Blur pilot name, FAA license, LAANC auth, and client information
+- [x] Save the edited image
+- [x] Test the blurred image on homepage
