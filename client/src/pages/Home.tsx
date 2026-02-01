@@ -75,7 +75,7 @@ const features = [
     icon: FileText,
     title: "Project Templates",
     description:
-      "Save project configurations as templates and create new projects in seconds with pre-filled settings",
+      "Save project configurations as templates and create new projects in seconds",
     image: "/images/feature-templates.jpg",
     link: "/features/project-templates",
   },

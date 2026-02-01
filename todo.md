@@ -298,3 +298,6 @@
 ## Remove Install as App Hero Card from Homepage
 - [x] Remove Install as App feature card from Home.tsx
 - [x] Test homepage layout after removal
+
+## Edit Template Hero Card Description
+- [x] Update Project Templates card text to remove "with pre-filled settings"
