@@ -257,3 +257,8 @@
 - [x] Add connection timeout handling
 - [x] Add better error messages for users
 - [x] Test media upload with improved error handling
+
+## Fix Nested <p> Tag Error on Dashboard
+- [x] Check browser console logs to find source of nested paragraph tags
+- [x] Fix HTML structure in the affected component
+- [x] Test dashboard to verify error is resolved
