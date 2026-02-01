@@ -550,3 +550,71 @@ export async function sendClientWelcomeEmail(params: {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+/**
+ * Send a welcome email to new project collaborators
+ */
+export async function sendProjectWelcomeEmail(params: {
+  to: string;
+  userName: string;
+  projectName: string;
+  role: 'viewer' | 'editor';
+  inviterName: string;
+  projectUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { to, userName, projectName, role, inviterName, projectUrl } = params;
+  
+  const roleDescription = role === 'editor' 
+    ? 'You can view, upload media, create flights, and manage project content.'
+    : 'You have view-only access to browse and download project data.';
+  
+  const html = generateEmailTemplate({
+    preheader: `${inviterName} has added you as a ${role} on "${projectName}"`,
+    title: 'You\'ve Been Added to a Project!',
+    body: `
+      <p>Hi <span class="highlight">${userName}</span>,</p>
+      <p><strong>${inviterName}</strong> has added you as a <span class="highlight">${role}</span> to the project "<strong>${projectName}</strong>" on Mapit.</p>
+      <p>${roleDescription}</p>
+      <p><strong>What you can do:</strong></p>
+      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0; line-height: 1.8;">
+        <li><strong>Interactive Maps:</strong> View project locations with GPS-tagged media on Google Maps</li>
+        <li><strong>Media Gallery:</strong> Browse and download all project photos and videos</li>
+        <li><strong>Flight Path Tracking:</strong> See the drone's flight path connecting sequential GPS points</li>
+        <li><strong>GPS Data Export:</strong> Export location data in KML, CSV, GeoJSON, and GPX formats</li>
+        <li><strong>PDF Reports:</strong> Generate professional reports with maps and project details</li>
+        ${role === 'editor' ? '<li><strong>Upload & Manage:</strong> Add new media, create flights, and organize project content</li>' : ''}
+      </ul>
+      <p>Click below to view the project and get started!</p>
+    `,
+    ctaText: 'View Project',
+    ctaUrl: projectUrl,
+    footer: `
+      <p><strong>Quick Tips:</strong></p>
+      <p style="margin-bottom: 12px;">• Click the project to see its interactive map and media gallery</p>
+      <p style="margin-bottom: 12px;">• Use the "Media Action" menu to download photos and videos</p>
+      <p style="margin-bottom: 12px;">• Generate reports from the "Project Actions" menu</p>
+      ${role === 'editor' ? '<p style="margin-bottom: 12px;">• Upload new media using the "Upload Media" button</p>' : ''}
+      <p style="margin-top: 16px;">Questions? Contact ${inviterName} for more information.</p>
+      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
+    `,
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      to: [to],
+      subject: `You've been added to "${projectName}" on Mapit`,
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Failed to send project welcome email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Error sending project welcome email:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

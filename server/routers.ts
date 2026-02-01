@@ -90,7 +90,7 @@ import {
   updateUserPilotSettings,
   getUserPilotSettings,
 } from "./db";
-import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail } from "./email";
+import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 import { cloudinaryUploadImage, cloudinaryUploadVideo, cloudinaryThumbnailUrl } from "./cloudinaryStorage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
@@ -1089,6 +1089,42 @@ export const appRouter = router({
 
         // Get the project details to return
         const project = await getProjectById(result.invitation!.projectId);
+        
+        // Send welcome email to the new project collaborator
+        if (project && result.invitation) {
+          try {
+            // Get inviter details
+            const inviter = await getUserById(result.invitation.invitedBy);
+            
+            // Get the project URL
+            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+            const projectUrl = `${baseUrl}/project/${project.id}`;
+            
+            // Send welcome email (only if user has email)
+            if (ctx.user.email) {
+              console.log(`[Project Welcome] Attempting to send welcome email to ${ctx.user.email}`);
+              const emailResult = await sendProjectWelcomeEmail({
+                to: ctx.user.email,
+                userName: ctx.user.name || 'there',
+                projectName: project.name,
+                role: result.invitation.role as 'viewer' | 'editor',
+                inviterName: inviter?.name || 'A Mapit user',
+                projectUrl,
+              });
+              
+              if (emailResult.success) {
+                console.log(`[Project Welcome] Successfully sent welcome email to ${ctx.user.email}`);
+              } else {
+                console.error(`[Project Welcome] Failed to send welcome email to ${ctx.user.email}:`, emailResult.error);
+              }
+            } else {
+              console.log('[Project Welcome] Skipping welcome email - user has no email address');
+            }
+          } catch (emailError) {
+            // Log error but don't fail the invitation acceptance
+            console.error('[Project Welcome] Exception while sending welcome email:', emailError);
+          }
+        }
 
         return {
           success: true,
@@ -2904,17 +2940,26 @@ export const appRouter = router({
             
             // Send welcome email (only if user has email)
             if (ctx.user.email) {
-              await sendClientWelcomeEmail({
+              console.log(`[Client Welcome] Attempting to send welcome email to ${ctx.user.email}`);
+              const emailResult = await sendClientWelcomeEmail({
                 to: ctx.user.email,
                 userName: ctx.user.name || 'there',
                 clientName: result.client.name,
                 projectCount,
                 dashboardUrl,
               });
+              
+              if (emailResult.success) {
+                console.log(`[Client Welcome] Successfully sent welcome email to ${ctx.user.email}`);
+              } else {
+                console.error(`[Client Welcome] Failed to send welcome email to ${ctx.user.email}:`, emailResult.error);
+              }
+            } else {
+              console.log('[Client Welcome] Skipping welcome email - user has no email address');
             }
           } catch (emailError) {
             // Log error but don't fail the invitation acceptance
-            console.error('[Client Welcome] Failed to send welcome email:', emailError);
+            console.error('[Client Welcome] Exception while sending welcome email:', emailError);
           }
         }
         

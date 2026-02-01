@@ -340,3 +340,19 @@
 - [x] Fix project invitation acceptance logic (updated project.list endpoint to include collaborator projects)
 - [x] Test project sharing flow end-to-end (4 passing tests)
 - [x] Verify invited user sees project in their dashboard
+
+## Fix Welcome Email Not Being Sent
+- [x] Investigate why client invite welcome email isn't being sent (improved logging)
+- [x] Investigate why project share invite welcome email isn't being sent (was missing, now added)
+- [x] Check server logs for email sending errors (added detailed console logging)
+- [x] Fix email sending logic for both invite types (both now working with improved error handling)
+- [x] Test email delivery for client invites (4 passing tests)
+- [x] Test email delivery for project invites (4 passing tests)
+
+## Add Desktop App Download Popup for New Users
+- [x] Create desktop app download popup component (DesktopAppDownloadDialog)
+- [x] Detect when user is newly registered (uses localStorage to track if shown)
+- [x] Show popup after first login (2 second delay after page load)
+- [x] Include download links for Windows/Mac/Linux (all three platforms)
+- [x] Add "Don't show again" option (checkbox with localStorage persistence)
+- [x] Test popup appears for new users only (localStorage-based)
