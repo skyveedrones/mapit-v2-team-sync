@@ -107,7 +107,7 @@ export function DesktopAppDownloadDialog() {
         </div>
 
         <DialogFooter className="flex-col sm:flex-col gap-3">
-          <div className="flex items-center justify-center space-x-2">
+          <div className="flex items-center space-x-2">
             <Checkbox
               id="dont-show"
               checked={dontShowAgain}

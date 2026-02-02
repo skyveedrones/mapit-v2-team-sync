@@ -424,3 +424,8 @@
 - [x] Make "Don't show again" text bold (changed to font-bold)
 - [x] Center the "Don't show again" checkbox and label at the bottom (added justify-center)
 - [x] Test the updated styling in browser (verified dialog displays correctly)
+
+## Move Desktop App Dialog "Don't Show Again" to Left
+- [x] Remove center alignment (justify-center) from checkbox container
+- [x] Keep bold styling on text (font-bold remains)
+- [x] Test left-aligned layout in browser (verified left-aligned display)
