@@ -362,3 +362,24 @@ export const projectTemplates = mysqlTable("project_templates", {
 
 export type ProjectTemplate = typeof projectTemplates.$inferSelect;
 export type InsertProjectTemplate = typeof projectTemplates.$inferInsert;
+
+/**
+ * Client project assignments table - tracks which specific projects are assigned to which client users.
+ * This allows granular control over project access within a client portal.
+ */
+export const clientProjectAssignments = mysqlTable("client_project_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to clients table */
+  clientId: int("clientId").notNull(),
+  /** Foreign key to users table (the client portal user) */
+  userId: int("userId").notNull(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table (admin who assigned the project) */
+  assignedBy: int("assignedBy").notNull(),
+  /** When the project was assigned */
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+});
+
+export type ClientProjectAssignment = typeof clientProjectAssignments.$inferSelect;
+export type InsertClientProjectAssignment = typeof clientProjectAssignments.$inferInsert;

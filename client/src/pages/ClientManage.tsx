@@ -58,6 +58,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
+import { ProjectAssignmentDialog } from "@/components/ProjectAssignmentDialog";
 
 // Helper function to generate client invite email template
 function generateClientInviteEmailTemplate(invite: { inviteUrl: string; email: string; role: string; clientName: string }) {
@@ -109,6 +110,8 @@ export default function ClientManage() {
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<{ id: number; name: string | null } | null>(null);
   const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; clientName: string } | null>(null);
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null } | null>(null);
   
   // Form states
   const [inviteEmail, setInviteEmail] = useState("");
@@ -667,20 +670,36 @@ export default function ClientManage() {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setUserToRemove({
-                            id: clientUserData.id,
-                            name: clientUserData.name,
-                          });
-                          setRemoveUserDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUser({
+                              id: clientUserData.id,
+                              name: clientUserData.name,
+                            });
+                            setAssignmentDialogOpen(true);
+                          }}
+                        >
+                          <FolderOpen className="h-4 w-4 mr-1" />
+                          Manage Projects
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setUserToRemove({
+                              id: clientUserData.id,
+                              name: clientUserData.name,
+                            });
+                            setRemoveUserDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1021,6 +1040,17 @@ export default function ClientManage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Project Assignment Dialog */}
+      {selectedUser && client && (
+        <ProjectAssignmentDialog
+          open={assignmentDialogOpen}
+          onOpenChange={setAssignmentDialogOpen}
+          clientId={parseInt(clientId || "0")}
+          userId={selectedUser.id}
+          userName={selectedUser.name || "User"}
+        />
+      )}
     </DashboardLayout>
   );
 }

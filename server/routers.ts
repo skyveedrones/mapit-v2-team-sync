@@ -3162,6 +3162,181 @@ export const appRouter = router({
         }
         return getProjectMedia(input.projectId, project.userId);
       }),
+
+    // Get all users with their project assignments for a client
+    getUsersWithAssignments: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { getClientUsersWithAssignments } = await import("./db");
+        return getClientUsersWithAssignments(input.clientId);
+      }),
+
+    // Get projects assigned to a specific user
+    getUserProjects: protectedProcedure
+      .input(z.object({ clientId: z.number(), userId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { getUserAssignedProjects } = await import("./db");
+        return getUserAssignedProjects(input.clientId, input.userId);
+      }),
+
+    // Get all projects in client folder (for assignment UI)
+    getClientProjectsForAssignment: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { getClientProjectsForAssignment } = await import("./db");
+        return getClientProjectsForAssignment(input.clientId);
+      }),
+
+    // Assign a project to a user
+    assignProjectToUser: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+          projectId: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { assignProjectToUser } = await import("./db");
+        return assignProjectToUser(
+          input.clientId,
+          input.userId,
+          input.projectId,
+          ctx.user.id
+        );
+      }),
+
+    // Unassign a project from a user
+    unassignProjectFromUser: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+          projectId: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { unassignProjectFromUser } = await import("./db");
+        return unassignProjectFromUser(
+          input.clientId,
+          input.userId,
+          input.projectId
+        );
+      }),
+
+    // Transfer a project between users
+    transferProject: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          fromUserId: z.number(),
+          toUserId: z.number(),
+          projectId: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { transferProjectBetweenUsers } = await import("./db");
+        return transferProjectBetweenUsers(
+          input.clientId,
+          input.fromUserId,
+          input.toUserId,
+          input.projectId,
+          ctx.user.id
+        );
+      }),
+
+    // Bulk assign multiple projects to a user
+    bulkAssignProjects: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+          projectIds: z.array(z.number()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { bulkAssignProjects } = await import("./db");
+        return bulkAssignProjects(
+          input.clientId,
+          input.userId,
+          input.projectIds,
+          ctx.user.id
+        );
+      }),
+
+    // Bulk unassign multiple projects from a user
+    bulkUnassignProjects: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+          projectIds: z.array(z.number()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        const { bulkUnassignProjects } = await import("./db");
+        return bulkUnassignProjects(
+          input.clientId,
+          input.userId,
+          input.projectIds
+        );
+      }),
   }),
 
   // Project templates

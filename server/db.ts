@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation } from "../drizzle/schema";
+import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2177,4 +2177,264 @@ export async function getMediaByFlight(flightId: number, userId: number) {
     .from(media)
     .where(and(eq(media.flightId, flightId), eq(media.userId, userId)))
     .orderBy(desc(media.createdAt));
+}
+
+/**
+ * Get all projects assigned to a specific client user
+ */
+export async function getUserAssignedProjects(clientId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+  
+  return db
+    .select({
+      id: clientProjectAssignments.id,
+      projectId: clientProjectAssignments.projectId,
+      assignedAt: clientProjectAssignments.assignedAt,
+      project: projects,
+    })
+    .from(clientProjectAssignments)
+    .leftJoin(projects, eq(clientProjectAssignments.projectId, projects.id))
+    .where(
+      and(
+        eq(clientProjectAssignments.clientId, clientId),
+        eq(clientProjectAssignments.userId, userId)
+      )
+    )
+    .orderBy(desc(clientProjectAssignments.assignedAt));
+}
+
+/**
+ * Get all projects in a client folder (for assignment UI)
+ */
+export async function getClientProjectsForAssignment(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.clientId, clientId))
+    .orderBy(desc(projects.createdAt));
+}
+
+/**
+ * Assign a project to a client user
+ */
+export async function assignProjectToUser(
+  clientId: number,
+  userId: number,
+  projectId: number,
+  assignedBy: number
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+
+  // Check if already assigned
+  const existing = await db
+    .select()
+    .from(clientProjectAssignments)
+    .where(
+      and(
+        eq(clientProjectAssignments.clientId, clientId),
+        eq(clientProjectAssignments.userId, userId),
+        eq(clientProjectAssignments.projectId, projectId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    return { alreadyAssigned: true, assignment: existing[0] };
+  }
+
+  const newAssignment: InsertClientProjectAssignment = {
+    clientId,
+    userId,
+    projectId,
+    assignedBy,
+  };
+
+  const result = await db.insert(clientProjectAssignments).values(newAssignment);
+  
+  return {
+    alreadyAssigned: false,
+    assignment: {
+      id: result[0]?.insertId ? Number(result[0].insertId) : 0,
+      ...newAssignment,
+      assignedAt: new Date(),
+    },
+  };
+}
+
+/**
+ * Unassign a project from a client user
+ */
+export async function unassignProjectFromUser(
+  clientId: number,
+  userId: number,
+  projectId: number
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+
+  await db
+    .delete(clientProjectAssignments)
+    .where(
+      and(
+        eq(clientProjectAssignments.clientId, clientId),
+        eq(clientProjectAssignments.userId, userId),
+        eq(clientProjectAssignments.projectId, projectId)
+      )
+    );
+
+  return { success: true };
+}
+
+/**
+ * Transfer a project from one user to another within the same client
+ */
+export async function transferProjectBetweenUsers(
+  clientId: number,
+  fromUserId: number,
+  toUserId: number,
+  projectId: number,
+  assignedBy: number
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Unassign from old user
+  await unassignProjectFromUser(clientId, fromUserId, projectId);
+  
+  // Assign to new user
+  const result = await assignProjectToUser(clientId, toUserId, projectId, assignedBy);
+  
+  return result;
+}
+
+/**
+ * Bulk assign multiple projects to a user
+ */
+export async function bulkAssignProjects(
+  clientId: number,
+  userId: number,
+  projectIds: number[],
+  assignedBy: number
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+
+  // Get existing assignments to avoid duplicates
+  const existing = await db
+    .select()
+    .from(clientProjectAssignments)
+    .where(
+      and(
+        eq(clientProjectAssignments.clientId, clientId),
+        eq(clientProjectAssignments.userId, userId)
+      )
+    );
+
+  const existingProjectIds = new Set(existing.map(a => a.projectId));
+  const newProjectIds = projectIds.filter(id => !existingProjectIds.has(id));
+
+  if (newProjectIds.length === 0) {
+    return { assigned: 0, skipped: projectIds.length };
+  }
+
+  const assignments: InsertClientProjectAssignment[] = newProjectIds.map(projectId => ({
+    clientId,
+    userId,
+    projectId,
+    assignedBy,
+  }));
+
+  await db.insert(clientProjectAssignments).values(assignments);
+
+  return { assigned: newProjectIds.length, skipped: projectIds.length - newProjectIds.length };
+}
+
+/**
+ * Bulk unassign multiple projects from a user
+ */
+export async function bulkUnassignProjects(
+  clientId: number,
+  userId: number,
+  projectIds: number[]
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+
+  await db
+    .delete(clientProjectAssignments)
+    .where(
+      and(
+        eq(clientProjectAssignments.clientId, clientId),
+        eq(clientProjectAssignments.userId, userId),
+        inArray(clientProjectAssignments.projectId, projectIds)
+      )
+    );
+
+  return { success: true };
+}
+
+/**
+ * Get all users and their project assignments for a client
+ */
+export async function getClientUsersWithAssignments(clientId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { clientProjectAssignments } = await import("../drizzle/schema");
+
+  // Get all client users
+  const clientUsersList = await getClientUsers(clientId);
+
+  // Get all assignments for this client
+  const assignments = await db
+    .select()
+    .from(clientProjectAssignments)
+    .where(eq(clientProjectAssignments.clientId, clientId));
+
+  // Group assignments by user
+  const assignmentsByUser = assignments.reduce((acc, assignment) => {
+    if (!acc[assignment.userId]) {
+      acc[assignment.userId] = [];
+    }
+    acc[assignment.userId].push(assignment);
+    return acc;
+  }, {} as Record<number, typeof assignments>);
+
+  // Combine user data with their assignments
+  return clientUsersList.map(cu => ({
+    ...cu,
+    assignments: assignmentsByUser[cu.clientUser.userId] || [],
+    projectCount: (assignmentsByUser[cu.clientUser.userId] || []).length,
+  }));
 }

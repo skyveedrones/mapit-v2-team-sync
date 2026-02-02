@@ -451,3 +451,23 @@
 - [x] Update backend endpoints to support sendEmail parameter (clientPortal.invite and sharing.invite)
 - [x] Test both dialogs in browser (verified button text changes and functionality works)
 - [ ] Test both invitation types with both methods
+
+## Client Portal Project Assignment System
+- [x] Design database schema for user-project assignments (created clientProjectAssignments table)
+- [x] Create `clientProjectAssignments` table with userId, projectId, clientId, assignedBy, assignedAt (migration completed)
+- [x] Add backend endpoint: `clientPortal.getUserProjects` - Get projects assigned to a user
+- [x] Add backend endpoint: `clientPortal.getClientProjectsForAssignment` - Get all projects in client folder
+- [x] Add backend endpoint: `clientPortal.assignProjectToUser` - Assign project to user
+- [x] Add backend endpoint: `clientPortal.unassignProjectFromUser` - Remove project assignment
+- [x] Add backend endpoint: `clientPortal.transferProject` - Transfer project between users
+- [x] Add backend endpoint: `clientPortal.bulkAssignProjects` - Assign multiple projects at once
+- [x] Add backend endpoint: `clientPortal.bulkUnassignProjects` - Remove multiple assignments
+- [x] Add backend endpoint: `clientPortal.getUsersWithAssignments` - Get all users with assignment counts
+- [x] Create ProjectAssignmentDialog component with user selection
+- [x] Show list of all client projects with checkbox selection (using CheckCircle2/Circle icons)
+- [x] Display currently assigned projects with visual indicator ("Currently Assigned" badge)
+- [x] Add "Select All" and "Deselect All" buttons (implemented in dialog)
+- [x] Add "Manage Projects" button next to each user in Client Management
+- [x] Implement bulk save functionality (assigns/unassigns in one operation)
+- [x] Show project details (name, description, location) in assignment dialog
+- [x] Add real-time assignment tracking with optimistic updates
