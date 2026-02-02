@@ -222,7 +222,8 @@ export default function ClientManage() {
           duration: 5000,
         });
       }
-      setInviteDialogOpen(false);
+      // Don't close dialog automatically - let user copy invitation first
+      // setInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("viewer");
       refetchInvitations();
@@ -796,7 +797,13 @@ export default function ClientManage() {
       </div>
 
       {/* Invite User Dialog */}
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+      <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
+        setInviteDialogOpen(open);
+        if (!open) {
+          // Clear last invite result when dialog is closed
+          setLastInviteResult(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Invite User to Portal</DialogTitle>
@@ -831,6 +838,58 @@ export default function ClientManage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Copy Invitation Section - Shows after successful invite */}
+            {lastInviteResult && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">📋 Copy Invitation (Manual Email Option)</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Use this if the automated email is blocked by the recipient's email server.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Invitation Link</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={lastInviteResult.inviteUrl}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastInviteResult.inviteUrl);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Email Template</Label>
+                  <Textarea
+                    value={generateClientInviteEmailTemplate(lastInviteResult)}
+                    readOnly
+                    className="font-mono text-xs min-h-[200px]"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generateClientInviteEmailTemplate(lastInviteResult));
+                      toast.success("Email template copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Email Template
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button

@@ -413,3 +413,9 @@
 - [x] Identify why media query isn't invalidating after upload (missing flightId parameter in invalidation)
 - [x] Fix cache invalidation to show thumbnails immediately (added conditional flightId to invalidate calls)
 - [x] Test upload and verify thumbnails appear without page refresh (4 passing tests)
+
+## Add Copy Invitation to Client Portal Invite
+- [x] Add copy invitation link and email template section to Client Portal invite dialog (added inside dialog)
+- [x] Reuse generateClientInviteEmailTemplate function from ClientManage.tsx (already exists)
+- [x] Display copy section after successful invitation creation (dialog stays open to show copy section)
+- [x] Test copy functionality works correctly (5 passing tests)
