@@ -107,7 +107,7 @@ export function DesktopAppDownloadDialog() {
         </div>
 
         <DialogFooter className="flex-col sm:flex-col gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-center space-x-2">
             <Checkbox
               id="dont-show"
               checked={dontShowAgain}
@@ -115,7 +115,7 @@ export function DesktopAppDownloadDialog() {
             />
             <label
               htmlFor="dont-show"
-              className="text-sm text-muted-foreground cursor-pointer"
+              className="text-sm font-bold cursor-pointer"
             >
               Don't show this again
             </label>

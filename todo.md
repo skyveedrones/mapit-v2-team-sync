@@ -419,3 +419,8 @@
 - [x] Reuse generateClientInviteEmailTemplate function from ClientManage.tsx (already exists)
 - [x] Display copy section after successful invitation creation (dialog stays open to show copy section)
 - [x] Test copy functionality works correctly (5 passing tests)
+
+## Update Desktop App Download Popup Styling
+- [x] Make "Don't show again" text bold (changed to font-bold)
+- [x] Center the "Don't show again" checkbox and label at the bottom (added justify-center)
+- [x] Test the updated styling in browser (verified dialog displays correctly)
