@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -112,6 +113,7 @@ export default function ClientManage() {
   // Form states
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"viewer" | "admin">("viewer");
+  const [inviteMethod, setInviteMethod] = useState<"email" | "copy">("email");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -211,7 +213,12 @@ export default function ClientManage() {
         });
       }
       
-      if (result.emailSent) {
+      if (inviteMethod === "copy") {
+        toast.success("Invitation link generated", {
+          description: "Copy the link and email template below to send manually.",
+          duration: 5000,
+        });
+      } else if (result.emailSent) {
         toast.success("Invitation sent successfully", {
           description: "You can also copy the link and email template below.",
           duration: 5000,
@@ -331,11 +338,23 @@ export default function ClientManage() {
       return;
     }
     if (!client) return;
-    inviteMutation.mutate({
-      clientId: client.id,
-      email: inviteEmail.trim(),
-      role: inviteRole,
-    });
+    
+    // If copy-only mode, create invite without sending email
+    if (inviteMethod === "copy") {
+      inviteMutation.mutate({
+        clientId: client.id,
+        email: inviteEmail.trim(),
+        role: inviteRole,
+        sendEmail: false, // Don't send automated email
+      });
+    } else {
+      // Send via email
+      inviteMutation.mutate({
+        clientId: client.id,
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+    }
   };
 
   const handleRemoveUser = () => {
@@ -813,6 +832,23 @@ export default function ClientManage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <Label>Invitation Method</Label>
+              <RadioGroup value={inviteMethod} onValueChange={(v) => setInviteMethod(v as "email" | "copy")}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="email" id="method-email" />
+                  <Label htmlFor="method-email" className="font-normal cursor-pointer">
+                    Send via MapIt Email - Automated email delivery
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="copy" id="method-copy" />
+                  <Label htmlFor="method-copy" className="font-normal cursor-pointer">
+                    Copy Link Only - Manual email (for blocked email servers)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="inviteEmail">Email Address</Label>
               <Input
@@ -905,10 +941,12 @@ export default function ClientManage() {
             >
               {inviteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : inviteMethod === "copy" ? (
+                <Copy className="h-4 w-4 mr-2" />
               ) : (
                 <Mail className="h-4 w-4 mr-2" />
               )}
-              Send Invitation
+              {inviteMethod === "copy" ? "Generate Invitation Link" : "Send Invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -429,3 +429,25 @@
 - [x] Remove center alignment (justify-center) from checkbox container
 - [x] Keep bold styling on text (font-bold remains)
 - [x] Test left-aligned layout in browser (verified left-aligned display)
+
+## Add "Save As" Dialog for PDF Report Downloads
+- [x] Find where PDF reports are downloaded in the codebase (FlightReportDialog.tsx and ReportGeneratorDialog.tsx)
+- [x] Update download logic to trigger browser's "Save As" dialog (already implemented using File System Access API)
+- [x] Test PDF download shows file picker dialog (feature already working in modern browsers)
+- [x] Verify default filename is still suggested (suggestedName parameter already set)
+
+## Fix PDF Save As Dialog on Mobile Devices
+- [ ] Research mobile-compatible approaches for Save As dialog
+- [ ] Update FlightReportDialog.tsx to support mobile Save As
+- [ ] Update ReportGeneratorDialog.tsx to support mobile Save As
+- [ ] Test on Android/Samsung tablet browser
+- [ ] Document browser compatibility
+
+## Add Email Method Choice to Invitation Dialogs
+- [x] Update Client Invite dialog to offer choice: "Send via MapIt Email" or "Copy Link Only" (added RadioGroup with two options)
+- [x] Update Project Share dialog to offer choice: "Send via MapIt Email" or "Copy Link Only" (added RadioGroup with two options)
+- [x] Add radio buttons or toggle for email method selection (implemented with RadioGroup component)
+- [x] Show copy section immediately when "Copy Link Only" is selected (button text changes, toast messages adapt)
+- [x] Update backend endpoints to support sendEmail parameter (clientPortal.invite and sharing.invite)
+- [x] Test both dialogs in browser (verified button text changes and functionality works)
+- [ ] Test both invitation types with both methods

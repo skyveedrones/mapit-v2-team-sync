@@ -1001,6 +1001,7 @@ export const appRouter = router({
         projectId: z.number(),
         email: z.string().email(),
         role: z.enum(["viewer", "editor"]).default("viewer"),
+        sendEmail: z.boolean().optional().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the project
@@ -1055,18 +1056,21 @@ export const appRouter = router({
         const baseUrl = process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
         const acceptUrl = `${baseUrl}/invite/${invitation.token}`;
 
-        // Send the invitation email
-        const emailResult = await sendProjectInvitationEmail({
-          to: input.email,
-          inviterName: ctx.user.name || 'A Mapit user',
-          projectName: project.name,
-          role: input.role,
-          inviteUrl: acceptUrl,
-        });
+        // Send the invitation email (only if sendEmail is true)
+        let emailResult: { success: boolean; error?: string } = { success: false, error: 'Email sending skipped' };
+        if (input.sendEmail !== false) {
+          emailResult = await sendProjectInvitationEmail({
+            to: input.email,
+            inviterName: ctx.user.name || 'A Mapit user',
+            projectName: project.name,
+            role: input.role,
+            inviteUrl: acceptUrl,
+          });
 
-        if (!emailResult.success) {
-          console.error('[Sharing] Failed to send invitation email:', emailResult.error);
-          // Don't throw - invitation is still created, just email failed
+          if (!emailResult.success) {
+            console.error('[Sharing] Failed to send invitation email:', emailResult.error);
+            // Don't throw - invitation is still created, just email failed
+          }
         }
 
         return {
@@ -2868,6 +2872,7 @@ export const appRouter = router({
           clientId: z.number(),
           email: z.string().email(),
           role: z.enum(["viewer", "admin"]).default("viewer"),
+          sendEmail: z.boolean().optional().default(true),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -2892,21 +2897,24 @@ export const appRouter = router({
           expiresAt,
         });
 
-        // Send invitation email
+        // Send invitation email (only if sendEmail is true)
         const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
         const inviteUrl = `${baseUrl}/client-invite/${token}`;
         
-        const emailResult = await sendClientInvitationEmail({
-          to: input.email,
-          inviterName: ctx.user.name || 'Mapit User',
-          clientName: client.name,
-          role: input.role,
-          inviteUrl,
-        });
+        let emailResult: { success: boolean; error?: string } = { success: false, error: 'Email sending skipped' };
+        if (input.sendEmail !== false) {
+          emailResult = await sendClientInvitationEmail({
+            to: input.email,
+            inviterName: ctx.user.name || 'Mapit User',
+            clientName: client.name,
+            role: input.role,
+            inviteUrl,
+          });
 
-        if (!emailResult.success) {
-          console.error('[Client Invite] Failed to send email:', emailResult.error);
-          // Still return success since invitation was created
+          if (!emailResult.success) {
+            console.error('[Client Invite] Failed to send email:', emailResult.error);
+            // Still return success since invitation was created
+          }
         }
 
         return {

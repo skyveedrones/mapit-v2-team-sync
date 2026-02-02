@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
@@ -95,6 +96,7 @@ export function ShareProjectDialog({
 }: ShareProjectDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"viewer" | "editor">("viewer");
+  const [inviteMethod, setInviteMethod] = useState<"email" | "copy">("email");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; projectName: string; inviterName: string } | null>(null);
 
@@ -129,7 +131,12 @@ export function ShareProjectDialog({
         });
       }
       
-      if (data.emailSent) {
+      if (inviteMethod === "copy") {
+        toast.success("Invitation link generated", {
+          description: "Copy the link and email template below to send manually.",
+          duration: 5000,
+        });
+      } else if (data.emailSent) {
         toast.success("Invitation sent!", {
           description: "You can also copy the link and email template below.",
           duration: 5000,
@@ -190,6 +197,7 @@ export function ShareProjectDialog({
         projectId,
         email: email.trim().toLowerCase(),
         role,
+        sendEmail: inviteMethod === "email", // Only send email if email method is selected
       });
     } finally {
       setIsSubmitting(false);
@@ -230,6 +238,23 @@ export function ShareProjectDialog({
 
           <TabsContent value="invite" className="space-y-4 mt-4">
             <form onSubmit={handleInvite} className="space-y-4">
+              <div className="space-y-3">
+                <Label>Invitation Method</Label>
+                <RadioGroup value={inviteMethod} onValueChange={(v) => setInviteMethod(v as "email" | "copy")}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="email" id="share-method-email" />
+                    <Label htmlFor="share-method-email" className="font-normal cursor-pointer">
+                      Send via MapIt Email - Automated email delivery
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="copy" id="share-method-copy" />
+                    <Label htmlFor="share-method-copy" className="font-normal cursor-pointer">
+                      Copy Link Only - Manual email (for blocked email servers)
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="flex gap-2">
@@ -279,7 +304,12 @@ export function ShareProjectDialog({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sending Invitation...
+                    {inviteMethod === "copy" ? "Generating Link..." : "Sending Invitation..."}
+                  </>
+                ) : inviteMethod === "copy" ? (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Generate Invitation Link
                   </>
                 ) : (
                   <>
