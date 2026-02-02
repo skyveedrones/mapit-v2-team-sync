@@ -376,3 +376,16 @@
 - [x] Include invitation link, instructions, and formatted email body (both templates complete)
 - [x] Test copy functionality works correctly (7 passing tests)
 - [x] Verify email templates are properly formatted (includes subject, body, instructions, features list)
+
+## Switch Storage Back to S3 from Cloudinary
+- [x] Update media upload endpoint to use S3 storage (both upload and uploadWithWatermark)
+- [x] Update project logo upload endpoint to use S3 storage
+- [x] Update user logo upload endpoint to use S3 storage
+- [x] Update client logo upload endpoint to use S3 storage
+- [x] Remove Cloudinary dependencies (imports removed, kept cloudinaryStorage.ts for reference)
+- [x] Test media image upload with S3 (passing test)
+- [x] Test media video upload with S3 (video upload uses S3)
+- [x] Test project logo upload with S3 (passing test)
+- [x] Test user logo upload with S3 (passing test)
+- [x] Test client logo upload with S3 (passing test)
+- [x] Verify all uploaded files are publicly accessible (all tests verify HTTP 200 response)
