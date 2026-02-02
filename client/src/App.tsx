@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { GlobalBackground } from "./components/GlobalBackground";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { DesktopAppDownloadDialog } from "./components/DesktopAppDownloadDialog";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -157,6 +158,7 @@ function App() {
         <TooltipProvider>
           <GlobalBackground />
           <Toaster />
+          <OfflineIndicator />
           <DesktopAppDownloadDialog />
           <Router />
         </TooltipProvider>

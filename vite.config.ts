@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,69 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  VitePWA({
+    registerType: 'autoUpdate',
+    includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+    manifest: {
+      name: 'MapIt - Drone Mapping Platform',
+      short_name: 'MapIt',
+      description: 'Professional drone mapping and project management platform',
+      theme_color: '#10b981',
+      icons: [
+        {
+          src: 'pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png'
+        },
+        {
+          src: 'pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        }
+      ]
+    },
+    workbox: {
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit for precaching
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/api\..+\/api\/trpc\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 // 24 hours
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /^https:\/\/.+\.cloudfront\.net\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'media-cache',
+            expiration: {
+              maxEntries: 200,
+              maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }
+      ]
+    }
+  })
+];
 
 export default defineConfig({
   plugins,
