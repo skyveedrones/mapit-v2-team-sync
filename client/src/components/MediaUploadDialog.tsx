@@ -690,7 +690,11 @@ export function MediaUploadDialog({
         toast.success(`Successfully resumed and completed upload: ${file.name}`);
         
         // Invalidate queries
-        await utils.media.list.invalidate({ projectId });
+        if (flightId) {
+          await utils.media.list.invalidate({ projectId, flightId });
+        } else {
+          await utils.media.list.invalidate({ projectId });
+        }
         await utils.project.get.invalidate({ id: projectId });
         onUploadComplete?.();
       } catch (error) {
@@ -925,7 +929,11 @@ export function MediaUploadDialog({
     abortControllerRef.current = null;
 
     // Invalidate queries to refresh data
-    await utils.media.list.invalidate({ projectId });
+    if (flightId) {
+      await utils.media.list.invalidate({ projectId, flightId });
+    } else {
+      await utils.media.list.invalidate({ projectId });
+    }
     await utils.project.get.invalidate({ id: projectId });
     await utils.project.list.invalidate();
 

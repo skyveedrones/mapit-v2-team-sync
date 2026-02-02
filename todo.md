@@ -407,3 +407,9 @@
 - [x] Verify cache limits work correctly (tested)
 - [x] Measure performance improvements (10x faster app load, 10x faster navigation, 20x faster cached images)
 - [x] Create documentation for offline features (OFFLINE_SUPPORT.md with comprehensive guide)
+
+## Fix New Flight Upload Media Refresh Issue
+- [x] Investigate New Flight upload flow (MediaUploadDialog component)
+- [x] Identify why media query isn't invalidating after upload (missing flightId parameter in invalidation)
+- [x] Fix cache invalidation to show thumbnails immediately (added conditional flightId to invalidate calls)
+- [x] Test upload and verify thumbnails appear without page refresh (4 passing tests)
