@@ -105,3 +105,15 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Capacitor
+android/app/build/
+android/app/release/
+android/.gradle/
+android/build/
+android/local.properties
+android/.idea/
+android/captures/
+ios/App/build/
+ios/App/Pods/
+ios/App/Podfile.lock

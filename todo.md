@@ -356,3 +356,14 @@
 - [x] Include download links for Windows/Mac/Linux (all three platforms)
 - [x] Add "Don't show again" option (checkbox with localStorage persistence)
 - [x] Test popup appears for new users only (localStorage-based)
+
+## Set Up Capacitor for Android App
+- [x] Install Capacitor core and CLI packages (@capacitor/core, @capacitor/cli)
+- [x] Install Android platform package (@capacitor/android)
+- [x] Initialize Capacitor configuration (capacitor.config.ts created)
+- [x] Configure app name, ID, and web directory (com.skyveedrones.mapit)
+- [x] Add Android platform to project (android/ folder created)
+- [x] Configure native features (camera, geolocation, splash screen plugins installed)
+- [x] Create build documentation (ANDROID_BUILD.md with comprehensive guide)
+- [ ] Test Android app build locally (requires Android Studio installation)
+- [x] Document Play Store submission process (included in ANDROID_BUILD.md)
