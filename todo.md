@@ -367,3 +367,12 @@
 - [x] Create build documentation (ANDROID_BUILD.md with comprehensive guide)
 - [ ] Test Android app build locally (requires Android Studio installation)
 - [x] Document Play Store submission process (included in ANDROID_BUILD.md)
+
+## Add Copy Invitation Link & Email Template Feature
+- [x] Add copy link button to client portal invite dialog (ClientManage.tsx with copy card)
+- [x] Create email template generator for client portal invites (generateClientInviteEmailTemplate)
+- [x] Add copy link button to project share invite dialog (ShareProjectDialog.tsx with copy section)
+- [x] Create email template generator for project share invites (generateProjectInviteEmailTemplate)
+- [x] Include invitation link, instructions, and formatted email body (both templates complete)
+- [x] Test copy functionality works correctly (7 passing tests)
+- [x] Verify email templates are properly formatted (includes subject, body, instructions, features list)

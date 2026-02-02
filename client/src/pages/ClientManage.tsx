@@ -41,6 +41,7 @@ import {
   ArrowLeft,
   Building2,
   Camera,
+  Copy,
   FolderOpen,
   Loader2,
   Mail,
@@ -57,6 +58,45 @@ import { useCallback, useRef, useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 
+// Helper function to generate client invite email template
+function generateClientInviteEmailTemplate(invite: { inviteUrl: string; email: string; role: string; clientName: string }) {
+  const roleDescription = invite.role === 'admin' 
+    ? 'manage the client portal and view all projects'
+    : 'view all projects assigned to this client';
+  
+  return `Subject: You've been invited to ${invite.clientName}'s MapIt Portal
+
+Hi,
+
+You've been invited to access ${invite.clientName}'s project portal on MapIt.
+
+As a ${invite.role}, you'll be able to ${roleDescription}.
+
+To accept this invitation and set up your access:
+
+1. Click the link below (or copy and paste it into your browser):
+   ${invite.inviteUrl}
+
+2. Sign in with your email address (${invite.email})
+
+3. Start viewing projects and media
+
+What you can do:
+• View interactive maps with drone footage
+• Browse media galleries with GPS-tagged photos and videos
+• Download media files and GPS data
+• Generate PDF reports
+• Export data in multiple formats (KML, CSV, GeoJSON, GPX)
+
+This invitation link will expire in 7 days. If you have any questions, please contact the person who invited you.
+
+Best regards,
+The MapIt Team
+
+---
+This is an automated message from MapIt. Please do not reply to this email.`;
+}
+
 export default function ClientManage() {
   const { clientId } = useParams<{ clientId: string }>();
   const [, setLocation] = useLocation();
@@ -67,6 +107,7 @@ export default function ClientManage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<{ id: number; name: string | null } | null>(null);
+  const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; clientName: string } | null>(null);
   
   // Form states
   const [inviteEmail, setInviteEmail] = useState("");
@@ -160,11 +201,25 @@ export default function ClientManage() {
 
   const inviteMutation = trpc.clientPortal.invite.useMutation({
     onSuccess: (result) => {
+      // Store the result for copy functionality
+      if (client) {
+        setLastInviteResult({
+          inviteUrl: result.inviteUrl,
+          email: inviteEmail,
+          role: inviteRole,
+          clientName: client.name,
+        });
+      }
+      
       if (result.emailSent) {
-        toast.success("Invitation sent successfully");
+        toast.success("Invitation sent successfully", {
+          description: "You can also copy the link and email template below.",
+          duration: 5000,
+        });
       } else {
         toast.success("Invitation created", {
-          description: "Email could not be sent. Share the invite link manually.",
+          description: "Email could not be sent. Use the copy button below to share manually.",
+          duration: 5000,
         });
       }
       setInviteDialogOpen(false);
@@ -657,6 +712,59 @@ export default function ClientManage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Copy Invitation Link & Template */}
+          {lastInviteResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Copy Invitation Link & Template</CardTitle>
+                <CardDescription>
+                  Use this when email servers block automated emails. Copy the link and email template to send manually.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Invitation Link</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={lastInviteResult.inviteUrl}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastInviteResult.inviteUrl);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Template</Label>
+                  <Textarea
+                    value={generateClientInviteEmailTemplate(lastInviteResult)}
+                    readOnly
+                    className="font-mono text-sm min-h-[300px]"
+                  />
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generateClientInviteEmailTemplate(lastInviteResult));
+                      toast.success("Email template copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Email Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Danger Zone */}
           <Card className="border-destructive/50">

@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import {
   Check,
   Clock,
+  Copy,
   Loader2,
   Mail,
   Send,
@@ -36,12 +37,54 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ShareProjectDialogProps {
   projectId: number;
   projectName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+// Helper function to generate project invite email template
+function generateProjectInviteEmailTemplate(invite: { inviteUrl: string; email: string; role: string; projectName: string; inviterName: string }) {
+  const roleDescription = invite.role === 'editor' 
+    ? 'view, upload media, and edit project details'
+    : 'view the project, media gallery, and interactive maps';
+  
+  return `Subject: You've been invited to collaborate on "${invite.projectName}" - MapIt
+
+Hi,
+
+${invite.inviterName} has invited you to collaborate on the project "${invite.projectName}" on MapIt.
+
+As a ${invite.role}, you'll be able to ${roleDescription}.
+
+To accept this invitation:
+
+1. Click the link below (or copy and paste it into your browser):
+   ${invite.inviteUrl}
+
+2. Sign in with your email address (${invite.email})
+
+3. Start collaborating on the project
+
+What you can do:
+• View interactive maps with drone footage
+• Browse GPS-tagged photos and videos
+• Download media files and GPS data
+• Generate PDF reports
+• Export data in multiple formats (KML, CSV, GeoJSON, GPX)
+${invite.role === 'editor' ? '• Upload new media and manage project details' : ''}
+
+This invitation link will expire in 7 days. If you have any questions, please contact ${invite.inviterName}.
+
+Best regards,
+The MapIt Team
+
+---
+This is an automated message from MapIt. Please do not reply to this email.`;
 }
 
 export function ShareProjectDialog({
@@ -53,7 +96,9 @@ export function ShareProjectDialog({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"viewer" | "editor">("viewer");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; projectName: string; inviterName: string } | null>(null);
 
+  const { user } = useAuth();
   const utils = trpc.useUtils();
 
   // Fetch collaborators
@@ -73,13 +118,26 @@ export function ShareProjectDialog({
   // Invite mutation
   const inviteMutation = trpc.sharing.invite.useMutation({
     onSuccess: (data) => {
+      // Store the result for copy functionality
+      if (data.inviteUrl && user) {
+        setLastInviteResult({
+          inviteUrl: data.inviteUrl,
+          email: email,
+          role: role,
+          projectName: projectName,
+          inviterName: user.name || 'A MapIt user',
+        });
+      }
+      
       if (data.emailSent) {
         toast.success("Invitation sent!", {
-          description: `An invitation email has been sent to ${email}`,
+          description: "You can also copy the link and email template below.",
+          duration: 5000,
         });
       } else if (data.isNew) {
         toast.success("Invitation created", {
-          description: "The invitation was created but the email could not be sent. Please try again.",
+          description: "Email could not be sent. Use the copy button below to share manually.",
+          duration: 5000,
         });
       } else {
         toast.info("Invitation already exists", {
@@ -240,6 +298,58 @@ export function ShareProjectDialog({
                 <li>Invitations expire after 7 days</li>
               </ul>
             </div>
+
+            {/* Copy Invitation Link & Template */}
+            {lastInviteResult && (
+              <div className="space-y-3 border-t pt-4">
+                <p className="text-sm font-medium">Copy Invitation Link & Template</p>
+                <p className="text-xs text-muted-foreground">
+                  Use this when email servers block automated emails. Copy the link and email template to send manually.
+                </p>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">Invitation Link</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={lastInviteResult.inviteUrl}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastInviteResult.inviteUrl);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">Email Template</Label>
+                  <Textarea
+                    value={generateProjectInviteEmailTemplate(lastInviteResult)}
+                    readOnly
+                    className="font-mono text-xs min-h-[200px]"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generateProjectInviteEmailTemplate(lastInviteResult));
+                      toast.success("Email template copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Email Template
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="members" className="mt-4">

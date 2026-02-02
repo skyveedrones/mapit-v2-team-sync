@@ -1071,6 +1071,7 @@ export const appRouter = router({
           invitation,
           isNew,
           emailSent: emailResult.success,
+          inviteUrl: acceptUrl,
         };
       }),
 
