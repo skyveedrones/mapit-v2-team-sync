@@ -471,3 +471,9 @@
 - [x] Implement bulk save functionality (assigns/unassigns in one operation)
 - [x] Show project details (name, description, location) in assignment dialog
 - [x] Add real-time assignment tracking with optimistic updates
+
+## Fix Desktop App Dialog "Don't Show Again" Persistence Issue
+- [x] Investigate why localStorage is not persisting the "don't show again" preference (found issue: onOpenChange was bypassing handleClose)
+- [x] Check if localStorage key is being set correctly when checkbox is checked (fixed by routing all close methods through handleClose)
+- [x] Verify localStorage is being read on component mount (working correctly)
+- [x] Test the fix to ensure dialog doesn't reappear after checking "don't show again" (tested with ESC key, verified localStorage persists, confirmed dialog doesn't reappear)

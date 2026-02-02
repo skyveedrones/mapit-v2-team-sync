@@ -32,11 +32,12 @@ export function DesktopAppDownloadDialog() {
     }
   }, []);
 
-  const handleClose = () => {
-    if (dontShowAgain) {
+  const handleClose = (open: boolean) => {
+    // When closing the dialog (open = false), check if we should save preference
+    if (!open && dontShowAgain) {
       localStorage.setItem(DESKTOP_APP_DIALOG_KEY, "true");
     }
-    setOpen(false);
+    setOpen(open);
   };
 
   const handleDownload = (platform: string) => {
@@ -47,11 +48,11 @@ export function DesktopAppDownloadDialog() {
     // For now, we'll just show a message
     alert(`Desktop app download for ${platform} coming soon! For now, you can install this web app to your device using your browser's "Install" or "Add to Home Screen" option.`);
     
-    handleClose();
+    handleClose(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
@@ -120,7 +121,7 @@ export function DesktopAppDownloadDialog() {
               Don't show this again
             </label>
           </div>
-          <Button variant="ghost" onClick={handleClose} className="w-full">
+          <Button variant="ghost" onClick={() => handleClose(false)} className="w-full">
             Continue with Web App
           </Button>
         </DialogFooter>
