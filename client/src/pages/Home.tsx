@@ -11,6 +11,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
+import { AppDownloadDialog } from "@/components/AppDownloadDialog";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -99,6 +100,7 @@ const staggerContainer = {
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [, setLocation] = useLocation();
 
   const handleLogin = () => {
@@ -131,6 +133,14 @@ export default function Home() {
               onClick={() => setLocation("/pricing")}
             >
               Pricing
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-foreground hover:text-primary"
+              onClick={() => setShowDownloadDialog(true)}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download App
             </Button>
             {isAuthenticated && user ? (
               <>
@@ -203,6 +213,17 @@ export default function Home() {
                 }}
               >
                 Pricing
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-foreground"
+                onClick={() => {
+                  setShowDownloadDialog(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download App
               </Button>
               {isAuthenticated && user ? (
                 <>
@@ -445,10 +466,10 @@ export default function Home() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                onClick={isAuthenticated ? () => setLocation("/dashboard") : handleLogin}
+                onClick={() => setShowDownloadDialog(true)}
               >
-                {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
-                <ChevronRight className="ml-2 h-5 w-5" />
+                <Download className="mr-2 h-5 w-5" />
+                Download the App
               </Button>
             </motion.div>
           </motion.div>
@@ -472,6 +493,14 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Download Dialog */}
+      {showDownloadDialog && (
+        <AppDownloadDialog
+          open={showDownloadDialog}
+          onOpenChange={setShowDownloadDialog}
+        />
+      )}
     </div>
   );
 }

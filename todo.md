@@ -477,3 +477,14 @@
 - [x] Check if localStorage key is being set correctly when checkbox is checked (fixed by routing all close methods through handleClose)
 - [x] Verify localStorage is being read on component mount (working correctly)
 - [x] Test the fix to ensure dialog doesn't reappear after checking "don't show again" (tested with ESC key, verified localStorage persists, confirmed dialog doesn't reappear)
+
+## Add Download App Buttons to Homepage
+- [x] Add "Download App" button to homepage navigation bar (added to desktop nav and mobile menu)
+- [x] Update bottom "Go to Dashboard" button to "Download the App" (changed button text and icon)
+- [x] Make bottom button open download options dialog (opens AppDownloadDialog)
+- [x] Ensure iOS/iPhone download works (PWA installation or App Store link) (implemented iOS installation guide via toast)
+- [x] Add platform detection for iOS devices (detects iOS, Android, standalone PWA)
+- [x] Test download functionality on desktop and mobile browsers (tested dialog, iOS instructions, all platforms)
+- [x] Create AppDownloadDialog component with Windows, macOS, Linux, iOS, Android options
+- [x] Add step-by-step iOS installation instructions (tap Share → Add to Home Screen → Add)
+- [x] Add Android installation instructions (tap menu → Add to Home screen → Install)
