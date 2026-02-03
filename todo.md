@@ -632,3 +632,14 @@
 - [x] Add meta keywords for SEO - Added 10 relevant keywords
 - [x] Improve page title from 5 to 30-60 characters - Now 58 characters
 - [x] Add missing alt text to images - Improved hero logo alt text to be more descriptive
+
+## PDF Download Still Failing (After Preview)
+- [ ] Preview works but download fails within seconds
+- [ ] Capture actual error logs from production
+- [ ] Identify root cause of download failure
+- [ ] Fix the issue and test end-to-end
+
+## Version Tracking
+- [x] Add version number to dashboard footer
+- [x] Display build date and version number (v1.0.0 with commit hash)
+- [ ] Add version info to settings/about section (optional enhancement)

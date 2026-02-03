@@ -27,6 +27,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { getVersionString } from '@shared/version';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -205,7 +206,15 @@ function DashboardLayoutContent({
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3">
+          <SidebarFooter className="p-3 space-y-2">
+            {/* Version Info */}
+            <div className="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Version</span>
+                <span className="font-mono">{getVersionString()}</span>
+              </div>
+            </div>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
