@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, PanelLeft, Settings } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Moon, PanelLeft, Settings, Sun } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -109,6 +110,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -224,6 +226,16 @@ function DashboardLayoutContent({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
+                  onClick={() => toggleTheme?.()}
+                  className="cursor-pointer"
+                >
+                  {theme === 'dark' ? (
+                    <><Sun className="mr-2 h-4 w-4" /><span>Light Mode</span></>
+                  ) : (
+                    <><Moon className="mr-2 h-4 w-4" /><span>Dark Mode</span></>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
@@ -257,6 +269,15 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => toggleTheme?.()}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>

@@ -9,6 +9,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { AppDownloadDialog } from "@/components/AppDownloadDialog";
@@ -25,6 +26,8 @@ import {
   X,
   LogOut,
   User,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -99,6 +102,7 @@ const staggerContainer = {
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [, setLocation] = useLocation();
@@ -141,6 +145,15 @@ export default function Home() {
             >
               <Download className="h-4 w-4 mr-2" />
               Download App
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground hover:text-primary"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             {isAuthenticated && user ? (
               <>
@@ -224,6 +237,20 @@ export default function Home() {
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download App
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-foreground justify-start"
+                onClick={() => {
+                  toggleTheme?.();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                {theme === 'dark' ? (
+                  <><Sun className="h-4 w-4 mr-2" /> Light Mode</>
+                ) : (
+                  <><Moon className="h-4 w-4 mr-2" /> Dark Mode</>
+                )}
               </Button>
               {isAuthenticated && user ? (
                 <>

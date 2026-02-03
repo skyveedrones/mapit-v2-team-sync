@@ -506,3 +506,28 @@
 - [x] Add proper error handling for unsupported browsers (detects Chrome/Edge/Safari and provides specific instructions)
 - [x] Test installation on Chrome, Edge, Safari, Firefox (tested in browser, shows appropriate instructions)
 - [x] Add fallback instructions if PWA installation fails (browser-specific instructions for manual installation)
+
+## Enable Light/Dark Theme Switching
+- [x] Enable theme switching in App.tsx (uncomment `switchable` prop in ThemeProvider)
+- [x] Add theme toggle button to homepage navigation bar (desktop and mobile menu)
+- [x] Add theme toggle button to dashboard layout (mobile header and user dropdown)
+- [x] Adjust color palette in index.css for better light mode appearance (updated :root colors)
+- [x] Test theme switching on homepage and dashboard (tested both themes)
+- [x] Ensure theme preference persists across page refreshes (uses localStorage)
+
+## Fix Mapit Logo Transparent Background
+- [x] Find the Mapit logo image file in the project (found mapit-logo-new.png)
+- [x] Update logo to use correct version (mapit-logo-new.png with black background)
+- [x] Test logo appearance in light mode (black background provides good contrast)
+- [x] Test logo appearance in dark mode (white text on black background works perfectly)
+- [x] Ensure logo looks good on both themes (verified both themes)
+
+## Complete Theme Switching Implementation
+- [x] Mark theme switching tasks as complete in todo.md
+- [x] Save checkpoint for theme switching and logo fix
+
+## Use Correct Mapit Logo (mapit-logo-new.png)
+- [x] Update homepage hero section to use mapit-logo-new.png
+- [x] Update footer to use mapit-logo-new.png  
+- [x] Ensure logo displays properly in both light and dark themes (tested both)
+- [x] Test logo appearance and visibility (verified correct logo displays)
