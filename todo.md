@@ -667,3 +667,11 @@
 - [x] Make projects in client tile clickable
 - [x] Navigate to project when clicked
 - [x] Add hover effect to indicate clickability (border color change and cursor pointer)
+
+## PDF Generation Failure (Again) - Mobile Issue
+- [x] Check server logs for PDF generation errors - Server is generating PDFs successfully
+- [x] Identify why PDF conversion fails after preview works - Mobile browsers can't handle large PDF downloads (50-70MB)
+- [x] Add mobile-optimized PDF generation with lower quality for mobile devices - Defaults to 'low' resolution
+- [x] Reduce default image quality further to keep PDFs under 50MB - Reduced all presets by 10%
+- [x] Add file size warning before generating PDF - Shows warning when >8 photos selected on mobile
+- [ ] Test with real project data on mobile devices

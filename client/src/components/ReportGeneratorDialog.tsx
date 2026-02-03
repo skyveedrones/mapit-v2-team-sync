@@ -67,6 +67,11 @@ const MAP_STYLE_OPTIONS: { value: MapStyle; label: string; description: string }
   { value: "terrain", label: "Terrain", description: "Physical terrain features" },
 ];
 
+// Detect if user is on a mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export function ReportGeneratorDialog({
   open,
   onOpenChange,
@@ -75,7 +80,8 @@ export function ReportGeneratorDialog({
   media,
 }: ReportGeneratorDialogProps) {
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());
-  const [resolution, setResolution] = useState<ResolutionPreset>("medium");
+  // Default to 'low' resolution on mobile devices to keep file size manageable
+  const [resolution, setResolution] = useState<ResolutionPreset>(isMobileDevice() ? "low" : "medium");
   const [mapStyle, setMapStyle] = useState<MapStyle>("hybrid");
   const [showFlightPath, setShowFlightPath] = useState(true);
   const [includeWatermark, setIncludeWatermark] = useState(false);
@@ -372,6 +378,16 @@ export function ReportGeneratorDialog({
             <p className="text-sm text-muted-foreground">
               {selectedMediaIds.size} of {photos.length} photos selected
             </p>
+            {isMobileDevice() && selectedMediaIds.size > 8 && (
+              <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
+                <svg className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="text-sm text-yellow-600 dark:text-yellow-500">
+                  <strong>Mobile Device Detected:</strong> Selecting more than 8 photos may cause download issues. Consider using fewer photos or switch to desktop for large reports.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Resolution Selection */}
