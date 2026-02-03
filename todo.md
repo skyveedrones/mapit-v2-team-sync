@@ -570,3 +570,11 @@
 - [x] Add Theme box next to Templates with sun/moon icon (added as third tab with Sun icon)
 - [x] Implement theme toggle functionality (created ThemeSettings component with Light/Dark buttons)
 - [x] Test theme switching from Settings page (successfully switches between light and dark themes with toast notification)
+
+## Improve App Download/Install Experience
+- [x] Find current PWA install prompt implementation (AppDownloadDialog component)
+- [x] Identify issues with current install UI (toast notifications at bottom are small, dark, hard to follow)
+- [x] Design improved install prompt (larger card-based layout with expandable instructions)
+- [x] Implement custom install dialog with clear instructions (step-by-step numbered guides)
+- [x] Add platform-specific install instructions (iOS, Android, Desktop with visual icons and detailed steps)
+- [x] Test install flow on different devices and browsers (tested desktop view with expandable iOS instructions)

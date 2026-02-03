@@ -6,9 +6,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Monitor, Apple, Smartphone, Chrome } from "lucide-react";
+import { Download, Monitor, Apple, Smartphone, Chrome, Share2, Plus, Home } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AppDownloadDialogProps {
   open: boolean;
@@ -20,6 +21,8 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
   const [isAndroid, setIsAndroid] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
 
   useEffect(() => {
     // Detect iOS
@@ -50,25 +53,9 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
     };
   }, []);
 
-  const handleIOSInstall = () => {
-    toast.info("To install on iPhone/iPad:", {
-      description: "1. Tap the Share button (square with arrow)\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' to install",
-      duration: 10000,
-    });
-  };
-
-  const handleAndroidInstall = () => {
-    toast.info("To install on Android:", {
-      description: "1. Tap the menu (three dots)\n2. Tap 'Add to Home screen' or 'Install app'\n3. Tap 'Install' to confirm",
-      duration: 10000,
-    });
-  };
-
-  const handleDesktopDownload = async (platform: string) => {
-    console.log(`[App Download] User clicked download for ${platform}`);
-    
-    // Try to trigger PWA installation
+  const handleDesktopInstall = async () => {
     if (deferredPrompt) {
+      // Trigger the native browser install prompt
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`[PWA] User ${outcome} the install prompt`);
@@ -79,25 +66,15 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
         });
         setDeferredPrompt(null);
         onOpenChange(false);
-      } else {
-        toast.info('Installation cancelled', {
-          description: 'You can install later from your browser menu.',
-        });
       }
     } else {
-      // Fallback: Show browser-specific instructions
+      // Show browser-specific instructions in toast as fallback
       const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
       const isEdge = /Edg/.test(navigator.userAgent);
-      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
       
       if (isChrome || isEdge) {
         toast.info('Install from browser menu', {
           description: `Click the install icon (⊕) in the address bar, or go to Menu → Install Mapit.`,
-          duration: 8000,
-        });
-      } else if (isSafari) {
-        toast.info('Safari installation', {
-          description: 'Safari doesn\'t support PWA installation on desktop. Please use Chrome or Edge.',
           duration: 8000,
         });
       } else {
@@ -111,122 +88,244 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <Download className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-xl">Download Mapit App</DialogTitle>
+            <DialogTitle className="text-xl">Install Mapit App</DialogTitle>
           </div>
           <DialogDescription className="text-base">
             {isStandalone
               ? "App is already installed! You can access it from your home screen."
-              : isIOS
-              ? "Install Mapit on your iPhone or iPad for the best experience."
-              : isAndroid
-              ? "Install Mapit on your Android device for offline access and faster performance."
-              : "Get the best experience with our app. Available for all platforms."}
+              : "Install Mapit for quick access, offline support, and a native app experience."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-4">
-          {isIOS ? (
-            <Button
-              variant="outline"
-              className="w-full justify-start h-auto py-4 px-4 border-2 border-primary/20 hover:border-primary/40"
-              onClick={handleIOSInstall}
-            >
-              <Apple className="h-6 w-6 mr-3 text-primary" />
-              <div className="text-left flex-1">
-                <div className="font-semibold">Install on iPhone/iPad</div>
-                <div className="text-sm text-muted-foreground">
-                  Tap to see installation instructions
-                </div>
-              </div>
-              <Download className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          ) : isAndroid ? (
-            <Button
-              variant="outline"
-              className="w-full justify-start h-auto py-4 px-4 border-2 border-primary/20 hover:border-primary/40"
-              onClick={handleAndroidInstall}
-            >
-              <Smartphone className="h-6 w-6 mr-3 text-primary" />
-              <div className="text-left flex-1">
-                <div className="font-semibold">Install on Android</div>
-                <div className="text-sm text-muted-foreground">
-                  Tap to see installation instructions
-                </div>
-              </div>
-              <Download className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto py-4 px-4"
-                onClick={() => handleDesktopDownload("Windows")}
-              >
-                <Monitor className="h-5 w-5 mr-3 text-primary" />
-                <div className="text-left flex-1">
-                  <div className="font-semibold">Windows</div>
-                  <div className="text-sm text-muted-foreground">For Windows 10 and later</div>
-                </div>
-                <Download className="h-4 w-4 text-muted-foreground" />
-              </Button>
+        <div className="space-y-4 py-4">
+          {/* iOS Installation */}
+          {isIOS && (
+            <Card className="border-2 border-primary/20">
+              <CardContent className="p-4">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto p-0 hover:bg-transparent"
+                  onClick={() => setShowIOSInstructions(!showIOSInstructions)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <Apple className="h-8 w-8 text-primary flex-shrink-0" />
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-lg">Install on iPhone/iPad</div>
+                      <div className="text-sm text-muted-foreground">
+                        {showIOSInstructions ? "Hide instructions" : "Tap to see step-by-step guide"}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
 
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto py-4 px-4"
-                onClick={() => handleDesktopDownload("macOS")}
-              >
-                <Apple className="h-5 w-5 mr-3 text-primary" />
-                <div className="text-left flex-1">
-                  <div className="font-semibold">macOS</div>
-                  <div className="text-sm text-muted-foreground">For macOS 11 and later</div>
-                </div>
-                <Download className="h-4 w-4 text-muted-foreground" />
-              </Button>
+                {showIOSInstructions && (
+                  <div className="mt-4 space-y-3 pl-2 border-l-2 border-primary/30">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium">Tap the Share button</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Share2 className="h-4 w-4" />
+                          Look for the square with an arrow pointing up (usually at the bottom or top of Safari)
+                        </p>
+                      </div>
+                    </div>
 
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto py-4 px-4"
-                onClick={() => handleDesktopDownload("Linux")}
-              >
-                <Chrome className="h-5 w-5 mr-3 text-primary" />
-                <div className="text-left flex-1">
-                  <div className="font-semibold">Linux</div>
-                  <div className="text-sm text-muted-foreground">For Ubuntu, Fedora, and more</div>
-                </div>
-                <Download className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </>
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium">Find "Add to Home Screen"</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Plus className="h-4 w-4" />
+                          Scroll down in the share menu and tap this option
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium">Tap "Add"</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Home className="h-4 w-4" />
+                          The Mapit icon will appear on your home screen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          {/* Show mobile install options on desktop */}
+          {/* Android Installation */}
+          {isAndroid && (
+            <Card className="border-2 border-primary/20">
+              <CardContent className="p-4">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto p-0 hover:bg-transparent"
+                  onClick={() => setShowAndroidInstructions(!showAndroidInstructions)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <Smartphone className="h-8 w-8 text-primary flex-shrink-0" />
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-lg">Install on Android</div>
+                      <div className="text-sm text-muted-foreground">
+                        {showAndroidInstructions ? "Hide instructions" : "Tap to see step-by-step guide"}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+
+                {showAndroidInstructions && (
+                  <div className="mt-4 space-y-3 pl-2 border-l-2 border-primary/30">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium">Tap the menu button</p>
+                        <p className="text-sm text-muted-foreground">
+                          Look for three dots (⋮) in the top-right corner of your browser
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium">Select "Add to Home screen" or "Install app"</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Plus className="h-4 w-4" />
+                          The exact wording depends on your browser
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium">Tap "Install" to confirm</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Home className="h-4 w-4" />
+                          The Mapit icon will appear on your home screen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Desktop Installation */}
           {!isIOS && !isAndroid && (
-            <div className="pt-4 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-3">Mobile Devices:</p>
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={handleIOSInstall}
-                >
-                  <Apple className="h-4 w-4 mr-2" />
-                  iPhone/iPad Installation Guide
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={handleAndroidInstall}
-                >
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Android Installation Guide
-                </Button>
+            <>
+              <Card className="border-2 border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Monitor className="h-8 w-8 text-primary flex-shrink-0" />
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-lg">Install on Desktop</div>
+                      <div className="text-sm text-muted-foreground">
+                        Works on Windows, macOS, and Linux
+                      </div>
+                    </div>
+                  </div>
+
+                  {deferredPrompt ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Click the button below to install Mapit as a desktop app. You'll get:
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-1 pl-4">
+                        <li>• Quick access from your desktop or taskbar</li>
+                        <li>• Offline support for viewing your projects</li>
+                        <li>• Native app experience without browser tabs</li>
+                      </ul>
+                      <Button
+                        onClick={handleDesktopInstall}
+                        className="w-full"
+                        size="lg"
+                      >
+                        <Download className="mr-2 h-5 w-5" />
+                        Install Mapit Now
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        To install Mapit on your computer:
+                      </p>
+                      <div className="space-y-2 pl-2 border-l-2 border-primary/30">
+                        <div className="flex gap-2">
+                          <Chrome className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm">Chrome/Edge</p>
+                            <p className="text-sm text-muted-foreground">
+                              Click the install icon (⊕) in the address bar, or Menu → Install Mapit
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleDesktopInstall}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Show Install Instructions
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Mobile guides on desktop */}
+              <div className="pt-2">
+                <p className="text-sm font-medium text-muted-foreground mb-3">Installing on mobile devices:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => {
+                      setIsIOS(true);
+                      setShowIOSInstructions(true);
+                    }}
+                  >
+                    <Apple className="h-4 w-4 mr-2" />
+                    iPhone/iPad
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => {
+                      setIsAndroid(true);
+                      setShowAndroidInstructions(true);
+                    }}
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Android
+                  </Button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </DialogContent>
