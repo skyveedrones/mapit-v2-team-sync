@@ -19,6 +19,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     // Detect iOS
@@ -34,6 +35,19 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                       (window.navigator as any).standalone ||
                       document.referrer.includes('android-app://');
     setIsStandalone(standalone);
+
+    // Listen for PWA install prompt
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('[PWA] Install prompt captured');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const handleIOSInstall = () => {
@@ -50,13 +64,49 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
     });
   };
 
-  const handleDesktopDownload = (platform: string) => {
+  const handleDesktopDownload = async (platform: string) => {
     console.log(`[App Download] User clicked download for ${platform}`);
     
-    // In a real app, these would be actual download links
-    toast.info(`${platform} app coming soon!`, {
-      description: "For now, you can install this web app using your browser's install option.",
-    });
+    // Try to trigger PWA installation
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`[PWA] User ${outcome} the install prompt`);
+      
+      if (outcome === 'accepted') {
+        toast.success('App installed successfully!', {
+          description: 'You can now access Mapit from your desktop.',
+        });
+        setDeferredPrompt(null);
+        onOpenChange(false);
+      } else {
+        toast.info('Installation cancelled', {
+          description: 'You can install later from your browser menu.',
+        });
+      }
+    } else {
+      // Fallback: Show browser-specific instructions
+      const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+      const isEdge = /Edg/.test(navigator.userAgent);
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      
+      if (isChrome || isEdge) {
+        toast.info('Install from browser menu', {
+          description: `Click the install icon (⊕) in the address bar, or go to Menu → Install Mapit.`,
+          duration: 8000,
+        });
+      } else if (isSafari) {
+        toast.info('Safari installation', {
+          description: 'Safari doesn\'t support PWA installation on desktop. Please use Chrome or Edge.',
+          duration: 8000,
+        });
+      } else {
+        toast.info('Install from browser', {
+          description: 'Look for an install option in your browser\'s menu (usually under More Tools or Settings).',
+          duration: 8000,
+        });
+      }
+    }
   };
 
   return (

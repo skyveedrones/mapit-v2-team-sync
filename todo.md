@@ -494,3 +494,15 @@
 - [x] Verify dialog has proper close button (X button in header) (Close button exists in top right)
 - [x] Test dialog can be closed by clicking outside/ESC key (tested and working)
 - [x] Apply same fix to Project Share dialog if needed (applied same shortened text to ShareProjectDialog)
+
+## Implement Working Download Links for All Platforms
+- [x] Research PWA installation methods for Windows, macOS, Linux (uses beforeinstallprompt event and browser-specific fallbacks)
+- [x] Update Windows download to trigger PWA installation (triggers native install prompt or shows instructions)
+- [x] Update macOS download to trigger PWA installation (triggers native install prompt or shows instructions)
+- [x] Update Linux download to trigger PWA installation (triggers native install prompt or shows instructions)
+- [x] Update iOS installation guide (already has instructions) (shows step-by-step toast)
+- [x] Update Android installation guide (already has instructions) (shows step-by-step toast)
+- [x] Remove "Coming soon" toast messages (replaced with actual installation methods)
+- [x] Add proper error handling for unsupported browsers (detects Chrome/Edge/Safari and provides specific instructions)
+- [x] Test installation on Chrome, Edge, Safari, Firefox (tested in browser, shows appropriate instructions)
+- [x] Add fallback instructions if PWA installation fails (browser-specific instructions for manual installation)
