@@ -143,35 +143,41 @@ export default function ClientProjects() {
         {clientProjects && clientProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clientProjects.map((project) => (
-              <Card key={project.id} className="group relative">
-                <button
-                  onClick={() => handleUnassignProject(project.id)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
-                  title="Remove from client"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {project.location || "No location set"}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`px-2 py-0.5 rounded-full ${
-                      project.status === "completed" 
-                        ? "bg-primary/20 text-primary" 
-                        : project.status === "active"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-muted text-muted-foreground"
-                    }`}>
-                      {project.status}
-                    </span>
-                    <span>{project.mediaCount || 0} media</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={project.id} href={`/projects/${project.id}`}>
+                <Card className="group relative cursor-pointer hover:border-primary/50 transition-colors">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleUnassignProject(project.id);
+                    }}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive z-10"
+                    title="Remove from client"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">{project.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {project.location || "No location set"}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className={`px-2 py-0.5 rounded-full ${
+                        project.status === "completed" 
+                          ? "bg-primary/20 text-primary" 
+                          : project.status === "active"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {project.status}
+                      </span>
+                      <span>{project.mediaCount || 0} media</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         ) : (

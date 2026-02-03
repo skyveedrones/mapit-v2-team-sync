@@ -662,3 +662,8 @@
 - [x] Update version.json to v1.0.1 with commit 10b7aa2d
 - [x] Update shared/version.ts to match
 - [ ] Verify published site updates to latest version after publishing
+
+## Clickable Projects in Client Tile
+- [x] Make projects in client tile clickable
+- [x] Navigate to project when clicked
+- [x] Add hover effect to indicate clickability (border color change and cursor pointer)
