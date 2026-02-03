@@ -563,3 +563,10 @@
 - [x] Keep logo white in dark mode - filter: none for .dark class
 - [x] Test logo visibility on light theme (black text with green marker - perfect contrast)
 - [x] Test logo visibility on dark theme (white text with green marker - perfect contrast)
+
+## Add Theme Selector to Settings Page
+- [x] Find the Settings page component (Settings.tsx)
+- [x] Locate where Templates box is displayed (as a tab in Tabs component)
+- [x] Add Theme box next to Templates with sun/moon icon (added as third tab with Sun icon)
+- [x] Implement theme toggle functionality (created ThemeSettings component with Light/Dark buttons)
+- [x] Test theme switching from Settings page (successfully switches between light and dark themes with toast notification)

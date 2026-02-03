@@ -5,10 +5,91 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Plane, Save, FileText } from "lucide-react";
+import { Loader2, Plane, Save, FileText, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Templates from "./settings/Templates";
+
+function ThemeSettings() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    // Get current theme from document
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    // Save to localStorage
+    localStorage.setItem('theme', newTheme);
+    toast.success(`Theme changed to ${newTheme} mode`);
+  };
+
+  return (
+    <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10">
+            {theme === 'dark' ? (
+              <Moon className="h-5 w-5 text-emerald-500" />
+            ) : (
+              <Sun className="h-5 w-5 text-emerald-500" />
+            )}
+          </div>
+          <div>
+            <CardTitle>Theme Preference</CardTitle>
+            <CardDescription>
+              Choose your preferred color theme for the application
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => toggleTheme('light')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-all hover:border-emerald-500/50 ${
+              theme === 'light'
+                ? 'border-emerald-500 bg-emerald-500/10'
+                : 'border-border bg-card'
+            }`}
+          >
+            <Sun className="h-8 w-8" />
+            <div className="text-center">
+              <div className="font-semibold">Light</div>
+              <div className="text-sm text-muted-foreground">Bright and clean</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => toggleTheme('dark')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-all hover:border-emerald-500/50 ${
+              theme === 'dark'
+                ? 'border-emerald-500 bg-emerald-500/10'
+                : 'border-border bg-card'
+            }`}
+          >
+            <Moon className="h-8 w-8" />
+            <div className="text-center">
+              <div className="font-semibold">Dark</div>
+              <div className="text-sm text-muted-foreground">Easy on the eyes</div>
+            </div>
+          </button>
+        </div>
+
+        <div className="text-sm text-muted-foreground">
+          Your theme preference is saved automatically and will be applied across all pages.
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Settings() {
   const [dronePilot, setDronePilot] = useState("");
@@ -69,6 +150,10 @@ export default function Settings() {
             <TabsTrigger value="templates">
               <FileText className="mr-2 h-4 w-4" />
               Templates
+            </TabsTrigger>
+            <TabsTrigger value="theme">
+              <Sun className="mr-2 h-4 w-4" />
+              Theme
             </TabsTrigger>
           </TabsList>
 
@@ -150,6 +235,10 @@ export default function Settings() {
 
           <TabsContent value="templates" className="mt-6">
             <Templates />
+          </TabsContent>
+
+          <TabsContent value="theme" className="mt-6">
+            <ThemeSettings />
           </TabsContent>
         </Tabs>
       </div>
