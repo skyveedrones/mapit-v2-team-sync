@@ -675,3 +675,10 @@
 - [x] Reduce default image quality further to keep PDFs under 50MB - Reduced all presets by 10%
 - [x] Add file size warning before generating PDF - Shows warning when >8 photos selected on mobile
 - [ ] Test with real project data on mobile devices
+
+## Email Report Feature
+- [x] Create backend endpoint to email PDF reports
+- [x] Use Resend API to send emails with PDF attachment
+- [x] Add Email Report button to preview dialog
+- [x] Add email input field and validation
+- [ ] Test email delivery with real reports

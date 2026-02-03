@@ -2142,6 +2142,60 @@ export const appRouter = router({
         }
       }),
 
+    // Email PDF report
+    emailReport: protectedProcedure
+      .input(z.object({
+        html: z.string(),
+        projectName: z.string(),
+        recipientEmail: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { sendReportEmail } = await import("./emailReport");
+        
+        // Log HTML size for debugging
+        const htmlSizeMB = (input.html.length / 1024 / 1024).toFixed(2);
+        console.log(`[Email Report] Preparing to email report (HTML: ${htmlSizeMB} MB) to ${input.recipientEmail}`);
+        
+        // Warn if HTML is very large (>50MB)
+        if (input.html.length > 50 * 1024 * 1024) {
+          console.warn(`[Email Report] WARNING: HTML size is very large (${htmlSizeMB} MB), this may cause timeout or memory issues`);
+        }
+        
+        try {
+          const result = await sendReportEmail({
+            to: input.recipientEmail,
+            projectName: input.projectName,
+            html: input.html,
+            senderName: ctx.user.name || 'Mapit User',
+          });
+          
+          if (!result.success) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: result.error || 'Failed to send email',
+            });
+          }
+          
+          console.log(`[Email Report] Report emailed successfully to ${input.recipientEmail}`);
+          
+          return {
+            success: true,
+            message: `Report sent to ${input.recipientEmail}`,
+          };
+        } catch (error: any) {
+          console.error("[Email Report] Failed to email report:", error);
+          console.error("[Email Report] Error details:", {
+            message: error.message,
+            stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+            htmlSize: htmlSizeMB + ' MB',
+          });
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to email report: ${error.message || 'Unknown error'}`,
+          });
+        }
+      }),
+
     // Generate flight report
     generateFlight: protectedProcedure
       .input(z.object({

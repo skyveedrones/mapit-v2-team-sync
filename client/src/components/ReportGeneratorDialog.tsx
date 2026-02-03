@@ -178,7 +178,39 @@ export function ReportGeneratorDialog({
   };
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
   const downloadPdfMutation = trpc.report.downloadPdf.useMutation();
+  const emailReportMutation = trpc.report.emailReport.useMutation();
+
+  const handleEmailReport = async () => {
+    if (!previewHtml) return;
+    if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsEmailing(true);
+    toast.info("Sending report via email, please wait...");
+
+    try {
+      const result = await emailReportMutation.mutateAsync({
+        html: previewHtml,
+        projectName,
+        recipientEmail,
+      });
+
+      toast.success(result.message || "Report sent successfully!");
+      setShowEmailDialog(false);
+      setRecipientEmail("");
+    } catch (error: any) {
+      console.error("Failed to email report:", error);
+      toast.error(error.message || "Failed to send email. Please try again.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     if (!previewHtml) return;
@@ -284,8 +316,18 @@ export function ReportGeneratorDialog({
               Back to Options
             </Button>
             <Button 
+              variant="outline"
+              onClick={() => setShowEmailDialog(true)}
+              disabled={isEmailing || isDownloading}
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Email Report
+            </Button>
+            <Button 
               onClick={handleDownloadPdf} 
-              disabled={isDownloading}
+              disabled={isDownloading || isEmailing}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isDownloading ? (
@@ -297,6 +339,74 @@ export function ReportGeneratorDialog({
                 <>
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Email dialog
+  if (showEmailDialog && previewHtml) {
+    return (
+      <Dialog open={open} onOpenChange={() => setShowEmailDialog(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Email Report
+            </DialogTitle>
+            <DialogDescription>
+              Enter the recipient's email address to send the PDF report.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Recipient Email</Label>
+              <input
+                id="email"
+                type="email"
+                placeholder="example@email.com"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                disabled={isEmailing}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              The PDF report will be generated and sent to this email address. This may take a minute for reports with many photos.
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEmailDialog(false)}
+              disabled={isEmailing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleEmailReport}
+              disabled={isEmailing || !recipientEmail}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isEmailing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Send Email
                 </>
               )}
             </Button>
