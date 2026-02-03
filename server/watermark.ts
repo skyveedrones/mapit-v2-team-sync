@@ -190,6 +190,6 @@ export async function generateThumbnail(
 ): Promise<Buffer> {
   return await sharp(imageBuffer)
     .resize(maxWidth, null, { fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 80 })
+    .jpeg({ quality: 70, progressive: true, mozjpeg: true })
     .toBuffer();
 }

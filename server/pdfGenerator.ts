@@ -6,6 +6,8 @@ import puppeteer from "puppeteer";
  * @returns Buffer containing the PDF data
  */
 export async function generatePdfFromHtml(html: string): Promise<Buffer> {
+  console.log("[PDF Generator] Starting PDF generation, HTML size:", (html.length / 1024).toFixed(2), "KB");
+  
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: "/usr/bin/chromium-browser",
@@ -14,21 +16,40 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
+      "--disable-software-rasterizer",
+      "--disable-extensions",
     ],
   });
 
   try {
     const page = await browser.newPage();
+    
+    // Increase timeout for large reports with many images
+    page.setDefaultTimeout(120000); // 2 minutes
+    
+    console.log("[PDF Generator] Setting page content...");
 
     // Set content and wait for images to load
+    // For data URLs, we don't need networkidle since there are no external requests
     await page.setContent(html, {
-      waitUntil: ["load", "networkidle0"],
-      timeout: 60000,
+      waitUntil: ["load", "domcontentloaded"],
+      timeout: 120000,
     });
+    
+    console.log("[PDF Generator] Content loaded, waiting for images...");
 
-    // Wait for images to load using a simple timeout
-    // networkidle0 should handle most cases, but add extra time for safety
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait for all images to load (data URLs should load instantly)
+    await page.evaluate(() => {
+      return Promise.all(
+        Array.from(document.images)
+          .filter(img => !img.complete)
+          .map(img => new Promise(resolve => {
+            img.onload = img.onerror = resolve;
+          }))
+      );
+    });
+    
+    console.log("[PDF Generator] Images loaded, generating PDF...");
 
     // Generate PDF
     const pdfBuffer = await page.pdf({
@@ -40,10 +61,17 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
         bottom: "0.5in",
         left: "0.5in",
       },
+      timeout: 120000,
     });
+    
+    console.log("[PDF Generator] PDF generated successfully, size:", (pdfBuffer.length / 1024).toFixed(2), "KB");
 
     return Buffer.from(pdfBuffer);
+  } catch (error) {
+    console.error("[PDF Generator] Error details:", error);
+    throw error;
   } finally {
     await browser.close();
+    console.log("[PDF Generator] Browser closed");
   }
 }

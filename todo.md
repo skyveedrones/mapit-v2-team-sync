@@ -593,3 +593,27 @@
 - [x] Remove auto-popup logic (removed DesktopAppDownloadDialog import and component from App.tsx)
 - [x] Keep manual download button in header (Download App button still available in header)
 - [x] Test login flow without popup appearing (tested - no popup appears after waiting 3+ seconds)
+
+## Fix Missing Thumbnails in CIP222 Project
+- [ ] Check database for CIP222 project media records
+- [ ] Identify which thumbnails are missing/not loading
+- [ ] Check if thumbnail URLs are valid
+- [ ] Check if thumbnails exist in S3 storage
+- [ ] Investigate thumbnail generation process
+- [ ] Fix thumbnail loading or regeneration issue
+- [ ] Test thumbnail display on mobile and desktop
+
+## Fix Slow-Loading Thumbnails
+- [x] Check current thumbnail size and compression settings (300px width, 80% quality)
+- [x] Optimize thumbnail generation to create smaller file sizes (reduced to 250px, 70% quality, progressive JPEG)
+- [x] Implement lazy loading for thumbnail images (already implemented with loading="lazy")
+- [ ] Add loading skeleton/placeholder for thumbnails
+- [ ] Test thumbnail loading performance with many images (need user to test on published site)
+- [ ] Verify thumbnails load quickly on mobile devices
+
+## PDF Report Generation Bug
+- [x] Fix PDF report generation failure - "Failed to generate PDF. Please try again." error
+- [x] Improved PDF generator with better error handling and logging
+- [x] Increased timeouts from 60s to 120s for large reports
+- [x] Added proper image loading verification for data URLs
+- [x] Created comprehensive vitest tests for PDF generation

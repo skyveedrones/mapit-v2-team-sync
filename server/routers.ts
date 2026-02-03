@@ -642,7 +642,7 @@ export const appRouter = router({
         // Generate thumbnail for images
         if (isImage) {
           try {
-            const thumbBuffer = await generateThumbnail(combinedBuffer, 300);
+            const thumbBuffer = await generateThumbnail(combinedBuffer, 250);
             const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
             const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
             thumbnailUrl = thumbResult.url;
@@ -744,7 +744,7 @@ export const appRouter = router({
         // Generate thumbnail for images
         if (isImage) {
           try {
-            const thumbBuffer = await generateThumbnail(buffer, 300);
+            const thumbBuffer = await generateThumbnail(buffer, 250);
             const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
             const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
             thumbnailUrl = thumbResult.url;
@@ -931,11 +931,11 @@ export const appRouter = router({
       }),
 
     // Rename a media file
-    renameFile: protectedProcedure
+    rename: protectedProcedure
       .input(
         z.object({
           id: z.number(),
-          filename: z.string().min(1, "Filename cannot be empty"),
+          filename: z.string(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -953,13 +953,37 @@ export const appRouter = router({
         if (!hasAccess) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have permission to rename this media",
+            message: "Only project owners and collaborators can rename media",
           });
         }
 
-        // Update the media item with new filename
         const updated = await updateMediaFilename(input.id, input.filename);
         return updated;
+      }),
+
+    // Regenerate missing thumbnails for a project
+    regenerateThumbnails: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission",
+          });
+        }
+
+        // Import and call the regeneration function
+        const { regenerateMissingThumbnails } = await import("./regenerate-thumbnails");
+        const results = await regenerateMissingThumbnails(input.projectId);
+
+        return {
+          success: true,
+          successCount: results.success.length,
+          failCount: results.failed.length,
+          failed: results.failed,
+        };
       }),
   }),
 
