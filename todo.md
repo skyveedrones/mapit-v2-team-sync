@@ -549,3 +549,10 @@
 - [x] Check backend flight.list endpoint permissions (only checked owner/collaborator, not client users)
 - [x] Fix permissions to allow client users to see project media (updated getProjectMediaWithAccess and flight.list)
 - [x] Test media visibility for client users (6 passing tests - client users can now see project media)
+
+## Replace Logo with Transparent Background Version
+- [x] Copy new transparent logo to project images directory
+- [x] Replace mapit-logo-new.png with transparent version (reduced from 1.6MB to 41KB)
+- [x] Test logo display on light theme (white text with green marker on light background)
+- [x] Test logo display on dark theme (white text with green marker on dark background)
+- [x] Verify logo looks good on both themes (transparent background works perfectly)
