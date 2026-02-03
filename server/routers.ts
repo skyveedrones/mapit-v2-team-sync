@@ -2167,6 +2167,7 @@ export const appRouter = router({
             projectName: input.projectName,
             html: input.html,
             senderName: ctx.user.name || 'Mapit User',
+            userId: ctx.user.id,
           });
           
           if (!result.success) {

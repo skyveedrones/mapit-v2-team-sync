@@ -692,3 +692,10 @@
 - [x] Fix broken navigation when clicking projects from Client page - Changed /projects/ to /project/
 - [x] Verify project route exists and is correct - Route is /project/:id
 - [ ] Test navigation from Clients → Projects → Project Details
+
+## Email Report Button Fix
+- [x] Diagnose why Email Report button doesn't open dialog
+- [x] Fix dialog rendering order (email dialog must be checked before preview)
+- [x] Test Email Report button opens dialog correctly
+- [x] Fix email timeout issue by uploading large PDFs to S3 and sending download link
+- [ ] Test email sending functionality end-to-end

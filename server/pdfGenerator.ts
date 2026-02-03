@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { existsSync } from "fs";
 
 /**
  * Generate a PDF from HTML content using Puppeteer
@@ -8,18 +9,51 @@ import puppeteer from "puppeteer";
 export async function generatePdfFromHtml(html: string): Promise<Buffer> {
   console.log("[PDF Generator] Starting PDF generation, HTML size:", (html.length / 1024).toFixed(2), "KB");
   
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: "/usr/bin/chromium-browser",
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-software-rasterizer",
-      "--disable-extensions",
-    ],
-  });
+  // Try to find available Chromium executable
+  const systemChromiumPaths = [
+    "/usr/bin/chromium-browser",
+    "/usr/bin/chromium",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+  ];
+  
+  let executablePath: string | undefined = undefined;
+  
+  // Check if system Chromium is available
+  for (const path of systemChromiumPaths) {
+    if (existsSync(path)) {
+      executablePath = path;
+      console.log("[PDF Generator] Using system Chromium:", path);
+      break;
+    }
+  }
+  
+  // If no system Chromium found, let Puppeteer use bundled Chromium
+  if (!executablePath) {
+    console.log("[PDF Generator] No system Chromium found, using bundled Chromium");
+  }
+  
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--single-process", // Required for some cloud environments
+        "--no-zygote", // Required for some cloud environments
+      ],
+    });
+    console.log("[PDF Generator] Browser launched successfully");
+  } catch (error) {
+    console.error("[PDF Generator] Failed to launch browser:", error);
+    throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`);
+  }
 
   try {
     const page = await browser.newPage();
@@ -68,8 +102,8 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
 
     return Buffer.from(pdfBuffer);
   } catch (error) {
-    console.error("[PDF Generator] Error details:", error);
-    throw error;
+    console.error("[PDF Generator] Error during PDF generation:", error);
+    throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
     await browser.close();
     console.log("[PDF Generator] Browser closed");

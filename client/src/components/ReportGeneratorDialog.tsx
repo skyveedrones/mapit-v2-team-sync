@@ -287,68 +287,7 @@ export function ReportGeneratorDialog({
     onOpenChange(false);
   };
 
-  // Preview mode
-  if (showPreview && previewHtml) {
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Report Preview
-            </DialogTitle>
-            <DialogDescription>
-              Review your report before downloading. Use the Download button to save as PDF.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-auto border rounded-lg bg-white">
-            <iframe
-              srcDoc={previewHtml}
-              className="w-full h-[60vh] border-0"
-              title="Report Preview"
-            />
-          </div>
-
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowPreview(false)}>
-              <X className="h-4 w-4 mr-2" />
-              Back to Options
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => setShowEmailDialog(true)}
-              disabled={isEmailing || isDownloading}
-            >
-              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Email Report
-            </Button>
-            <Button 
-              onClick={handleDownloadPdf} 
-              disabled={isDownloading || isEmailing}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Email dialog
+  // Email dialog (check this FIRST before preview)
   if (showEmailDialog && previewHtml) {
     return (
       <Dialog open={open} onOpenChange={() => setShowEmailDialog(false)}>
@@ -415,6 +354,69 @@ export function ReportGeneratorDialog({
       </Dialog>
     );
   }
+
+  // Preview mode
+  if (showPreview && previewHtml) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Report Preview
+            </DialogTitle>
+            <DialogDescription>
+              Review your report before downloading. Use the Download button to save as PDF.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto border rounded-lg bg-white">
+            <iframe
+              srcDoc={previewHtml}
+              className="w-full h-[60vh] border-0"
+              title="Report Preview"
+            />
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Back to Options
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setShowEmailDialog(true)}
+              disabled={isEmailing || isDownloading}
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Email Report
+            </Button>
+            <Button 
+              onClick={handleDownloadPdf} 
+              disabled={isDownloading || isEmailing}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

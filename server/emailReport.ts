@@ -5,6 +5,8 @@
 
 import { Resend } from 'resend';
 import { generatePdfFromHtml } from './pdfGenerator';
+import { storagePut } from './storage';
+import { nanoid } from 'nanoid';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -13,28 +15,45 @@ export interface EmailReportParams {
   projectName: string;
   html: string;
   senderName?: string;
+  userId?: number;
 }
 
 /**
  * Send a PDF report via email
+ * For large PDFs, uploads to S3 and sends download link instead of attachment
  */
 export async function sendReportEmail(params: EmailReportParams): Promise<{ success: boolean; error?: string }> {
-  const { to, projectName, html, senderName = 'Mapit' } = params;
+  const { to, projectName, html, senderName = 'Mapit', userId = 1 } = params;
   
   try {
     console.log(`[Email Report] Generating PDF for project: ${projectName}`);
     
     // Generate PDF from HTML
     const pdfBuffer = await generatePdfFromHtml(html);
+    const pdfSizeKB = pdfBuffer.length / 1024;
+    const pdfSizeMB = pdfSizeKB / 1024;
     
-    console.log(`[Email Report] PDF generated (${(pdfBuffer.length / 1024).toFixed(2)} KB), sending email to ${to}`);
+    console.log(`[Email Report] PDF generated (${pdfSizeKB.toFixed(2)} KB), preparing email to ${to}`);
     
-    // Send email with PDF attachment
-    const { error } = await resend.emails.send({
-      from: 'Mapit Reports <noreply@notifications.skyveedrones.com>',
-      to: [to],
-      subject: `Mapit Report - ${projectName}`,
-      html: `
+    // Resend has a 40MB attachment limit, but we'll use 5MB as a safe threshold
+    // For larger files, upload to S3 and send a download link
+    const useAttachment = pdfSizeMB < 5;
+    
+    let emailHtml: string;
+    let attachments: any[] = [];
+    
+    if (useAttachment) {
+      console.log(`[Email Report] PDF is small enough (${pdfSizeMB.toFixed(2)} MB), sending as attachment`);
+      
+      // Send as attachment for small PDFs
+      attachments = [
+        {
+          filename: `${projectName.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`,
+          content: pdfBuffer,
+        },
+      ];
+      
+      emailHtml = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -104,13 +123,125 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
           </div>
         </body>
         </html>
-      `,
-      attachments: [
-        {
-          filename: `${projectName.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`,
-          content: pdfBuffer,
-        },
-      ],
+      `;
+    } else {
+      console.log(`[Email Report] PDF is large (${pdfSizeMB.toFixed(2)} MB), uploading to S3 and sending download link`);
+      
+      // Upload to S3 for large PDFs
+      const fileKey = `${userId}/reports/${nanoid()}_${projectName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      const { url } = await storagePut(fileKey, pdfBuffer, 'application/pdf');
+      
+      console.log(`[Email Report] PDF uploaded to S3: ${url}`);
+      
+      emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 8px 8px 0 0;
+              text-align: center;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: 700;
+              margin-bottom: 10px;
+            }
+            .content {
+              background: #f9fafb;
+              padding: 30px;
+              border-radius: 0 0 8px 8px;
+            }
+            .project-name {
+              font-size: 20px;
+              font-weight: 600;
+              color: #10b981;
+              margin: 20px 0;
+            }
+            .download-button {
+              display: inline-block;
+              background: #10b981;
+              color: white;
+              padding: 14px 28px;
+              text-decoration: none;
+              border-radius: 6px;
+              font-weight: 600;
+              margin: 20px 0;
+            }
+            .file-info {
+              background: white;
+              padding: 15px;
+              border-radius: 6px;
+              border-left: 4px solid #10b981;
+              margin: 20px 0;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              color: #6b7280;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">Map<span style="color: #d1fae5;">it</span></div>
+            <p style="margin: 0;">Drone Mapping Report</p>
+          </div>
+          <div class="content">
+            <p>Hello,</p>
+            <p>Your drone mapping report is ready!</p>
+            <div class="project-name">📍 ${projectName}</div>
+            
+            <div class="file-info">
+              <strong>📄 Report Details</strong><br>
+              File Size: ${pdfSizeMB.toFixed(2)} MB<br>
+              Includes: Project overview, aerial photos, GPS data
+            </div>
+            
+            <p>Click the button below to download your report:</p>
+            
+            <div style="text-align: center;">
+              <a href="${url}" class="download-button">📥 Download Report PDF</a>
+            </div>
+            
+            <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
+              <em>Note: This download link will remain active for 7 days.</em>
+            </p>
+            
+            <p>If you have any questions about this report, please don't hesitate to reach out.</p>
+            
+            <div class="footer">
+              <p>Sent by ${senderName} via <strong>Mapit</strong></p>
+              <p>Delivering precision drone mapping solutions</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+    }
+    
+    // Send email
+    const { error } = await resend.emails.send({
+      from: 'Mapit Reports <noreply@notifications.skyveedrones.com>',
+      to: [to],
+      subject: `Mapit Report - ${projectName}`,
+      html: emailHtml,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     if (error) {
