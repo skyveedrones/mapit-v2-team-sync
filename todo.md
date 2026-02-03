@@ -643,3 +643,10 @@
 - [x] Add version number to dashboard footer
 - [x] Display build date and version number (v1.0.0 with commit hash)
 - [ ] Add version info to settings/about section (optional enhancement)
+
+## Check for Updates Feature
+- [x] Create API endpoint to get latest version info (version.json)
+- [x] Add Settings page with update checker (Version tab)
+- [x] Add checkbox to enable/disable automatic update checks
+- [x] Show notification when update is available
+- [x] Add "Refresh Page" button to load new version

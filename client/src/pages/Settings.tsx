@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Plane, Save, FileText, Sun, Moon } from "lucide-react";
+import { Loader2, Plane, Save, FileText, Sun, Moon, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Templates from "./settings/Templates";
+import VersionCheck from "@/components/VersionCheck";
 
 function ThemeSettings() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -155,6 +156,10 @@ export default function Settings() {
               <Sun className="mr-2 h-4 w-4" />
               Theme
             </TabsTrigger>
+            <TabsTrigger value="version">
+              <Info className="mr-2 h-4 w-4" />
+              Version
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pilot" className="mt-6">
@@ -239,6 +244,10 @@ export default function Settings() {
 
           <TabsContent value="theme" className="mt-6">
             <ThemeSettings />
+          </TabsContent>
+
+          <TabsContent value="version" className="mt-6">
+            <VersionCheck />
           </TabsContent>
         </Tabs>
       </div>
