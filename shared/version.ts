@@ -4,9 +4,9 @@
  */
 
 export const APP_VERSION = {
-  version: '1.0.0',
+  version: '1.0.1',
   buildDate: new Date().toISOString(),
-  commit: import.meta.env?.VITE_GIT_COMMIT || '76443d0',
+  commit: import.meta.env?.VITE_GIT_COMMIT || '10b7aa2d',
 };
 
 export function getVersionString(): string {
