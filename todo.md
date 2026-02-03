@@ -587,3 +587,9 @@
 - [x] Fix MapIt email missing link/access button (verified backend template includes CTA button - email template is correct)
 - [x] Test Project Share with both email methods (MapIt invite: no copy section ✓, Copy Link: shows copy section ✓)
 - [x] Test Client User invite with both email methods (same fix applied to ClientManage.tsx)
+
+## Remove Auto-Download Popup on Login
+- [x] Find where auto-popup is triggered on login (DesktopAppDownloadDialog component in App.tsx)
+- [x] Remove auto-popup logic (removed DesktopAppDownloadDialog import and component from App.tsx)
+- [x] Keep manual download button in header (Download App button still available in header)
+- [x] Test login flow without popup appearing (tested - no popup appears after waiting 3+ seconds)

@@ -8,7 +8,7 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { GlobalBackground } from "./components/GlobalBackground";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { DesktopAppDownloadDialog } from "./components/DesktopAppDownloadDialog";
+
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -159,7 +159,7 @@ function App() {
           <GlobalBackground />
           <Toaster />
           <OfflineIndicator />
-          <DesktopAppDownloadDialog />
+
           <Router />
         </TooltipProvider>
       </ThemeProvider>
