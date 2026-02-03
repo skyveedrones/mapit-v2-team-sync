@@ -650,3 +650,9 @@
 - [x] Add checkbox to enable/disable automatic update checks
 - [x] Show notification when update is available
 - [x] Add "Refresh Page" button to load new version
+
+## Hard Refresh Fix
+- [x] Update "Refresh Now" button to bypass browser cache
+- [x] Force hard reload when updating to new version
+- Clears service worker caches
+- Adds cache-busting parameter to URL

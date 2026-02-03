@@ -61,7 +61,22 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    // Hard refresh that bypasses cache
+    // Method 1: Use location.reload(true) - deprecated but still works in most browsers
+    // Method 2: Clear cache and reload by adding timestamp to URL
+    // Method 3: Use Cache API to clear service worker cache
+    
+    // Clear any service worker caches first
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+    
+    // Force hard reload by modifying the URL with a cache-busting parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('_refresh', Date.now().toString());
+    window.location.href = url.toString();
   };
 
   // Auto-check on mount if enabled
