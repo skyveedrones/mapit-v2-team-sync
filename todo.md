@@ -556,3 +556,10 @@
 - [x] Test logo display on light theme (white text with green marker on light background)
 - [x] Test logo display on dark theme (white text with green marker on dark background)
 - [x] Verify logo looks good on both themes (transparent background works perfectly)
+
+## Fix Logo Text Color for Light Mode
+- [x] Find where logo is displayed in the code (found in 5 files: Footer, FlightDetail, Home, InviteAccept, Pricing)
+- [x] Apply CSS filter to invert logo colors in light mode (black text) - added invert(1) hue-rotate(180deg) filter
+- [x] Keep logo white in dark mode - filter: none for .dark class
+- [x] Test logo visibility on light theme (black text with green marker - perfect contrast)
+- [x] Test logo visibility on dark theme (white text with green marker - perfect contrast)
