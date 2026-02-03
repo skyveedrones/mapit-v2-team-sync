@@ -682,3 +682,8 @@
 - [x] Add Email Report button to preview dialog
 - [x] Add email input field and validation
 - [ ] Test email delivery with real reports
+
+## Version Update Not Showing
+- [x] Update version.json to v1.0.2 with commit b25952e3
+- [x] Update shared/version.ts to match
+- [ ] Publish latest checkpoint to update all devices
