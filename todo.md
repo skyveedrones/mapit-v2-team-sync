@@ -687,3 +687,8 @@
 - [x] Update version.json to v1.0.2 with commit b25952e3
 - [x] Update shared/version.ts to match
 - [ ] Publish latest checkpoint to update all devices
+
+## 404 Error on Client Project Click
+- [x] Fix broken navigation when clicking projects from Client page - Changed /projects/ to /project/
+- [x] Verify project route exists and is correct - Route is /project/:id
+- [ ] Test navigation from Clients → Projects → Project Details

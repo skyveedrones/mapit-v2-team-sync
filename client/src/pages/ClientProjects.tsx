@@ -143,7 +143,7 @@ export default function ClientProjects() {
         {clientProjects && clientProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clientProjects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`}>
+              <Link key={project.id} href={`/project/${project.id}`}>
                 <Card className="group relative cursor-pointer hover:border-primary/50 transition-colors">
                   <button
                     onClick={(e) => {
