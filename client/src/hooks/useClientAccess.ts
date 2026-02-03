@@ -50,16 +50,20 @@ export function useClientAccess(projectId?: number) {
   // Check if user is the owner
   const isOwner = project.userId === user.id;
 
+  // Check if user has platform admin role (users.role = 'admin')
+  const isPlatformAdmin = user.role === 'admin';
+
   // Check if user is a collaborator (would need to query collaborators)
   // For now, we'll assume if they're not the owner but have access, they're a client user
-  const isClientOnly = !isOwner;
+  // UNLESS they are a platform admin
+  const isClientOnly = !isOwner && !isPlatformAdmin;
 
   return {
     isClientOnly,
     isOwner,
     isCollaborator: false, // TODO: Implement collaborator check if needed
-    canEdit: isOwner, // Only owner can edit
-    canDelete: isOwner, // Only owner can delete
+    canEdit: isOwner || isPlatformAdmin, // Owner or platform admin can edit
+    canDelete: isOwner || isPlatformAdmin, // Owner or platform admin can delete
     canView: true, // Everyone with access can view
   };
 }

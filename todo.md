@@ -531,3 +531,21 @@
 - [x] Update footer to use mapit-logo-new.png  
 - [x] Ensure logo displays properly in both light and dark themes (tested both)
 - [x] Test logo appearance and visibility (verified correct logo displays)
+
+## Fix Admin Rights Not Working for traceybechtol@gmail.com
+- [x] Check database to verify user has admin role (UPDATED: user has role='user', NOT 'admin')
+- [x] Clarify admin role types: Platform Admin (users.role) vs Client Portal Admin (client_users.role)
+- [x] Check client portal access logic to understand why admin sees "Client View" (found useClientAccess hook only checks isOwner)
+- [x] Review project access permissions for admin users (found isPlatformAdmin check was missing)
+- [x] Fix logic to give platform admin users full access to all projects (added isPlatformAdmin check to useClientAccess)
+- [ ] Note: traceybechtol@gmail.com has Client Portal Admin role, NOT Platform Admin role
+
+## Fix "Oncor Switch" Project Showing No Data
+- [x] Check if "Oncor Switch" project exists in database (confirmed exists)
+- [x] Verify project has flights and media associated (UPDATED: project DOES have media, but not showing for client user)
+- [x] Check if there are any access permission issues (project IS assigned to traceybechtol@gmail.com)
+- [x] Investigate why media files aren't displaying for client portal users (found getProjectMediaWithAccess only checked owner/collaborator)
+- [x] Check backend media.list endpoint permissions (endpoint checks client access but calls function that doesn't)
+- [x] Check backend flight.list endpoint permissions (only checked owner/collaborator, not client users)
+- [x] Fix permissions to allow client users to see project media (updated getProjectMediaWithAccess and flight.list)
+- [x] Test media visibility for client users (6 passing tests - client users can now see project media)

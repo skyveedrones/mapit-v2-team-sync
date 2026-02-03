@@ -1390,9 +1390,11 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ projectId: z.number() }))
       .query(async ({ ctx, input }) => {
-        // Check if user has access to the project (owner or collaborator)
+        // Check if user has access to the project (owner, collaborator, or client user)
         const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
-        if (!hasAccess) {
+        const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
+        
+        if (!hasAccess && !hasClientAccess) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found or you don't have access",

@@ -888,7 +888,7 @@ export async function getUserById(userId: number) {
 }
 
 /**
- * Get project media with access check (for collaborators)
+ * Get project media with access check (for collaborators and client users)
  */
 export async function getProjectMediaWithAccess(projectId: number, userId: number) {
   const db = await getDb();
@@ -896,9 +896,11 @@ export async function getProjectMediaWithAccess(projectId: number, userId: numbe
     throw new Error("Database not available");
   }
 
-  // First verify user has access to the project
+  // First verify user has access to the project (owner/collaborator OR client user)
   const hasAccess = await userHasProjectAccess(projectId, userId);
-  if (!hasAccess) {
+  const hasClientAccess = await userHasClientProjectAccess(userId, projectId);
+  
+  if (!hasAccess && !hasClientAccess) {
     return null;
   }
 
