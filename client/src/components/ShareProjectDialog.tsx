@@ -250,7 +250,7 @@ export function ShareProjectDialog({
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="copy" id="share-method-copy" />
                     <Label htmlFor="share-method-copy" className="font-normal cursor-pointer">
-                      Copy Link Only - Manual email (for blocked email servers)
+                      Copy Link Only - I'll send manually
                     </Label>
                   </div>
                 </RadioGroup>

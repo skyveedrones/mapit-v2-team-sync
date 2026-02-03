@@ -488,3 +488,9 @@
 - [x] Create AppDownloadDialog component with Windows, macOS, Linux, iOS, Android options
 - [x] Add step-by-step iOS installation instructions (tap Share → Add to Home Screen → Add)
 - [x] Add Android installation instructions (tap menu → Add to Home screen → Install)
+
+## Fix Client Invite Dialog UI Issues
+- [x] Shorten "Copy Link Only - Manual email (for blocked email servers)" text to be more concise (changed to "Copy Link Only - I'll send manually")
+- [x] Verify dialog has proper close button (X button in header) (Close button exists in top right)
+- [x] Test dialog can be closed by clicking outside/ESC key (tested and working)
+- [x] Apply same fix to Project Share dialog if needed (applied same shortened text to ShareProjectDialog)
