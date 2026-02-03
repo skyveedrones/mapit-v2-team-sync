@@ -8,10 +8,10 @@ import sharp from "sharp";
 
 // Resolution presets for media in reports
 export const RESOLUTION_PRESETS = {
-  high: { width: 1920, quality: 90, label: "High (1920px)" },
-  medium: { width: 1280, quality: 80, label: "Medium (1280px)" },
-  low: { width: 800, quality: 70, label: "Low (800px)" },
-  thumbnail: { width: 400, quality: 60, label: "Thumbnail (400px)" },
+  high: { width: 1920, quality: 85, label: "High (1920px)" },
+  medium: { width: 1280, quality: 75, label: "Medium (1280px)" },
+  low: { width: 800, quality: 65, label: "Low (800px)" },
+  thumbnail: { width: 400, quality: 55, label: "Thumbnail (400px)" },
 } as const;
 
 export type ResolutionPreset = keyof typeof RESOLUTION_PRESETS;

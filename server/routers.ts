@@ -2109,19 +2109,35 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const { generatePdfFromHtml } = await import("./pdfGenerator");
         
+        // Log HTML size for debugging
+        const htmlSizeMB = (input.html.length / 1024 / 1024).toFixed(2);
+        console.log(`[Report] Generating PDF from HTML (${htmlSizeMB} MB)`);
+        
+        // Warn if HTML is very large (>50MB)
+        if (input.html.length > 50 * 1024 * 1024) {
+          console.warn(`[Report] WARNING: HTML size is very large (${htmlSizeMB} MB), this may cause timeout or memory issues`);
+        }
+        
         try {
           const pdfBuffer = await generatePdfFromHtml(input.html);
+          
+          console.log(`[Report] PDF generated successfully (${(pdfBuffer.length / 1024).toFixed(2)} KB)`);
           
           // Return as base64 encoded string
           return {
             pdfData: pdfBuffer.toString("base64"),
             filename: `${input.projectName.replace(/[^a-zA-Z0-9]/g, "_")}_Report_${new Date().toISOString().split("T")[0]}.pdf`,
           };
-        } catch (error) {
+        } catch (error: any) {
           console.error("[Report] Failed to generate PDF:", error);
+          console.error("[Report] Error details:", {
+            message: error.message,
+            stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+            htmlSize: htmlSizeMB + ' MB',
+          });
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to generate PDF. Please try again.",
+            message: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
           });
         }
       }),

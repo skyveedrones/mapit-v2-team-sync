@@ -617,3 +617,18 @@
 - [x] Increased timeouts from 60s to 120s for large reports
 - [x] Added proper image loading verification for data URLs
 - [x] Created comprehensive vitest tests for PDF generation
+
+## PDF Generation Still Failing (Production Issue)
+- [x] Investigate why PDF reports are still failing on all reports despite test passing
+- [x] Check actual server logs when user attempts PDF generation
+- [x] Identify difference between test environment and production usage - Large HTML files with many high-res images
+- [x] Fix the real root cause of PDF generation failures
+  - Reduced JPEG quality (85/75/65/55 instead of 90/80/70/60) to reduce HTML size
+  - Increased Puppeteer timeout from 120s to 180s (3 minutes)
+  - Added detailed logging for HTML size and error messages
+- [ ] Test end-to-end PDF generation with real project data
+
+## SEO Improvements for Homepage
+- [x] Add meta keywords for SEO - Added 10 relevant keywords
+- [x] Improve page title from 5 to 30-60 characters - Now 58 characters
+- [x] Add missing alt text to images - Improved hero logo alt text to be more descriptive

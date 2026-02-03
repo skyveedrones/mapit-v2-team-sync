@@ -309,7 +309,7 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="mb-8">
               <img
                 src="/images/mapit-logo-new.png"
-                alt="Mapit"
+                alt="Mapit - Professional Drone Mapping and Project Management Platform"
                 className="h-56 md:h-72 lg:h-80 w-auto mx-auto"
               />
             </motion.div>

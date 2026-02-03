@@ -25,7 +25,7 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     const page = await browser.newPage();
     
     // Increase timeout for large reports with many images
-    page.setDefaultTimeout(120000); // 2 minutes
+    page.setDefaultTimeout(180000); // 3 minutes
     
     console.log("[PDF Generator] Setting page content...");
 
@@ -33,7 +33,7 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     // For data URLs, we don't need networkidle since there are no external requests
     await page.setContent(html, {
       waitUntil: ["load", "domcontentloaded"],
-      timeout: 120000,
+      timeout: 180000,
     });
     
     console.log("[PDF Generator] Content loaded, waiting for images...");
@@ -61,7 +61,7 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
         bottom: "0.5in",
         left: "0.5in",
       },
-      timeout: 120000,
+      timeout: 180000,
     });
     
     console.log("[PDF Generator] PDF generated successfully, size:", (pdfBuffer.length / 1024).toFixed(2), "KB");
