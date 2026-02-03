@@ -329,8 +329,8 @@ export function ShareProjectDialog({
               </ul>
             </div>
 
-            {/* Copy Invitation Link & Template */}
-            {lastInviteResult && (
+            {/* Copy Invitation Link & Template - Only show when copy method was used */}
+            {lastInviteResult && inviteMethod === "copy" && (
               <div className="space-y-3 border-t pt-4">
                 <p className="text-sm font-medium">Copy Invitation Link & Template</p>
                 <p className="text-xs text-muted-foreground">

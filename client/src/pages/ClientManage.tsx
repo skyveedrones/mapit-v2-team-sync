@@ -894,8 +894,8 @@ export default function ClientManage() {
               </Select>
             </div>
 
-            {/* Copy Invitation Section - Shows after successful invite */}
-            {lastInviteResult && (
+            {/* Copy Invitation Section - Only show when copy method was used */}
+            {lastInviteResult && inviteMethod === "copy" && (
               <div className="space-y-4 border-t pt-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">📋 Copy Invitation (Manual Email Option)</Label>

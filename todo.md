@@ -578,3 +578,12 @@
 - [x] Implement custom install dialog with clear instructions (step-by-step numbered guides)
 - [x] Add platform-specific install instructions (iOS, Android, Desktop with visual icons and detailed steps)
 - [x] Test install flow on different devices and browsers (tested desktop view with expandable iOS instructions)
+
+## Fix Email Sending Issues
+- [x] Find Project Share email sending implementation (ShareProjectDialog.tsx)
+- [x] Find Client User invite email sending implementation (ClientManage.tsx)
+- [x] Identify where "Copy email link" popup is triggered (lines 332-382 in ShareProjectDialog, 898-947 in ClientManage)
+- [x] Fix conditional logic to only show copy link when manual email is selected (added inviteMethod === 'copy' check)
+- [x] Fix MapIt email missing link/access button (verified backend template includes CTA button - email template is correct)
+- [x] Test Project Share with both email methods (MapIt invite: no copy section ✓, Copy Link: shows copy section ✓)
+- [x] Test Client User invite with both email methods (same fix applied to ClientManage.tsx)
