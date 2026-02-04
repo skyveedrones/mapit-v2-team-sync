@@ -773,3 +773,10 @@
 - [x] Found root cause: Field name mismatch (client vs clientName, pilot vs dronePilot, etc.)
 - [x] Fix the actual root cause of template not populating fields
 - [ ] Test template selection with actual template data
+
+## Add Description and Name Fields to Template Population
+- [x] Check if description field exists in CreateProjectDialog
+- [x] Add description field to Templates settings config
+- [x] Add project name field to Templates settings config
+- [x] Update template population logic to include description and name
+- [ ] Test description and name auto-fill from template

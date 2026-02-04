@@ -73,7 +73,9 @@ export function CreateProjectDialog({
       if (template && template.config) {
         try {
           const values = JSON.parse(template.config);
+          if (values.projectName) setName(values.projectName);
           if (values.client) setClientName(values.client);
+          if (values.projectDescription) setDescription(values.projectDescription);
           if (values.location) setLocation(values.location);
           if (values.pilot) setDronePilot(values.pilot);
           if (values.faaLicense) setFaaLicense(values.faaLicense);

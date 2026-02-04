@@ -31,7 +31,9 @@ export default function Templates() {
     description: "",
     category: "municipal",
     config: {
+      projectName: "",
       client: "",
+      projectDescription: "",
       pilot: "",
       faaLicense: "",
       laancAuth: "",
@@ -85,7 +87,9 @@ export default function Templates() {
       description: "",
       category: "municipal",
       config: {
+        projectName: "",
         client: "",
+        projectDescription: "",
         pilot: "",
         faaLicense: "",
         laancAuth: "",
@@ -272,6 +276,21 @@ export default function Templates() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="projectName">Project Name</Label>
+                  <Input
+                    id="projectName"
+                    value={formData.config.projectName}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, projectName: e.target.value },
+                      })
+                    }
+                    placeholder="e.g., Downtown Construction Site Mapping"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="client">Client Name</Label>
                   <Input
                     id="client"
@@ -283,6 +302,22 @@ export default function Templates() {
                       })
                     }
                     placeholder="e.g., City of Forney"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="projectDescription">Project Description</Label>
+                  <Textarea
+                    id="projectDescription"
+                    value={formData.config.projectDescription}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, projectDescription: e.target.value },
+                      })
+                    }
+                    placeholder="e.g., Aerial documentation for construction progress tracking"
+                    rows={3}
                   />
                 </div>
 
