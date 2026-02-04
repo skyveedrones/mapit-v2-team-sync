@@ -1,15 +1,26 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 import { existsSync } from "fs";
 
 /**
  * Generate a PDF from HTML content using Puppeteer
+ * Works in both development (system Chrome) and production (@sparticuz/chromium)
  * @param html - The HTML content to convert to PDF
  * @returns Buffer containing the PDF data
  */
 export async function generatePdfFromHtml(html: string): Promise<Buffer> {
   console.log("[PDF Generator] Starting PDF generation, HTML size:", (html.length / 1024).toFixed(2), "KB");
   
-  // Try to find available Chromium executable
+  let executablePath: string | undefined = undefined;
+  let args: string[] = [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    "--disable-software-rasterizer",
+    "--disable-extensions",
+  ];
+  
+  // Try to find system Chromium first (for development)
   const systemChromiumPaths = [
     "/usr/bin/chromium-browser",
     "/usr/bin/chromium",
@@ -17,9 +28,6 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     "/usr/bin/google-chrome-stable",
   ];
   
-  let executablePath: string | undefined = undefined;
-  
-  // Check if system Chromium is available
   for (const path of systemChromiumPaths) {
     if (existsSync(path)) {
       executablePath = path;
@@ -28,9 +36,17 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     }
   }
   
-  // If no system Chromium found, let Puppeteer use bundled Chromium
+  // If no system Chromium found, use @sparticuz/chromium for production
   if (!executablePath) {
-    console.log("[PDF Generator] No system Chromium found, using bundled Chromium");
+    try {
+      const chromium = await import("@sparticuz/chromium");
+      executablePath = await chromium.default.executablePath();
+      args = await chromium.default.args;
+      console.log("[PDF Generator] Using @sparticuz/chromium for production");
+    } catch (error) {
+      console.error("[PDF Generator] Failed to load @sparticuz/chromium:", error);
+      throw new Error("No Chromium executable found. Please ensure @sparticuz/chromium is installed.");
+    }
   }
   
   let browser;
@@ -38,16 +54,7 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     browser = await puppeteer.launch({
       headless: true,
       executablePath,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-extensions",
-        "--single-process", // Required for some cloud environments
-        "--no-zygote", // Required for some cloud environments
-      ],
+      args,
     });
     console.log("[PDF Generator] Browser launched successfully");
   } catch (error) {

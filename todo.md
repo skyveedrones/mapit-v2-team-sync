@@ -699,3 +699,10 @@
 - [x] Test Email Report button opens dialog correctly
 - [x] Fix email timeout issue by uploading large PDFs to S3 and sending download link
 - [ ] Test email sending functionality end-to-end
+
+## Production Puppeteer Chrome Not Found Error
+- [x] Diagnose why Puppeteer can't find Chrome on production server
+- [x] Install @sparticuz/chromium for serverless/production environments
+- [x] Update pdfGenerator to use @sparticuz/chromium when system Chrome not available
+- [ ] Test PDF generation on published site (iPhone)
+- [ ] Test Email Report on published site (iPhone)
