@@ -194,7 +194,7 @@ export function CreateProjectDialog({
                   <SelectContent>
                     <SelectItem value="none">None - Start from scratch</SelectItem>
                     {templates.map((template: any) => (
-                      <SelectItem key={template.id} value={template.id}>
+                      <SelectItem key={template.id} value={String(template.id)}>
                         {template.name}
                         {template.category && (
                           <span className="text-xs text-muted-foreground ml-2">({template.category})</span>

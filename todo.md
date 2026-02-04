@@ -759,3 +759,9 @@
 - [x] Add proper CSS styles to print window for correct formatting
 - [x] Ensure PDF matches original server-generated format
 - [ ] Test PDF download format on desktop
+
+## Fix Template Application Bug
+- [x] Investigate why "Template Applied" popup shows but form fields don't populate
+- [x] Find the template selection code in create project dialog
+- [x] Fix form field population when template is selected (converted template.id to String)
+- [ ] Test template application with all available templates
