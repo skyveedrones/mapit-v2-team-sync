@@ -73,11 +73,11 @@ export function CreateProjectDialog({
       if (template && template.config) {
         try {
           const values = JSON.parse(template.config);
-          if (values.clientName) setClientName(values.clientName);
+          if (values.client) setClientName(values.client);
           if (values.location) setLocation(values.location);
-          if (values.dronePilot) setDronePilot(values.dronePilot);
-          if (values.faaLicenseNumber) setFaaLicense(values.faaLicenseNumber);
-          if (values.laancAuthNumber) setLaancAuth(values.laancAuthNumber);
+          if (values.pilot) setDronePilot(values.pilot);
+          if (values.faaLicense) setFaaLicense(values.faaLicense);
+          if (values.laancAuth) setLaancAuth(values.laancAuth);
           
           toast.success("Template applied!", {
             description: `Fields auto-filled from "${template.name}" template.`,

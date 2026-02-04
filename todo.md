@@ -765,3 +765,11 @@
 - [x] Find the template selection code in create project dialog
 - [x] Fix form field population when template is selected (converted template.id to String)
 - [ ] Test template application with all available templates
+
+## Debug Template Application Not Working
+- [x] Check browser console logs for errors when selecting template
+- [x] Verify template data structure matches what useEffect expects
+- [x] Check if template.config is properly stored in database
+- [x] Found root cause: Field name mismatch (client vs clientName, pilot vs dronePilot, etc.)
+- [x] Fix the actual root cause of template not populating fields
+- [ ] Test template selection with actual template data
