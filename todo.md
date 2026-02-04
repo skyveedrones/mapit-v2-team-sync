@@ -720,3 +720,9 @@
 - [x] Update shared/version.ts to v1.0.4
 - [ ] Create checkpoint and publish
 - [ ] Test version detection on iPhone
+
+## Fix Chromium Shared Library Error (libnspr4.so)
+- [x] Research @sparticuz/chromium configuration for missing dependencies
+- [x] Update pdfGenerator with LD_LIBRARY_PATH fix for serverless environments
+- [ ] Test PDF generation on production
+- [ ] Test Email Report on production

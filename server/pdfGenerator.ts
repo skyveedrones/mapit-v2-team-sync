@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer-core";
 import { existsSync } from "fs";
+import * as path from "path";
 
 /**
  * Generate a PDF from HTML content using Puppeteer
@@ -28,10 +29,10 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
     "/usr/bin/google-chrome-stable",
   ];
   
-  for (const path of systemChromiumPaths) {
-    if (existsSync(path)) {
-      executablePath = path;
-      console.log("[PDF Generator] Using system Chromium:", path);
+  for (const chromePath of systemChromiumPaths) {
+    if (existsSync(chromePath)) {
+      executablePath = chromePath;
+      console.log("[PDF Generator] Using system Chromium:", chromePath);
       break;
     }
   }
@@ -39,10 +40,23 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
   // If no system Chromium found, use @sparticuz/chromium for production
   if (!executablePath) {
     try {
+      console.log("[PDF Generator] No system Chromium found, loading @sparticuz/chromium...");
       const chromium = await import("@sparticuz/chromium");
+      
+      // Note: setGraphicsMode may not be available in all versions of @sparticuz/chromium
+      // The LD_LIBRARY_PATH fix is the critical piece for serverless environments
+      
       executablePath = await chromium.default.executablePath();
-      args = await chromium.default.args;
-      console.log("[PDF Generator] Using @sparticuz/chromium for production");
+      args = chromium.default.args;
+      
+      // CRITICAL FIX: Set LD_LIBRARY_PATH so Chromium can find shared libraries
+      // This is required for serverless environments where libnspr4.so and libnss3.so
+      // are extracted to /tmp but Chromium can't find them without this path
+      const execDir = path.dirname(executablePath);
+      process.env.LD_LIBRARY_PATH = execDir;
+      console.log("[PDF Generator] Set LD_LIBRARY_PATH to:", execDir);
+      
+      console.log("[PDF Generator] Using @sparticuz/chromium for production, path:", executablePath);
     } catch (error) {
       console.error("[PDF Generator] Failed to load @sparticuz/chromium:", error);
       throw new Error("No Chromium executable found. Please ensure @sparticuz/chromium is installed.");
@@ -51,6 +65,7 @@ export async function generatePdfFromHtml(html: string): Promise<Buffer> {
   
   let browser;
   try {
+    console.log("[PDF Generator] Launching browser with args:", args.slice(0, 3).join(", "), "...");
     browser = await puppeteer.launch({
       headless: true,
       executablePath,
