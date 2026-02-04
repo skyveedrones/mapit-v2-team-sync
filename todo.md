@@ -714,3 +714,9 @@
 - [x] Updated ClientInviteAccept.tsx all logo instances
 - [x] Test logo visibility in light mode
 - [x] Test logo visibility in dark mode
+
+## Update Version to v1.0.4 for iPhone Detection
+- [x] Update version.json to v1.0.4 with checkpoint 5c4b0901
+- [x] Update shared/version.ts to v1.0.4
+- [ ] Create checkpoint and publish
+- [ ] Test version detection on iPhone
