@@ -227,26 +227,37 @@ export function ReportGeneratorDialog({
         return;
       }
       
-      // Write the HTML with print styles
+      // Write the HTML with complete print styles matching the server-generated PDF
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="UTF-8">
           <title>${projectName} - Report</title>
           <style>
             @page {
-              size: A4;
-              margin: 20mm;
+              margin: 0.3in 0.4in;
+              size: letter;
             }
-            body {
+            * {
+              box-sizing: border-box;
               margin: 0;
               padding: 0;
-              font-family: Arial, sans-serif;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              font-size: 11px;
+              line-height: 1.4;
+              color: #1a1a1a;
+              background: #fff;
             }
             @media print {
               body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+              }
+              .page-break {
+                page-break-before: always;
               }
             }
           </style>

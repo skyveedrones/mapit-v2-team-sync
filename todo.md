@@ -753,3 +753,9 @@
 - [ ] Test PDF download via print dialog on iPhone
 - [ ] Test email report on iPhone
 - [x] Update version to v1.0.7
+
+## Fix PDF Download Format
+- [x] Diagnose why print dialog PDF format is messed up
+- [x] Add proper CSS styles to print window for correct formatting
+- [x] Ensure PDF matches original server-generated format
+- [ ] Test PDF download format on desktop
