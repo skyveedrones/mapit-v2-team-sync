@@ -275,7 +275,7 @@ export async function processImageForReport(
  */
 export function generateReportHtml(
   project: Project,
-  mediaImages: { filename: string; dataUrl: string }[],
+  mediaImages: { filename: string; dataUrl: string; media: Media }[],
   mapImageDataUrl: string | null,
   generatedAt: Date,
   userLogoUrl?: string,
@@ -294,6 +294,49 @@ export function generateReportHtml(
   const skyVeeLogo = skyVeeLogoDataUrl 
     ? `<img src="${skyVeeLogoDataUrl}" alt="SkyVee" class="skyvee-logo-img" />`
     : `<span class="skyvee-logo-text">SkyVee</span>`;
+
+  // Generate priority items section with thumbnails and notes
+  const generatePrioritySection = () => {
+    const priorityItems = mediaImages.filter(img => 
+      img.media.priority === "low" || img.media.priority === "high"
+    );
+    
+    if (priorityItems.length === 0) return "";
+    
+    const priorityHtml = priorityItems.map(img => {
+      const priorityColor = img.media.priority === "high" ? "#dc2626" : "#eab308";
+      const priorityLabel = img.media.priority === "high" ? "High Priority" : "Low Priority";
+      
+      return `
+        <div class="priority-item">
+          <div class="priority-thumbnail">
+            <img src="${img.dataUrl}" alt="${img.filename}" />
+            <div class="priority-indicator" style="background-color: ${priorityColor};">
+              <span style="color: white; font-weight: bold; font-size: 16px;">!</span>
+            </div>
+          </div>
+          <div class="priority-details">
+            <div class="priority-header">
+              <span class="priority-filename">${img.filename}</span>
+              <span class="priority-badge" style="background-color: ${priorityColor};">${priorityLabel}</span>
+            </div>
+            ${img.media.notes ? `
+              <div class="priority-notes">${img.media.notes}</div>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+    
+    return `
+      <div class="priority-section">
+        <div class="section-header">Items Requiring Attention</div>
+        <div class="priority-container">
+          ${priorityHtml}
+        </div>
+      </div>
+    `;
+  };
 
   // Generate photo grid HTML - 6 photos per page (3 rows x 2 columns)
   const generatePhotoPages = () => {
@@ -519,6 +562,90 @@ export function generateReportHtml(
       background: #f9f9f9;
     }
     
+    /* Priority section */
+    .priority-section {
+      margin: 15px 0;
+      page-break-inside: avoid;
+    }
+    .priority-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .priority-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      align-items: flex-start;
+    }
+    .priority-thumbnail {
+      position: relative;
+      flex-shrink: 0;
+      width: 120px;
+      height: 90px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+    .priority-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .priority-indicator {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .priority-details {
+      flex: 1;
+      min-width: 0;
+    }
+    .priority-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+    .priority-filename {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a1a1a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .priority-badge {
+      font-size: 9px;
+      font-weight: 600;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+    .priority-notes {
+      font-size: 10px;
+      color: #555;
+      line-height: 1.5;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #e5e5e5;
+    }
+    
     /* Photo grid - 4 rows x 2 columns = 8 per page */
     .photo-page {
       page-break-inside: avoid;
@@ -639,6 +766,9 @@ export function generateReportHtml(
     </div>
   </div>
   ` : ""}
+  
+  <!-- Priority Items Section -->
+  ${generatePrioritySection()}
   
   <!-- Photo Gallery Pages -->
   ${generatePhotoPages()}

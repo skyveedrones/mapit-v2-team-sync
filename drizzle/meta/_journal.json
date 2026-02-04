@@ -127,6 +127,13 @@
       "when": 1770060465695,
       "tag": "0017_left_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1770221689243,
+      "tag": "0018_chemical_captain_cross",
+      "breakpoints": true
     }
   ]
 }

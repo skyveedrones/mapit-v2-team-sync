@@ -104,7 +104,17 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       toast.error(`Failed to save notes: ${error.message}`);
     },
   });
-  const renameMutation = trpc.media.renameFile.useMutation();
+  const updatePriorityMutation = trpc.media.updatePriority.useMutation({
+    onSuccess: () => {
+      // Invalidate media list to refresh data
+      utils.media.list.invalidate({ projectId, flightId });
+      toast.success("Priority updated");
+    },
+    onError: (error) => {
+      toast.error(`Failed to update priority: ${error.message}`);
+    },
+  });
+  const renameMutation = trpc.media.rename.useMutation();
   const utils = trpc.useUtils();
 
   // Create GPS marker number mapping based on capture time (flight path order)
@@ -895,6 +905,83 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   <p className="text-xs text-muted-foreground">
                     If video appears green, try downloading and playing locally
                   </p>
+                </div>
+              )}
+
+              {/* Priority Selection - Full width */}
+              {!isFullscreen && (
+                <div className="mb-4">
+                  <div className="p-3 rounded-lg bg-card border border-border flex flex-col">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                      <FileImage className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">Priority for PDF Report</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priority"
+                          value="none"
+                          checked={selectedMedia.priority === "none"}
+                          onChange={(e) => {
+                            const newPriority = e.target.value as "none" | "low" | "high";
+                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
+                            updatePriorityMutation.mutate({
+                              id: selectedMedia.id,
+                              priority: newPriority,
+                            });
+                          }}
+                          disabled={!canEdit}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">None</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priority"
+                          value="low"
+                          checked={selectedMedia.priority === "low"}
+                          onChange={(e) => {
+                            const newPriority = e.target.value as "none" | "low" | "high";
+                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
+                            updatePriorityMutation.mutate({
+                              id: selectedMedia.id,
+                              priority: newPriority,
+                            });
+                          }}
+                          disabled={!canEdit}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm flex items-center gap-1">
+                          <span className="text-yellow-500 font-bold">!</span>
+                          Low Priority (Yellow)
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priority"
+                          value="high"
+                          checked={selectedMedia.priority === "high"}
+                          onChange={(e) => {
+                            const newPriority = e.target.value as "none" | "low" | "high";
+                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
+                            updatePriorityMutation.mutate({
+                              id: selectedMedia.id,
+                              priority: newPriority,
+                            });
+                          }}
+                          disabled={!canEdit}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm flex items-center gap-1">
+                          <span className="text-red-500 font-bold">!</span>
+                          High Priority (Red)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -2137,6 +2137,35 @@ export async function updateMediaNotes(
 }
 
 /**
+ * Update priority for a media item
+ */
+export async function updateMediaPriority(
+  mediaId: number,
+  priority: "none" | "low" | "high"
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(media)
+    .set({
+      priority: priority,
+      updatedAt: new Date(),
+    })
+    .where(eq(media.id, mediaId));
+
+  // Return the updated media item
+  const [updated] = await db
+    .select()
+    .from(media)
+    .where(eq(media.id, mediaId));
+
+  return updated;
+}
+
+/**
  * Update filename for a media item
  */
 export async function updateMediaFilename(

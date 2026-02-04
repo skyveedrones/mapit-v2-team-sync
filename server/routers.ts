@@ -44,6 +44,7 @@ import {
   updateFlightMediaCount,
   updateMediaGPS,
   updateMediaNotes,
+  updateMediaPriority,
   updateMediaFilename,
   updateProject,
   userHasFlightAccess,
@@ -926,6 +927,39 @@ export const appRouter = router({
 
         // Update the media item with new notes
         const updated = await updateMediaNotes(input.id, input.notes);
+
+        return updated;
+      }),
+
+    // Update priority for a media item
+    updatePriority: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          priority: z.enum(["none", "low", "high"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Get the media item to verify ownership
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+
+        // Verify user has access to the project (owner or collaborator)
+        const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have permission to edit this media",
+          });
+        }
+
+        // Update the media item with new priority
+        const updated = await updateMediaPriority(input.id, input.priority);
 
         return updated;
       }),
@@ -2017,7 +2051,7 @@ export const appRouter = router({
         }
 
         // Process media images
-        const mediaImages: { filename: string; dataUrl: string }[] = [];
+        const mediaImages: { filename: string; dataUrl: string; media: typeof selectedMedia[0] }[] = [];
         for (const media of selectedMedia) {
           if (media.mediaType !== "photo") continue;
 
@@ -2041,7 +2075,7 @@ export const appRouter = router({
 
             // Convert to base64 data URL
             const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString("base64")}`;
-            mediaImages.push({ filename: media.filename, dataUrl });
+            mediaImages.push({ filename: media.filename, dataUrl, media });
           } catch (error) {
             console.error(`[Report] Failed to process media ${media.id}:`, error);
           }
@@ -2244,7 +2278,7 @@ export const appRouter = router({
         }
 
         // Process media images
-        const mediaImages: { filename: string; dataUrl: string }[] = [];
+        const mediaImages: { filename: string; dataUrl: string; media: typeof selectedMedia[0] }[] = [];
         for (const media of selectedMedia) {
           if (media.mediaType !== "photo") continue;
 
@@ -2268,7 +2302,7 @@ export const appRouter = router({
 
             // Convert to base64 data URL
             const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString("base64")}`;
-            mediaImages.push({ filename: media.filename, dataUrl });
+            mediaImages.push({ filename: media.filename, dataUrl, media });
           } catch (error) {
             console.error(`[Report] Failed to process media ${media.id}:`, error);
           }

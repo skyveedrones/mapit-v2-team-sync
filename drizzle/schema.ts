@@ -142,6 +142,8 @@ export const media = mysqlTable("media", {
   thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
   /** User notes for this media file */
   notes: text("notes"),
+  /** Priority level for PDF report inclusion: none (not included), low (yellow !), high (red !) */
+  priority: mysqlEnum("priority", ["none", "low", "high"]).default("none").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

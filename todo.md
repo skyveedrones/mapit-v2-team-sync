@@ -792,3 +792,12 @@
 - [x] Identify which inputs in Settings/Templates are causing the error
 - [x] Ensure all input values have default empty strings instead of undefined (fixed handleOpenDialog)
 - [ ] Test Settings page to verify error is resolved
+
+## Add Priority Selection Feature to Media
+- [x] Add priority field to media table schema (enum: 'none', 'low', 'high')
+- [x] Update media popup UI to include priority selection (yellow/red radio buttons)
+- [x] Update tRPC media endpoints to handle priority field
+- [x] Modify PDF report generator to include priority items section
+- [x] Add priority indicator (yellow/red !) to thumbnails in PDF
+- [x] Place priority items after map and before regular photos in PDF
+- [ ] Test priority selection and PDF generation
