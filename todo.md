@@ -813,3 +813,8 @@
 - [x] Find keyboard event handlers for F, 0, -, + keys in MediaGallery
 - [x] Add check to ignore shortcuts when typing in input/textarea fields
 - [ ] Test that notes and title editing work without triggering image controls
+
+## Disable Pricing Button with Coming Soon Popup
+- [x] Find pricing button in navigation/header
+- [x] Replace pricing link with button that shows "Coming Soon!" toast
+- [ ] Test pricing button shows popup instead of navigating

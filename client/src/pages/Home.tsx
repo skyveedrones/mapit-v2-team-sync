@@ -134,7 +134,7 @@ export default function Home() {
             <Button
               variant="ghost"
               className="text-foreground hover:text-primary"
-              onClick={() => setLocation("/pricing")}
+              onClick={() => toast.info("Coming Soon!", { description: "Pricing plans will be available soon." })}
             >
               Pricing
             </Button>
@@ -221,7 +221,7 @@ export default function Home() {
                 variant="ghost"
                 className="w-full text-foreground"
                 onClick={() => {
-                  setLocation("/pricing");
+                  toast.info("Coming Soon!", { description: "Pricing plans will be available soon." });
                   setMobileMenuOpen(false);
                 }}
               >
@@ -354,7 +354,7 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
-                onClick={() => setLocation("/pricing")}
+                onClick={() => toast.info("Coming Soon!", { description: "Pricing plans will be available soon." })}
               >
                 View Pricing
               </Button>
