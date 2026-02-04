@@ -808,3 +808,8 @@
 - [x] Make priority indicator color match selected priority (yellow for low, red for high)
 - [x] Ensure priority indicator only shows when priority is set (not for 'none')
 - [ ] Test thumbnail display with different priority levels
+
+## Fix Keyboard Shortcut Conflict in Media Dialog
+- [x] Find keyboard event handlers for F, 0, -, + keys in MediaGallery
+- [x] Add check to ignore shortcuts when typing in input/textarea fields
+- [ ] Test that notes and title editing work without triggering image controls

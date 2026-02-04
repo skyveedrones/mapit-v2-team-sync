@@ -281,6 +281,12 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     if (!selectedMedia) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts if user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         navigateToPrevious();
