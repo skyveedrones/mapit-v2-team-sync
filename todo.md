@@ -736,3 +736,20 @@
 - [x] Update emailReport.ts to use client-generated PDF when available
 - [ ] Test PDF download on production
 - [ ] Test Email Report on production
+
+## Browser Print PDF Solution
+- [x] Identify root cause: html2canvas fails on iPhone with CORS/memory issues
+- [x] Implement browser print approach (window.open + window.print)
+- [x] Remove complex PDF libraries (jsPDF, html2canvas, pdfmake)
+- [ ] Test PDF download via print dialog on iPhone
+- [ ] Test PDF download via print dialog on PC
+- [ ] Update Email Report to use same approach
+
+## Simplified PDF Generation Approach
+- [x] Remove client-side PDF generation (jsPDF/html2canvas) from download function
+- [x] Implement browser print dialog for PDF downloads (works on all devices)
+- [x] Keep server-side PDF generation for email reports only
+- [x] Remove unused jsPDF and html2canvas imports
+- [ ] Test PDF download via print dialog on iPhone
+- [ ] Test email report on iPhone
+- [x] Update version to v1.0.7
