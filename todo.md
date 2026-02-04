@@ -780,3 +780,15 @@
 - [x] Add project name field to Templates settings config
 - [x] Update template population logic to include description and name
 - [ ] Test description and name auto-fill from template
+
+## Debug Description Field Not Populating
+- [ ] Check if existing templates have projectDescription in their config
+- [ ] Verify the template population logic is correct
+- [ ] Check browser console for any errors
+- [ ] Test with a newly created template
+- [ ] Fix the issue and verify description populates
+
+## Fix Controlled/Uncontrolled Input Error in Settings
+- [x] Identify which inputs in Settings/Templates are causing the error
+- [x] Ensure all input values have default empty strings instead of undefined (fixed handleOpenDialog)
+- [ ] Test Settings page to verify error is resolved

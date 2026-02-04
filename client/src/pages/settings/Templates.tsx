@@ -105,11 +105,23 @@ export default function Templates() {
   const handleOpenDialog = (template?: any) => {
     if (template) {
       setEditingTemplate(template);
+      const parsedConfig = typeof template.config === 'string' ? JSON.parse(template.config) : template.config;
       setFormData({
         name: template.name,
         description: template.description || "",
         category: template.category,
-        config: template.config,
+        config: {
+          projectName: parsedConfig.projectName || "",
+          client: parsedConfig.client || "",
+          projectDescription: parsedConfig.projectDescription || "",
+          pilot: parsedConfig.pilot || "",
+          faaLicense: parsedConfig.faaLicense || "",
+          laancAuth: parsedConfig.laancAuth || "",
+          warrantyMonths: parsedConfig.warrantyMonths || 12,
+          requireGps: parsedConfig.requireGps !== undefined ? parsedConfig.requireGps : true,
+          applyWatermark: parsedConfig.applyWatermark !== undefined ? parsedConfig.applyWatermark : true,
+          exportFormats: parsedConfig.exportFormats || ["kml", "geojson", "csv"],
+        },
       });
     } else {
       resetForm();
