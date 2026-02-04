@@ -705,19 +705,17 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               </div>
             </div>
 
-            {/* Media type badge */}
+            {/* Priority indicator in upper right corner */}
             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-              <div className={`p-1.5 rounded-full backdrop-blur-sm ${
-                item.mediaType === "video" 
-                  ? "bg-red-500/90" 
-                  : "bg-[#04B16F]/90"
-              }`}>
-                {item.mediaType === "video" ? (
-                  <FileVideo className="h-4 w-4 text-white" />
-                ) : (
-                  <FileImage className="h-4 w-4 text-white" />
-                )}
-              </div>
+              {item.priority && item.priority !== "none" && (
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-lg ${
+                  item.priority === "high" 
+                    ? "bg-red-500" 
+                    : "bg-yellow-500"
+                }`}>
+                  <span className="text-white font-bold text-lg">!</span>
+                </div>
+              )}
               {/* No GPS indicator */}
               {(!item.latitude || !item.longitude) && (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium">

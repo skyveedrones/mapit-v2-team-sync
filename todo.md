@@ -801,3 +801,10 @@
 - [x] Add priority indicator (yellow/red !) to thumbnails in PDF
 - [x] Place priority items after map and before regular photos in PDF
 - [ ] Test priority selection and PDF generation
+
+## Fix Media Thumbnail Icons
+- [x] Identify and remove green icon from media thumbnails in Project Media
+- [x] Add priority indicator ("!") to upper right corner of thumbnails
+- [x] Make priority indicator color match selected priority (yellow for low, red for high)
+- [x] Ensure priority indicator only shows when priority is set (not for 'none')
+- [ ] Test thumbnail display with different priority levels
