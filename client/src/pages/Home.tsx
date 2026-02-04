@@ -123,7 +123,7 @@ export default function Home() {
         <div className="container flex items-center justify-between h-16">
           <a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
             <img
-              src="/images/skyvee-logo-white.png"
+              src={theme === "dark" ? "/images/skyvee-logo-white.png" : "/images/skyvee-logo-dark.png"}
               alt="SkyVee Drones"
               className="h-10 w-auto"
             />

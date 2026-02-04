@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
@@ -31,6 +32,7 @@ const fadeInUp = {
 
 export default function ClientInviteAccept() {
   const { user, loading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const params = useParams<{ token: string }>();
   const [isAccepting, setIsAccepting] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -94,7 +96,7 @@ export default function ClientInviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/skyvee-logo-white.png" alt="SkyVee" className="h-8 w-auto" />
+              <img src={theme === "dark" ? "/images/skyvee-logo-white.png" : "/images/skyvee-logo-dark.png"} alt="SkyVee" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -140,7 +142,7 @@ export default function ClientInviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/skyvee-logo-white.png" alt="SkyVee" className="h-8 w-auto" />
+              <img src={theme === "dark" ? "/images/skyvee-logo-white.png" : "/images/skyvee-logo-dark.png"} alt="SkyVee" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -181,7 +183,7 @@ export default function ClientInviteAccept() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/skyvee-logo-white.png" alt="SkyVee" className="h-8 w-auto" />
+              <img src={theme === "dark" ? "/images/skyvee-logo-white.png" : "/images/skyvee-logo-dark.png"} alt="SkyVee" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>

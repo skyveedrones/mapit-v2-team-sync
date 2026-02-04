@@ -706,3 +706,11 @@
 - [x] Update pdfGenerator to use @sparticuz/chromium when system Chrome not available
 - [ ] Test PDF generation on published site (iPhone)
 - [ ] Test Email Report on published site (iPhone)
+
+## Fix SkyVee Logo Text Color in Light Mode
+- [x] Find logo component in navigation/header
+- [x] Update logo to use theme-aware image source (dark logo for light mode, white logo for dark mode)
+- [x] Updated Home.tsx navigation logo
+- [x] Updated ClientInviteAccept.tsx all logo instances
+- [x] Test logo visibility in light mode
+- [x] Test logo visibility in dark mode
