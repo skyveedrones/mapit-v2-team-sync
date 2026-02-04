@@ -14,26 +14,36 @@ export interface EmailReportParams {
   to: string;
   projectName: string;
   html: string;
+  pdfBase64?: string; // Client-generated PDF (optional)
   senderName?: string;
   userId?: number;
 }
 
 /**
  * Send a PDF report via email
+ * If pdfBase64 is provided, uses client-generated PDF (no Chromium needed)
+ * Otherwise falls back to server-side PDF generation
  * For large PDFs, uploads to S3 and sends download link instead of attachment
  */
 export async function sendReportEmail(params: EmailReportParams): Promise<{ success: boolean; error?: string }> {
-  const { to, projectName, html, senderName = 'Mapit', userId = 1 } = params;
+  const { to, projectName, html, pdfBase64, senderName = 'Mapit', userId = 1 } = params;
   
   try {
-    console.log(`[Email Report] Generating PDF for project: ${projectName}`);
+    let pdfBuffer: Buffer;
     
-    // Generate PDF from HTML
-    const pdfBuffer = await generatePdfFromHtml(html);
+    // Use client-generated PDF if available, otherwise generate on server
+    if (pdfBase64) {
+      console.log(`[Email Report] Using client-generated PDF for project: ${projectName}`);
+      pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    } else {
+      console.log(`[Email Report] Generating PDF on server for project: ${projectName}`);
+      pdfBuffer = await generatePdfFromHtml(html);
+    }
+    
     const pdfSizeKB = pdfBuffer.length / 1024;
     const pdfSizeMB = pdfSizeKB / 1024;
     
-    console.log(`[Email Report] PDF generated (${pdfSizeKB.toFixed(2)} KB), preparing email to ${to}`);
+    console.log(`[Email Report] PDF ready (${pdfSizeKB.toFixed(2)} KB), preparing email to ${to}`);
     
     // Resend has a 40MB attachment limit, but we'll use 5MB as a safe threshold
     // For larger files, upload to S3 and send a download link

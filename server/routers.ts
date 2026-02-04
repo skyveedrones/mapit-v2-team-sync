@@ -2148,17 +2148,22 @@ export const appRouter = router({
         html: z.string(),
         projectName: z.string(),
         recipientEmail: z.string().email(),
+        pdfBase64: z.string().optional(), // Client-generated PDF
       }))
       .mutation(async ({ ctx, input }) => {
         const { sendReportEmail } = await import("./emailReport");
         
-        // Log HTML size for debugging
-        const htmlSizeMB = (input.html.length / 1024 / 1024).toFixed(2);
-        console.log(`[Email Report] Preparing to email report (HTML: ${htmlSizeMB} MB) to ${input.recipientEmail}`);
-        
-        // Warn if HTML is very large (>50MB)
-        if (input.html.length > 50 * 1024 * 1024) {
-          console.warn(`[Email Report] WARNING: HTML size is very large (${htmlSizeMB} MB), this may cause timeout or memory issues`);
+        // Log size for debugging
+        if (input.pdfBase64) {
+          const pdfSizeMB = (input.pdfBase64.length * 0.75 / 1024 / 1024).toFixed(2);
+          console.log(`[Email Report] Using client-generated PDF (${pdfSizeMB} MB) to ${input.recipientEmail}`);
+        } else {
+          const htmlSizeMB = (input.html.length / 1024 / 1024).toFixed(2);
+          console.log(`[Email Report] Preparing to email report (HTML: ${htmlSizeMB} MB) to ${input.recipientEmail}`);
+          
+          if (input.html.length > 50 * 1024 * 1024) {
+            console.warn(`[Email Report] WARNING: HTML size is very large (${htmlSizeMB} MB), this may cause timeout or memory issues`);
+          }
         }
         
         try {
@@ -2166,6 +2171,7 @@ export const appRouter = router({
             to: input.recipientEmail,
             projectName: input.projectName,
             html: input.html,
+            pdfBase64: input.pdfBase64, // Pass client-generated PDF
             senderName: ctx.user.name || 'Mapit User',
             userId: ctx.user.id,
           });
@@ -2188,7 +2194,7 @@ export const appRouter = router({
           console.error("[Email Report] Error details:", {
             message: error.message,
             stack: error.stack?.split('\n').slice(0, 3).join('\n'),
-            htmlSize: htmlSizeMB + ' MB',
+            hasPdfBase64: !!input.pdfBase64,
           });
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",

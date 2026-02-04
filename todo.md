@@ -726,3 +726,13 @@
 - [x] Update pdfGenerator with LD_LIBRARY_PATH fix for serverless environments
 - [ ] Test PDF generation on production
 - [ ] Test Email Report on production
+
+## Alternative PDF Generation (Chromium-free)
+- [x] Research PDF generation alternatives that work in serverless (jsPDF, pdfmake, react-pdf)
+- [x] Install jsPDF and html2canvas for client-side PDF generation
+- [x] Update ReportGeneratorDialog to generate PDF in browser (handleDownloadPdf)
+- [x] Update handleEmailReport to generate PDF on client and send as base64
+- [x] Update emailReport endpoint to accept pdfBase64 parameter
+- [x] Update emailReport.ts to use client-generated PDF when available
+- [ ] Test PDF download on production
+- [ ] Test Email Report on production

@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface ReportGeneratorDialogProps {
   open: boolean;
@@ -192,13 +194,76 @@ export function ReportGeneratorDialog({
     }
 
     setIsEmailing(true);
-    toast.info("Sending report via email, please wait...");
+    toast.info("Generating PDF and sending via email, please wait...");
 
     try {
+      // Generate PDF on client-side first
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "794px";
+      container.style.backgroundColor = "white";
+      container.innerHTML = previewHtml;
+      document.body.appendChild(container);
+
+      // Wait for images to load
+      const images = container.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map(
+          (img) =>
+            new Promise((resolve) => {
+              if (img.complete) {
+                resolve(true);
+              } else {
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+              }
+            })
+        )
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      document.body.removeChild(container);
+
+      // Create PDF
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Convert PDF to base64
+      const pdfBase64 = pdf.output("datauristring").split(",")[1];
+
+      // Send to server for emailing
       const result = await emailReportMutation.mutateAsync({
-        html: previewHtml,
+        html: previewHtml, // Keep for backwards compatibility
         projectName,
         recipientEmail,
+        pdfBase64, // Send pre-generated PDF
       });
 
       toast.success(result.message || "Report sent successfully!");
@@ -216,62 +281,104 @@ export function ReportGeneratorDialog({
     if (!previewHtml) return;
 
     setIsDownloading(true);
-    toast.info("Generating PDF, please wait...");
+    toast.info("Generating PDF, please wait... This may take a moment.");
 
     try {
-      const result = await downloadPdfMutation.mutateAsync({
-        html: previewHtml,
-        projectName,
+      // Create a hidden container for rendering the HTML
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "794px"; // A4 width at 96 DPI
+      container.style.backgroundColor = "white";
+      container.innerHTML = previewHtml;
+      document.body.appendChild(container);
+
+      // Wait for images to load
+      const images = container.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map(
+          (img) =>
+            new Promise((resolve) => {
+              if (img.complete) {
+                resolve(true);
+              } else {
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+              }
+            })
+        )
+      );
+
+      // Small delay to ensure rendering is complete
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Convert HTML to canvas
+      const canvas = await html2canvas(container, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
       });
 
-      // Convert base64 to blob
-      const byteCharacters = atob(result.pdfData);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      // Remove the container
+      document.body.removeChild(container);
+
+      // Create PDF from canvas
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+      // Add first page
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "application/pdf" });
+
+      // Generate filename
+      const sanitizedName = projectName.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `${sanitizedName}_Report_${new Date().toISOString().split("T")[0]}.pdf`;
 
       // Try to use File System Access API for native Save As dialog
-      // This lets the user choose where to save the file
-      if ('showSaveFilePicker' in window) {
+      if ("showSaveFilePicker" in window) {
         try {
           const handle = await (window as any).showSaveFilePicker({
-            suggestedName: result.filename,
-            types: [{
-              description: 'PDF Document',
-              accept: { 'application/pdf': ['.pdf'] },
-            }],
+            suggestedName: filename,
+            types: [
+              {
+                description: "PDF Document",
+                accept: { "application/pdf": [".pdf"] },
+              },
+            ],
           });
           const writable = await handle.createWritable();
-          await writable.write(blob);
+          await writable.write(pdf.output("blob"));
           await writable.close();
           toast.success("PDF saved successfully!");
           return;
         } catch (err: any) {
-          // User cancelled the save dialog
-          if (err.name === 'AbortError') {
+          if (err.name === "AbortError") {
             setIsDownloading(false);
             return;
           }
-          // Fall through to alternative method if API fails
           console.log("File System Access API not available, using fallback");
         }
       }
 
-      // Fallback for browsers without File System Access API
-      // This will trigger the browser's default download behavior
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = result.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up URL after a delay
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      // Fallback: direct download
+      pdf.save(filename);
       toast.success("PDF download started!");
     } catch (error) {
       console.error("Failed to generate PDF:", error);
