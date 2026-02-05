@@ -10,7 +10,7 @@ export function GlobalBackground() {
       {/* Background Image */}
       <img
         src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/LbBUqIxtVRausZSp.jpg"
-        alt=""
+        alt="Aerial drone photography background"
         className="w-full h-full object-cover opacity-20"
         aria-hidden="true"
       />
