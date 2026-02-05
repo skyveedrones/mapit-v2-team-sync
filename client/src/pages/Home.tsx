@@ -80,7 +80,7 @@ const features = [
     title: "Project Templates",
     description:
       "Save project configurations as templates and create new projects in seconds",
-    image: "/images/feature-templates.jpg",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/xcuWZVIoHJLrMRMZ.png",
     link: "/features/project-templates",
   },
 ];

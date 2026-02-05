@@ -824,3 +824,8 @@
 - [x] Check if image file exists or if CDN URL is broken
 - [x] Replace with working image path or upload to CDN
 - [ ] Test image loads correctly on homepage
+
+## Replace Project Templates Homepage Hero Image
+- [x] Upload new template editing screenshot to CDN
+- [x] Update Home.tsx to reference new template image
+- [ ] Test image displays correctly on homepage
