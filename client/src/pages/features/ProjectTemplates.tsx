@@ -36,7 +36,7 @@ export default function ProjectTemplates() {
             </div>
             <div className="relative">
               <img
-                src="/images/feature-templates.jpg"
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/SxjCbukJOAezRSZP.png"
                 alt="Project Templates Dashboard"
                 className="rounded-lg shadow-2xl ring-1 ring-white/10"
               />

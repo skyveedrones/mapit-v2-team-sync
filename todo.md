@@ -828,4 +828,6 @@
 ## Replace Project Templates Homepage Hero Image
 - [x] Upload new template editing screenshot to CDN
 - [x] Update Home.tsx to reference new template image
-- [ ] Test image displays correctly on homepage
+- [x] Upload cleaner template screenshot (Screenshot(6).png)
+- [x] Update all references including feature detail page
+- [ ] Test image displays correctly on homepage and feature page
