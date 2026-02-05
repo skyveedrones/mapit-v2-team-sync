@@ -818,3 +818,9 @@
 - [x] Find pricing button in navigation/header
 - [x] Replace pricing link with button that shows "Coming Soon!" toast
 - [ ] Test pricing button shows popup instead of navigating
+
+## Fix GPS Export Hero Image Not Loading
+- [x] Find GPS Export Hero image reference in Home.tsx
+- [x] Check if image file exists or if CDN URL is broken
+- [x] Replace with working image path or upload to CDN
+- [ ] Test image loads correctly on homepage

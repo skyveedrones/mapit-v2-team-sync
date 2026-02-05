@@ -63,7 +63,7 @@ const features = [
     title: "GPS Data Export",
     description:
       "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software",
-    image: "/images/feature-export-new.png",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/gkNBTHRsPHDBWczp.png",
     link: "/features/gps-data-export",
   },
   {
