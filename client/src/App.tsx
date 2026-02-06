@@ -32,6 +32,7 @@ import GpsDataExport from "./pages/features/GpsDataExport";
 import PdfMapOverlay from "./pages/features/PdfMapOverlay";
 import InstallAsApp from "./pages/features/InstallAsApp";
 import ProjectTemplates from "./pages/features/ProjectTemplates";
+import DemoProject from "./pages/DemoProject";
 
 /**
  * Protected Route Component
@@ -100,6 +101,12 @@ function Router() {
       </Route>
       <Route path="/project/:id/flight/:flightId/map">
         {() => <ProtectedRoute component={ProjectMap} />}
+      </Route>
+      
+      {/* Demo Project */}
+      <Route path="/demo" component={DemoProject} />
+      <Route path="/demo/project">
+        {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
       
       {/* Feature pages */}

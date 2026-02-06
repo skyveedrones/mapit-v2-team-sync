@@ -122,6 +122,10 @@ const pwaFeatures = [
 export default function InstallAsApp() {
   const { isAuthenticated } = useAuth();
 
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
   const handleGetStarted = () => {
     if (isAuthenticated) {
       window.location.href = "/dashboard";
@@ -175,13 +179,21 @@ export default function InstallAsApp() {
                 experience without app store downloads.
               </motion.p>
               
-              <motion.div variants={fadeInUp}>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                  <Download className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleGetStarted}
                 >
-                  Install Now
+                  Install App
                   <Download className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>

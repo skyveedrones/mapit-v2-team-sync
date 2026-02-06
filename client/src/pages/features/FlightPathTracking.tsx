@@ -117,6 +117,10 @@ const howItWorks = [
 export default function FlightPathTracking() {
   const { isAuthenticated } = useAuth();
 
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
   const handleGetStarted = () => {
     if (isAuthenticated) {
       window.location.href = "/dashboard";
@@ -169,10 +173,18 @@ export default function FlightPathTracking() {
                 in chronological order. See exactly where you flew and review your coverage.
               </motion.p>
               
-              <motion.div variants={fadeInUp}>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                  <Route className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleGetStarted}
                 >
                   View Flight Paths

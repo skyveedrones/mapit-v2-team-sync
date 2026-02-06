@@ -28,6 +28,8 @@ import {
   User,
   Moon,
   Sun,
+  Eye,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -134,6 +136,13 @@ export default function Home() {
             <Button
               variant="ghost"
               className="text-foreground hover:text-primary"
+              onClick={() => setLocation("/demo")}
+            >
+              See Demo
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-foreground hover:text-primary"
               onClick={() => toast.info("Coming Soon!", { description: "Pricing plans will be available soon." })}
             >
               Pricing
@@ -217,6 +226,16 @@ export default function Home() {
             className="md:hidden border-t border-border bg-background"
           >
             <div className="container py-4 flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                className="w-full text-foreground"
+                onClick={() => {
+                  setLocation("/demo");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                See Demo
+              </Button>
               <Button
                 variant="ghost"
                 className="w-full text-foreground"
@@ -476,6 +495,21 @@ export default function Home() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto text-center"
           >
+            <motion.div
+              variants={fadeInUp}
+              className="mb-8"
+            >
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 text-base px-6 py-4"
+                onClick={() => setLocation("/demo")}
+              >
+                <Eye className="mr-2 h-5 w-5" />
+                See Demo Project
+              </Button>
+            </motion.div>
+
             <motion.h2
               variants={fadeInUp}
               className="text-3xl md:text-4xl font-bold mb-4"
@@ -489,7 +523,7 @@ export default function Home() {
             >
               Start organizing and visualizing your drone footage today
             </motion.p>
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
@@ -497,6 +531,15 @@ export default function Home() {
               >
                 <Download className="mr-2 h-5 w-5" />
                 Download the App
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                onClick={handleLogin}
+              >
+                <Zap className="mr-2 h-5 w-5" />
+                Start Free Trial
               </Button>
             </motion.div>
           </motion.div>

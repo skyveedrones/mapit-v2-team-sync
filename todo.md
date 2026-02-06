@@ -837,3 +837,15 @@
 - [x] Reduce meta keywords from 10 to 6 focused keywords
 - [x] Find and add missing alt text to background image
 - [ ] Test SEO improvements with validation tools
+
+## Demo Project Showcase Feature
+- [x] Create demo project page with read-only access (/demo or /demo-project)
+- [x] Add "See Demo" button to all feature call-out pages (replace "Start" buttons)
+- [x] Update feature call-out pages to link to demo project instead of login
+- [x] Add "See Demo" link to main navigation bar on homepage
+- [x] Add "See Demo" button above "Ready to Map Your Projects?" section on homepage
+- [x] Add demo project title/header to showcase page
+- [ ] Set up read-only mode for demo project (disable editing, uploads, deletions)
+- [ ] Use current "Demonstration Project" as template for demo
+- [ ] Test all demo links from homepage and feature pages
+- [ ] Verify demo project loads without authentication

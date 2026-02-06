@@ -120,6 +120,10 @@ const howItWorks = [
 export default function PdfMapOverlay() {
   const { isAuthenticated } = useAuth();
 
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
   const handleGetStarted = () => {
     if (isAuthenticated) {
       window.location.href = "/dashboard";
@@ -173,13 +177,21 @@ export default function PdfMapOverlay() {
                 precise GPS positioning.
               </motion.p>
               
-              <motion.div variants={fadeInUp}>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                  <Layers className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleGetStarted}
                 >
-                  Try Overlay Feature
+                  Start Overlaying
                   <Layers className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>

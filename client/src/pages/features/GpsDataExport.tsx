@@ -115,6 +115,10 @@ const features = [
 export default function GpsDataExport() {
   const { isAuthenticated } = useAuth();
 
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
   const handleGetStarted = () => {
     if (isAuthenticated) {
       window.location.href = "/dashboard";
@@ -168,10 +172,18 @@ export default function GpsDataExport() {
                 GPS devices for maximum compatibility.
               </motion.p>
               
-              <motion.div variants={fadeInUp}>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                  <Download className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleGetStarted}
                 >
                   Export Your Data

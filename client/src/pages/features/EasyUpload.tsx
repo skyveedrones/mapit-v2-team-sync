@@ -113,6 +113,10 @@ const benefits = [
 export default function EasyUpload() {
   const { isAuthenticated } = useAuth();
 
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
   const handleGetStarted = () => {
     if (isAuthenticated) {
       window.location.href = "/dashboard";
@@ -165,10 +169,18 @@ export default function EasyUpload() {
                 No manual data entry—just upload and let the system do the work.
               </motion.p>
               
-              <motion.div variants={fadeInUp}>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                  <Upload className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleGetStarted}
                 >
                   Start Uploading

@@ -1,8 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Copy, Zap } from "lucide-react";
+import { FileText, Clock, Copy, Zap, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 
 export default function ProjectTemplates() {
+  const { isAuthenticated } = useAuth();
+
+  const handleSeeDemo = () => {
+    window.location.href = "/demo";
+  };
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      window.location.href = "/dashboard";
+    } else {
+      window.location.href = getLoginUrl();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -22,16 +38,21 @@ export default function ProjectTemplates() {
                 Save your project configurations as reusable templates. Pre-fill client names, settings, and preferences to eliminate repetitive data entry and speed up your workflow.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/dashboard">
-                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-                    Get Started
-                  </Button>
-                </Link>
-                <Link href="/">
-                  <Button size="lg" variant="outline" className="border-emerald-500/30 text-white hover:bg-emerald-500/10">
-                    Learn More
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={handleSeeDemo}
+                >
+                  See Demo
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-emerald-500/30 text-white hover:bg-emerald-500/10"
+                  onClick={handleGetStarted}
+                >
+                  Get Started
+                </Button>
               </div>
             </div>
             <div className="relative">
