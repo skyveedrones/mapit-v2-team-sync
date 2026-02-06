@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Lock, Eye, MapPin, FileText, Download, Zap } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -67,6 +68,9 @@ export default function DemoProject() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Track demo page view
+    trackEvent('demo_page_view');
+    
     // Simulate loading the demo project
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -121,7 +125,10 @@ export default function DemoProject() {
               <>
                 {" "}
                 <button
-                  onClick={() => (window.location.href = getLoginUrl())}
+                  onClick={() => {
+                    trackEvent('demo_to_signup_click');
+                    window.location.href = getLoginUrl();
+                  }}
                   className="text-primary hover:underline font-semibold"
                 >
                   Sign in
@@ -170,7 +177,10 @@ export default function DemoProject() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => setLocation("/demo/project")}
+                onClick={() => {
+                  trackEvent('demo_project_view');
+                  setLocation("/project/1");
+                }}
               >
                 View Demo Project
                 <MapPin className="ml-2 h-5 w-5" />
@@ -179,7 +189,10 @@ export default function DemoProject() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => (window.location.href = getLoginUrl())}
+                  onClick={() => {
+                    trackEvent('demo_to_signup_click');
+                    window.location.href = getLoginUrl();
+                  }}
                 >
                   Create Your Own
                   <Zap className="ml-2 h-5 w-5" />
@@ -284,7 +297,10 @@ export default function DemoProject() {
                   <Button
                     size="lg"
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={() => (window.location.href = getLoginUrl())}
+                    onClick={() => {
+                    trackEvent('demo_to_signup_click');
+                    window.location.href = getLoginUrl();
+                  }}
                   >
                     Start Free Trial
                     <Zap className="ml-2 h-5 w-5" />

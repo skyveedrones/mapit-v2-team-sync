@@ -91,8 +91,14 @@ export default function ProjectDetail() {
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
   
+  // Check if this is the demo project (read-only mode)
+  const isDemoProject = projectId === 1;
+  
   // Check user access permissions for this project
   const { isClientOnly, canEdit, canDelete } = useClientAccess(projectId);
+  // Override permissions for demo project
+  const demoCanEdit = isDemoProject ? false : canEdit;
+  const demoCanDelete = isDemoProject ? false : canDelete;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -275,7 +281,7 @@ export default function ProjectDetail() {
                     </div>
                   )}
                   <div>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h1
                       className="text-2xl md:text-3xl font-bold"
                       style={{ fontFamily: "var(--font-display)" }}
@@ -287,6 +293,12 @@ export default function ProjectDetail() {
                     >
                       {statusLabels[project.status]}
                     </span>
+                    {isDemoProject && (
+                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1">
+                        <Shield className="h-3 w-3" />
+                        Read-Only Demo
+                      </span>
+                    )}
                   </div>
                   {project.description && (
                     <p className="text-muted-foreground max-w-2xl">
@@ -315,7 +327,7 @@ export default function ProjectDetail() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                       {/* Owner and editor actions */}
-                      {canEdit && (
+                      {demoCanEdit && (
                         <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
                           <Plane className="h-4 w-4 mr-2 text-sky-500" />
                           New Flight
@@ -465,7 +477,7 @@ export default function ProjectDetail() {
                     <Plane className="h-5 w-5 inline mr-2 text-primary" />
                     Flights ({flights.length})
                   </h2>
-                  {canEdit && (
+                  {demoCanEdit && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -484,7 +496,7 @@ export default function ProjectDetail() {
                     <FlightCard
                       key={flight.id}
                       flight={flight}
-                      canEdit={canEdit}
+                      canEdit={demoCanEdit}
                     />
                   ))}
                 </div>
@@ -516,11 +528,11 @@ export default function ProjectDetail() {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
                     <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      {canEdit 
+                      {demoCanEdit 
                         ? "Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map."
                         : "No media has been uploaded to this project yet."}
                     </p>
-                    {canEdit && (
+                    {demoCanEdit && (
                       <Button
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
                         onClick={() => setUploadDialogOpen(true)}

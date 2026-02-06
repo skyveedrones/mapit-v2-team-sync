@@ -3,11 +3,14 @@ import { FileText, Clock, Copy, Zap, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { trackEvent } from "@/lib/analytics";
+import { motion } from "framer-motion";
 
 export default function ProjectTemplates() {
   const { isAuthenticated } = useAuth();
 
   const handleSeeDemo = () => {
+    trackEvent('demo_button_click_feature_page');
     window.location.href = "/demo";
   };
 

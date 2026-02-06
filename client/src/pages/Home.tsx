@@ -13,6 +13,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { AppDownloadDialog } from "@/components/AppDownloadDialog";
+import { trackEvent } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -136,7 +137,10 @@ export default function Home() {
             <Button
               variant="ghost"
               className="text-foreground hover:text-primary"
-              onClick={() => setLocation("/demo")}
+              onClick={() => {
+                trackEvent('demo_button_click_homepage');
+                setLocation("/demo");
+              }}
             >
               See Demo
             </Button>
@@ -230,6 +234,7 @@ export default function Home() {
                 variant="ghost"
                 className="w-full text-foreground"
                 onClick={() => {
+                  trackEvent('demo_button_click_homepage');
                   setLocation("/demo");
                   setMobileMenuOpen(false);
                 }}
@@ -503,7 +508,10 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 className="border-primary/50 text-primary hover:bg-primary/10 text-base px-6 py-4"
-                onClick={() => setLocation("/demo")}
+                onClick={() => {
+                  trackEvent('demo_button_click_homepage');
+                  setLocation("/demo");
+                }}
               >
                 <Eye className="mr-2 h-5 w-5" />
                 See Demo Project
@@ -536,7 +544,10 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
-                onClick={handleLogin}
+                onClick={() => {
+                  trackEvent('demo_to_trial_click');
+                  handleLogin();
+                }}
               >
                 <Zap className="mr-2 h-5 w-5" />
                 Start Free Trial
