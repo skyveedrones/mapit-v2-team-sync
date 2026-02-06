@@ -396,6 +396,26 @@ export const appRouter = router({
 
   // Project management procedures
   project: router({
+    // Get demo project without authentication
+    getDemo: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        // Only allow access to demo project (ID: 1)
+        if (input.id !== 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only demo project is publicly accessible",
+          });
+        }
+        const demoProject = await getProjectById(1);
+        if (!demoProject) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Demo project not found",
+          });
+        }
+        return { ...demoProject, logoUrl: demoProject.logoUrl, accessRole: 'demo' as const, isDemoProject: true };
+      }),
     // List all projects for the current user
     list: protectedProcedure.query(async ({ ctx }) => {
       // Get projects owned by the user and shared with them (collaborator)
@@ -516,6 +536,32 @@ export const appRouter = router({
 
   // Media management procedures
   media: router({
+    // List media for demo project without authentication
+    listDemo: publicProcedure
+      .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
+      .query(async ({ input }) => {
+        // Only allow access to demo project (ID: 1)
+        if (input.projectId !== 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only demo project media is publicly accessible",
+          });
+        }
+        
+        const media = await getProjectMediaWithAccess(input.projectId, undefined as any);
+        
+        // Filter by flight if flightId provided
+        if (input.flightId !== undefined) {
+          return (media || []).filter(m => m.flightId === input.flightId);
+        }
+        
+        // By default, exclude media assigned to flights
+        if (!input.includeFlightMedia) {
+          return (media || []).filter(m => m.flightId === null);
+        }
+        
+        return media || [];
+      }),
     // List all media for a project (owner or collaborator)
     list: protectedProcedure
       .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
@@ -1422,6 +1468,20 @@ export const appRouter = router({
 
   // Flight procedures
   flight: router({
+    // List flights for demo project without authentication
+    listDemo: publicProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ input }) => {
+        // Only allow access to demo project (ID: 1)
+        if (input.projectId !== 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only demo project flights are publicly accessible",
+          });
+        }
+        
+        return await getProjectFlights(input.projectId);
+      }),
     // Create a new flight within a project
     create: protectedProcedure
       .input(z.object({

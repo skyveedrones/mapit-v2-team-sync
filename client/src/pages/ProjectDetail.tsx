@@ -110,23 +110,38 @@ export default function ProjectDetail() {
   const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
 
-  // Fetch project details
-  const { data: project, isLoading, error } = trpc.project.get.useQuery(
-    { id: projectId },
-    { enabled: projectId > 0 }
-  );
+  // Fetch project details - use public demo procedures if accessing demo project
+  const { data: project, isLoading, error } = isDemoProject
+    ? trpc.project.getDemo.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      )
+    : trpc.project.get.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      );
 
   // Fetch media list to determine if we show gallery or empty state
-  const { data: mediaList } = trpc.media.list.useQuery(
-    { projectId },
-    { enabled: projectId > 0 }
-  );
+  const { data: mediaList } = isDemoProject
+    ? trpc.media.listDemo.useQuery(
+        { projectId },
+        { enabled: projectId > 0 }
+      )
+    : trpc.media.list.useQuery(
+        { projectId },
+        { enabled: projectId > 0 }
+      );
 
   // Fetch flights for this project
-  const { data: flights } = trpc.flight.list.useQuery(
-    { projectId },
-    { enabled: projectId > 0 }
-  );
+  const { data: flights } = isDemoProject
+    ? trpc.flight.listDemo.useQuery(
+        { projectId },
+        { enabled: projectId > 0 }
+      )
+    : trpc.flight.list.useQuery(
+        { projectId },
+        { enabled: projectId > 0 }
+      );
 
   const handleComingSoon = () => {
     toast.info("Feature coming soon!", {

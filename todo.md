@@ -860,3 +860,12 @@
 - [x] Track "See Demo" button clicks from homepage and feature pages
 - [x] Track "Start Free Trial" conversions from demo page
 - [ ] Create analytics dashboard view for demo engagement
+
+
+## Public Demo Access (No Login Required)
+- [x] Create demo user account in database
+- [x] Update backend to allow unauthenticated access to demo project (ID: 1)
+- [x] Create public demo procedures (project.getDemo, media.listDemo, flight.listDemo)
+- [x] Update ProjectDetail to use public demo procedures for demo project
+- [x] Update DemoProject page to navigate directly to demo project
+- [x] Verify all demo features work without authentication

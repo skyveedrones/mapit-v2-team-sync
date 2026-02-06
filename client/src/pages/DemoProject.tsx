@@ -79,13 +79,12 @@ export default function DemoProject() {
   }, []);
 
   const handleViewFullProject = () => {
-    if (isAuthenticated) {
-      // Navigate to the actual demonstration project (ID: 1)
-      setLocation("/project/1");
-    } else {
-      window.location.href = getLoginUrl();
-    }
+    // Navigate directly to demo project - no login required
+    trackEvent('demo_project_view');
+    setLocation("/project/1");
   };
+
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -177,10 +176,7 @@ export default function DemoProject() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => {
-                  trackEvent('demo_project_view');
-                  setLocation("/project/1");
-                }}
+                onClick={handleViewFullProject}
               >
                 View Demo Project
                 <MapPin className="ml-2 h-5 w-5" />
