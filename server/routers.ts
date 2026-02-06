@@ -427,6 +427,14 @@ export const appRouter = router({
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
+        // Allow public access to demo project (ID: 1)
+        if (input.id === 1) {
+          const demoProject = await getProjectById(1);
+          if (demoProject) {
+            let logoUrl = demoProject.logoUrl;
+            return { ...demoProject, logoUrl, accessRole: 'demo' as const, isDemoProject: true };
+          }
+        }
         // First check if user is owner
         const ownedProject = await getUserProject(input.id, ctx.user.id);
         if (ownedProject) {
@@ -512,8 +520,13 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
       .query(async ({ ctx, input }) => {
+        // Allow public access to demo project (ID: 1)
+        let hasAccess = input.projectId === 1;
+        
         // Check if user has access (owner, collaborator, or client user)
-        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
+          hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        }
         const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
         
         if (!hasAccess && !hasClientAccess) {
@@ -1448,8 +1461,13 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ projectId: z.number() }))
       .query(async ({ ctx, input }) => {
+        // Allow public access to demo project (ID: 1)
+        let hasAccess = input.projectId === 1;
+        
         // Check if user has access to the project (owner, collaborator, or client user)
-        const hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        if (!hasAccess) {
+          hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
+        }
         const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
         
         if (!hasAccess && !hasClientAccess) {
