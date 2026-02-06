@@ -91,16 +91,34 @@ function Router() {
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
       <Route path="/project/:id">
-        {() => <ProtectedRoute component={ProjectDetail} />}
+        {(params) => {
+          // Demo project (ID: 1) doesn't require authentication
+          if (params.id === '1') {
+            return <ProjectDetail />;
+          }
+          return <ProtectedRoute component={ProjectDetail} />;
+        }}
       </Route>
       <Route path="/project/:id/map">
         {() => <ProtectedRoute component={ProjectMap} />}
       </Route>
       <Route path="/project/:id/flight/:flightId">
-        {() => <ProtectedRoute component={FlightDetail} />}
+        {(params) => {
+          // Demo project (ID: 1) doesn't require authentication
+          if (params.id === '1') {
+            return <FlightDetail />;
+          }
+          return <ProtectedRoute component={FlightDetail} />;
+        }}
       </Route>
       <Route path="/project/:id/flight/:flightId/map">
-        {() => <ProtectedRoute component={ProjectMap} />}
+        {(params) => {
+          // Demo project (ID: 1) doesn't require authentication
+          if (params.id === '1') {
+            return <ProjectMap />;
+          }
+          return <ProtectedRoute component={ProjectMap} />;
+        }}
       </Route>
       
       {/* Demo Project */}

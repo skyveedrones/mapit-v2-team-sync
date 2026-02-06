@@ -10,12 +10,19 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+// Check if current path is a demo route that doesn't require authentication
+const isDemoRoute = () => {
+  if (typeof window === "undefined") return false;
+  const path = window.location.pathname;
+  return path === '/project/1' || path === '/demo' || path.startsWith('/demo/');
+};
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
-  // Don't redirect if accessing demo project (ID: 1)
-  if (window.location.pathname === '/project/1' || window.location.pathname === '/demo') {
+  // Don't redirect if accessing demo routes - they allow unauthenticated access
+  if (isDemoRoute()) {
     return;
   }
 
@@ -28,6 +35,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
+    // Skip redirect logic entirely for demo routes
+    if (isDemoRoute()) return;
+    
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
     console.error("[API Query Error]", error);
@@ -36,6 +46,9 @@ queryClient.getQueryCache().subscribe(event => {
 
 queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
+    // Skip redirect logic entirely for demo routes
+    if (isDemoRoute()) return;
+    
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
     console.error("[API Mutation Error]", error);
