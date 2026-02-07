@@ -875,3 +875,9 @@
 - [x] Conditionally use media.listDemo when in demo mode
 - [x] Update ProjectDetail to pass isDemoProject to MediaGallery
 - [x] Test demo media display works without authentication
+
+## Remove Duplicate Photos from Demo Project
+- [x] Query all media files in demo project (projectId = 1)
+- [x] Identify duplicates (keep first 12, delete rest)
+- [x] Delete duplicate media from database
+- [x] Verify only 12 photos remain
