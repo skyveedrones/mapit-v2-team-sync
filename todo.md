@@ -899,3 +899,7 @@
 - [x] Update LAANC authorization to "LAANC 111"
 - [x] Remove "Create Your Own" text and replace with "Sign Up"
 - [x] Disable PDF report download for demo project
+
+## Disable Email Report and Update Location
+- [x] Disable email report button in PDF report dialog
+- [x] Update project location to "Anytown, USA"
