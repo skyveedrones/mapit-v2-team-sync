@@ -190,8 +190,8 @@ export default function DemoProject() {
                     window.location.href = getLoginUrl();
                   }}
                 >
-                  Create Your Own
-                  <Zap className="ml-2 h-5 w-5" />
+                  <Zap className="mr-2 h-5 w-5" />
+                  Sign Up
                 </Button>
               )}
             </motion.div>

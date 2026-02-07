@@ -892,3 +892,9 @@
 - [x] Fix full screen map redirecting to login - add demo support to ProjectMap page
 - [x] Fix PDF report preview errors in demo mode - handle unauthenticated report generation
 - [x] Fix flight detail pages showing "no media or not authorized" - use demo procedures for flight details
+
+## Update Demo Project Data and UI
+- [x] Update pilot name to "Joe Pilot"
+- [x] Update FAA license to "111111"
+- [x] Update LAANC authorization to "LAANC 111"
+- [x] Remove "Create Your Own" text and replace with "Sign Up"
