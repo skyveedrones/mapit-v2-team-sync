@@ -445,7 +445,7 @@ export function generateReportHtml(
     /* Header with dual logos */
     .report-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       padding: 20px 0 15px 0;
       border-bottom: 2px solid #000000;
@@ -718,16 +718,11 @@ export function generateReportHtml(
   </style>
 </head>
 <body>
-  <!-- Header with dual logos -->
+  <!-- Header with SkyVee logo -->
   <div class="report-header">
     <div class="logo-left">
       ${skyVeeLogo}
     </div>
-    ${userLogoUrl ? `
-    <div class="logo-right">
-      <img src="${userLogoUrl}" alt="Project Logo" />
-    </div>
-    ` : ""}
   </div>
   
   <!-- Report Title -->
