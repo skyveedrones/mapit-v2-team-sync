@@ -1197,6 +1197,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         onOpenChange={setWatermarkDialogOpen}
         selectedMedia={selectedMediaItems}
         projectId={projectId}
+        isDemoProject={isDemoProject}
         onWatermarkApplied={() => {
           utils.media.list.invalidate({ projectId, flightId });
           setSelectedIds(new Set());

@@ -50,6 +50,7 @@ interface WatermarkDialogProps {
   selectedMedia: Media[];
   projectId: number;
   onWatermarkApplied?: () => void;
+  isDemoProject?: boolean;
 }
 
 type Position = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
@@ -69,6 +70,7 @@ export function WatermarkDialog({
   selectedMedia,
   projectId,
   onWatermarkApplied,
+  isDemoProject = false,
 }: WatermarkDialogProps) {
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [watermarkPreview, setWatermarkPreview] = useState<string | null>(null);
@@ -382,7 +384,8 @@ export function WatermarkDialog({
                     size="sm"
                     className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={handleDeleteSavedWatermark}
-                    disabled={deleteWatermarkMutation.isPending}
+                    disabled={deleteWatermarkMutation.isPending || isDemoProject}
+                    title={isDemoProject ? "Disabled in demo mode" : ""}
                   >
                     {deleteWatermarkMutation.isPending ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -428,14 +431,19 @@ export function WatermarkDialog({
                     </Button>
                   </div>
                 ) : (
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 hover:border-primary/50 hover:bg-muted/50 transition-colors ${
+                    isDemoProject ? "opacity-50 cursor-not-allowed" : ""
+                  }`}>
                     <Upload className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Upload watermark</span>
+                    <span className="text-sm text-muted-foreground">
+                      {isDemoProject ? "Upload watermark (Demo)" : "Upload watermark"}
+                    </span>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
                       onChange={handleFileChange}
+                      disabled={isDemoProject}
                     />
                   </label>
                 )}

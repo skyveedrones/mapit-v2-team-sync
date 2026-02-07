@@ -904,3 +904,7 @@
 - [x] Disable email report button in PDF report dialog
 - [x] Update project location to "Anytown, USA"
 - [x] Delete photo 1000000322.jpg from demo project
+
+## Disable Demo Features
+- [ ] Disable delete icon in media gallery for demo project
+- [ ] Disable upload watermark feature for demo project
