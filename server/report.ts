@@ -475,6 +475,7 @@ export function generateReportHtml(
       max-height: 70px;
       max-width: 180px;
       object-fit: contain;
+      filter: brightness(0) saturate(100%);
     }
     
     /* Title section */

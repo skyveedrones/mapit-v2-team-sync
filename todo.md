@@ -995,3 +995,13 @@
 
 ## Demo Project Media Selection Restrictions
 - [x] Deactivate Select All button for demo projects
+
+
+## Professional Sample PDF Report
+- [ ] Update demo report generation to match MAPIT platform format
+- [ ] Include MAPIT logo and SkyVee branding in report header
+- [ ] Add PROJECT INFORMATION section with all required fields
+- [ ] Add DESCRIPTION section
+- [ ] Add PROJECT MEDIA section
+- [ ] Test sample report preview displays correctly
+- [ ] Verify report format matches platform's professional style

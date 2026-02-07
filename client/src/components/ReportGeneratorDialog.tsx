@@ -43,7 +43,292 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 function generateSampleDemoReport(): string {
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sample GPS Flight Report</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px;background:#f9f9f9}.container{max-width:900px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.header{text-align:center;margin-bottom:30px;border-bottom:2px solid #667eea;padding-bottom:20px}.header h1{margin:0;color:#333;font-size:28px}.header p{margin:5px 0 0 0;color:#666;font-size:14px}.section{margin-bottom:30px}.section-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #ddd}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px}.stat-box{background:#f5f5f5;padding:15px;border-radius:4px;text-align:center}.stat-value{font-size:24px;font-weight:bold;color:#667eea}.stat-label{font-size:12px;color:#666;margin-top:5px}.markers{display:grid;gap:10px}.marker{display:flex;align-items:center;padding:8px;background:#f5f5f5;border-radius:4px}.marker-num{width:24px;height:24px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;margin-right:10px}.marker-info{flex:1}.marker-name{font-weight:bold;color:#333}.marker-coords{font-size:12px;color:#666}.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;color:#999;font-size:12px}</style></head><body><div class="container"><div class="header"><h1>Sample GPS Flight Report</h1><p>Demonstration Project - New York City Area</p></div><div class="section"><div class="section-title">Flight Statistics</div><div class="stats"><div class="stat-box"><div class="stat-value">5</div><div class="stat-label">GPS Waypoints</div></div><div class="stat-box"><div class="stat-value">2.4 km</div><div class="stat-label">Flight Distance</div></div><div class="stat-box"><div class="stat-value">312 m</div><div class="stat-label">Max Altitude</div></div></div></div><div class="section"><div class="section-title">Flight Map</div><div style="width:100%;height:300px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:bold"><div style="text-align:center"><div style="font-size:48px;margin-bottom:10px">🗺️</div><div>Sample Flight Map</div><div style="font-size:12px;margin-top:10px;opacity:0.8">5 GPS Waypoints - New York City Area</div></div></div></div><div class="section"><div class="section-title">GPS Waypoints</div><div class="markers"><div class="marker"><div class="marker-num">1</div><div class="marker-info"><div class="marker-name">Downtown Manhattan</div><div class="marker-coords">Lat: 40.7128° | Lng: -74.0060° | Alt: 245m</div></div></div><div class="marker"><div class="marker-num">2</div><div class="marker-info"><div class="marker-name">Central Park North</div><div class="marker-coords">Lat: 40.7580° | Lng: -73.9855° | Alt: 312m</div></div></div><div class="marker"><div class="marker-num">3</div><div class="marker-info"><div class="marker-name">Upper East Side</div><div class="marker-coords">Lat: 40.7489° | Lng: -73.9680° | Alt: 287m</div></div></div><div class="marker"><div class="marker-num">4</div><div class="marker-info"><div class="marker-name">Midtown East</div><div class="marker-coords">Lat: 40.7614° | Lng: -73.9776° | Alt: 298m</div></div></div><div class="marker"><div class="marker-num">5</div><div class="marker-info"><div class="marker-name">Times Square</div><div class="marker-coords">Lat: 40.7505° | Lng: -73.9972° | Alt: 305m</div></div></div></div></div><div class="footer"><p>This is a sample report generated for demonstration purposes.</p><p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p></div></div></body></html>`;
+  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MAPIT - Sample Project Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+      border-bottom: 4px solid #10b981;
+    }
+    .header-logo {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .header-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 15px;
+    }
+    .header-meta {
+      font-size: 12px;
+      opacity: 0.8;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .section {
+      margin-bottom: 35px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #10b981;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-icon {
+      font-size: 18px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .info-item {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 3px solid #10b981;
+    }
+    .info-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .info-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a1a2e;
+    }
+    .description-box {
+      background: #f0f9ff;
+      border-left: 4px solid #10b981;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #333;
+    }
+    .media-section {
+      margin-top: 30px;
+    }
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .media-item {
+      background: #f9f9f9;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #e5e5e5;
+      text-align: center;
+      padding: 15px;
+    }
+    .media-placeholder {
+      width: 100%;
+      height: 150px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    .media-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      word-break: break-word;
+    }
+    .media-info {
+      font-size: 11px;
+      color: #666;
+    }
+    .footer {
+      background: #f9f9f9;
+      border-top: 1px solid #e5e5e5;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    .footer-text {
+      margin: 5px 0;
+    }
+    .page-break {
+      page-break-after: always;
+      margin: 20px 0;
+    }
+    @media print {
+      body {
+        background: white;
+      }
+      .container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-logo">MAPIT</div>
+      <h1>Sample Project Report</h1>
+      <div class="header-subtitle">Demonstration Flight Analysis</div>
+      <div class="header-meta">
+        <div>Generated: ${currentDate} at ${currentTime}</div>
+      </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="content">
+      <!-- Project Information Section -->
+      <div class="section">
+        <div class="section-title">
+          <span class="section-icon">📋</span>
+          PROJECT INFORMATION
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Location</div>
+            <div class="info-value">Terrell, Texas, USA</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Client</div>
+            <div class="info-value">Demo Client</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Flight Date</div>
+            <div class="info-value">January 15, 2026</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Status</div>
+            <div class="info-value">✓ Complete</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Media Count</div>
+            <div class="info-value">11 Photos</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Pilot</div>
+            <div class="info-value">Demo Pilot</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">FAA License</div>
+            <div class="info-value">N/A (Demo)</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">LAANC Authorization</div>
+            <div class="info-value">N/A (Demo)</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Description Section -->
+      <div class="section">
+        <div class="section-title">
+          <span class="section-icon">📝</span>
+          DESCRIPTION
+        </div>
+        <div class="description-box">
+          <p>This is a sample demonstration report showcasing the professional reporting capabilities of MAPIT. The report includes project information, flight statistics, and media documentation. In production use, this report would contain actual flight data, GPS coordinates, altitude information, and high-resolution imagery from your drone missions.</p>
+          <p style="margin-top: 12px;">MAPIT enables efficient project documentation and analysis through comprehensive reporting tools designed for professionals in surveying, construction, agriculture, and environmental monitoring.</p>
+        </div>
+      </div>
+      
+      <!-- Project Media Section -->
+      <div class="section media-section">
+        <div class="section-title">
+          <span class="section-icon">📸</span>
+          PROJECT MEDIA
+        </div>
+        <div class="media-grid">
+          <div class="media-item">
+            <div class="media-placeholder">📷</div>
+            <div class="media-name">Flight Photo 1</div>
+            <div class="media-info">Infrastructure Inspection</div>
+          </div>
+          <div class="media-item">
+            <div class="media-placeholder">📷</div>
+            <div class="media-name">Flight Photo 2</div>
+            <div class="media-info">Park Mapping Mission</div>
+          </div>
+          <div class="media-item">
+            <div class="media-placeholder">📷</div>
+            <div class="media-name">Flight Photo 3</div>
+            <div class="media-info">Downtown Survey Flight</div>
+          </div>
+          <div class="media-item">
+            <div class="media-placeholder">📷</div>
+            <div class="media-name">Flight Photo 4</div>
+            <div class="media-info">Downtown Survey Flight</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">This is a sample report for demonstration purposes.</div>
+      <div class="footer-text">For production use, reports include actual flight data, GPS coordinates, and high-resolution imagery.</div>
+      <div class="footer-text" style="margin-top: 10px; font-size: 11px; color: #999;">MAPIT © 2026 - Professional Drone Mapping Solutions</div>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 interface ReportGeneratorDialogProps {
@@ -160,30 +445,23 @@ export function ReportGeneratorDialog({
 
     setIsGenerating(true);
     try {
-      if (isDemoProject) {
-        const sampleHtml = generateSampleDemoReport();
-        setPreviewHtml(sampleHtml);
-        setShowPreview(true);
-        toast.success("Sample GPS report generated");
-      } else {
-        const result = await generateMutation.mutateAsync({
-          projectId,
-          mediaIds: Array.from(selectedMediaIds),
-          resolution,
-          mapStyle,
-          showFlightPath,
-          includeWatermark,
-          watermarkData: watermarkData || undefined,
-          watermarkPosition,
-          watermarkOpacity,
-          watermarkScale,
-          userLogoUrl: userLogo?.logoUrl || undefined,
-        });
+      const result = await generateMutation.mutateAsync({
+        projectId,
+        mediaIds: Array.from(selectedMediaIds),
+        resolution,
+        mapStyle,
+        showFlightPath,
+        includeWatermark,
+        watermarkData: watermarkData || undefined,
+        watermarkPosition,
+        watermarkOpacity,
+        watermarkScale,
+        userLogoUrl: userLogo?.logoUrl || undefined,
+      });
 
-        setPreviewHtml(result.html);
-        setShowPreview(true);
-        toast.success(`Report generated with ${result.mediaCount} photos`);
-      }
+      setPreviewHtml(result.html);
+      setShowPreview(true);
+      toast.success(`Report generated with ${result.mediaCount} photos`);
     } catch (error) {
       if (!isDemoProject) {
         console.error("Failed to generate report:", error);
@@ -193,6 +471,9 @@ export function ReportGeneratorDialog({
       setIsGenerating(false);
     }
   };
+
+  // This function is kept for reference but no longer used
+  const _generateSampleDemoReport = generateSampleDemoReport;
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
@@ -420,19 +701,14 @@ export function ReportGeneratorDialog({
             </Button>
             <Button 
               onClick={handleDownloadPdf} 
-              disabled={isDownloading || isEmailing || isDemoProject}
+              disabled={isDownloading || isEmailing}
               className="bg-emerald-600 hover:bg-emerald-700"
-              title={isDemoProject ? "Download disabled in demo mode" : ""}
+              title=""
             >
               {isDownloading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Generating PDF...
-                </>
-              ) : isDemoProject ? (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF (Demo)
                 </>
               ) : (
                 <>
