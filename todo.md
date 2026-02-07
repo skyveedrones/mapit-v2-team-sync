@@ -898,3 +898,4 @@
 - [x] Update FAA license to "111111"
 - [x] Update LAANC authorization to "LAANC 111"
 - [x] Remove "Create Your Own" text and replace with "Sign Up"
+- [x] Disable PDF report download for demo project

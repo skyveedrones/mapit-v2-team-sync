@@ -406,13 +406,19 @@ export function ReportGeneratorDialog({
             </Button>
             <Button 
               onClick={handleDownloadPdf} 
-              disabled={isDownloading || isEmailing}
+              disabled={isDownloading || isEmailing || isDemoProject}
               className="bg-emerald-600 hover:bg-emerald-700"
+              title={isDemoProject ? "Download disabled in demo mode" : ""}
             >
               {isDownloading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Generating PDF...
+                </>
+              ) : isDemoProject ? (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF (Demo)
                 </>
               ) : (
                 <>
