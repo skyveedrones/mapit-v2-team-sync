@@ -650,7 +650,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 ? "border-primary ring-2 ring-primary/20"
                 : "border-border hover:border-primary/50"
             }`}
-            onClick={() => setSelectedMedia(item)}
+            onClick={() => !isDemoProject && setSelectedMedia(item)}
           >
             {item.mediaType === "photo" ? (
               <img

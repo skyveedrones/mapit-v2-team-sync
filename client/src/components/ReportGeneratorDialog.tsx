@@ -42,6 +42,10 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
+function generateSampleDemoReport(): string {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sample GPS Flight Report</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px;background:#f9f9f9}.container{max-width:900px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.header{text-align:center;margin-bottom:30px;border-bottom:2px solid #667eea;padding-bottom:20px}.header h1{margin:0;color:#333;font-size:28px}.header p{margin:5px 0 0 0;color:#666;font-size:14px}.section{margin-bottom:30px}.section-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #ddd}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px}.stat-box{background:#f5f5f5;padding:15px;border-radius:4px;text-align:center}.stat-value{font-size:24px;font-weight:bold;color:#667eea}.stat-label{font-size:12px;color:#666;margin-top:5px}.markers{display:grid;gap:10px}.marker{display:flex;align-items:center;padding:8px;background:#f5f5f5;border-radius:4px}.marker-num{width:24px;height:24px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;margin-right:10px}.marker-info{flex:1}.marker-name{font-weight:bold;color:#333}.marker-coords{font-size:12px;color:#666}.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;color:#999;font-size:12px}</style></head><body><div class="container"><div class="header"><h1>Sample GPS Flight Report</h1><p>Demonstration Project - New York City Area</p></div><div class="section"><div class="section-title">Flight Statistics</div><div class="stats"><div class="stat-box"><div class="stat-value">5</div><div class="stat-label">GPS Waypoints</div></div><div class="stat-box"><div class="stat-value">2.4 km</div><div class="stat-label">Flight Distance</div></div><div class="stat-box"><div class="stat-value">312 m</div><div class="stat-label">Max Altitude</div></div></div></div><div class="section"><div class="section-title">Flight Map</div><div style="width:100%;height:300px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:bold"><div style="text-align:center"><div style="font-size:48px;margin-bottom:10px">🗺️</div><div>Sample Flight Map</div><div style="font-size:12px;margin-top:10px;opacity:0.8">5 GPS Waypoints - New York City Area</div></div></div></div><div class="section"><div class="section-title">GPS Waypoints</div><div class="markers"><div class="marker"><div class="marker-num">1</div><div class="marker-info"><div class="marker-name">Downtown Manhattan</div><div class="marker-coords">Lat: 40.7128° | Lng: -74.0060° | Alt: 245m</div></div></div><div class="marker"><div class="marker-num">2</div><div class="marker-info"><div class="marker-name">Central Park North</div><div class="marker-coords">Lat: 40.7580° | Lng: -73.9855° | Alt: 312m</div></div></div><div class="marker"><div class="marker-num">3</div><div class="marker-info"><div class="marker-name">Upper East Side</div><div class="marker-coords">Lat: 40.7489° | Lng: -73.9680° | Alt: 287m</div></div></div><div class="marker"><div class="marker-num">4</div><div class="marker-info"><div class="marker-name">Midtown East</div><div class="marker-coords">Lat: 40.7614° | Lng: -73.9776° | Alt: 298m</div></div></div><div class="marker"><div class="marker-num">5</div><div class="marker-info"><div class="marker-name">Times Square</div><div class="marker-coords">Lat: 40.7505° | Lng: -73.9972° | Alt: 305m</div></div></div></div></div><div class="footer"><p>This is a sample report generated for demonstration purposes.</p><p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p></div></div></body></html>`;
+}
+
 interface ReportGeneratorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -144,7 +148,7 @@ export function ReportGeneratorDialog({
   }, []);
 
   const handleGenerateReport = async () => {
-    if (selectedMediaIds.size === 0) {
+    if (selectedMediaIds.size === 0 && !isDemoProject) {
       toast.error("Please select at least one photo");
       return;
     }
@@ -156,26 +160,35 @@ export function ReportGeneratorDialog({
 
     setIsGenerating(true);
     try {
-      const result = await generateMutation.mutateAsync({
-        projectId,
-        mediaIds: Array.from(selectedMediaIds),
-        resolution,
-        mapStyle,
-        showFlightPath,
-        includeWatermark,
-        watermarkData: watermarkData || undefined,
-        watermarkPosition,
-        watermarkOpacity,
-        watermarkScale,
-        userLogoUrl: userLogo?.logoUrl || undefined,
-      });
+      if (isDemoProject) {
+        const sampleHtml = generateSampleDemoReport();
+        setPreviewHtml(sampleHtml);
+        setShowPreview(true);
+        toast.success("Sample GPS report generated");
+      } else {
+        const result = await generateMutation.mutateAsync({
+          projectId,
+          mediaIds: Array.from(selectedMediaIds),
+          resolution,
+          mapStyle,
+          showFlightPath,
+          includeWatermark,
+          watermarkData: watermarkData || undefined,
+          watermarkPosition,
+          watermarkOpacity,
+          watermarkScale,
+          userLogoUrl: userLogo?.logoUrl || undefined,
+        });
 
-      setPreviewHtml(result.html);
-      setShowPreview(true);
-      toast.success(`Report generated with ${result.mediaCount} photos`);
+        setPreviewHtml(result.html);
+        setShowPreview(true);
+        toast.success(`Report generated with ${result.mediaCount} photos`);
+      }
     } catch (error) {
-      console.error("Failed to generate report:", error);
-      toast.error("Failed to generate report");
+      if (!isDemoProject) {
+        console.error("Failed to generate report:", error);
+        toast.error("Failed to generate report");
+      }
     } finally {
       setIsGenerating(false);
     }

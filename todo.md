@@ -957,3 +957,13 @@
 
 ## Distribute Demo Photos Across Flights
 - [x] Distribute 11 demo photos across 3 existing flights to showcase flight organization
+
+
+## Demo Project Improvements
+- [x] Hide console errors for report generation in demo mode
+- [x] Disable media photo/video enlargement for demo users
+- [x] Create imaginary drone flight with 5 GPS marker points in USA
+- [x] Generate sample GPS report template
+- [x] Implement report generation display on "Generate Report" button click
+- [x] Apply all demo improvements to main flight and 4 additional flights
+- [x] Test all demo features work correctly
