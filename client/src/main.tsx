@@ -14,7 +14,12 @@ const queryClient = new QueryClient();
 const isDemoRoute = () => {
   if (typeof window === "undefined") return false;
   const path = window.location.pathname;
-  return path === '/project/1' || path === '/demo' || path.startsWith('/demo/');
+  // Check for demo routes: /demo, /demo/*, /project/1, /project/1/*
+  const isDemoPath = path === '/demo' || 
+                     path.startsWith('/demo/') || 
+                     path === '/project/1' || 
+                     path.startsWith('/project/1/');
+  return isDemoPath;
 };
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {

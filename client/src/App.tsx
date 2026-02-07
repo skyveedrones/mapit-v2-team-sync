@@ -37,10 +37,16 @@ import DemoProject from "./pages/DemoProject";
 /**
  * Protected Route Component
  * Redirects to login if user is not authenticated
+ * Allows unauthenticated access to demo project (ID: 1)
  */
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({ component: Component, isDemoRoute = false }: { component: React.ComponentType; isDemoRoute?: boolean }) {
   const { isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
+
+  // Skip authentication check for demo routes
+  if (isDemoRoute) {
+    return <Component />;
+  }
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
