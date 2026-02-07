@@ -290,8 +290,8 @@ export function generateReportHtml(
     });
   };
 
-  // SkyVee logo - always use text with black font
-  const skyVeeLogo = `<span class="skyvee-logo-text">SkyVee</span>`;
+  // MAPIT logo - use the actual logo image
+  const skyVeeLogo = `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="MAPIT" class="mapit-logo-img" />`;
 
   // Generate priority items section with thumbnails and notes
   const generatePrioritySection = () => {
@@ -457,11 +457,10 @@ export function generateReportHtml(
       align-items: center;
       padding-left: 15px;
     }
-    .logo-left .skyvee-logo-text {
-      font-size: 36px;
-      font-weight: bold;
-      color: #000000;
-      letter-spacing: -0.5px;
+    .logo-left .mapit-logo-img {
+      height: 80px;
+      width: auto;
+      max-width: 300px;
     }
     .logo-right {
       padding-right: 15px;
