@@ -29,6 +29,11 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
 async function forceRegenerateThumbnails(projectIds: number[]) {
   const db = await getDb();
   
+  if (!db) {
+    console.error("Failed to connect to database");
+    return;
+  }
+  
   let totalSuccess = 0;
   let totalFailed = 0;
   

@@ -698,6 +698,7 @@ export default function FlightDetail() {
         flightId={flightId}
         flightName={flight.name}
         media={flight.media || []}
+        isDemoProject={isDemoProject}
       />
 
       {/* Delete Confirmation Dialog */}
