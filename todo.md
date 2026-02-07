@@ -947,3 +947,10 @@
 - [x] Disable export GPS data
 - [x] Disable PDF report download and email
 - [x] Disable watermark delete and upload
+
+## Create Interactive Demo Tour
+- [ ] Install tour library (driver.js or intro.js)
+- [ ] Create tour configuration with key feature highlights
+- [ ] Implement tour component
+- [ ] Integrate tour into demo project page
+- [ ] Test tour functionality

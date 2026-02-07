@@ -17,6 +17,7 @@ import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { WarrantyReminderDialog } from "@/components/WarrantyReminderDialog";
 import { ProjectLogoDialog } from "@/components/ProjectLogoDialog";
+import { DemoBanner } from "@/components/DemoBanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -241,6 +242,7 @@ export default function ProjectDetail() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
@@ -274,6 +276,13 @@ export default function ProjectDetail() {
             animate="visible"
             variants={staggerContainer}
           >
+            {/* Demo Banner */}
+            {isDemoProject && (
+              <motion.div variants={fadeInUp} className="mb-6">
+                <DemoBanner />
+              </motion.div>
+            )}
+
             {/* Back Button & Header */}
             <motion.div variants={fadeInUp} className="mb-6">
               <Link href="/dashboard">
@@ -283,7 +292,7 @@ export default function ProjectDetail() {
                 </Button>
               </Link>
 
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div id="demo-welcome" className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex items-start gap-4">
                   {/* Project Logo */}
                   {project.logoUrl && (
@@ -336,7 +345,7 @@ export default function ProjectDetail() {
                   {/* Consolidated Project Actions Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      <Button id="project-actions" className="bg-primary text-primary-foreground hover:bg-primary/90">
                         Project Actions
                         <ChevronDown className="h-4 w-4 ml-2" />
                       </Button>
@@ -535,12 +544,14 @@ export default function ProjectDetail() {
               </div>
 
               {hasMedia ? (
+                <div id="media-gallery">
                 <MediaGallery
                   isDemoProject={isDemoProject}
                   projectId={projectId} 
                   canEdit={canEdit}
                   onUploadClick={() => setUploadDialogOpen(true)}
                 />
+                </div>
               ) : (
                 <Card className="border-dashed">
                   <CardContent className="py-12 text-center">
