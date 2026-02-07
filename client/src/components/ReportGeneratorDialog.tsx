@@ -48,6 +48,7 @@ interface ReportGeneratorDialogProps {
   projectId: number;
   projectName: string;
   media: Media[];
+  isDemoProject?: boolean;
 }
 
 type ResolutionPreset = "high" | "medium" | "low" | "thumbnail";
@@ -78,6 +79,7 @@ export function ReportGeneratorDialog({
   projectId,
   projectName,
   media,
+  isDemoProject = false,
 }: ReportGeneratorDialogProps) {
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());
   // Default to 'low' resolution on mobile devices to keep file size manageable
@@ -97,8 +99,10 @@ export function ReportGeneratorDialog({
 
   const generateMutation = trpc.report.generate.useMutation();
 
-  // Fetch user logo for report header
-  const { data: userLogo } = trpc.logo.get.useQuery();
+  // Fetch user logo for report header (skip for demo project)
+  const { data: userLogo } = trpc.logo.get.useQuery(undefined, {
+    enabled: !isDemoProject,
+  });
 
   // Filter to only show photos
   const photos = media.filter(m => m.mediaType === "photo");

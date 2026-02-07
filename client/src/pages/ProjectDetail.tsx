@@ -618,6 +618,7 @@ export default function ProjectDetail() {
         projectId={projectId}
         projectName={project?.name || "Project"}
         media={mediaList || []}
+        isDemoProject={isDemoProject}
       />
 
       <WarrantyReminderDialog

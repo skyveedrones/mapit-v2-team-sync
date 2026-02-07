@@ -86,6 +86,7 @@ export default function FlightDetail() {
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
   const flightId = parseInt(params.flightId || "0", 10);
+  const isDemoProject = projectId === 1;
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -102,17 +103,27 @@ export default function FlightDetail() {
 
   const utils = trpc.useUtils();
 
-  // Fetch flight details with media
-  const { data: flight, isLoading, error } = trpc.flight.get.useQuery(
-    { id: flightId },
-    { enabled: flightId > 0 }
-  );
+  // Fetch flight details with media - use demo procedure for unauthenticated demo access
+  const { data: flight, isLoading, error } = isDemoProject
+    ? trpc.flight.getDemo.useQuery(
+        { id: flightId },
+        { enabled: flightId > 0 }
+      )
+    : trpc.flight.get.useQuery(
+        { id: flightId },
+        { enabled: flightId > 0 }
+      );
 
-  // Fetch parent project for breadcrumb
-  const { data: project } = trpc.project.get.useQuery(
-    { id: projectId },
-    { enabled: projectId > 0 }
-  );
+  // Fetch parent project for breadcrumb - use demo procedure for unauthenticated demo access
+  const { data: project } = isDemoProject
+    ? trpc.project.getDemo.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      )
+    : trpc.project.get.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      );
 
   const updateFlight = trpc.flight.update.useMutation({
     onSuccess: () => {

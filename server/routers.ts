@@ -1575,6 +1575,29 @@ export const appRouter = router({
         
         return await getProjectFlights(input.projectId);
       }),
+    // Get single flight for demo project without authentication
+    getDemo: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const flight = await getFlightById(input.id);
+        if (!flight) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Flight not found",
+          });
+        }
+        
+        // Only allow access to demo project flights (project ID: 1)
+        if (flight.projectId !== 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only demo project flights are publicly accessible",
+          });
+        }
+        
+        const media = await getFlightMedia(input.id);
+        return { ...flight, media };
+      }),
     // Create a new flight within a project
     create: protectedProcedure
       .input(z.object({

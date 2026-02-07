@@ -106,7 +106,13 @@ function Router() {
         }}
       </Route>
       <Route path="/project/:id/map">
-        {() => <ProtectedRoute component={ProjectMap} />}
+        {(params) => {
+          // Demo project (ID: 1) doesn't require authentication
+          if (params.id === '1') {
+            return <ProjectMap />;
+          }
+          return <ProtectedRoute component={ProjectMap} />;
+        }}
       </Route>
       <Route path="/project/:id/flight/:flightId">
         {(params) => {

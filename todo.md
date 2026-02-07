@@ -887,3 +887,8 @@
 - [x] Investigate why map shows 'No GPS Data Available'
 - [x] Fix GPS marker display on project map
 - [x] Verify GPS points and flight path display correctly
+
+## Fix Demo Project Issues
+- [x] Fix full screen map redirecting to login - add demo support to ProjectMap page
+- [x] Fix PDF report preview errors in demo mode - handle unauthenticated report generation
+- [x] Fix flight detail pages showing "no media or not authorized" - use demo procedures for flight details

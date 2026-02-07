@@ -47,6 +47,7 @@ export default function ProjectMap() {
   const { id, flightId: flightIdParam } = useParams<{ id: string; flightId?: string }>();
   const projectId = parseInt(id || "0", 10);
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
+  const isDemoProject = projectId === 1;
   const { user } = useAuth();
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
@@ -61,19 +62,30 @@ export default function ProjectMap() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<GeotaggedMedia | null>(null);
 
-  // Fetch project details
-  const { data: project, isLoading: projectLoading } = trpc.project.get.useQuery(
-    { id: projectId },
-    { enabled: projectId > 0 }
-  );
+  // Fetch project details - use demo procedure for unauthenticated demo access
+  const { data: project, isLoading: projectLoading } = isDemoProject
+    ? trpc.project.getDemo.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      )
+    : trpc.project.get.useQuery(
+        { id: projectId },
+        { enabled: projectId > 0 }
+      );
 
   // Fetch media for this project (or specific flight if flightId provided)
   // When viewing project map (no flightId), only show project-level media (not flight media)
   // When viewing flight map (with flightId), show only that flight's media
-  const { data: mediaItems, isLoading: mediaLoading } = trpc.media.list.useQuery(
-    { projectId, flightId, includeFlightMedia: false },
-    { enabled: projectId > 0 }
-  );
+  // Use demo procedure for unauthenticated demo access
+  const { data: mediaItems, isLoading: mediaLoading } = isDemoProject
+    ? trpc.media.listDemo.useQuery(
+        { projectId, flightId, includeFlightMedia: false },
+        { enabled: projectId > 0 }
+      )
+    : trpc.media.list.useQuery(
+        { projectId, flightId, includeFlightMedia: false },
+        { enabled: projectId > 0 }
+      );
 
   // Filter media with GPS coordinates and convert decimal strings to numbers
   const geotaggedMedia: GeotaggedMedia[] = (mediaItems || [])
