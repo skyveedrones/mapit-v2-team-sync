@@ -290,10 +290,8 @@ export function generateReportHtml(
     });
   };
 
-  // SkyVee logo - use the actual logo image if provided, otherwise use text fallback
-  const skyVeeLogo = skyVeeLogoDataUrl 
-    ? `<img src="${skyVeeLogoDataUrl}" alt="SkyVee" class="skyvee-logo-img" />`
-    : `<span class="skyvee-logo-text">SkyVee</span>`;
+  // SkyVee logo - always use text with black font
+  const skyVeeLogo = `<span class="skyvee-logo-text">SkyVee</span>`;
 
   // Generate priority items section with thumbnails and notes
   const generatePrioritySection = () => {
@@ -459,14 +457,11 @@ export function generateReportHtml(
       align-items: center;
       padding-left: 15px;
     }
-    .logo-left .skyvee-logo-img {
-      height: 70px;
-      width: auto;
-    }
     .logo-left .skyvee-logo-text {
-      font-size: 32px;
+      font-size: 36px;
       font-weight: bold;
       color: #000000;
+      letter-spacing: -0.5px;
     }
     .logo-right {
       padding-right: 15px;
