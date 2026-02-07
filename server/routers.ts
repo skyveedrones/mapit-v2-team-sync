@@ -2296,11 +2296,11 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-light.png');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-dark.png');
           const logoBuffer = await fs.readFile(logoPath);
           skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
-          console.error('[Report] Failed to load Mapit logo:', error);
+          console.error('[Report] Failed to load SkyVee logo:', error);
         }
 
         // Generate HTML report
@@ -2521,11 +2521,11 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-light.png');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'skyvee-logo-dark.png');
           const logoBuffer = await fs.readFile(logoPath);
           skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
-          console.error('[Report] Failed to load Mapit logo:', error);
+          console.error('[Report] Failed to load SkyVee logo:', error);
         }
 
         // Get the parent project for full report data
