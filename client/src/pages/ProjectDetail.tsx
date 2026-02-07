@@ -354,9 +354,12 @@ export default function ProjectDetail() {
                         <FileText className="h-4 w-4 mr-2 text-orange-500" />
                         Generate Report
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setExportDialogOpen(true)}>
+                      <DropdownMenuItem 
+                        onClick={() => isDemoProject ? null : setExportDialogOpen(true)}
+                        disabled={isDemoProject}
+                      >
                         <Download className="h-4 w-4 mr-2 text-purple-500" />
-                        Export GPS Data
+                        Export GPS Data {isDemoProject && '(Demo)'}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleComingSoon}>
                         <Layers className="h-4 w-4 mr-2 text-orange-500" />
@@ -364,7 +367,7 @@ export default function ProjectDetail() {
                       </DropdownMenuItem>
                       
                       {/* Owner-only actions */}
-                      {isOwner && (
+                      {isOwner && !isDemoProject && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>

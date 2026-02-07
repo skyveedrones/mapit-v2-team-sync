@@ -908,3 +908,42 @@
 ## Disable Demo Features
 - [ ] Disable delete icon in media gallery for demo project
 - [ ] Disable upload watermark feature for demo project
+
+## Fix HTML Error and Delete Button
+- [ ] Fix HTML nesting error: p tag cannot contain div on project detail page
+- [ ] Disable delete project button for demo project
+
+## Comprehensive Demo Read-Only Restrictions
+### Project Actions
+- [ ] Disable delete project button
+- [ ] Disable edit project settings
+- [ ] Disable project reminders
+
+### Media Actions  
+- [ ] Disable upload media
+- [ ] Disable delete media
+- [ ] Disable download selected media
+- [ ] Disable watermark upload (already done)
+- [ ] Disable watermark delete (already done)
+- [ ] Disable rename media
+- [ ] Disable update GPS coordinates
+- [ ] Disable update media notes
+- [ ] Disable update media priority
+
+### Flight Actions
+- [ ] Disable create new flight
+- [ ] Disable edit flight details
+- [ ] Disable delete flight
+
+### Report Actions
+- [ ] Disable PDF download (already done)
+- [ ] Disable email report (already done)
+
+### Other Actions
+- [ ] Fix HTML nesting error (p containing div)
+
+## Demo Restrictions Completed
+- [x] Disable delete/edit/share/logo/reminder project actions
+- [x] Disable export GPS data
+- [x] Disable PDF report download and email
+- [x] Disable watermark delete and upload
