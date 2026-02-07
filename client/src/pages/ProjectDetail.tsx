@@ -97,7 +97,8 @@ export default function ProjectDetail() {
   // Check user access permissions for this project
   const { isClientOnly, canEdit, canDelete } = useClientAccess(projectId);
   // Override permissions for demo project
-  const demoCanEdit = isDemoProject ? false : canEdit;
+  // Allow authenticated users (owner) to upload to demo, but prevent unauthenticated visitors from editing
+  const demoCanEdit = isDemoProject ? (user ? canEdit : false) : canEdit;
   const demoCanDelete = isDemoProject ? false : canDelete;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);

@@ -1,8 +1,11 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
+import { desc, eq } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { getDb } from "./db";
+import { media } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -548,19 +551,28 @@ export const appRouter = router({
           });
         }
         
-        const media = await getProjectMediaWithAccess(input.projectId, undefined as any);
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database not available",
+          });
+        }
+        
+        // Directly query media for demo project without access check
+        const mediaList = await db
+          .select()
+          .from(media)
+          .where(eq(media.projectId, input.projectId))
+          .orderBy(desc(media.createdAt));
         
         // Filter by flight if flightId provided
         if (input.flightId !== undefined) {
-          return (media || []).filter(m => m.flightId === input.flightId);
+          return mediaList.filter(m => m.flightId === input.flightId);
         }
         
-        // By default, exclude media assigned to flights
-        if (!input.includeFlightMedia) {
-          return (media || []).filter(m => m.flightId === null);
-        }
-        
-        return media || [];
+        // For demo project, always include flight media by default
+        return mediaList || [];
       }),
     // List all media for a project (owner or collaborator)
     list: protectedProcedure
@@ -625,6 +637,14 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Prevent uploads to demo project (read-only)
+        if (input.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+        
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
         if (!project) {
@@ -658,6 +678,14 @@ export const appRouter = router({
         thumbnailData: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Prevent uploads to demo project (read-only)
+        if (input.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+        
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
         if (!project) {
@@ -758,6 +786,14 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail for videos
       }))
       .mutation(async ({ ctx, input }) => {
+        // Prevent uploads to demo project (read-only)
+        if (input.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+        
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
         if (!project) {
@@ -853,6 +889,23 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        // Get media to check project
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+        
+        // Prevent deletion from demo project (read-only)
+        if (mediaItem.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+        
         const deleted = await deleteMedia(input.id, ctx.user.id);
         if (!deleted) {
           throw new TRPCError({
@@ -876,6 +929,14 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail
       }))
       .mutation(async ({ ctx, input }) => {
+        // Prevent uploads to demo project (read-only)
+        if (input.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+        
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
         if (!project) {
@@ -938,6 +999,14 @@ export const appRouter = router({
           });
         }
 
+        // Prevent edits to demo project (read-only)
+        if (mediaItem.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+
         // Verify user owns the project (not just collaborator)
         const project = await getUserProject(mediaItem.projectId, ctx.user.id);
         if (!project) {
@@ -975,6 +1044,14 @@ export const appRouter = router({
           });
         }
 
+        // Prevent edits to demo project (read-only)
+        if (mediaItem.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+
         // Verify user has access to the project (owner or collaborator)
         const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
         if (!hasAccess) {
@@ -1008,6 +1085,14 @@ export const appRouter = router({
           });
         }
 
+        // Prevent edits to demo project (read-only)
+        if (mediaItem.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
+          });
+        }
+
         // Verify user has access to the project (owner or collaborator)
         const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
         if (!hasAccess) {
@@ -1038,6 +1123,14 @@ export const appRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Media not found",
+          });
+        }
+
+        // Prevent edits to demo project (read-only)
+        if (mediaItem.projectId === 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Demo project is read-only",
           });
         }
 
