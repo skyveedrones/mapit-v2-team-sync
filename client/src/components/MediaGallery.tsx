@@ -615,6 +615,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             variant="outline"
             size="sm"
             onClick={toggleSelectAll}
+            disabled={isDemoProject}
+            title={isDemoProject ? "Selection disabled in demo mode" : ""}
           >
             {selectedIds.size === sortedMedia.length ? (
               <>

@@ -991,3 +991,7 @@
 - [x] Disable download buttons for demo project
 - [x] Remove NYC Aerial Survey flight and GPS markers
 - [x] Center map on actual photo GPS markers
+
+
+## Demo Project Media Selection Restrictions
+- [x] Deactivate Select All button for demo projects
