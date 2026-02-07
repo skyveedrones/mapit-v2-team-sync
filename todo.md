@@ -954,3 +954,6 @@
 - [ ] Implement tour component
 - [ ] Integrate tour into demo project page
 - [ ] Test tour functionality
+
+## Distribute Demo Photos Across Flights
+- [x] Distribute 11 demo photos across 3 existing flights to showcase flight organization

@@ -1,6 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -559,19 +559,21 @@ export const appRouter = router({
           });
         }
         
-        // Directly query media for demo project without access check
+        // Build where conditions
+        const conditions = [eq(media.projectId, input.projectId)];
+        
+        // Add flight filter if provided
+        if (input.flightId !== undefined) {
+          conditions.push(eq(media.flightId, input.flightId));
+        }
+        
+        // Query media for demo project with SQL filtering
         const mediaList = await db
           .select()
           .from(media)
-          .where(eq(media.projectId, input.projectId))
+          .where(and(...conditions))
           .orderBy(desc(media.createdAt));
         
-        // Filter by flight if flightId provided
-        if (input.flightId !== undefined) {
-          return mediaList.filter(m => m.flightId === input.flightId);
-        }
-        
-        // For demo project, always include flight media by default
         return mediaList || [];
       }),
     // List all media for a project (owner or collaborator)

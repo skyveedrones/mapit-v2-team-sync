@@ -527,6 +527,7 @@ export default function FlightDetail() {
                   flightId={flightId}
                   canEdit={canEdit}
                   onUploadClick={() => setUploadDialogOpen(true)}
+                  isDemoProject={isDemoProject}
                 />
               ) : (
                 <Card className="border-dashed">
