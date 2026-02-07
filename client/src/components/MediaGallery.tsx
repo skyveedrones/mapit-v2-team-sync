@@ -61,6 +61,7 @@ import { WatermarkDialog } from "./WatermarkDialog";
 import { GPSEditDialog } from "./GPSEditDialog";
 
 interface MediaGalleryProps {
+  isDemoProject?: boolean;
   projectId: number;
   flightId?: number;
   canEdit?: boolean;
@@ -69,7 +70,7 @@ interface MediaGalleryProps {
 
 type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
 
-export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick }: MediaGalleryProps) {
+export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick, isDemoProject = false }: MediaGalleryProps) {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
@@ -92,7 +93,10 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
-  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId, flightId });
+  // Fetch media - use demo procedure for unauthenticated demo access
+  const { data: mediaList, isLoading } = isDemoProject
+    ? trpc.media.listDemo.useQuery({ projectId, flightId })
+    : trpc.media.list.useQuery({ projectId, flightId });
   const deleteMutation = trpc.media.delete.useMutation();
   const updateNotesMutation = trpc.media.updateNotes.useMutation({
     onSuccess: () => {

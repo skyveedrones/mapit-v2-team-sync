@@ -531,7 +531,8 @@ export default function ProjectDetail() {
               </div>
 
               {hasMedia ? (
-                <MediaGallery 
+                <MediaGallery
+                  isDemoProject={isDemoProject}
                   projectId={projectId} 
                   canEdit={canEdit}
                   onUploadClick={() => setUploadDialogOpen(true)}

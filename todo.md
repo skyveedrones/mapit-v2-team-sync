@@ -869,3 +869,9 @@
 - [x] Update ProjectDetail to use public demo procedures for demo project
 - [x] Update DemoProject page to navigate directly to demo project
 - [x] Verify all demo features work without authentication
+
+## Fix Demo Project Media Display
+- [x] Update MediaGallery component to accept isDemoProject prop
+- [x] Conditionally use media.listDemo when in demo mode
+- [x] Update ProjectDetail to pass isDemoProject to MediaGallery
+- [x] Test demo media display works without authentication
