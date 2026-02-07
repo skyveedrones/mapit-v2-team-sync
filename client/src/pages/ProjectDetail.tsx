@@ -479,6 +479,7 @@ export default function ProjectDetail() {
               <EmbeddedProjectMap
                 projectId={project.id}
                 projectName={project.name}
+                isDemoProject={isDemoProject}
               />
             </motion.div>
 

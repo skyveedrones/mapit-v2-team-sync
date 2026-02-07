@@ -18,9 +18,10 @@ interface EmbeddedProjectMapProps {
   projectId: number;
   projectName: string;
   flightId?: number;
+  isDemoProject?: boolean;
 }
 
-export function EmbeddedProjectMap({ projectId, projectName, flightId }: EmbeddedProjectMapProps) {
+export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoProject = false }: EmbeddedProjectMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
@@ -28,7 +29,10 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId }: Embedde
   const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
-  const { data: mediaList, isLoading } = trpc.media.list.useQuery({ projectId, flightId });
+  // Fetch media - use demo procedure for unauthenticated demo access
+  const { data: mediaList, isLoading } = isDemoProject
+    ? trpc.media.listDemo.useQuery({ projectId, flightId })
+    : trpc.media.list.useQuery({ projectId, flightId });
 
   // Filter media with GPS coordinates
   const mediaWithGPS = mediaList?.filter(
