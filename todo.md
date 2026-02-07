@@ -903,3 +903,4 @@
 ## Disable Email Report and Update Location
 - [x] Disable email report button in PDF report dialog
 - [x] Update project location to "Anytown, USA"
+- [x] Delete photo 1000000322.jpg from demo project
