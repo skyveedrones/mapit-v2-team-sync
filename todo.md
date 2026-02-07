@@ -985,3 +985,9 @@
 - [x] Implement demo report generation without authentication errors
 - [x] Ensure map only shows GPS markers from media gallery
 - [x] Test all demo features work correctly without errors
+
+
+## Demo Project Download & Map Fixes
+- [x] Disable download buttons for demo project
+- [x] Remove NYC Aerial Survey flight and GPS markers
+- [x] Center map on actual photo GPS markers

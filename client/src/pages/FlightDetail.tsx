@@ -381,12 +381,14 @@ export default function FlightDetail() {
                       <Map className="h-4 w-4 mr-2 text-blue-500" />
                       View Map
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setReportDialogOpen(true)}
-                    >
-                      <Download className="h-4 w-4 mr-2 text-purple-500" />
-                      Download Report
-                    </DropdownMenuItem>
+                    {!isDemoProject && (
+                      <DropdownMenuItem
+                        onClick={() => setReportDialogOpen(true)}
+                      >
+                        <Download className="h-4 w-4 mr-2 text-purple-500" />
+                        Download Report
+                      </DropdownMenuItem>
+                    )}
 
                     {canEdit && (
                       <>
