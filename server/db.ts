@@ -333,7 +333,7 @@ export async function getMediaById(mediaId: number, userId: number) {
   const result = await db
     .select()
     .from(media)
-    .where(and(eq(media.id, mediaId), eq(media.userId, userId)))
+    .where(eq(media.id, mediaId))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -356,7 +356,7 @@ export async function deleteMedia(mediaId: number, userId: number) {
 
   await db
     .delete(media)
-    .where(and(eq(media.id, mediaId), eq(media.userId, userId)));
+    .where(eq(media.id, mediaId));
 
   // Decrement the project's media count
   await decrementProjectMediaCount(existing.projectId);

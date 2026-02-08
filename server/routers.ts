@@ -879,6 +879,14 @@ export const appRouter = router({
           });
         }
         
+        // Verify user has access to the project
+        const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
+        if (!hasAccess) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to delete media from this project",
+          });
+        }
         
         const deleted = await deleteMedia(input.id, ctx.user.id);
         if (!deleted) {
