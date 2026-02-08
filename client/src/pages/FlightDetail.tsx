@@ -310,9 +310,9 @@ export default function FlightDetail() {
             initial="hidden"
             animate="visible"
           >
-            {/* Breadcrumb */}
+            {/* Breadcrumb and Back Button */}
             <motion.div variants={fadeInUp} className="mb-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                 <Link
                   href="/dashboard"
                   className="hover:text-foreground transition-colors"
@@ -329,6 +329,16 @@ export default function FlightDetail() {
                 <span>/</span>
                 <span className="text-foreground">{flight.name}</span>
               </div>
+              <Link href={`/project/${projectId}`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground gap-2 h-8 px-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to {project?.name || "Project"}
+                </Button>
+              </Link>
             </motion.div>
 
             {/* Flight Header */}
