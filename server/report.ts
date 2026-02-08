@@ -290,8 +290,10 @@ export function generateReportHtml(
     });
   };
 
-  // MAPIT logo - use the actual logo image
-  const skyVeeLogo = `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="MAPIT" class="mapit-logo-img" />`;
+  // MAPIT logo - use the actual logo image passed from server
+  const skyVeeLogo = skyVeeLogoDataUrl 
+    ? `<img src="${skyVeeLogoDataUrl}" alt="MAPIT" class="mapit-logo-img" />`
+    : `<div style="color: #333; font-weight: bold; font-size: 24px;">MAPIT</div>`;
 
   // Generate priority items section with thumbnails and notes
   const generatePrioritySection = () => {
@@ -722,6 +724,7 @@ export function generateReportHtml(
     <div class="logo-left">
       ${skyVeeLogo}
     </div>
+    ${userLogoUrl ? `<div class="logo-right"><img src="${userLogoUrl}" alt="Company Logo" /></div>` : ""}
   </div>
   
   <!-- Report Title -->
