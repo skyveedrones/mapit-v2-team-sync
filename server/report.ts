@@ -449,7 +449,7 @@ export function generateReportHtml(
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      background: #ffffff;
       padding: 20px;
       border-bottom: 3px solid #22c55e;
       margin-bottom: 20px;
