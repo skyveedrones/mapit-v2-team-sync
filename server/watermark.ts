@@ -59,26 +59,28 @@ export async function applyWatermark(
   const wmWidth = watermarkMeta.width || watermarkWidth;
   const wmHeight = watermarkMeta.height || watermarkWidth;
 
-  // Calculate position
+  // Calculate position with extra padding for corners to prevent cutoff
   let left: number;
   let top: number;
+  // Use larger padding for corners to ensure watermark stays within bounds
+  const cornerPadding = Math.max(opts.padding, Math.ceil(wmWidth * 0.15) + 10);
 
   switch (opts.position) {
     case "top-left":
-      left = opts.padding;
-      top = opts.padding;
+      left = cornerPadding;
+      top = cornerPadding;
       break;
     case "top-right":
-      left = metadata.width - wmWidth - opts.padding;
-      top = opts.padding;
+      left = metadata.width - wmWidth - cornerPadding;
+      top = cornerPadding;
       break;
     case "bottom-left":
-      left = opts.padding;
-      top = metadata.height - wmHeight - opts.padding;
+      left = cornerPadding;
+      top = metadata.height - wmHeight - cornerPadding;
       break;
     case "bottom-right":
-      left = metadata.width - wmWidth - opts.padding;
-      top = metadata.height - wmHeight - opts.padding;
+      left = metadata.width - wmWidth - cornerPadding;
+      top = metadata.height - wmHeight - cornerPadding;
       break;
     case "center":
       left = Math.round((metadata.width - wmWidth) / 2);
