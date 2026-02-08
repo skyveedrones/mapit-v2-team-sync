@@ -639,13 +639,6 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Prevent uploads to demo project (read-only)
-        if (input.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -680,13 +673,6 @@ export const appRouter = router({
         thumbnailData: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Prevent uploads to demo project (read-only)
-        if (input.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -788,13 +774,6 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail for videos
       }))
       .mutation(async ({ ctx, input }) => {
-        // Prevent uploads to demo project (read-only)
-        if (input.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -900,13 +879,6 @@ export const appRouter = router({
           });
         }
         
-        // Prevent deletion from demo project (read-only)
-        if (mediaItem.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
         
         const deleted = await deleteMedia(input.id, ctx.user.id);
         if (!deleted) {
@@ -931,13 +903,6 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail
       }))
       .mutation(async ({ ctx, input }) => {
-        // Prevent uploads to demo project (read-only)
-        if (input.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -1001,14 +966,6 @@ export const appRouter = router({
           });
         }
 
-        // Prevent edits to demo project (read-only)
-        if (mediaItem.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
-
         // Verify user owns the project (not just collaborator)
         const project = await getUserProject(mediaItem.projectId, ctx.user.id);
         if (!project) {
@@ -1046,14 +1003,6 @@ export const appRouter = router({
           });
         }
 
-        // Prevent edits to demo project (read-only)
-        if (mediaItem.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
-
         // Verify user has access to the project (owner or collaborator)
         const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
         if (!hasAccess) {
@@ -1087,14 +1036,6 @@ export const appRouter = router({
           });
         }
 
-        // Prevent edits to demo project (read-only)
-        if (mediaItem.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
-          });
-        }
-
         // Verify user has access to the project (owner or collaborator)
         const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
         if (!hasAccess) {
@@ -1125,14 +1066,6 @@ export const appRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Media not found",
-          });
-        }
-
-        // Prevent edits to demo project (read-only)
-        if (mediaItem.projectId === 1) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Demo project is read-only",
           });
         }
 
