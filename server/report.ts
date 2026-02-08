@@ -460,16 +460,16 @@ export function generateReportHtml(
       padding-left: 15px;
     }
     .logo-left .mapit-logo-img {
-      height: 80px;
+      height: 50px;
       width: auto;
-      max-width: 300px;
+      max-width: 200px;
     }
     .logo-right {
       padding-right: 15px;
     }
     .logo-right img {
-      max-height: 70px;
-      max-width: 180px;
+      max-height: 90px;
+      max-width: 250px;
       object-fit: contain;
     }
     
