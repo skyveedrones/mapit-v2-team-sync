@@ -100,7 +100,7 @@ export default function ProjectDetail() {
   // Override permissions for demo project
   // Allow authenticated users (owner) to upload to demo, but prevent unauthenticated visitors from editing
   const demoCanEdit = isDemoProject ? (user ? canEdit : false) : canEdit;
-  const demoCanDelete = isDemoProject ? false : canDelete;
+  const demoCanDelete = canDelete;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
