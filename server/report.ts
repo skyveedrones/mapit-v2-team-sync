@@ -447,12 +447,12 @@ export function generateReportHtml(
     /* Header with dual logos */
     .report-header {
       display: flex;
-      justify-content: flex-start;
+      justify-content: space-between;
       align-items: center;
-      padding: 20px 0 15px 0;
-      border-bottom: 2px solid #000000;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      padding: 20px;
+      border-bottom: 3px solid #22c55e;
       margin-bottom: 20px;
-      margin-top: 10px;
     }
     .logo-left {
       display: flex;
@@ -460,16 +460,18 @@ export function generateReportHtml(
       padding-left: 15px;
     }
     .logo-left .mapit-logo-img {
-      height: 50px;
+      height: 30px;
       width: auto;
-      max-width: 200px;
+      max-width: 120px;
     }
     .logo-right {
       padding-right: 15px;
+      flex: 1;
+      text-align: right;
     }
     .logo-right img {
-      max-height: 90px;
-      max-width: 250px;
+      max-height: 120px;
+      max-width: 350px;
       object-fit: contain;
     }
     
