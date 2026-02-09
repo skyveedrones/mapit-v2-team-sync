@@ -518,18 +518,19 @@ export default function Home() {
                 <Download className="mr-2 h-5 w-5" />
                 Download the App
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
-                onClick={() => {
-                  trackEvent('demo_to_trial_click');
-                  handleLogin();
-                }}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                Start Free Trial
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                  onClick={() => {
+                    trackEvent('demo_to_trial_click');
+                  }}
+                >
+                  <Zap className="mr-2 h-5 w-5" />
+                  Start Free Trial
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>
