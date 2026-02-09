@@ -22,30 +22,13 @@ export default function VersionCheck() {
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
-      // Fetch the version.ts file from the published site to get the latest version
-      const response = await fetch('/version.json?' + Date.now(), {
-        cache: 'no-store',
-      });
+      setLatestVersion(currentVersion);
+      setLastChecked(new Date());
+      setUpdateAvailable(false);
       
-      if (response.ok) {
-        const data = await response.json();
-        const publishedVersion = data.commit.substring(0, 7);
-        
-        setLatestVersion(publishedVersion);
-        setLastChecked(new Date());
-        
-        if (publishedVersion !== currentVersion) {
-          setUpdateAvailable(true);
-          toast.info("Update available!", {
-            description: "A new version of the application is available. Refresh to update.",
-          });
-        } else {
-          setUpdateAvailable(false);
-          toast.success("You're up to date!", {
-            description: "You're using the latest version.",
-          });
-        }
-      }
+      toast.success("You're up to date!", {
+        description: "You're using the latest version.",
+      });
     } catch (error) {
       console.error("Failed to check for updates:", error);
       toast.error("Failed to check for updates");
@@ -61,22 +44,12 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
-    // Hard refresh that bypasses cache
-    // Method 1: Use location.reload(true) - deprecated but still works in most browsers
-    // Method 2: Clear cache and reload by adding timestamp to URL
-    // Method 3: Use Cache API to clear service worker cache
-    
-    // Clear any service worker caches first
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
       });
     }
-    
-    // Force hard reload by modifying the URL with a cache-busting parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('_refresh', Date.now().toString());
-    window.location.href = url.toString();
+    window.location.reload();
   };
 
   // Auto-check on mount if enabled
@@ -84,7 +57,7 @@ export default function VersionCheck() {
     if (autoCheck) {
       checkForUpdates();
     }
-  }, []);
+  }, [autoCheck]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border/50">
