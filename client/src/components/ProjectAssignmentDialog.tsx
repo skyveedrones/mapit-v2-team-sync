@@ -142,8 +142,8 @@ export function ProjectAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="pb-4 border-b">
           <DialogTitle>Manage Project Access for {userName}</DialogTitle>
         </DialogHeader>
 
@@ -153,7 +153,7 @@ export function ProjectAssignmentDialog({
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-4">
               <p className="text-sm text-muted-foreground">
                 {selectedProjects.size} of {allProjects?.length || 0} projects selected
               </p>
@@ -231,7 +231,7 @@ export function ProjectAssignmentDialog({
               )}
             </ScrollArea>
 
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-6 mt-auto border-t">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
