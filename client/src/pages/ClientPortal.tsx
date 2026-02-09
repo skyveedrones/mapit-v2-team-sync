@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -100,6 +101,7 @@ export default function ClientPortal() {
 
       {/* Main Content */}
       <main className="container py-8">
+        <BackToDashboard />
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-2">Your Projects</h2>
           <p className="text-muted-foreground">

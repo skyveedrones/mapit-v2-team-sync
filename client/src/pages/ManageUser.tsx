@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,12 +125,7 @@ export default function ManageUser() {
 
       {/* Main Content */}
       <main className="container py-8">
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" onClick={() => setLocation("/portal")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Portal
-          </Button>
-        </div>
+        <BackToDashboard />
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* User Information */}

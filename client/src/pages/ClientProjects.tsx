@@ -4,6 +4,7 @@
  */
 
 import DashboardLayout from "@/components/DashboardLayout";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -117,15 +118,11 @@ export default function ClientProjects() {
 
   return (
     <DashboardLayout>
+      <BackToDashboard />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/clients">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
             <div>
               <h1 className="text-2xl font-bold font-display">{client.name}</h1>
               <p className="text-muted-foreground">

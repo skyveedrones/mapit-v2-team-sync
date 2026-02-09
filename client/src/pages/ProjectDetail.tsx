@@ -5,6 +5,7 @@
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useClientAccess } from "@/hooks/useClientAccess";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
@@ -206,12 +207,7 @@ export default function ProjectDetail() {
                 <p className="text-muted-foreground mb-4">
                   The project you're looking for doesn't exist or you don't have access to it.
                 </p>
-                <Link href="/dashboard">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Dashboard
-                  </Button>
-                </Link>
+                <BackToDashboard variant="default" />
               </CardContent>
             </Card>
           </div>
@@ -295,12 +291,7 @@ export default function ProjectDetail() {
 
             {/* Back Button & Header */}
             <motion.div variants={fadeInUp} className="mb-6">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="mb-4 -ml-2">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
+              <BackToDashboard />
 
               <div id="demo-welcome" className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex items-start gap-4">

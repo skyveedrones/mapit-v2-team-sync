@@ -5,6 +5,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
@@ -414,9 +415,7 @@ export default function ProjectMap() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
-          <Link href="/dashboard">
-            <Button>Back to Dashboard</Button>
-          </Link>
+          <BackToDashboard variant="default" />
         </div>
       </div>
     );

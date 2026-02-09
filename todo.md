@@ -1034,3 +1034,15 @@
 - [x] Configure "User" role permissions (read, view, download, upload, email, create flights)
 - [x] Restrict "User" role from accessing account and user information
 - [x] Test "User" role permissions
+
+## New Task - Add Back to Dashboard Navigation
+
+- [x] Create reusable BackToDashboard component
+- [x] Add BackToDashboard to ProjectDetail page
+- [x] Add BackToDashboard to FlightDetail page
+- [x] Add BackToDashboard to ProjectMap page
+- [x] Add BackToDashboard to ClientPortal page
+- [x] Add BackToDashboard to ManageUser page
+- [x] Add BackToDashboard to ClientProjects page
+- [x] Add BackToDashboard to other pages as needed
+- [x] Test all pages have proper navigation
