@@ -661,15 +661,45 @@ export default function ProjectDetail() {
         onOpenChange={setLogoDialogOpen}
       />
 
-      {/* Sample Report Dialog - Shows the generated sample report from demo project */}
-      <ReportGeneratorDialog
-        open={sampleReportDialogOpen}
-        onOpenChange={setSampleReportDialogOpen}
-        projectId={projectId}
-        projectName={project?.name || "Project"}
-        media={mediaList || []}
-        isDemoProject={isDemoProject}
-      />
+      {/* Sample Report Dialog - Shows the PDF sample report */}
+      {sampleReportDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold">Sample Project Report</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSampleReportDialogOpen(false)}
+              >
+                X
+              </Button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <iframe
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
+                className="w-full h-full"
+                title="Sample Project Report"
+              />
+            </div>
+            <div className="flex items-center justify-between p-4 border-t border-border">
+              <a
+                href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
+                download="DemoSampleReport.pdf"
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Download PDF
+              </a>
+              <Button
+                variant="outline"
+                onClick={() => setSampleReportDialogOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
