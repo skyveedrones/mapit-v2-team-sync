@@ -219,16 +219,15 @@ export default function Home() {
               >
                 See Demo
               </Button>
-              <Button
-                variant="ghost"
-                className="w-full text-foreground"
-                onClick={() => {
-                  toast.info("Coming Soon!", { description: "Pricing plans will be available soon." });
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Pricing
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  variant="ghost"
+                  className="w-full text-foreground"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Pricing
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 className="w-full text-foreground"
@@ -352,14 +351,15 @@ export default function Home() {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
-                onClick={() => toast.info("Coming Soon!", { description: "Pricing plans will be available soon." })}
-              >
-                View Pricing
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                >
+                  View Pricing
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>
