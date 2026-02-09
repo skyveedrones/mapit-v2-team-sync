@@ -678,26 +678,16 @@ export default function ProjectDetail() {
             <div className="p-6 text-center">
               <FileText className="h-12 w-12 mx-auto mb-4 text-emerald-600" />
               <h3 className="text-xl font-semibold mb-2">DemoSampleReport.pdf</h3>
-              <p className="text-muted-foreground mb-6">Click below to view or download the sample project report</p>
-              <div className="flex gap-3 justify-center">
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                  onClick={() => {
-                    window.open('https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf', '_blank');
-                  }}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  View PDF
-                </Button>
-                <a
-                  href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
-                  download="DemoSampleReport.pdf"
-                  className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-border hover:bg-accent"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </a>
-              </div>
+              <p className="text-muted-foreground mb-6">Click below to view the sample project report</p>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => {
+                  window.open('https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf', '_blank');
+                }}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                View PDF
+              </Button>
             </div>
           </div>
         </div>
