@@ -45,6 +45,10 @@ import { toast } from "sonner";
 function generateSampleDemoReport(): string {
   // This is a placeholder that will be replaced with actual generated report HTML
   // The real sample report is generated from the Demonstration Project data
+  const now = new Date();
+  const currentDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -442,6 +446,14 @@ export function ReportGeneratorDialog({
       return;
     }
 
+    // For demo project, show the sample report immediately
+    if (isDemoProject) {
+      const sampleHtml = generateSampleDemoReport();
+      setPreviewHtml(sampleHtml);
+      setShowPreview(true);
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const result = await generateMutation.mutateAsync({
@@ -462,10 +474,8 @@ export function ReportGeneratorDialog({
       setShowPreview(true);
       toast.success(`Report generated with ${result.mediaCount} photos`);
     } catch (error) {
-      if (!isDemoProject) {
-        console.error("Failed to generate report:", error);
-        toast.error("Failed to generate report");
-      }
+      console.error("Failed to generate report:", error);
+      toast.error("Failed to generate report");
     } finally {
       setIsGenerating(false);
     }
@@ -884,7 +894,7 @@ export function ReportGeneratorDialog({
           </Button>
           <Button
             onClick={handleGenerateReport}
-            disabled={isGenerating || selectedMediaIds.size === 0}
+            disabled={isGenerating || (selectedMediaIds.size === 0 && !isDemoProject)}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             {isGenerating ? (

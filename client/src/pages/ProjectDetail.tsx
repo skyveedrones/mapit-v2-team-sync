@@ -288,7 +288,7 @@ export default function ProjectDetail() {
                   className="whitespace-nowrap"
                   onClick={() => setSampleReportDialogOpen(true)}
                 >
-                  See Sample Project
+                  See Sample Project Report
                 </Button>
               </motion.div>
             )}
