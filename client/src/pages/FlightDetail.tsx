@@ -310,8 +310,8 @@ export default function FlightDetail() {
             initial="hidden"
             animate="visible"
           >
-            {/* Breadcrumb and Back Button */}
-            <motion.div variants={fadeInUp} className="mb-6">
+            {/* Breadcrumb and Back Button - Hidden */}
+            {/* <motion.div variants={fadeInUp} className="mb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                 <Link
                   href="/dashboard"
@@ -339,7 +339,7 @@ export default function FlightDetail() {
                   Back to {project?.name || "Project"}
                 </Button>
               </Link>
-            </motion.div>
+            </motion.div> */}
 
             {/* Flight Header */}
             <motion.div

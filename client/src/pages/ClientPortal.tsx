@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
-import { Building2, FolderOpen, Image, LogOut, MapPin } from "lucide-react";
-import { Link } from "wouter";
+import { Building2, FolderOpen, Image, LogOut, MapPin, Settings } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 export default function ClientPortal() {
   const { user, logout, loading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   
   // Get client portal data for the current user
   const { data: portalData, isLoading } = trpc.clientPortal.getMyPortal.useQuery(undefined, {
@@ -85,6 +86,10 @@ export default function ClientPortal() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user?.name}</span>
+            <Button variant="outline" size="sm" onClick={() => setLocation("/portal/manage-user")}>
+              <Settings className="mr-2 h-4 w-4" />
+              Manage User
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => logout()}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

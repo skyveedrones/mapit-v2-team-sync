@@ -444,13 +444,15 @@ export async function sendClientInvitationEmail(params: {
   to: string;
   inviterName: string;
   clientName: string;
-  role: 'viewer' | 'admin';
+  role: 'viewer' | 'user' | 'admin';
   inviteUrl: string;
 }): Promise<{ success: boolean; error?: string }> {
   const { to, inviterName, clientName, role, inviteUrl } = params;
   
   const roleDescription = role === 'admin' 
     ? 'view projects and manage settings' 
+    : role === 'user'
+    ? 'view, download, upload media, and create flights'
     : 'view projects';
   
   const html = generateEmailTemplate({

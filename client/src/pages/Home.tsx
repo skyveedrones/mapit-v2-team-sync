@@ -134,31 +134,9 @@ export default function Home() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <Button
-              variant="ghost"
-              className="text-foreground hover:text-primary"
-              onClick={() => {
-                trackEvent('demo_button_click_homepage');
-                setLocation("/demo");
-              }}
-            >
-              See Demo
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-foreground hover:text-primary"
-              onClick={() => toast.info("Coming Soon!", { description: "Pricing plans will be available soon." })}
-            >
-              Pricing
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-foreground hover:text-primary"
-              onClick={() => setShowDownloadDialog(true)}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download App
-            </Button>
+
+
+
             <Button
               variant="ghost"
               size="icon"
@@ -193,18 +171,18 @@ export default function Home() {
             ) : (
               <>
                 <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => setLocation("/dashboard")}
-                >
-                  Client Portal
-                </Button>
-                <Button
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleLogin}
                   disabled={loading}
                 >
                   {loading ? "Loading..." : "Login"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => setLocation("/dashboard")}
+                >
+                  Client Portal
                 </Button>
               </>
             )}

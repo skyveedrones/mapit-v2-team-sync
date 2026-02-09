@@ -3145,7 +3145,7 @@ export const appRouter = router({
         z.object({
           clientId: z.number(),
           email: z.string().email(),
-          role: z.enum(["viewer", "admin"]).default("viewer"),
+          role: z.enum(["viewer", "user", "admin"]).default("viewer"),
           sendEmail: z.boolean().optional().default(true),
         })
       )

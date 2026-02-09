@@ -64,6 +64,8 @@ import { ProjectAssignmentDialog } from "@/components/ProjectAssignmentDialog";
 function generateClientInviteEmailTemplate(invite: { inviteUrl: string; email: string; role: string; clientName: string }) {
   const roleDescription = invite.role === 'admin' 
     ? 'manage the client portal and view all projects'
+    : invite.role === 'user'
+    ? 'view, download, upload, and create flights for projects'
     : 'view all projects assigned to this client';
   
   return `Subject: You've been invited to ${invite.clientName}'s MapIt Portal
@@ -115,7 +117,7 @@ export default function ClientManage() {
   
   // Form states
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"viewer" | "admin">("viewer");
+  const [inviteRole, setInviteRole] = useState<"viewer" | "user" | "admin">("viewer");
   const [inviteMethod, setInviteMethod] = useState<"email" | "copy">("email");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -882,13 +884,14 @@ export default function ClientManage() {
               <Label htmlFor="inviteRole">Role</Label>
               <Select
                 value={inviteRole}
-                onValueChange={(v) => setInviteRole(v as "viewer" | "admin")}
+                onValueChange={(v) => setInviteRole(v as "viewer" | "user" | "admin")}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="viewer">Viewer - Can view projects</SelectItem>
+                  <SelectItem value="user">User - Can view, download, upload, and create flights</SelectItem>
                   <SelectItem value="admin">Admin - Can manage client</SelectItem>
                 </SelectContent>
               </Select>

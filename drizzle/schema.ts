@@ -31,6 +31,8 @@ export const users = mysqlTable("users", {
   defaultFaaLicenseNumber: varchar("defaultFaaLicenseNumber", { length: 100 }),
   /** Default LAANC authorization number for new projects */
   defaultLaancAuthNumber: varchar("defaultLaancAuthNumber", { length: 100 }),
+  /** User's organization name */
+  organization: varchar("organization", { length: 255 }),
   /** Stripe customer ID for billing */
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   /** Stripe subscription ID for active subscription */
@@ -301,8 +303,8 @@ export const clientUsers = mysqlTable("client_users", {
   clientId: int("clientId").notNull(),
   /** Foreign key to users table */
   userId: int("userId").notNull(),
-  /** Role of the user: viewer can only view, admin can manage client settings */
-  role: mysqlEnum("role", ["viewer", "admin"]).default("viewer").notNull(),
+  /** Role of the user: viewer can only view, user can view/download/upload/create flights, admin can manage client settings */
+  role: mysqlEnum("role", ["viewer", "user", "admin"]).default("viewer").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -323,7 +325,7 @@ export const clientInvitations = mysqlTable("client_invitations", {
   /** Unique token for accepting the invitation */
   token: varchar("token", { length: 64 }).notNull().unique(),
   /** Role to assign when invitation is accepted */
-  role: mysqlEnum("role", ["viewer", "admin"]).default("viewer").notNull(),
+  role: mysqlEnum("role", ["viewer", "user", "admin"]).default("viewer").notNull(),
   /** Status of the invitation */
   status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
   /** When the invitation expires (7 days from creation) */

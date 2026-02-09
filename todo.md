@@ -1005,3 +1005,32 @@
 - [ ] Add PROJECT MEDIA section
 - [ ] Test sample report preview displays correctly
 - [ ] Verify report format matches platform's professional style
+
+## New Tasks - Phase 2 Implementation
+
+### Task 1: Hide Navigation Links on Flights Page
+- [x] Find and hide navigation links on project flights page
+- [x] Test flights page displays without navigation links
+
+### Task 2: Reorganize Mapit Homepage Navigation
+- [x] Remove "See Demo", "Pricing", "Download App" from top navigation
+- [x] Move "Client Portal" button under "Login" as dropdown
+- [ ] Test homepage navigation layout
+
+### Task 3: Add Organization Field to User Registration
+- [x] Add "Organization" field to user registration form
+- [x] Update user database schema to include organization field
+- [x] Test registration with organization field
+
+### Task 4: Create User Management Page
+- [x] Create new "Manage User" button in client portal
+- [x] Create new ManageUser.tsx page
+- [x] Add ability to update user password, email, job title, contact
+- [x] Move "Manage Projects" button to this page as well
+- [x] Test user management functionality
+
+### Task 5: Add New "User" Role with Limited Permissions
+- [x] Add "User" role to invite user page
+- [x] Configure "User" role permissions (read, view, download, upload, email, create flights)
+- [x] Restrict "User" role from accessing account and user information
+- [x] Test "User" role permissions

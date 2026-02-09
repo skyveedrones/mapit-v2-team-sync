@@ -21,6 +21,7 @@ import ClientProjects from "./pages/ClientProjects";
 import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
 import ClientInviteAccept from "./pages/ClientInviteAccept";
+import ManageUser from "./pages/ManageUser";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 
@@ -170,6 +171,9 @@ function Router() {
       </Route>
       <Route path="/portal/project/:id">
         {() => <ProtectedRoute component={ProjectDetail} />}
+      </Route>
+      <Route path="/portal/manage-user">
+        {() => <ProtectedRoute component={ManageUser} />}
       </Route>
       
       {/* Invitation acceptance pages */}
