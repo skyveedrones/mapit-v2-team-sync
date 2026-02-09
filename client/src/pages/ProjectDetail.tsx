@@ -664,7 +664,7 @@ export default function ProjectDetail() {
       {/* Sample Report Dialog - Shows the PDF sample report */}
       {sampleReportDialogOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+          <div className="bg-background rounded-lg shadow-lg max-w-2xl w-full flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-lg font-semibold">Sample Project Report</h2>
               <Button
@@ -675,27 +675,29 @@ export default function ProjectDetail() {
                 X
               </Button>
             </div>
-            <div className="flex-1 overflow-auto">
-              <iframe
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
-                className="w-full h-full"
-                title="Sample Project Report"
-              />
-            </div>
-            <div className="flex items-center justify-between p-4 border-t border-border">
-              <a
-                href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
-                download="DemoSampleReport.pdf"
-                className="text-emerald-600 hover:text-emerald-700 font-medium"
-              >
-                Download PDF
-              </a>
-              <Button
-                variant="outline"
-                onClick={() => setSampleReportDialogOpen(false)}
-              >
-                Close
-              </Button>
+            <div className="p-6 text-center">
+              <FileText className="h-12 w-12 mx-auto mb-4 text-emerald-600" />
+              <h3 className="text-xl font-semibold mb-2">DemoSampleReport.pdf</h3>
+              <p className="text-muted-foreground mb-6">Click below to view or download the sample project report</p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => {
+                    window.open('https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf', '_blank');
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  View PDF
+                </Button>
+                <a
+                  href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/riHovZjBSqWGYnSa.pdf"
+                  download="DemoSampleReport.pdf"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-border hover:bg-accent"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </a>
+              </div>
             </div>
           </div>
         </div>
