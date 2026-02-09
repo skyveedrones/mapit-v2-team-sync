@@ -179,21 +179,13 @@ export default function PdfMapOverlay() {
                 precise GPS positioning.
               </motion.p>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fadeInUp}>
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleSeeDemo}
                 >
                   See Demo
-                  <Layers className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleGetStarted}
-                >
-                  Start Overlaying
                   <Layers className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -384,14 +376,15 @@ export default function PdfMapOverlay() {
               Start overlaying your construction plans on aerial imagery today.
             </motion.p>
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleGetStarted}
-              >
-                Get Started
-                <Layers className="ml-2 h-5 w-5" />
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Get Started
+                  <Layers className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>

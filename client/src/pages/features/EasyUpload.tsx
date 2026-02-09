@@ -171,21 +171,13 @@ export default function EasyUpload() {
                 No manual data entry—just upload and let the system do the work.
               </motion.p>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fadeInUp}>
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleSeeDemo}
                 >
                   See Demo
-                  <Upload className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleGetStarted}
-                >
-                  Start Uploading
                   <Upload className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -382,14 +374,15 @@ export default function EasyUpload() {
               Start uploading your drone footage and let us handle the rest.
             </motion.p>
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleGetStarted}
-              >
-                Get Started
-                <Upload className="ml-2 h-5 w-5" />
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Get Started
+                  <Upload className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>

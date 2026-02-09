@@ -171,21 +171,13 @@ export default function InteractiveMaps() {
                 terrain views.
               </motion.p>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fadeInUp}>
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleSeeDemo}
                 >
                   See Demo
-                  <Map className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleGetStarted}
-                >
-                  Explore Maps
                   <Map className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -382,14 +374,15 @@ export default function InteractiveMaps() {
               Start visualizing your drone footage on interactive maps today.
             </motion.p>
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleGetStarted}
-              >
-                Get Started
-                <Map className="ml-2 h-5 w-5" />
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Get Started
+                  <Map className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>

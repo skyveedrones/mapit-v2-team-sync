@@ -48,14 +48,15 @@ export default function ProjectTemplates() {
                 >
                   See Demo
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-emerald-500/30 text-white hover:bg-emerald-500/10"
-                  onClick={handleGetStarted}
-                >
-                  Get Started
-                </Button>
+                <Link href="/pricing">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-emerald-500/30 text-white hover:bg-emerald-500/10"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="relative">

@@ -174,21 +174,13 @@ export default function GpsDataExport() {
                 GPS devices for maximum compatibility.
               </motion.p>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fadeInUp}>
                 <Button
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleSeeDemo}
                 >
                   See Demo
-                  <Download className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleGetStarted}
-                >
-                  Export Your Data
                   <Download className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -379,14 +371,15 @@ export default function GpsDataExport() {
               Export GPS coordinates in the format that works best for your tools and workflow.
             </motion.p>
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleGetStarted}
-              >
-                Start Exporting
-                <Download className="ml-2 h-5 w-5" />
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Get Started
+                  <Download className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>
