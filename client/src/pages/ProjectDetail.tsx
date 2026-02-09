@@ -97,10 +97,9 @@ export default function ProjectDetail() {
   
   // Check user access permissions for this project
   const { isClientOnly, canEdit, canDelete } = useClientAccess(projectId);
-  // Override permissions for demo project
-  // Allow authenticated users (owner) to upload to demo, but prevent unauthenticated visitors from editing
-  const demoCanEdit = isDemoProject ? (user ? canEdit : false) : canEdit;
-  const demoCanDelete = canDelete;
+  // Override permissions for demo project - lock to read-only
+  const demoCanEdit = isDemoProject ? false : canEdit;
+  const demoCanDelete = isDemoProject ? false : canDelete;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -111,6 +110,7 @@ export default function ProjectDetail() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
+  const [sampleReportDialogOpen, setSampleReportDialogOpen] = useState(false);
 
   // Fetch project details - use public demo procedures if accessing demo project
   const { data: project, isLoading, error } = isDemoProject
@@ -278,8 +278,18 @@ export default function ProjectDetail() {
           >
             {/* Demo Banner */}
             {isDemoProject && (
-              <motion.div variants={fadeInUp} className="mb-6">
-                <DemoBanner />
+              <motion.div variants={fadeInUp} className="mb-6 flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <DemoBanner />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="whitespace-nowrap"
+                  onClick={() => setSampleReportDialogOpen(true)}
+                >
+                  See Sample Project
+                </Button>
               </motion.div>
             )}
 
@@ -649,6 +659,16 @@ export default function ProjectDetail() {
         currentLogoUrl={project?.logoUrl}
         open={logoDialogOpen}
         onOpenChange={setLogoDialogOpen}
+      />
+
+      {/* Sample Report Dialog - Shows the generated sample report from demo project */}
+      <ReportGeneratorDialog
+        open={sampleReportDialogOpen}
+        onOpenChange={setSampleReportDialogOpen}
+        projectId={projectId}
+        projectName={project?.name || "Project"}
+        media={mediaList || []}
+        isDemoProject={isDemoProject}
       />
     </div>
   );

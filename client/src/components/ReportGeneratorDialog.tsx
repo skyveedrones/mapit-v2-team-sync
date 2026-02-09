@@ -43,9 +43,8 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 function generateSampleDemoReport(): string {
-  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  
+  // This is a placeholder that will be replaced with actual generated report HTML
+  // The real sample report is generated from the Demonstration Project data
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -691,8 +690,8 @@ export function ReportGeneratorDialog({
             <Button 
               variant="outline"
               onClick={() => setShowEmailDialog(true)}
-              disabled={isEmailing || isDownloading}
-              title=""
+              disabled={isEmailing || isDownloading || isDemoProject}
+              title={isDemoProject ? "Email not available for demo project" : ""}
             >
               <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

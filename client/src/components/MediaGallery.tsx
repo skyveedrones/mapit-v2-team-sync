@@ -512,40 +512,48 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {canEdit && (
+              {isDemoProject ? (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  Demo project is read-only
+                </div>
+              ) : (
                 <>
-                  <DropdownMenuItem onClick={onUploadClick}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Media
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem
-                onClick={handleDownloadSelected}
-                disabled={selectedIds.size === 0}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Selected ({selectedIds.size})
-              </DropdownMenuItem>
-              {canEdit && (
-                <>
+                  {canEdit && (
+                    <>
+                      <DropdownMenuItem onClick={onUploadClick}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Media
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem
-                    onClick={() => setWatermarkDialogOpen(true)}
-                    disabled={watermarkableCount === 0}
-                  >
-                    <ImagePlus className="h-4 w-4 mr-2" />
-                    Watermark Media ({watermarkableCount})
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setBulkDeleteDialogOpen(true)}
+                    onClick={handleDownloadSelected}
                     disabled={selectedIds.size === 0}
-                    className="text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Selected ({selectedIds.size})
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Selected ({selectedIds.size})
                   </DropdownMenuItem>
+                  {canEdit && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => setWatermarkDialogOpen(true)}
+                        disabled={watermarkableCount === 0}
+                      >
+                        <ImagePlus className="h-4 w-4 mr-2" />
+                        Watermark Media ({watermarkableCount})
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setBulkDeleteDialogOpen(true)}
+                        disabled={selectedIds.size === 0}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected ({selectedIds.size})
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </>
               )}
             </DropdownMenuContent>
