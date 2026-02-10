@@ -46,12 +46,19 @@ export default function ClientInviteAccept() {
   );
 
   // Accept invitation mutation
+  const utils = trpc.useUtils();
   const acceptMutation = trpc.clientPortal.acceptInvitation.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Invalidate the portal data query to force a refetch
+      await utils.clientPortal.getMyPortal.invalidate();
       setAccepted(true);
       toast.success("Invitation accepted!", {
-        description: "You now have access to the client portal.",
+        description: "You now have access to the client portal. Redirecting...",
       });
+      // Redirect to portal after a short delay to show the toast
+      setTimeout(() => {
+        window.location.href = '/portal';
+      }, 1500);
     },
     onError: (error) => {
       toast.error("Failed to accept invitation", {
@@ -161,12 +168,16 @@ export default function ClientInviteAccept() {
                   <p className="text-muted-foreground mb-6">
                     You now have access to the "{client?.name}" client portal.
                   </p>
-                  <Link href="/portal">
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      Go to Client Portal
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </Link>
+                  {accepted ? (
+                    <p className="text-sm text-muted-foreground mb-4">Redirecting to portal...</p>
+                  ) : (
+                    <Link href="/portal">
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        Go to Client Portal
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
