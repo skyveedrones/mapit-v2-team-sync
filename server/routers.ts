@@ -94,7 +94,7 @@ import {
   updateUserPilotSettings,
   getUserPilotSettings,
 } from "./db";
-import { sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
+import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
@@ -3159,10 +3159,10 @@ export const appRouter = router({
         
         let emailResult: { success: boolean; error?: string } = { success: false, error: 'Email sending skipped' };
         if (input.sendEmail !== false) {
-          emailResult = await sendClientInvitationEmail({
+          emailResult = await sendProjectInvitationEmail({
             to: input.email,
             inviterName: ctx.user.name || 'Mapit User',
-            clientName: client.name,
+            projectName: client.name,
             inviteLink: inviteUrl,
           });
 
@@ -3208,7 +3208,8 @@ export const appRouter = router({
               const emailResult = await sendClientWelcomeEmail({
                 to: ctx.user.email,
                 clientName: result.client.name,
-                portalLink: dashboardUrl,
+                projectName: 'Your Project',
+                loginUrl: dashboardUrl,
               });
               
               if (emailResult.success) {
