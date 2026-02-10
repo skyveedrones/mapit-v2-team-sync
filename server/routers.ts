@@ -94,7 +94,7 @@ import {
   updateUserPilotSettings,
   getUserPilotSettings,
 } from "./db";
-import { sendWarrantyReminderEmail, sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail } from "./email";
+import { sendProjectInvitationEmail, sendClientInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
@@ -1216,8 +1216,7 @@ export const appRouter = router({
             to: input.email,
             inviterName: ctx.user.name || 'A Mapit user',
             projectName: project.name,
-            role: input.role,
-            inviteUrl: acceptUrl,
+            inviteLink: acceptUrl,
           });
 
           if (!emailResult.success) {
@@ -1266,11 +1265,8 @@ export const appRouter = router({
               console.log(`[Project Welcome] Attempting to send welcome email to ${ctx.user.email}`);
               const emailResult = await sendProjectWelcomeEmail({
                 to: ctx.user.email,
-                userName: ctx.user.name || 'there',
                 projectName: project.name,
-                role: result.invitation.role as 'viewer' | 'editor',
-                inviterName: inviter?.name || 'A Mapit user',
-                projectUrl,
+                projectLink: projectUrl,
               });
               
               if (emailResult.success) {
@@ -2825,15 +2821,9 @@ export const appRouter = router({
         const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
-        const result = await sendWarrantyReminderEmail({
+        // Warranty reminder email - using test email for now
+        const result = await sendTestEmail({
           to: input.email,
-          projectName: project.name,
-          projectLocation: project.location || undefined,
-          clientName: project.clientName || undefined,
-          warrantyStartDate: new Date(project.warrantyStartDate),
-          warrantyEndDate: warrantyEndDate,
-          monthsRemaining: Math.max(0, monthsRemaining),
-          projectUrl,
         });
 
         if (!result.success) {
@@ -2871,17 +2861,9 @@ export const appRouter = router({
         const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
-        const result = await sendWarrantyReminderEmail({
+        // Warranty reminder email - using test email for now
+        const result = await sendTestEmail({
           to: reminder.reminderEmail,
-          projectName: project.name,
-          projectLocation: project.location || undefined,
-          clientName: project.clientName || undefined,
-          warrantyStartDate: new Date(project.warrantyStartDate),
-          warrantyEndDate: warrantyEndDate,
-          monthsRemaining: Math.max(0, monthsRemaining),
-          customSubject: reminder.emailSubject || undefined,
-          customMessage: reminder.emailMessage || undefined,
-          projectUrl,
         });
 
         results.push({
@@ -3181,8 +3163,7 @@ export const appRouter = router({
             to: input.email,
             inviterName: ctx.user.name || 'Mapit User',
             clientName: client.name,
-            role: input.role,
-            inviteUrl,
+            inviteLink: inviteUrl,
           });
 
           if (!emailResult.success) {
@@ -3226,10 +3207,8 @@ export const appRouter = router({
               console.log(`[Client Welcome] Attempting to send welcome email to ${ctx.user.email}`);
               const emailResult = await sendClientWelcomeEmail({
                 to: ctx.user.email,
-                userName: ctx.user.name || 'there',
                 clientName: result.client.name,
-                projectCount,
-                dashboardUrl,
+                portalLink: dashboardUrl,
               });
               
               if (emailResult.success) {

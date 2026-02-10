@@ -31,6 +31,10 @@ function generateEmailTemplate(content: {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="format-detection" content="date=no">
+  <meta name="format-detection" content="address=no">
+  <meta name="format-detection" content="email=no">
   <title>${content.title}</title>
   <!--[if mso]>
   <noscript>
@@ -48,55 +52,46 @@ function generateEmailTemplate(content: {
       margin: 0;
       padding: 0;
       background-color: ${BRAND_COLORS.background};
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    
-    .preheader {
-      display: none !important;
-      visibility: hidden;
-      opacity: 0;
-      color: transparent;
-      height: 0;
-      width: 0;
+      font-family: 'Inter', sans-serif;
+      color: ${BRAND_COLORS.text};
     }
     
     .container {
       max-width: 600px;
       margin: 0 auto;
-      padding: 40px 20px;
-    }
-    
-    .card {
       background-color: ${BRAND_COLORS.cardBg};
       border: 1px solid ${BRAND_COLORS.border};
-      border-radius: 12px;
-      padding: 40px;
+      border-radius: 8px;
+      overflow: hidden;
     }
     
-    .logo {
+    .header {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      padding: 32px 24px;
+      border-bottom: 2px solid ${BRAND_COLORS.primary};
       text-align: center;
-      margin-bottom: 32px;
     }
     
-    .logo-text {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 28px;
-      font-weight: 700;
-      color: ${BRAND_COLORS.text};
-      text-decoration: none;
-    }
-    
-    .logo-accent {
-      color: ${BRAND_COLORS.primary};
-    }
-    
-    .title {
+    .header h1 {
+      margin: 0;
+      font-family: 'Orbitron', monospace;
       font-size: 24px;
-      font-weight: 600;
-      color: ${BRAND_COLORS.text};
-      text-align: center;
-      margin: 0 0 24px 0;
+      font-weight: 700;
+      color: ${BRAND_COLORS.primary};
+      letter-spacing: 1px;
+    }
+    
+    .content {
+      padding: 32px 24px;
+    }
+    
+    .preheader {
+      display: none;
+      max-height: 0;
+      max-width: 0;
+      overflow: hidden;
+      font-size: 1px;
+      opacity: 0;
     }
     
     .body-text {
@@ -148,475 +143,338 @@ function generateEmailTemplate(content: {
   </style>
 </head>
 <body>
-  <span class="preheader">${content.preheader}</span>
-  
+  <div class="preheader">${content.preheader}</div>
   <div class="container">
-    <div class="card">
-      <!-- Logo -->
-      <div class="logo">
-        <span class="logo-text">Map<span class="logo-accent">it</span></span>
-      </div>
-      
-      <!-- Title -->
-      <h1 class="title">${content.title}</h1>
-      
-      <!-- Body -->
-      <div class="body-text">
-        ${content.body}
-      </div>
-      
-      ${content.ctaText && content.ctaUrl ? `
-      <!-- CTA Button -->
-      <div class="cta-container">
-        <a href="${content.ctaUrl}" class="cta-button">${content.ctaText}</a>
-      </div>
-      ` : ''}
-      
+    <div class="header">
+      <h1>MAPIT</h1>
+    </div>
+    <div class="content">
+      <div class="body-text">${content.body}</div>
+      ${content.ctaUrl ? `<div class="cta-container"><a href="${content.ctaUrl}" class="cta-button">${content.ctaText || 'View'}</a></div>` : ''}
       <div class="divider"></div>
-      
-      <!-- Footer -->
       <div class="footer">
-        ${content.footer || `
-        <p>This email was sent by <a href="https://www.skyveedrones.com">Mapit by SkyVee Drones</a>.</p>
-        <p>If you didn't expect this email, you can safely ignore it.</p>
-        `}
+        ${content.footer || 'Thank you for using Mapit'}
+        <br><br>
+        <a href="https://mapit.skyveedrones.com">Visit Mapit</a> | <a href="mailto:support@skyveedrones.com">Contact Support</a>
       </div>
     </div>
   </div>
 </body>
 </html>
-  `.trim();
+  `;
 }
 
 /**
- * Send a project invitation email
+ * Send project invitation email
  */
 export async function sendProjectInvitationEmail(params: {
   to: string;
-  inviterName: string;
   projectName: string;
-  role: 'viewer' | 'editor';
-  inviteUrl: string;
+  inviterName: string;
+  inviteLink: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, inviterName, projectName, role, inviteUrl } = params;
-  
-  const roleDescription = role === 'editor' 
-    ? 'view and edit' 
-    : 'view';
-  
-  const html = generateEmailTemplate({
-    preheader: `${inviterName} has invited you to collaborate on a drone mapping project`,
-    title: 'You\'ve Been Invited!',
-    body: `
-      <p><span class="highlight">${inviterName}</span> has invited you to ${roleDescription} the drone mapping project:</p>
-      <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">"${projectName}"</p>
-      <p>Click the button below to accept the invitation and access the project. You'll need to create an account or sign in if you haven't already.</p>
-    `,
-    ctaText: 'Accept Invitation',
-    ctaUrl: inviteUrl,
-    footer: `
-      <p>This invitation will expire in 7 days.</p>
-      <p>If you don't want to join this project, you can ignore this email.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
+  const { to, projectName, inviterName, inviteLink } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `${inviterName} invited you to ${projectName}`,
+      title: `You're invited to ${projectName}`,
+      body: `<p>${inviterName} has invited you to collaborate on <strong>${projectName}</strong> using Mapit.</p>`,
+      ctaText: 'View Project',
+      ctaUrl: inviteLink,
+      footer: 'If you did not expect this invitation, you can safely ignore this email.',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
+      replyTo: 'support@skyveedrones.com',
       subject: `${inviterName} invited you to "${projectName}" on Mapit`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `project-invite-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send invitation:', error);
+      console.error('[Email] Failed to send project invitation to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Project invitation sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending invitation:', err);
+    console.error('[Email] Exception sending project invitation:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Send a welcome email when invitation is accepted
+ * Send project welcome email (after accepting invitation)
  */
-export async function sendWelcomeEmail(params: {
+export async function sendProjectWelcomeEmail(params: {
   to: string;
-  userName: string;
   projectName: string;
-  projectUrl: string;
+  projectLink: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, userName, projectName, projectUrl } = params;
-  
-  const html = generateEmailTemplate({
-    preheader: `Welcome to Mapit! You now have access to "${projectName}"`,
-    title: 'Welcome to Mapit!',
-    body: `
-      <p>Hi <span class="highlight">${userName}</span>,</p>
-      <p>You've successfully joined the drone mapping project:</p>
-      <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">"${projectName}"</p>
-      <p>You can now access the project's interactive maps, media gallery, and GPS data. Click below to get started!</p>
-    `,
-    ctaText: 'View Project',
-    ctaUrl: projectUrl,
-    footer: `
-      <p>Need help? Visit our <a href="https://skyveedrones.com/help">Help Center</a>.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
+  const { to, projectName, projectLink } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `You now have access to ${projectName}`,
+      title: `Welcome to ${projectName}`,
+      body: `<p>You now have access to <strong>${projectName}</strong> on Mapit. You can start viewing and collaborating on this project right away.</p>`,
+      ctaText: 'Open Project',
+      ctaUrl: projectLink,
+      footer: 'Questions? Contact our support team at support@skyveedrones.com',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
+      replyTo: 'support@skyveedrones.com',
       subject: `Welcome to Mapit - You now have access to "${projectName}"`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `project-welcome-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send welcome email:', error);
+      console.error('[Email] Failed to send project welcome email to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Project welcome email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending welcome email:', err);
+    console.error('[Email] Exception sending project welcome email:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Validate the Resend API key by making a test request
- */
-export async function validateResendApiKey(): Promise<{ valid: boolean; error?: string }> {
-  try {
-    // Try to get API key info - this is a lightweight way to validate the key
-    const { data, error } = await resend.apiKeys.list();
-    
-    if (error) {
-      return { valid: false, error: error.message };
-    }
-    
-    return { valid: true };
-  } catch (err) {
-    return { valid: false, error: err instanceof Error ? err.message : 'Unknown error' };
-  }
-}
-
-/**
- * Send a test email to verify the configuration
+ * Send test email to verify configuration
  */
 export async function sendTestEmail(params: {
   to: string;
 }): Promise<{ success: boolean; error?: string }> {
   const { to } = params;
-  
-  const html = generateEmailTemplate({
-    preheader: 'This is a test email from Mapit',
-    title: 'Test Email Successful!',
-    body: `
-      <p>Congratulations! Your email configuration is working correctly.</p>
-      <p>This test email was sent from your verified domain: <span class="highlight">notifications.skyveedrones.com</span></p>
-      <p>You can now send:</p>
-      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0;">
-        <li>Project invitation emails</li>
-        <li>Welcome emails</li>
-        <li>Warranty reminder emails</li>
-      </ul>
-    `,
-    ctaText: 'Go to Dashboard',
-    ctaUrl: 'https://skyveedrones.com/dashboard',
-    footer: `
-      <p>This was a test email sent at ${new Date().toLocaleString()}.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
 
   try {
+    const html = generateEmailTemplate({
+      preheader: 'Test email to verify Mapit configuration',
+      title: 'Mapit Test Email',
+      body: `<p>This is a test email from Mapit to verify that your email configuration is working correctly.</p><p>If you received this email, your email authentication (SPF, DKIM, DMARC) is properly configured.</p>`,
+      footer: 'This is an automated test email. No action is required.',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
+      replyTo: 'support@skyveedrones.com',
       subject: 'Mapit Test Email - Configuration Verified',
       html,
+      headers: {
+        'X-Entity-Ref-ID': `test-email-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send test email:', error);
+      console.error('[Email] Failed to send test email to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Test email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending test email:', err);
+    console.error('[Email] Exception sending test email:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Send a warranty reminder email
+ * Send report via email
  */
-export async function sendWarrantyReminderEmail(params: {
+export async function sendReportEmail(params: {
   to: string;
   projectName: string;
-  projectLocation?: string;
-  clientName?: string;
-  warrantyStartDate: Date;
-  warrantyEndDate: Date;
-  monthsRemaining: number;
-  customSubject?: string;
-  customMessage?: string;
-  projectUrl: string;
+  reportUrl: string;
+  senderName: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { 
-    to, 
-    projectName, 
-    projectLocation,
-    clientName,
-    warrantyStartDate, 
-    warrantyEndDate, 
-    monthsRemaining,
-    customSubject,
-    customMessage,
-    projectUrl 
-  } = params;
-  
-  const formatDate = (date: Date) => date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const defaultMessage = `
-    <p>This is a reminder that the warranty for the following drone mapping project is approaching its expiration:</p>
-    <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">"${projectName}"</p>
-    ${clientName ? `<p><strong>Client:</strong> ${clientName}</p>` : ''}
-    ${projectLocation ? `<p><strong>Location:</strong> ${projectLocation}</p>` : ''}
-    <p><strong>Warranty Period:</strong> ${formatDate(warrantyStartDate)} - ${formatDate(warrantyEndDate)}</p>
-    <p style="font-size: 18px; color: ${monthsRemaining <= 1 ? '#ef4444' : BRAND_COLORS.primary}; font-weight: 600; text-align: center; margin: 24px 0;">
-      ${monthsRemaining <= 0 ? 'WARRANTY HAS EXPIRED' : `${monthsRemaining} month${monthsRemaining !== 1 ? 's' : ''} remaining`}
-    </p>
-    <p>Please review the project and take any necessary action before the warranty expires.</p>
-  `;
-
-  const html = generateEmailTemplate({
-    preheader: `Warranty reminder for "${projectName}" - ${monthsRemaining} months remaining`,
-    title: 'Warranty Reminder',
-    body: customMessage || defaultMessage,
-    ctaText: 'View Project',
-    ctaUrl: projectUrl,
-    footer: `
-      <p>This is an automated warranty reminder from Mapit.</p>
-      <p>To manage your reminder settings, visit the project settings.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
-
-  const subject = customSubject || `Warranty Reminder: "${projectName}" - ${monthsRemaining} month${monthsRemaining !== 1 ? 's' : ''} remaining`;
+  const { to, projectName, reportUrl, senderName } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `${senderName} shared a report for ${projectName}`,
+      title: `Project Report: ${projectName}`,
+      body: `<p>${senderName} has shared a report for <strong>${projectName}</strong> with you.</p><p>Click the button below to view the report.</p>`,
+      ctaText: 'View Report',
+      ctaUrl: reportUrl,
+      footer: 'Questions about this report? Contact the sender or our support team.',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
-      subject,
+      replyTo: 'support@skyveedrones.com',
+      subject: `${senderName} shared a report for "${projectName}"`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `report-email-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send warranty reminder:', error);
+      console.error('[Email] Failed to send report email to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Report email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending warranty reminder:', err);
+    console.error('[Email] Exception sending report email:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Send a client portal invitation email
+ * Send client portal invitation email
  */
 export async function sendClientInvitationEmail(params: {
   to: string;
-  inviterName: string;
   clientName: string;
-  role: 'viewer' | 'user' | 'admin';
-  inviteUrl: string;
+  inviterName: string;
+  inviteLink: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, inviterName, clientName, role, inviteUrl } = params;
-  
-  const roleDescription = role === 'admin' 
-    ? 'view projects and manage settings' 
-    : role === 'user'
-    ? 'view, download, upload media, and create flights'
-    : 'view projects';
-  
-  const html = generateEmailTemplate({
-    preheader: `${inviterName} has invited you to access the ${clientName} client portal on Mapit`,
-    title: 'Client Portal Access',
-    body: `
-      <p><span class="highlight">${inviterName}</span> has invited you to access the client portal for:</p>
-      <p style="font-size: 20px; font-weight: 600; color: ${BRAND_COLORS.text}; text-align: center; margin: 24px 0;">${clientName}</p>
-      <p>As a portal member, you'll be able to ${roleDescription} for ${clientName}.</p>
-      <p>Click the button below to accept the invitation and access your portal. You'll need to create an account or sign in if you haven't already.</p>
-    `,
-    ctaText: 'Access Client Portal',
-    ctaUrl: inviteUrl,
-    footer: `
-      <p>This invitation will expire in 7 days.</p>
-      <p>If you don't want to join this portal, you can ignore this email.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
+  const { to, clientName, inviterName, inviteLink } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `${inviterName} invited you to the ${clientName} portal`,
+      title: `You're invited to the ${clientName} portal`,
+      body: `<p>${inviterName} has invited you to access the <strong>${clientName}</strong> client portal on Mapit.</p><p>You'll be able to view and manage projects related to ${clientName}.</p>`,
+      ctaText: 'Accept Invitation',
+      ctaUrl: inviteLink,
+      footer: 'If you did not expect this invitation, you can safely ignore this email.',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
-      subject: `${inviterName} invited you to the ${clientName} portal on SkyVee`,
+      replyTo: 'support@skyveedrones.com',
+      subject: `${inviterName} invited you to the ${clientName} portal on Mapit`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `client-invite-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send client invitation:', error);
+      console.error('[Email] Failed to send client invitation to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Client invitation email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending client invitation:', err);
+    console.error('[Email] Exception sending client invitation:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Send a welcome email to new client portal users
+ * Send client portal welcome email
  */
 export async function sendClientWelcomeEmail(params: {
   to: string;
-  userName: string;
   clientName: string;
-  projectCount: number;
-  dashboardUrl: string;
+  portalLink: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, userName, clientName, projectCount, dashboardUrl } = params;
-  
-  const html = generateEmailTemplate({
-    preheader: `Welcome to Mapit! You now have access to ${projectCount} project${projectCount !== 1 ? 's' : ''} for ${clientName}`,
-    title: 'Welcome to Your Client Portal!',
-    body: `
-      <p>Hi <span class="highlight">${userName}</span>,</p>
-      <p>Welcome to Mapit! You've been granted access to the client portal for <span class="highlight">${clientName}</span>.</p>
-      <p>You now have access to <strong>${projectCount} drone mapping project${projectCount !== 1 ? 's' : ''}</strong> with the following features:</p>
-      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0; line-height: 1.8;">
-        <li><strong>Interactive Maps:</strong> View project locations with GPS-tagged media on Google Maps</li>
-        <li><strong>Media Gallery:</strong> Browse and download all project photos and videos</li>
-        <li><strong>Flight Path Tracking:</strong> See the drone's flight path connecting sequential GPS points</li>
-        <li><strong>GPS Data Export:</strong> Export location data in KML, CSV, GeoJSON, and GPX formats</li>
-        <li><strong>PDF Reports:</strong> Generate professional reports with maps and project details</li>
-      </ul>
-      <p>Your access is <strong>view-only</strong>, so you can explore all project data without worrying about making changes. Click below to get started!</p>
-    `,
-    ctaText: 'View Your Projects',
-    ctaUrl: dashboardUrl,
-    footer: `
-      <p><strong>Need Help?</strong></p>
-      <p style="margin-bottom: 12px;">• Click any project to see its interactive map and media gallery</p>
-      <p style="margin-bottom: 12px;">• Use the "Media Action" menu to download photos and videos</p>
-      <p style="margin-bottom: 12px;">• Generate reports from the "Project Actions" menu</p>
-      <p style="margin-top: 16px;">Questions? Contact your project manager at ${clientName}.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
+  const { to, clientName, portalLink } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `Welcome to the ${clientName} portal on Mapit`,
+      title: `Welcome to the ${clientName} portal`,
+      body: `<p>Welcome to the <strong>${clientName}</strong> client portal on Mapit!</p><p>You can now access and view all projects associated with ${clientName}. Use the portal to stay updated on project progress, view media, and download reports.</p>`,
+      ctaText: 'Access Portal',
+      ctaUrl: portalLink,
+      footer: 'Questions? Contact our support team at support@skyveedrones.com',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
+      replyTo: 'support@skyveedrones.com',
       subject: `Welcome to Mapit - ${clientName} Client Portal Access`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `client-welcome-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send client welcome email:', error);
+      console.error('[Email] Failed to send client welcome email to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Client welcome email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending client welcome email:', err);
+    console.error('[Email] Exception sending client welcome email:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
 /**
- * Send a welcome email to new project collaborators
+ * Send email when user is added to a project
  */
-export async function sendProjectWelcomeEmail(params: {
+export async function sendProjectAddedEmail(params: {
   to: string;
-  userName: string;
   projectName: string;
-  role: 'viewer' | 'editor';
-  inviterName: string;
-  projectUrl: string;
+  projectLink: string;
+  addedByName: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, userName, projectName, role, inviterName, projectUrl } = params;
-  
-  const roleDescription = role === 'editor' 
-    ? 'You can view, upload media, create flights, and manage project content.'
-    : 'You have view-only access to browse and download project data.';
-  
-  const html = generateEmailTemplate({
-    preheader: `${inviterName} has added you as a ${role} on "${projectName}"`,
-    title: 'You\'ve Been Added to a Project!',
-    body: `
-      <p>Hi <span class="highlight">${userName}</span>,</p>
-      <p><strong>${inviterName}</strong> has added you as a <span class="highlight">${role}</span> to the project "<strong>${projectName}</strong>" on Mapit.</p>
-      <p>${roleDescription}</p>
-      <p><strong>What you can do:</strong></p>
-      <ul style="color: ${BRAND_COLORS.textMuted}; margin: 16px 0; line-height: 1.8;">
-        <li><strong>Interactive Maps:</strong> View project locations with GPS-tagged media on Google Maps</li>
-        <li><strong>Media Gallery:</strong> Browse and download all project photos and videos</li>
-        <li><strong>Flight Path Tracking:</strong> See the drone's flight path connecting sequential GPS points</li>
-        <li><strong>GPS Data Export:</strong> Export location data in KML, CSV, GeoJSON, and GPX formats</li>
-        <li><strong>PDF Reports:</strong> Generate professional reports with maps and project details</li>
-        ${role === 'editor' ? '<li><strong>Upload & Manage:</strong> Add new media, create flights, and organize project content</li>' : ''}
-      </ul>
-      <p>Click below to view the project and get started!</p>
-    `,
-    ctaText: 'View Project',
-    ctaUrl: projectUrl,
-    footer: `
-      <p><strong>Quick Tips:</strong></p>
-      <p style="margin-bottom: 12px;">• Click the project to see its interactive map and media gallery</p>
-      <p style="margin-bottom: 12px;">• Use the "Media Action" menu to download photos and videos</p>
-      <p style="margin-bottom: 12px;">• Generate reports from the "Project Actions" menu</p>
-      ${role === 'editor' ? '<p style="margin-bottom: 12px;">• Upload new media using the "Upload Media" button</p>' : ''}
-      <p style="margin-top: 16px;">Questions? Contact ${inviterName} for more information.</p>
-      <p style="margin-top: 16px;">— The <a href="https://www.skyveedrones.com">Mapit</a> Team</p>
-    `,
-  });
+  const { to, projectName, projectLink, addedByName } = params;
 
   try {
+    const html = generateEmailTemplate({
+      preheader: `You've been added to ${projectName}`,
+      title: `You've been added to ${projectName}`,
+      body: `<p>${addedByName} has added you to the <strong>${projectName}</strong> project on Mapit.</p><p>You can now view and collaborate on this project.</p>`,
+      ctaText: 'View Project',
+      ctaUrl: projectLink,
+      footer: 'Questions? Contact our support team at support@skyveedrones.com',
+    });
+
     const { error } = await resend.emails.send({
-      from: 'Mapit <noreply@notifications.skyveedrones.com>',
+      from: 'Mapit <noreply@skyveedrones.com>',
       to: [to],
+      replyTo: 'support@skyveedrones.com',
       subject: `You've been added to "${projectName}" on Mapit`,
       html,
+      headers: {
+        'X-Entity-Ref-ID': `project-added-${Date.now()}`,
+        'X-Mailer': 'Mapit/1.0',
+      },
     });
 
     if (error) {
-      console.error('[Email] Failed to send project welcome email:', error);
+      console.error('[Email] Failed to send project added email to', to, ':', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Email] Project added email sent to', to);
     return { success: true };
   } catch (err) {
-    console.error('[Email] Error sending project welcome email:', err);
+    console.error('[Email] Exception sending project added email:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
