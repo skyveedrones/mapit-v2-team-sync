@@ -1,15 +1,29 @@
 /**
  * Application version information
- * This file is automatically updated during build with the latest commit hash
- * When a new checkpoint is created, update the commit hash and version number
+ * 
+ * AUTOMATICALLY UPDATED - Do not edit manually
+ * Updated by: scripts/update-version.mjs
+ * Last updated: 2026-02-10T18:09:24.981Z
+ * 
+ * This file is automatically updated during build with:
+ * - Latest version number from package.json
+ * - Current git commit hash
+ * - Build timestamp
+ * - Git branch information
  */
 
 export const APP_VERSION = {
   version: '1.0.8',
+  commit: '39783732d50a4b1eac7e7ff673cc37d6498b07ab',
+  branch: 'main',
   buildDate: new Date().toISOString(),
-  commit: import.meta.env?.VITE_GIT_COMMIT || 'b7814213',
+  buildTimestamp: 1770746964981,
 };
 
+/**
+ * Get human-readable version string
+ * Format: v1.0.8 (b781421) - Feb 10, 2026
+ */
 export function getVersionString(): string {
   const date = new Date(APP_VERSION.buildDate);
   const formattedDate = date.toLocaleDateString('en-US', {
@@ -26,4 +40,17 @@ export function getVersionString(): string {
   });
   
   return `v${APP_VERSION.version} (${APP_VERSION.commit.substring(0, 7)}) - ${formattedDate}`;
+}
+
+/**
+ * Get version for API/backend communication
+ */
+export function getVersionInfo() {
+  return {
+    version: APP_VERSION.version,
+    commit: APP_VERSION.commit,
+    branch: APP_VERSION.branch,
+    buildDate: APP_VERSION.buildDate,
+    displayVersion: getVersionString(),
+  };
 }
