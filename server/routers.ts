@@ -390,6 +390,25 @@ export const appRouter = router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {
       return [];
     }),
+    getUserDetails: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return {
+          id: input.userId,
+          name: null,
+          email: null,
+          role: 'user' as const,
+        };
+      }),
+    updateUser: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        name: z.string().min(1),
+        role: z.enum(['user', 'admin']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return { success: true };
+      }),
     inviteUserToProjects: protectedProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ ctx, input }) => {

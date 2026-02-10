@@ -43,12 +43,14 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { ProjectAssignmentDialog } from "@/components/ProjectAssignmentDialog";
+import { UserManagementDialog } from "@/components/UserManagementDialog";
 
 export default function UsersPage() {
   const { user } = useAuth();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null } | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null; email: string | null } | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
 
@@ -107,9 +109,14 @@ export default function UsersPage() {
     }
   };
 
-  const handleAssignProjects = (userItem: { id: number; name: string | null }) => {
+  const handleAssignProjects = (userItem: { id: number; name: string | null; email: string | null }) => {
     setSelectedUser(userItem);
     setAssignDialogOpen(true);
+  };
+
+  const handleManageUser = (userItem: { id: number; name: string | null; email: string | null }) => {
+    setSelectedUser(userItem);
+    setManageDialogOpen(true);
   };
 
   if (isLoading) {
@@ -201,10 +208,10 @@ export default function UsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAssignProjects(userItem)}
+                        onClick={() => handleManageUser(userItem)}
                       >
                         <Edit2 className="h-4 w-4 mr-2" />
-                        Manage Projects
+                        Manage
                       </Button>
                       <Button
                         variant="outline"
@@ -283,6 +290,17 @@ export default function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* User Management Dialog */}
+      {selectedUser && (
+        <UserManagementDialog
+          open={manageDialogOpen}
+          onOpenChange={setManageDialogOpen}
+          userId={selectedUser.id}
+          userName={selectedUser.name}
+          userEmail={selectedUser.email}
+        />
+      )}
 
       {/* Project Assignment Dialog */}
       {selectedUser && (
