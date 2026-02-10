@@ -2469,3 +2469,92 @@ export async function getClientUsersWithAssignments(clientId: number) {
     projectCount: (assignmentsByUser[cu.clientUser.userId] || []).length,
   }));
 }
+
+
+/**
+ * Get all users who have access to the owner's projects (collaborators)
+ */
+export async function getOwnerUsers(ownerId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get all projects owned by this user
+  const ownerProjects = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(eq(projects.userId, ownerId));
+
+  if (ownerProjects.length === 0) {
+    return [];
+  }
+
+  const projectIds = ownerProjects.map(p => p.id);
+
+  // Get all collaborators for these projects
+  const collaborators = await db
+    .selectDistinct({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      createdAt: projectCollaborators.createdAt,
+    })
+    .from(projectCollaborators)
+    .innerJoin(users, eq(projectCollaborators.userId, users.id))
+    .where(inArray(projectCollaborators.projectId, projectIds));
+
+  return collaborators;
+}
+
+/**
+ * Get a specific user's details
+ */
+export async function getUserDetailsById(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const user = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      openId: users.openId,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return user[0] || null;
+}
+
+/**
+ * Update a user's details
+ */
+export async function updateUserDetails(userId: number, data: { name?: string; role?: 'user' | 'admin' }) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.role !== undefined) updateData.role = data.role;
+
+  if (Object.keys(updateData).length === 0) {
+    return { success: true };
+  }
+
+  await db
+    .update(users)
+    .set(updateData)
+    .where(eq(users.id, userId));
+
+  return { success: true };
+}
+
+

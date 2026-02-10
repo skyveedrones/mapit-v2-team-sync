@@ -388,17 +388,16 @@ export const appRouter = router({
   
   users: router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {
-      return [];
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      const { getOwnerUsers } = await import('./db');
+      return getOwnerUsers(ctx.user.id);
     }),
     getUserDetails: protectedProcedure
       .input(z.object({ userId: z.number() }))
       .query(async ({ ctx, input }) => {
-        return {
-          id: input.userId,
-          name: null,
-          email: null,
-          role: 'user' as const,
-        };
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const { getUserDetailsById } = await import('./db');
+        return getUserDetailsById(input.userId);
       }),
     updateUser: protectedProcedure
       .input(z.object({
@@ -407,7 +406,9 @@ export const appRouter = router({
         role: z.enum(['user', 'admin']),
       }))
       .mutation(async ({ ctx, input }) => {
-        return { success: true };
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const { updateUserDetails } = await import('./db');
+        return updateUserDetails(input.userId, { name: input.name, role: input.role });
       }),
     inviteUserToProjects: protectedProcedure
       .input(z.object({ email: z.string().email() }))
