@@ -2493,19 +2493,35 @@ export async function getOwnerUsers(ownerId: number) {
   const projectIds = ownerProjects.map(p => p.id);
 
   // Get all collaborators for these projects
-  const collaborators = await db
-    .selectDistinct({
+  const allCollaborators = await db
+    .select({
       id: users.id,
       name: users.name,
       email: users.email,
       role: users.role,
-      createdAt: projectCollaborators.createdAt,
+      projectId: projectCollaborators.projectId,
     })
     .from(projectCollaborators)
     .innerJoin(users, eq(projectCollaborators.userId, users.id))
     .where(inArray(projectCollaborators.projectId, projectIds));
 
-  return collaborators;
+  // Deduplicate users and count their projects
+  const userMap = new Map<number, any>();
+  for (const collab of allCollaborators) {
+    if (!userMap.has(collab.id)) {
+      userMap.set(collab.id, {
+        id: collab.id,
+        name: collab.name,
+        email: collab.email,
+        role: collab.role,
+        projectCount: 0,
+      });
+    }
+    const user = userMap.get(collab.id)!;
+    user.projectCount++;
+  }
+
+  return Array.from(userMap.values());
 }
 
 /**
