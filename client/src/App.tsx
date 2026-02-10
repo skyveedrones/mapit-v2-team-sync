@@ -22,6 +22,7 @@ import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
 import ClientInviteAccept from "./pages/ClientInviteAccept";
 import ManageUser from "./pages/ManageUser";
+import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 
@@ -96,6 +97,9 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
+      </Route>
+      <Route path="/users">
+        {() => <ProtectedRoute component={Users} />}
       </Route>
       <Route path="/project/:id">
         {(params) => {

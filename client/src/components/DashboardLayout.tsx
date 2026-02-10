@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, Moon, PanelLeft, Settings, Sun } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Moon, PanelLeft, Settings, Sun, Users as UsersIcon } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -31,6 +31,7 @@ import { getVersionString } from '@shared/version';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: UsersIcon, label: "Users", path: "/users" },
   { icon: Building2, label: "Clients", path: "/clients" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];

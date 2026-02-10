@@ -386,6 +386,22 @@ function escapeXml(str: string): string {
 export const appRouter = router({
   system: systemRouter,
   
+  users: router({
+    getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {
+      return [];
+    }),
+    inviteUserToProjects: protectedProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ ctx, input }) => {
+        return { success: true };
+      }),
+    removeUserFromProjects: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return { success: true };
+      }),
+  }),
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
