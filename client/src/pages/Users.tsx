@@ -42,13 +42,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ProjectAssignmentDialog } from "@/components/ProjectAssignmentDialog";
+
 import { UserManagementDialog } from "@/components/UserManagementDialog";
 
 export default function UsersPage() {
   const { user } = useAuth();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null; email: string | null } | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -107,11 +106,6 @@ export default function UsersPage() {
     if (confirm("Are you sure you want to remove this user from all your projects?")) {
       removeUserMutation.mutate({ userId });
     }
-  };
-
-  const handleAssignProjects = (userItem: { id: number; name: string | null; email: string | null }) => {
-    setSelectedUser(userItem);
-    setAssignDialogOpen(true);
   };
 
   const handleManageUser = (userItem: { id: number; name: string | null; email: string | null }) => {
@@ -302,16 +296,7 @@ export default function UsersPage() {
         />
       )}
 
-      {/* Project Assignment Dialog */}
-      {selectedUser && (
-        <ProjectAssignmentDialog
-          open={assignDialogOpen}
-          onOpenChange={setAssignDialogOpen}
-          clientId={0}
-          userId={selectedUser.id}
-          userName={selectedUser.name || "User"}
-        />
-      )}
+
     </DashboardLayout>
   );
 }
