@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, AlertCircle } from "lucide-react";
-import { ProjectAssignmentDialog } from "./ProjectAssignmentDialog";
+
 
 interface UserManagementDialogProps {
   open: boolean;
@@ -33,7 +33,7 @@ export function UserManagementDialog({
 }: UserManagementDialogProps) {
   const [editName, setEditName] = useState(userName || "");
   const [selectedRole, setSelectedRole] = useState<"user" | "admin">("user");
-  const [showProjectAssignment, setShowProjectAssignment] = useState(false);
+
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch user details
@@ -99,16 +99,15 @@ export function UserManagementDialog({
 
   return (
     <>
-      <Dialog open={open && !showProjectAssignment} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Manage User: {userName}</DialogTitle>
           </DialogHeader>
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="details">User Details</TabsTrigger>
-              <TabsTrigger value="projects">Project Access</TabsTrigger>
             </TabsList>
 
             {/* User Details Tab */}
@@ -189,41 +188,12 @@ export function UserManagementDialog({
               </DialogFooter>
             </TabsContent>
 
-            {/* Project Access Tab */}
-            <TabsContent value="projects" className="mt-6">
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Manage which projects this user can access
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowProjectAssignment(true)}
-                >
-                  Manage Project Access
-                </Button>
-              </div>
-            </TabsContent>
+
           </Tabs>
         </DialogContent>
       </Dialog>
 
-      {/* Project Assignment Dialog */}
-      {showProjectAssignment && (
-        <ProjectAssignmentDialog
-          open={showProjectAssignment}
-          onOpenChange={(newOpen) => {
-            setShowProjectAssignment(newOpen);
-            if (!newOpen) {
-              // Refresh user details after project assignment changes
-              utils.users.getUserDetails.invalidate({ userId });
-            }
-          }}
-          clientId={0}
-          userId={userId}
-          userName={userName || "User"}
-        />
-      )}
+
     </>
   );
 }
