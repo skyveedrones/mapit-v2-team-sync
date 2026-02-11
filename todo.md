@@ -1068,7 +1068,8 @@
 ## High-Resolution File Upload Feature
 - [x] Create uncompressed high-resolution file upload endpoint (highres-upload.ts)
 - [x] Add Cloudinary environment variables to ENV
-- [ ] Create tRPC procedure for high-resolution upload
+- [x] Create tRPC procedure for high-resolution upload (uploadHighResolution mutation)
+- [x] Write comprehensive vitest tests for upload procedure (14 tests passing)
 - [ ] Integrate high-res upload into media upload flow
 - [ ] Connect View High Resolution button to stored high-res files
 - [ ] Test high-resolution upload and playback

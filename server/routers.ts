@@ -99,6 +99,7 @@ import { storagePut, storageGet } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
+import { uploadHighResolutionMedia } from "./highres-upload";
 
 // Validation schemas for project operations
 const createProjectSchema = z.object({
@@ -1149,6 +1150,70 @@ export const appRouter = router({
           failCount: results.failed.length,
           failed: results.failed,
         };
+      }),
+
+    // Upload high-resolution version of existing media
+    uploadHighResolution: protectedProcedure
+      .input(z.object({
+        mediaId: z.number(),
+        fileData: z.string(),
+        filename: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Media not found",
+          });
+        }
+
+        const project = await getUserProject(mediaItem.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to upload high-resolution files for this media",
+          });
+        }
+
+        const buffer = Buffer.from(input.fileData, "base64");
+        const fileSize = buffer.length;
+        const mediaType = input.mimeType.startsWith("video/") ? "video" : "photo";
+        const uploadResult = await uploadHighResolutionMedia(
+          buffer,
+          input.filename,
+          mediaType,
+          ctx.user.id,
+          mediaItem.projectId
+        );
+
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database not available",
+          });
+        }
+
+        await db
+          .update(media)
+          .set({
+            highResUrl: uploadResult.url,
+            highResKey: uploadResult.fileKey,
+            highResFileSize: fileSize,
+            originalWidth: uploadResult.width || null,
+            originalHeight: uploadResult.height || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(media.id, input.mediaId));
+
+        const [updated] = await db
+          .select()
+          .from(media)
+          .where(eq(media.id, input.mediaId));
+
+        return updated;
       }),
   }),
 
