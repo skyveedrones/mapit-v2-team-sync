@@ -727,6 +727,11 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
 
             {/* Priority indicator in upper right corner */}
             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+              {item.highResUrl && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/90 text-white text-xs font-medium shadow-lg">
+                  <span>HD</span>
+                </div>
+              )}
               {item.priority && item.priority !== "none" && (
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-lg ${
                   item.priority === "high" 

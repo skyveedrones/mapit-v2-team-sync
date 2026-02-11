@@ -39,6 +39,7 @@ interface MediaUploadDialogProps {
   projectId: number;
   flightId?: number;
   onUploadComplete?: () => void;
+  mediaList?: any[]; // Optional: pass media list for high-res selection
 }
 
 interface FileToUpload {
@@ -315,6 +316,7 @@ export function MediaUploadDialog({
   projectId,
   flightId,
   onUploadComplete,
+  mediaList: propMediaList,
 }: MediaUploadDialogProps) {
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -331,6 +333,13 @@ export function MediaUploadDialog({
   const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
   const uploadHighResMutation = trpc.media.uploadHighResolution.useMutation();
   const utils = trpc.useUtils();
+
+  const { data: mediaList = propMediaList || [] } = trpc.media.list.useQuery(
+    { projectId, flightId },
+    { enabled: uploadMode === 'highres' }
+  );
+
+  const mediaWithoutHighRes = (mediaList || []).filter(m => !m.highResUrl);
 
   // Load pending resumable uploads on mount
   useEffect(() => {
@@ -1093,6 +1102,36 @@ export function MediaUploadDialog({
             High-Resolution Upload
           </button>
         </div>
+
+        {/* High-Resolution Media Selector */}
+        {uploadMode === 'highres' && (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">Select Media for High-Resolution Upload</h4>
+            <p className="text-xs text-muted-foreground mb-3">Choose which media item to upload the high-resolution version for</p>
+            {mediaWithoutHighRes.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">All media items already have high-resolution versions</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {mediaWithoutHighRes.map((media) => (
+                  <label key={media.id} className="flex items-center gap-3 p-2 rounded hover:bg-blue-500/5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="media-selection"
+                      value={media.id}
+                      checked={selectedMediaForHighRes === media.id}
+                      onChange={(e) => setSelectedMediaForHighRes(parseInt(e.target.value))}
+                      className="w-4 h-4"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{media.filename}</p>
+                      <p className="text-xs text-muted-foreground">{media.mediaType === 'video' ? '🎬 Video' : '📷 Photo'}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex-1 overflow-auto space-y-4">
           {/* Pending Resumable Uploads */}
