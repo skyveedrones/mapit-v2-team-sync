@@ -625,7 +625,7 @@ export function generateReportHtml(
       gap: 8px;
     }
     .priority-filename {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 600;
       color: #1a1a1a;
       overflow: hidden;
@@ -643,10 +643,10 @@ export function generateReportHtml(
       flex-shrink: 0;
     }
     .priority-notes {
-      font-size: 12px;
+      font-size: 14px;
       color: #333;
-      line-height: 1.6;
-      padding: 10px;
+      line-height: 1.7;
+      padding: 12px;
       background: #f8f9fa;
       border-radius: 4px;
       border-left: 4px solid #e5e5e5;
@@ -719,16 +719,16 @@ export function generateReportHtml(
       z-index: 10;
     }
     .photo-label {
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
       text-align: center;
-      padding: 4px;
+      padding: 5px;
       background: #f5f5f5;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      height: 22px;
-      line-height: 14px;
+      height: 24px;
+      line-height: 16px;
     }
     
     /* Page break utility */

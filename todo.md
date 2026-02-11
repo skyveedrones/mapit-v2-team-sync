@@ -1083,3 +1083,10 @@
 - [x] Task 8: Enhance GPS marker popups with larger size and "Select to View" button
 - [x] Task 4: Add Settings link and Export Data feature to Dashboard Actions menu
 - [x] Task 6: Redesign client portal Manage Projects popup with user info fields (Company, Department, Location)
+
+## UI Task Corrections (User Clarifications)
+- [ ] Task 1 (CORRECTED): Media popup redesign - image left (smaller), Location/Captured on right, title below and enlarged
+- [ ] Task 3 (CORRECTED): Add priority icon to PDF report photo grid, revert Report Preview popup to larger size
+- [ ] Task 2 (CORRECTED): Enlarge Priority/Notes fields in PDF, enlarge thumbnail titles, fix return navigation (not fullscreen)
+- [ ] Task 8 (CORRECTED): Enlarge GPS marker popups with "Select to View" text
+- [ ] Task 4 (CORRECTED): Add export format selection popup (PDF, CSV, etc.) instead of direct CSV export

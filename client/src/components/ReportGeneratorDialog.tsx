@@ -582,16 +582,16 @@ export function ReportGeneratorDialog({
         setTimeout(() => {
           // Trigger print dialog
           printWindow.print();
-          toast.success('Print dialog opened! Save as PDF to download.');
+          toast.success('Print dialog opened! Save as PDF to download. Close the window to return to MapIt.');
           setIsDownloading(false);
         }, 500);
       };
       
     } catch (error: any) {
       console.error('[PDF Generation Error]:', error);
-      toast.error('Failed to open print dialog. Please try again.');
+        toast.error('Failed to open print dialog. Please try again. Make sure popups are allowed.');
     } finally {
-      setTimeout(() => setIsDownloading(false), 1000);
+      setTimeout(() => setIsDownloading(false), 2000);
     }
   };
 
@@ -673,7 +673,7 @@ export function ReportGeneratorDialog({
   if (showPreview && previewHtml) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-5xl max-h-[95vh] flex flex-col">
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />

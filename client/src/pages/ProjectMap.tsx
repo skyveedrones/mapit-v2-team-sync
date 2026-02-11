@@ -202,7 +202,7 @@ export default function ProjectMap() {
           if (media.thumbnailUrl) {
             console.log('Rendering video with thumbnail:', media.thumbnailUrl);
             mediaContent = `
-              <div style="position: relative; width: 100%; height: 128px; background: #111827; border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
+              <div style="position: relative; width: 100%; height: 200px; background: #111827; border-radius: 4px; margin-bottom: 10px; overflow: hidden;">
                 <img 
                   src="${media.thumbnailUrl}" 
                   alt="${media.filename}" 
@@ -219,7 +219,7 @@ export default function ProjectMap() {
           } else {
             console.log('Video has no thumbnail, showing placeholder');
             mediaContent = `
-              <div style="width: 100%; height: 128px; background: #111827; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+              <div style="width: 100%; height: 200px; background: #111827; border-radius: 4px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
                   <line x1="7" y1="2" x2="7" y2="22"></line>
@@ -235,9 +235,9 @@ export default function ProjectMap() {
           }
         } else {
           if (imageUrl) {
-            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 128px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='${media.url}'" />`;
+            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" onerror="this.src='${media.url}'" />`;
           } else {
-            mediaContent = `<div style="width: 100%; height: 128px; background: #e5e7eb; border-radius: 4px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Thumbnail</span></div>`;
+            mediaContent = `<div style="width: 100%; height: 200px; background: #e5e7eb; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Thumbnail</span></div>`;
           }
         }
         
@@ -247,7 +247,7 @@ export default function ProjectMap() {
           : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
         
         content.innerHTML = `
-          <div class="font-semibold text-base mb-2" style="font-size: 14px; font-weight: 600;">${media.filename}</div>
+          <div class="font-semibold text-base mb-2" style="font-size: 16px; font-weight: 700; color: #1a1a1a;">${media.filename}</div>
           <div class="relative">
             ${mediaContent}
             <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${isVideo ? 'Play video' : 'Enlarge image'}">
@@ -260,8 +260,8 @@ export default function ProjectMap() {
             ${media.capturedAt ? `<div>📅 ${new Date(media.capturedAt).toLocaleString()}</div>` : ''}
           </div>
           <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-            <button id="select-btn-${media.id}" style="width: 100%; padding: 8px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-              Select to View
+            <button id="select-btn-${media.id}" style="width: 100%; padding: 10px; background: #10b981; color: white; border: none; border-radius: 5px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+              ✓ Select to View
             </button>
           </div>
         `;

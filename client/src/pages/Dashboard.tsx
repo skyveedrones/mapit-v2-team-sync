@@ -14,6 +14,14 @@ import { SharedProjectCard } from "@/components/SharedProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -63,6 +71,8 @@ export default function Dashboard() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
 
 
   // Fetch projects
@@ -80,6 +90,14 @@ export default function Dashboard() {
   };
 
   const handleExportData = async () => {
+    if (!projects || projects.length === 0) {
+      toast.info('No projects to export');
+      return;
+    }
+    setExportDialogOpen(true);
+  };
+
+  const handleConfirmExport = async () => {
     try {
       if (!projects || projects.length === 0) {
         toast.info('No projects to export');
@@ -108,13 +126,81 @@ export default function Dashboard() {
         p.clientName || '',
       ]);
 
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
+            if (exportFormat === 'csv') {
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
 
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: 'text/csv' });
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `mapit-projects-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.success('Projects exported successfully!', {
+          description: `Exported ${projectsData.length} projects to CSV.`,
+        });
+      } else if (exportFormat === 'pdf') {
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Mapit Projects Export</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 20px; color: #333; }
+              h1 { color: #10b981; border-bottom: 3px solid #10b981; padding-bottom: 10px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th { background-color: #10b981; color: white; padding: 12px; text-align: left; font-weight: 600; }
+              td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+              tr:nth-child(even) { background-color: #f9fafb; }
+              .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+            </style>
+          </head>
+          <body>
+            <h1>Mapit Projects Export</h1>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <table>
+              <thead>
+                <tr>
+                  ${headers.map(h => `<th>${h}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+              </tbody>
+            </table>
+            <div class="footer">
+              <p>Total Projects: ${projectsData.length}</p>
+              <p>Exported from Mapit - Drone Mapping Project Manager</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          toast.error('Please allow popups to export PDF');
+          return;
+        }
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            toast.success('Projects exported successfully!', {
+              description: `Exported ${projectsData.length} projects to PDF.`,
+            });
+          }, 500);
+        };
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -337,6 +423,52 @@ export default function Dashboard() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
+      
+      {/* Export Format Selection Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Projects
+            </DialogTitle>
+            <DialogDescription>
+              Choose the format for exporting your projects
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-4">
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-accent transition-colors" onClick={() => setExportFormat('csv')}>
+              <input type="radio" name="format" value="csv" checked={exportFormat === 'csv'} onChange={() => setExportFormat('csv')} className="h-4 w-4" />
+              <div className="flex-1">
+                <div className="font-medium">CSV Format</div>
+                <div className="text-sm text-muted-foreground">Spreadsheet compatible (Excel, Google Sheets)</div>
+              </div>
+            </label>
+            
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-accent transition-colors" onClick={() => setExportFormat('pdf')}>
+              <input type="radio" name="format" value="pdf" checked={exportFormat === 'pdf'} onChange={() => setExportFormat('pdf')} className="h-4 w-4" />
+              <div className="flex-1">
+                <div className="font-medium">PDF Format</div>
+                <div className="text-sm text-muted-foreground">Professional document format</div>
+              </div>
+            </label>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              handleConfirmExport();
+              setExportDialogOpen(false);
+            }} className="bg-emerald-600 hover:bg-emerald-700">
+              <Download className="h-4 w-4 mr-2" />
+              Export as {exportFormat.toUpperCase()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
