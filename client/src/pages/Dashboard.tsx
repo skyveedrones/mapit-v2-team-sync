@@ -33,7 +33,9 @@ import {
   Plus,
   Settings,
   Users,
+  FileJson,
 } from "lucide-react";
+import { Link } from "wouter";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -75,6 +77,60 @@ export default function Dashboard() {
     toast.info("Feature coming soon!", {
       description: "This feature is currently under development.",
     });
+  };
+
+  const handleExportData = async () => {
+    try {
+      if (!projects || projects.length === 0) {
+        toast.info('No projects to export');
+        return;
+      }
+      // Fetch all projects with their data
+      const projectsData = projects.map(p => ({
+        id: p.id,
+        name: p.name,
+        location: p.location,
+        status: p.status,
+        createdAt: p.createdAt,
+        flightDate: p.flightDate,
+        clientName: p.clientName,
+      }));
+
+      // Create CSV content
+      const headers = ['ID', 'Project Name', 'Location', 'Status', 'Created Date', 'Flight Date', 'Client'];
+      const rows = projectsData.map(p => [
+        p.id,
+        p.name,
+        p.location || '',
+        p.status || '',
+        new Date(p.createdAt).toLocaleDateString(),
+        p.flightDate ? new Date(p.flightDate).toLocaleDateString() : '',
+        p.clientName || '',
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mapit-projects-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Projects exported successfully!', {
+        description: `Exported ${projectsData.length} projects to CSV.`,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export data');
+    }
   };
 
   const handleEditProject = (project: Project) => {
@@ -129,14 +185,16 @@ export default function Dashboard() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem onClick={handleComingSoon}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
+                <DropdownMenuItem onClick={handleExportData}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  Export Projects
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleComingSoon}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500">

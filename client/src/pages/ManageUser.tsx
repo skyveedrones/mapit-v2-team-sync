@@ -31,6 +31,9 @@ export default function ManageUser() {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
+    company: "",
+    department: "",
+    location: "",
     jobTitle: "",
     contact: "",
     password: "",
@@ -154,6 +157,36 @@ export default function ManageUser() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="company">Company</Label>
+                <Input
+                  id="company"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  placeholder="Enter your company name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  placeholder="Enter your department"
+                />
+              </div>
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  placeholder="Enter your location"
                 />
               </div>
               <div>

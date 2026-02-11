@@ -1073,3 +1073,13 @@
 - [ ] Integrate high-res upload into media upload flow
 - [ ] Connect View High Resolution button to stored high-res files
 - [ ] Test high-resolution upload and playback
+
+## UI/UX Improvement Tasks (Priority Queue)
+- [x] Task 5: Delete all test projects (cleanup foundation) - 44 test projects deleted
+- [x] Task 1: Redesign media detail popup - Applied CSS layout changes to reduce image height
+- [x] Task 3: Add missing priority icon to PDF report thumbnails - Red/yellow badges on photo grid
+- [x] Task 2: Enlarge priority/notes fields and titles in PDF report, add return navigation
+- [x] Task 7: Update fullscreen map navigation label to "Return to Project" or "Return to Flight"
+- [x] Task 8: Enhance GPS marker popups with larger size and "Select to View" button
+- [x] Task 4: Add Settings link and Export Data feature to Dashboard Actions menu
+- [x] Task 6: Redesign client portal Manage Projects popup with user info fields (Company, Department, Location)

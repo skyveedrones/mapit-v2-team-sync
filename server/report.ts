@@ -350,12 +350,20 @@ export function generateReportHtml(
       const pageNumber = Math.floor(i / photosPerPage) + 1;
       const totalPages = Math.ceil(mediaImages.length / photosPerPage);
       
-      const photoGrid = pagePhotos.map((img, idx) => `
+      const photoGrid = pagePhotos.map((img, idx) => {
+        const priorityColor = img.media.priority === "high" ? "#dc2626" : img.media.priority === "low" ? "#eab308" : null;
+        const priorityIcon = priorityColor ? `<div class="priority-badge-small" style="background-color: ${priorityColor};">!</div>` : "";
+        
+        return `
         <div class="photo-cell">
-          <img src="${img.dataUrl}" alt="${img.filename}" />
+          <div class="photo-image-wrapper">
+            <img src="${img.dataUrl}" alt="${img.filename}" />
+            ${priorityIcon}
+          </div>
           <span class="photo-label">${img.filename}</span>
         </div>
-      `).join("");
+      `;
+      }).join("");
       
       pages.push(`
         <div class="page-break"></div>
@@ -617,7 +625,7 @@ export function generateReportHtml(
       gap: 8px;
     }
     .priority-filename {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
       color: #1a1a1a;
       overflow: hidden;
@@ -625,23 +633,23 @@ export function generateReportHtml(
       white-space: nowrap;
     }
     .priority-badge {
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
       color: white;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
       flex-shrink: 0;
     }
     .priority-notes {
-      font-size: 10px;
-      color: #555;
-      line-height: 1.5;
-      padding: 8px;
+      font-size: 12px;
+      color: #333;
+      line-height: 1.6;
+      padding: 10px;
       background: #f8f9fa;
       border-radius: 4px;
-      border-left: 3px solid #e5e5e5;
+      border-left: 4px solid #e5e5e5;
     }
     
     /* Photo grid - 4 rows x 2 columns = 8 per page */
@@ -657,8 +665,8 @@ export function generateReportHtml(
       border-bottom: 1px solid #e5e5e5;
     }
     .section-title {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
       color: #000000;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -683,10 +691,32 @@ export function generateReportHtml(
       overflow: hidden;
       background: #fafafa;
     }
-    .photo-cell img {
+    .photo-image-wrapper {
+      position: relative;
       width: 100%;
       height: calc(100% - 22px);
+      overflow: hidden;
+    }
+    .photo-cell img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+    }
+    .priority-badge-small {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      z-index: 10;
     }
     .photo-label {
       font-size: 8px;

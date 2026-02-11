@@ -247,25 +247,37 @@ export default function ProjectMap() {
           : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
         
         content.innerHTML = `
-          <div class="font-semibold text-sm mb-1">${media.filename}</div>
+          <div class="font-semibold text-base mb-2" style="font-size: 14px; font-weight: 600;">${media.filename}</div>
           <div class="relative">
             ${mediaContent}
             <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${isVideo ? 'Play video' : 'Enlarge image'}">
               ${buttonIcon}
             </button>
           </div>
-          <div class="text-xs text-gray-600">
+          <div class="text-xs text-gray-600" style="margin: 8px 0;">
             <div>📍 ${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
             ${media.altitude ? `<div>🏔️ Altitude: ${media.altitude.toFixed(1)}m</div>` : ''}
             ${media.capturedAt ? `<div>📅 ${new Date(media.capturedAt).toLocaleString()}</div>` : ''}
           </div>
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+            <button id="select-btn-${media.id}" style="width: 100%; padding: 8px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+              Select to View
+            </button>
+          </div>
         `;
 
-        // Add click handler for enlarge button after content is added to DOM
+        // Add click handlers for enlarge button and select button after content is added to DOM
         setTimeout(() => {
           const enlargeBtn = document.getElementById(`enlarge-btn-${media.id}`);
+          const selectBtn = document.getElementById(`select-btn-${media.id}`);
           if (enlargeBtn) {
             enlargeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setEnlargedImage(media);
+            });
+          }
+          if (selectBtn) {
+            selectBtn.addEventListener('click', (e) => {
               e.stopPropagation();
               setEnlargedImage(media);
             });
@@ -452,8 +464,9 @@ export default function ProjectMap() {
           <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-4 max-w-sm">
             <div className="flex items-start gap-3">
               <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
-                <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8">
+                <Button variant="ghost" size="sm" className="flex-shrink-0 h-8 px-2 gap-1.5">
                   <ArrowLeft className="h-4 w-4" />
+                  <span className="text-xs">Return to {flightId ? 'Flight' : 'Project'}</span>
                 </Button>
               </Link>
               <div className="flex-1 min-w-0">
