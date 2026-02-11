@@ -1122,3 +1122,9 @@
 - [x] Ensure image is 100% visible in popup without scrolling
 - [x] Rewrite Tip text below map to be clearer and more concise
 - [x] Test popup appearance and readability
+
+## Popup Aspect Ratio Fix - Current Session
+- [x] Adjust popup width and height to match image aspect ratio (16:9)
+- [x] Set popup to 320px width and 180px height
+- [x] Ensure no wasted space in popup container
+- [x] Test with different image dimensions (landscape, portrait, square)

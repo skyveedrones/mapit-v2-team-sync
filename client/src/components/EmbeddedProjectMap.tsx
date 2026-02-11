@@ -147,7 +147,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           if (media.thumbnailUrl) {
             // Video with thumbnail - show thumbnail with play icon overlay (clickable)
             mediaDisplay = `
-              <div style="position: relative; width: 100%; height: 200px; border-radius: 4px; margin-bottom: 8px; background: #000; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
+              <div style="position: relative; width: 100%; height: 180px; border-radius: 4px; margin-bottom: 8px; background: #000; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
                 <img src="${media.thumbnailUrl}" alt="${media.filename}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -156,7 +156,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           } else {
             // Video without thumbnail - show video icon placeholder
             mediaDisplay = `
-              <div style="width: 100%; height: 200px; background: #1f2937; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
+              <div style="width: 100%; height: 180px; background: #1f2937; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
                   <line x1="7" y1="2" x2="7" y2="22"></line>
@@ -172,11 +172,11 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           }
         } else {
           const imageUrl = media.thumbnailUrl || media.url;
-          mediaDisplay = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='${media.url}'" />`;
+          mediaDisplay = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='${media.url}'" />`;
         }
         
         const content = `
-          <div style="max-width: 300px; padding: 12px; background: #1a1a1a; border-radius: 8px;">
+          <div style="max-width: 320px; padding: 12px; background: #1a1a1a; border-radius: 8px;">
             ${mediaDisplay}
             <p style="font-weight: 600; font-size: 12px; margin: 0 0 4px 0; color: #333;">${media.filename}</p>
             <p style="font-size: 11px; color: #666; margin: 0;">
