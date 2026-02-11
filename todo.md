@@ -1096,3 +1096,9 @@
 - [x] Enlarge Report Preview dialog window size to match previous versions (max-w-[95vw])
 - [x] Increase photo title font sizes in PDF report (10px → 14px)
 - [x] Remove Client, Pilot, FAA License, and LAANC Auth fields from Project screen
+
+## Current Session - Map Display Improvements
+- [x] Increase embedded project map media popup height (from 120px to 250px)
+- [x] Increase popup container width (from 200px to 350px)
+- [x] Keep marker sizes unchanged
+- [x] Test map display on ProjectDetail page
