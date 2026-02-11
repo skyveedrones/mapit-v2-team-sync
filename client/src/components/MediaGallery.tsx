@@ -1142,6 +1142,25 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   Download
                 </a>
               </Button>
+              <Button
+                variant="default"
+                onClick={() => {
+                  if (selectedMedia) {
+                    const link = document.createElement("a");
+                    link.href = selectedMedia.url;
+                    link.download = `highres-${selectedMedia.filename}`;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    toast.success("High-resolution download started");
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                High Resolution
+              </Button>
               <Button variant="outline" onClick={() => setSelectedMedia(null)}>
                 Close
               </Button>
