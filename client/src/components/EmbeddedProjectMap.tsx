@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
-import { Expand, MapPin, Navigation } from "lucide-react";
+import { Expand, MapPin, Navigation, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Link } from "wouter";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
@@ -28,6 +28,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [enlargedMedia, setEnlargedMedia] = useState<Media | null>(null);
 
   // Fetch media - use demo procedure for unauthenticated demo access
   const { data: mediaList, isLoading } = isDemoProject
@@ -144,9 +145,9 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
         let mediaDisplay = '';
         if (isVideo) {
           if (media.thumbnailUrl) {
-            // Video with thumbnail - show thumbnail with play icon overlay
+            // Video with thumbnail - show thumbnail with play icon overlay (clickable)
             mediaDisplay = `
-              <div style="position: relative; width: 100%; height: 250px; border-radius: 4px; margin-bottom: 8px; background: #000;">
+              <div style="position: relative; width: 100%; height: 250px; border-radius: 4px; margin-bottom: 8px; background: #000; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
                 <img src="${media.thumbnailUrl}" alt="${media.filename}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -155,7 +156,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           } else {
             // Video without thumbnail - show video icon placeholder
             mediaDisplay = `
-              <div style="width: 100%; height: 250px; background: #1f2937; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+              <div style="width: 100%; height: 250px; background: #1f2937; border-radius: 4px; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;" onclick="window.__openVideo && window.__openVideo('${media.id}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
                   <line x1="7" y1="2" x2="7" y2="22"></line>
@@ -237,6 +238,18 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
     }
   }, [mediaWithGPS]);
 
+  // Setup global function to open video in fullscreen
+  if (typeof window !== 'undefined') {
+    (window as any).__openVideo = (mediaId: number) => {
+      const media = mediaList?.find(m => m.id === mediaId);
+      if (media) {
+        setEnlargedMedia(media);
+      }
+    };
+    // Store mediaList reference for access from HTML
+    (window as any).__mediaList = mediaList;
+  }
+
   if (isLoading) {
     return (
       <Card className="bg-card">
@@ -298,6 +311,48 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
             <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground">
               <span className="text-primary font-medium">{mediaWithGPS.length}</span> GPS points • 
               <span className="text-emerald-500 ml-1">—</span> Flight path
+            </div>
+          </div>
+        )}
+
+        {/* Fullscreen Media Viewer Modal */}
+        {enlargedMedia && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            onClick={() => setEnlargedMedia(null)}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 h-10 w-10 text-white hover:bg-white/20 z-10"
+              onClick={() => setEnlargedMedia(null)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <div className="max-w-[90vw] max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
+              {enlargedMedia.mediaType === 'video' ? (
+                <video
+                  src={enlargedMedia.url}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                />
+              ) : (
+                <img
+                  src={enlargedMedia.url}
+                  alt={enlargedMedia.filename}
+                  className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                />
+              )}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
+                <h3 className="font-semibold text-sm mb-1">{enlargedMedia.filename}</h3>
+                <div className="text-xs text-gray-300 flex flex-wrap gap-4">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {parseFloat(enlargedMedia.latitude as any).toFixed(6)}, {parseFloat(enlargedMedia.longitude as any).toFixed(6)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}

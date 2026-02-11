@@ -1102,3 +1102,9 @@
 - [x] Increase popup container width (from 200px to 350px)
 - [x] Keep marker sizes unchanged
 - [x] Test map display on ProjectDetail page
+
+## Video Playback in Marker Popups
+- [x] Make video thumbnails in GPS marker popups clickable to open videos in fullscreen
+- [x] Add visual indicator that video thumbnail is clickable (cursor pointer)
+- [x] Test video playback opens correctly from popup click
+- [x] Enlarged media popup (250px height) with fullscreen video player modal
