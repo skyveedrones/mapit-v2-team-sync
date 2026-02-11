@@ -181,7 +181,8 @@ export default function ProjectMap() {
         
         // Create info window content
         const content = document.createElement("div");
-        content.className = "p-2 max-w-xs";
+        content.className = "p-4 max-w-lg";
+        content.style.width = '400px';
         const isVideo = media.mediaType === 'video';
         const imageUrl = media.thumbnailUrl || (isVideo ? '' : media.url);
         
@@ -196,48 +197,25 @@ export default function ProjectMap() {
           });
         }
         
-        // For videos, show thumbnail or video icon; for photos, show image
+        // For videos, show video player; for photos, show image
         let mediaContent = '';
         if (isVideo) {
-          if (media.thumbnailUrl) {
-            console.log('Rendering video with thumbnail:', media.thumbnailUrl);
-            mediaContent = `
-              <div style="position: relative; width: 100%; height: 200px; background: #111827; border-radius: 4px; margin-bottom: 10px; overflow: hidden;">
-                <img 
-                  src="${media.thumbnailUrl}" 
-                  alt="${media.filename}" 
-                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" 
-                  onerror="console.error('Failed to load video thumbnail:', this.src);"
-                  onload="console.log('Video thumbnail loaded successfully');"
-                />
-                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                  <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  </div>
-                </div>
-              </div>`;
-          } else {
-            console.log('Video has no thumbnail, showing placeholder');
-            mediaContent = `
-              <div style="width: 100%; height: 200px; background: #111827; border-radius: 4px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-                  <line x1="7" y1="2" x2="7" y2="22"></line>
-                  <line x1="17" y1="2" x2="17" y2="22"></line>
-                  <line x1="2" y1="12" x2="22" y2="12"></line>
-                  <line x1="2" y1="7" x2="7" y2="7"></line>
-                  <line x1="2" y1="17" x2="7" y2="17"></line>
-                  <line x1="17" y1="17" x2="22" y2="17"></line>
-                  <line x1="17" y1="7" x2="22" y2="7"></line>
-                </svg>
-                <span style="color: #9ca3af; font-size: 12px;">Video</span>
-              </div>`;
-          }
+          // Use video player for videos
+          mediaContent = `
+            <video 
+              id="video-${media.id}"
+              style="width: 100%; height: 300px; background: #111827; border-radius: 4px; margin-bottom: 10px; object-fit: contain;" 
+              controls
+              controlsList="nodownload"
+            >
+              <source src="${media.url}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>`;
         } else {
           if (imageUrl) {
-            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" onerror="this.src='${media.url}'" />`;
+            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" onerror="this.src='${media.url}'" />`;
           } else {
-            mediaContent = `<div style="width: 100%; height: 200px; background: #e5e7eb; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Thumbnail</span></div>`;
+            mediaContent = `<div style="width: 100%; height: 300px; background: #e5e7eb; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Image</span></div>`;
           }
         }
         
