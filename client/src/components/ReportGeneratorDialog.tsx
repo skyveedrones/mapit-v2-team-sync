@@ -673,7 +673,7 @@ export function ReportGeneratorDialog({
   if (showPreview && previewHtml) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col w-[95vw]">
+        <DialogContent className="max-w-[98vw] max-h-[98vh] flex flex-col w-[98vw] h-[98vh] p-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -684,7 +684,7 @@ export function ReportGeneratorDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-auto border rounded-lg bg-white">
+          <div className="flex-1 overflow-auto border rounded-lg bg-white min-h-0">
             <iframe
               srcDoc={previewHtml}
               className="w-full h-full border-0"
