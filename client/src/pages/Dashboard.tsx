@@ -201,18 +201,6 @@ export default function Dashboard() {
           }, 500);
         };
       }
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `mapit-projects-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success('Projects exported successfully!', {
-        description: `Exported ${projectsData.length} projects to CSV.`,
-      });
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export data');
