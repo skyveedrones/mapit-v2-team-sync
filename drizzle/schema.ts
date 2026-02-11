@@ -142,6 +142,24 @@ export const media = mysqlTable("media", {
   cameraModel: varchar("cameraModel", { length: 100 }),
   /** Thumbnail URL for quick preview */
   thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
+  /** S3 key for thumbnail */
+  thumbnailKey: varchar("thumbnailKey", { length: 500 }),
+  /** Original image width in pixels */
+  originalWidth: int("originalWidth"),
+  /** Original image height in pixels */
+  originalHeight: int("originalHeight"),
+  /** Thumbnail width in pixels */
+  thumbnailWidth: int("thumbnailWidth"),
+  /** Thumbnail height in pixels */
+  thumbnailHeight: int("thumbnailHeight"),
+  /** Whether this is a high-resolution version (1 = true, 0 = false) */
+  isHighResolution: int("isHighResolution").default(1),
+  /** Link to high-resolution download URL */
+  highResUrl: varchar("highResUrl", { length: 500 }),
+  /** S3 key for high-resolution file */
+  highResKey: varchar("highResKey", { length: 500 }),
+  /** High-resolution file size in bytes */
+  highResFileSize: int("highResFileSize"),
   /** User notes for this media file */
   notes: text("notes"),
   /** Priority level for PDF report inclusion: none (not included), low (yellow !), high (red !) */
