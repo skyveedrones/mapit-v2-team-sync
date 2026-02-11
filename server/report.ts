@@ -719,7 +719,7 @@ export function generateReportHtml(
       z-index: 10;
     }
     .photo-label {
-      font-size: 10px;
+      font-size: 14px;
       color: #666;
       text-align: center;
       padding: 5px;

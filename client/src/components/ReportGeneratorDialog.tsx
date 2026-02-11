@@ -673,7 +673,7 @@ export function ReportGeneratorDialog({
   if (showPreview && previewHtml) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col w-[95vw]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />

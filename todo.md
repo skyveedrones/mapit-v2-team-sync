@@ -1090,3 +1090,9 @@
 - [ ] Task 2 (CORRECTED): Enlarge Priority/Notes fields in PDF, enlarge thumbnail titles, fix return navigation (not fullscreen)
 - [ ] Task 8 (CORRECTED): Enlarge GPS marker popups with "Select to View" text
 - [ ] Task 4 (CORRECTED): Add export format selection popup (PDF, CSV, etc.) instead of direct CSV export
+
+
+## Current UI Fixes (Session)
+- [x] Enlarge Report Preview dialog window size to match previous versions (max-w-[95vw])
+- [x] Increase photo title font sizes in PDF report (10px → 14px)
+- [x] Remove Client, Pilot, FAA License, and LAANC Auth fields from Project screen
