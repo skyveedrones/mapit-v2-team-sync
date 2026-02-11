@@ -1108,3 +1108,10 @@
 - [x] Add visual indicator that video thumbnail is clickable (cursor pointer)
 - [x] Test video playback opens correctly from popup click
 - [x] Enlarged media popup (250px height) with fullscreen video player modal
+
+## Map UI Improvements - Current Session
+- [x] Add instruction text "Click on Full Screen to view map video GPS points" below embedded map
+- [x] Enlarge popup box to match fullscreen map style (more spacious, larger image area)
+- [x] Increase media image size in popup from 250px to 400px height
+- [x] Increase popup box width from 350px to 600px
+- [x] Test popup styling matches the fullscreen map appearance
