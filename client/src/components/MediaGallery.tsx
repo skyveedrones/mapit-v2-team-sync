@@ -1147,11 +1147,28 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   variant="default"
                   onClick={() => {
                     if (selectedMedia) {
+                      // Use highResUrl if available, otherwise use regular URL
+                      const highResUrl = selectedMedia.highResUrl || selectedMedia.url;
+                      // Update selectedMedia to show high-res version
+                      setSelectedMedia({
+                        ...selectedMedia,
+                        url: highResUrl,
+                      });
+                      toast.success("Viewing high-resolution version with zoom enabled");
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  View High Resolution
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (selectedMedia) {
+                      const highResUrl = selectedMedia.highResUrl || selectedMedia.url;
                       const link = document.createElement("a");
-                      link.href = selectedMedia.url;
+                      link.href = highResUrl;
                       link.download = `highres-${selectedMedia.filename}`;
-                      link.target = "_blank";
-                      link.rel = "noopener noreferrer";
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
@@ -1160,7 +1177,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   }}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  High Resolution
+                  Download
                 </Button>
                 <Button variant="outline" onClick={() => setSelectedMedia(null)}>
                   Close
