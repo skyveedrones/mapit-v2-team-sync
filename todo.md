@@ -1115,3 +1115,10 @@
 - [x] Increase media image size in popup from 250px to 400px height
 - [x] Increase popup box width from 350px to 600px
 - [x] Test popup styling matches the fullscreen map appearance
+
+## Popup Size Adjustment - Current Session
+- [x] Reduce popup width from 600px to 300px (50% smaller)
+- [x] Reduce media image height from 400px to 200px (50% smaller)
+- [x] Ensure image is 100% visible in popup without scrolling
+- [x] Rewrite Tip text below map to be clearer and more concise
+- [x] Test popup appearance and readability
