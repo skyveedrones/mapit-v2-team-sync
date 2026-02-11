@@ -1146,17 +1146,17 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 <Button
                   variant="default"
                   onClick={() => {
-                    if (selectedMedia) {
-                      // Use highResUrl if available, otherwise use regular URL
-                      const highResUrl = selectedMedia.highResUrl || selectedMedia.url;
-                      // Update selectedMedia to show high-res version
+                    if (selectedMedia && selectedMedia.highResUrl) {
                       setSelectedMedia({
                         ...selectedMedia,
-                        url: highResUrl,
+                        url: selectedMedia.highResUrl,
                       });
-                      toast.success("Viewing high-resolution version with zoom enabled");
+                      toast.success("Viewing high-resolution version");
+                    } else {
+                      toast.info("No high-resolution version uploaded yet");
                     }
                   }}
+                  disabled={!selectedMedia?.highResUrl}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   View High Resolution
@@ -1164,8 +1164,24 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 <Button
                   variant="outline"
                   onClick={() => {
+                    if (selectedMedia && onUploadClick) {
+                      toast.info("High-resolution upload mode activated");
+                      onUploadClick();
+                    }
+                  }}
+                >
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                  Upload High-Res
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
                     if (selectedMedia) {
-                      const highResUrl = selectedMedia.highResUrl || selectedMedia.url;
+                      if (!selectedMedia?.highResUrl) {
+                        toast.info("No high-resolution version uploaded yet");
+                        return;
+                      }
+                      const highResUrl = selectedMedia.highResUrl;
                       const link = document.createElement("a");
                       link.href = highResUrl;
                       link.download = `highres-${selectedMedia.filename}`;

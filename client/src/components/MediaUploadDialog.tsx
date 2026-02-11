@@ -322,11 +322,14 @@ export function MediaUploadDialog({
   const [pendingResumable, setPendingResumable] = useState<PersistedUpload[]>([]);
   const [h265WarningOpen, setH265WarningOpen] = useState(false);
   const [h265Files, setH265Files] = useState<string[]>([]);
+  const [uploadMode, setUploadMode] = useState<'standard' | 'highres'>('standard');
+  const [selectedMediaForHighRes, setSelectedMediaForHighRes] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const uploadMutation = trpc.media.upload.useMutation();
   const uploadChunkMutation = trpc.media.uploadChunk.useMutation();
   const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
+  const uploadHighResMutation = trpc.media.uploadHighResolution.useMutation();
   const utils = trpc.useUtils();
 
   // Load pending resumable uploads on mount
@@ -820,6 +823,106 @@ export function MediaUploadDialog({
   const createMediaMutation = trpc.media.createFromUrl.useMutation();
 
   const uploadFiles = async () => {
+    // Handle high-resolution upload mode
+    if (uploadMode === 'highres' && selectedMediaForHighRes) {
+      const pendingFiles = files.filter((f) => f.status === "pending");
+      if (pendingFiles.length === 0) {
+        toast.error("Please select a file to upload");
+        return;
+      }
+
+      setIsUploading(true);
+      const fileItem = pendingFiles[0];
+      const startTime = Date.now();
+      const index = files.indexOf(fileItem);
+
+      setFiles((prev) =>
+        prev.map((f, idx) =>
+          idx === index ? { 
+            ...f, 
+            status: "uploading" as const, 
+            progress: 0,
+            startTime,
+            bytesUploaded: 0
+          } : f
+        )
+      );
+
+      try {
+        const base64Data = await fileToBase64WithProgress(
+          fileItem.file,
+          (loaded, total) => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const speed = loaded / elapsed;
+            const remaining = total - loaded;
+            const eta = remaining / speed;
+            const progress = (loaded / total) * 50;
+            
+            setFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === index ? { 
+                  ...f, 
+                  progress,
+                  uploadSpeed: speed,
+                  eta,
+                  bytesUploaded: loaded
+                } : f
+              )
+            );
+          }
+        );
+
+        setFiles((prev) =>
+          prev.map((f, idx) => (idx === index ? { ...f, progress: 60 } : f))
+        );
+
+        await uploadHighResMutation.mutateAsync({
+          mediaId: selectedMediaForHighRes,
+          filename: fileItem.file.name,
+          mimeType: fileItem.file.type,
+          fileData: base64Data,
+        });
+
+        setFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === index ? { 
+              ...f, 
+              status: "success" as const, 
+              progress: 100,
+              uploadSpeed: undefined,
+              eta: undefined
+            } : f
+          )
+        );
+
+        toast.success("High-resolution file uploaded successfully");
+        await utils.media.get.invalidate({ id: selectedMediaForHighRes });
+        await utils.media.list.invalidate({ projectId });
+        
+        setUploadMode('standard');
+        setSelectedMediaForHighRes(null);
+        setFiles([]);
+        onUploadComplete?.();
+      } catch (error) {
+        console.error("High-res upload error:", error);
+        setFiles((prev) =>
+          prev.map((f, idx) => (
+            idx === index ? {
+              ...f,
+              status: "error" as const,
+              error: error instanceof Error ? error.message : "Upload failed",
+              uploadSpeed: undefined,
+              eta: undefined
+            } : f
+          ))
+        );
+      }
+
+      setIsUploading(false);
+      return;
+    }
+
+    // Standard upload mode
     const pendingFiles = files.filter((f) => f.status === "pending");
     if (pendingFiles.length === 0) return;
 
@@ -963,10 +1066,33 @@ export function MediaUploadDialog({
         <DialogHeader>
           <DialogTitle>Upload Media</DialogTitle>
           <DialogDescription>
-            Upload drone photos and videos. GPS data will be extracted automatically from images.
-            Videos up to 1GB supported. Large uploads can be resumed if interrupted.
+            {uploadMode === 'standard' 
+              ? 'Upload drone photos and videos. GPS data extracted automatically.'
+              : 'Upload high-resolution version of existing media to preserve original quality'}
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex gap-2 border-b">
+          <button
+            onClick={() => {
+              setUploadMode('standard');
+              setFiles([]);
+              setSelectedMediaForHighRes(null);
+            }}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${uploadMode === 'standard' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Standard Upload
+          </button>
+          <button
+            onClick={() => {
+              setUploadMode('highres');
+              setFiles([]);
+            }}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${uploadMode === 'highres' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            High-Resolution Upload
+          </button>
+        </div>
 
         <div className="flex-1 overflow-auto space-y-4">
           {/* Pending Resumable Uploads */}
