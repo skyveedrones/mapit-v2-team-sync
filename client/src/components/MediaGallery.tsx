@@ -1132,38 +1132,54 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             ) : (
               <div />
             )}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                asChild
-              >
-                <a href={selectedMedia?.url} download={selectedMedia?.filename} target="_blank" rel="noopener noreferrer">
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  asChild
+                >
+                  <a href={selectedMedia?.url} download={selectedMedia?.filename} target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </a>
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    if (selectedMedia) {
+                      const link = document.createElement("a");
+                      link.href = selectedMedia.url;
+                      link.download = `highres-${selectedMedia.filename}`;
+                      link.target = "_blank";
+                      link.rel = "noopener noreferrer";
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      toast.success("High-resolution download started");
+                    }
+                  }}
+                >
                   <Download className="h-4 w-4 mr-2" />
-                  Download
-                </a>
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => {
-                  if (selectedMedia) {
-                    const link = document.createElement("a");
-                    link.href = selectedMedia.url;
-                    link.download = `highres-${selectedMedia.filename}`;
-                    link.target = "_blank";
-                    link.rel = "noopener noreferrer";
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    toast.success("High-resolution download started");
-                  }
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                High Resolution
-              </Button>
-              <Button variant="outline" onClick={() => setSelectedMedia(null)}>
-                Close
-              </Button>
+                  High Resolution
+                </Button>
+                <Button variant="outline" onClick={() => setSelectedMedia(null)}>
+                  Close
+                </Button>
+              </div>
+              {selectedMedia && (
+                <div className="flex gap-4 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  {selectedMedia.originalWidth && selectedMedia.originalHeight && (
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">Resolution:</span>
+                      <span>{selectedMedia.originalWidth} x {selectedMedia.originalHeight}px</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">File Size:</span>
+                    <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           )}
