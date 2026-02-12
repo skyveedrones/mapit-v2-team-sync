@@ -1145,3 +1145,6 @@
 ## Media Viewer Help Text Update - Current Session
 - [x] Replace "If Video Appears green, try downloading and playing locally" with "To view full screen, right click on video and select Open in New Tab"
 - [x] Test help text displays correctly in media viewer modal
+- [x] Update help text to include "then click on new tab at top of browser"
+- [x] Polish help text for clarity and ease of use
+- [x] Test polished help text displays correctly
