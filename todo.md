@@ -1135,3 +1135,9 @@
 - [x] Increase popup image height from 180px to 240px
 - [x] Ensure popup height accommodates full image display
 - [x] Test with various image sizes to verify no cropping
+
+## Fullscreen Video Player Fix - Current Session
+- [x] Fix title overlay blocking video player controls in fullscreen modal
+- [x] Reposition title above video player in header bar
+- [x] Ensure video controls are fully accessible and clickable
+- [x] Test fullscreen video playback from map markers

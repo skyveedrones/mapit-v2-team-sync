@@ -745,22 +745,8 @@ export default function ProjectMap() {
           >
             <X className="h-6 w-6" />
           </Button>
-          <div className="max-w-[90vw] max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
-            {enlargedImage.mediaType === 'video' ? (
-              <video
-                src={enlargedImage.url}
-                controls
-                autoPlay
-                className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              />
-            ) : (
-              <img
-                src={enlargedImage.url}
-                alt={enlargedImage.filename}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              />
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
+          <div className="flex flex-col max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-black/70 text-white p-3 rounded-t-lg">
               <h3 className="font-semibold text-sm mb-1">{enlargedImage.filename}</h3>
               <div className="text-xs text-gray-300 flex flex-wrap gap-4">
                 <span className="flex items-center gap-1">
@@ -780,6 +766,22 @@ export default function ProjectMap() {
                   </span>
                 )}
               </div>
+            </div>
+            <div className="relative flex-1 flex items-center justify-center">
+              {enlargedImage.mediaType === 'video' ? (
+                <video
+                  src={enlargedImage.url}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full object-contain rounded-b-lg"
+                />
+              ) : (
+                <img
+                  src={enlargedImage.url}
+                  alt={enlargedImage.filename}
+                  className="max-w-full max-h-full object-contain rounded-b-lg"
+                />
+              )}
             </div>
           </div>
         </div>
