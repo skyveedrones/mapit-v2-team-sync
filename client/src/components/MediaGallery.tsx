@@ -4,6 +4,7 @@
  * Includes Action dropdown with Upload, Download, Watermark, Delete, and Sort options
  */
 
+import { useClientRole, canEdit, canDownload } from "@/_core/hooks/useClientRole";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -71,6 +72,10 @@ interface MediaGalleryProps {
 type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
 
 export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick, isDemoProject = false }: MediaGalleryProps) {
+  const userClientRole = useClientRole();
+  const isViewer = userClientRole === 'viewer';
+  const canEditMedia = canEdit && !isViewer;
+  const canDownloadMedia = canDownload(userClientRole);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
@@ -518,7 +523,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 </div>
               ) : (
                 <>
-                  {canEdit && (
+                  {canEditMedia && (
                     <>
                       <DropdownMenuItem onClick={onUploadClick}>
                         <Upload className="h-4 w-4 mr-2" />
@@ -529,7 +534,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   )}
                   <DropdownMenuItem
                     onClick={handleDownloadSelected}
-                    disabled={selectedIds.size === 0}
+                    disabled={selectedIds.size === 0 || !canDownloadMedia}
+                    title={!canDownloadMedia ? "Viewers cannot download media" : ""}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download Selected ({selectedIds.size})

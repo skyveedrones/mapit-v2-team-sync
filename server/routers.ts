@@ -384,6 +384,34 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+
+// Helper function to check client user role
+async function getClientUserRole(userId: number, clientId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select({ role: clientUsers.role })
+    .from(clientUsers)
+    .where(and(eq(clientUsers.userId, userId), eq(clientUsers.clientId, clientId)))
+    .limit(1);
+  
+  return result.length > 0 ? result[0].role : null;
+}
+
+// Helper function to check if user has required role
+function hasRequiredRole(userRole: string | null, requiredRole: string): boolean {
+  if (!userRole) return false;
+  
+  const roleHierarchy: Record<string, number> = {
+    'viewer': 1,
+    'user': 2,
+    'admin': 3,
+  };
+  
+  return (roleHierarchy[userRole] || 0) >= (roleHierarchy[requiredRole] || 0);
+}
+
 export const appRouter = router({
   system: systemRouter,
   
@@ -676,6 +704,15 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -710,6 +747,15 @@ export const appRouter = router({
         thumbnailData: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -811,6 +857,15 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail for videos
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -907,6 +962,19 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        // Check if user is a client user and has viewer role
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0) {
+          // User is a client user - check their role
+          const userRole = clientAccess[0].role;
+          if (userRole === 'viewer') {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Viewers cannot delete media",
+            });
+          }
+        }
+
         // Get media to check project
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
@@ -948,6 +1016,15 @@ export const appRouter = router({
         thumbnailData: z.string().optional(), // Base64 encoded thumbnail
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
@@ -1003,6 +1080,15 @@ export const appRouter = router({
         altitude: z.number().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
+          });
+        }
+
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
           throw new TRPCError({
@@ -1039,6 +1125,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
+          });
+        }
+
         // Get the media item to verify ownership
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
@@ -1072,6 +1167,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
+          });
+        }
+
         // Get the media item to verify ownership
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
@@ -1105,6 +1209,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
+          });
+        }
+
         // Get the media item to verify ownership
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
@@ -1131,6 +1244,15 @@ export const appRouter = router({
     regenerateThumbnails: protectedProcedure
       .input(z.object({ projectId: z.number() }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
+          });
+        }
+
         // Verify user owns the project
         const project = await getUserProject(input.projectId, ctx.user.id);
         if (!project) {
@@ -1161,6 +1283,15 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         const mediaItem = await getMediaById(input.mediaId, ctx.user.id);
         if (!mediaItem) {
           throw new TRPCError({
@@ -2622,6 +2753,15 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         // Validate file type
         if (!input.mimeType.startsWith("image/")) {
           throw new TRPCError({
@@ -2680,6 +2820,15 @@ export const appRouter = router({
         mimeType: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+      // Check if user is a client user with viewer role - viewers cannot upload
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot upload media",
+          });
+        }
+
         // Validate file type
         if (!input.mimeType.startsWith("image/")) {
           throw new TRPCError({
@@ -3005,6 +3154,11 @@ export const appRouter = router({
     // List all clients for the current user (owner)
     list: protectedProcedure.query(async ({ ctx }) => {
       return getOwnerClients(ctx.user.id);
+    }),
+
+    // Get current user's client access (roles and permissions)
+    getUserAccess: protectedProcedure.query(async ({ ctx }) => {
+      return getUserClientAccess(ctx.user.id);
     }),
 
     // Get a single client by ID

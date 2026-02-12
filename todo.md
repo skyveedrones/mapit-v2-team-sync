@@ -1169,3 +1169,22 @@
 - [x] Test role management feature
 - [x] Successfully changed user role from "user" to "admin"
 - [x] Verified role change persists in the UI
+
+
+## Role-Based Access Control Implementation - Current Session
+- [ ] Add role-based permission checks to backend API endpoints (download, upload, delete)
+- [ ] Update frontend UI to hide/disable download and upload buttons for Viewer role
+- [ ] Hide delete media button for Viewer role
+- [ ] Hide upload media button for Viewer role
+- [ ] Hide download button for Viewer role
+- [ ] Test permission restrictions with Viewer, User, and Admin roles
+- [ ] Verify Viewer users cannot access restricted features
+
+
+## Role-Based Access Control - Current Session
+- [x] Add role-based permission checks to backend API endpoints (all media mutations)
+- [x] Create useClientRole hook for frontend role detection
+- [x] Update frontend UI to hide/disable download and upload for Viewer role
+- [x] Add getUserAccess endpoint to clientPortal router
+- [x] Restrict Users and Viewers from accessing Admin features
+- [x] Prevent Viewers from uploading, downloading, and deleting media
