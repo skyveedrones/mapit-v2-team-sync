@@ -111,6 +111,18 @@ async function startServer() {
       process.exit(0);
     });
   });
+  
+  // Global error handlers
+  process.on('uncaughtException', (error) => {
+    console.error('[Server] Uncaught Exception:', error);
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+  });
 }
 
-startServer().catch(console.error);
+startServer().catch((error) => {
+  console.error('[Server] Fatal startup error:', error);
+  process.exit(1);
+});
