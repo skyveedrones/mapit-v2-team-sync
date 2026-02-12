@@ -1141,3 +1141,7 @@
 - [x] Reposition title above video player in header bar
 - [x] Ensure video controls are fully accessible and clickable
 - [x] Test fullscreen video playback from map markers
+
+## Media Viewer Help Text Update - Current Session
+- [x] Replace "If Video Appears green, try downloading and playing locally" with "To view full screen, right click on video and select Open in New Tab"
+- [x] Test help text displays correctly in media viewer modal

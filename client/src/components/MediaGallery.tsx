@@ -926,7 +926,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               {!isFullscreen && selectedMedia.mediaType === "video" && (
                 <div className="text-center py-1.5 px-3 bg-muted/50 rounded-lg mb-3">
                   <p className="text-xs text-muted-foreground">
-                    If video appears green, try downloading and playing locally
+                    To view full screen, right click on video and select Open in New Tab
                   </p>
                 </div>
               )}
