@@ -74,8 +74,8 @@ function createTierLimiter(tier: string, limits: any) {
     // Fallback to in-memory store if Redis is not available
     return rateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
-      max: limits.apiCallsPerHour === -1 ? 1000000 : limits.apiCallsPerHour,
-      message: `Too many API requests for ${tier} tier, please try again later`,
+      max: limits.dataRequestsPerHour === -1 ? 1000000 : limits.dataRequestsPerHour,
+       message: `Too many data requests for ${tier} tier, please try again later`,
       standardHeaders: true,
       legacyHeaders: false,
     });
@@ -87,8 +87,8 @@ function createTierLimiter(tier: string, limits: any) {
       prefix: `rl:${tier}:`,
     } as any),
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: limits.apiCallsPerHour === -1 ? 1000000 : limits.apiCallsPerHour,
-    message: `Too many API requests for ${tier} tier, please try again later`,
+    max: limits.dataRequestsPerHour === -1 ? 1000000 : limits.dataRequestsPerHour,
+    message: `Too many data requests for ${tier} tier, please try again later`,
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req: any) => {

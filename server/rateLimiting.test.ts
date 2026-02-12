@@ -29,7 +29,7 @@ describe('Subscription Plan Limits', () => {
 
     it('should have correct API rate limits', () => {
       const limits = getPlanLimits('free');
-      expect(limits.apiCallsPerHour).toBe(100);
+      expect(limits.dataRequestsPerHour).toBe(100);
       expect(limits.fileUploadsPerDay).toBe(10);
       expect(limits.pdfExportsPerDay).toBe(5);
       expect(limits.concurrentRequests).toBe(5);
@@ -68,7 +68,7 @@ describe('Subscription Plan Limits', () => {
     it('should have higher API rate limits', () => {
       const free = getPlanLimits('free');
       const starter = getPlanLimits('starter');
-      expect(starter.apiCallsPerHour).toBeGreaterThan(free.apiCallsPerHour);
+      expect(starter.dataRequestsPerHour).toBeGreaterThan(free.dataRequestsPerHour);
       expect(starter.fileUploadsPerDay).toBeGreaterThan(free.fileUploadsPerDay);
     });
 
@@ -136,7 +136,7 @@ describe('Subscription Plan Limits', () => {
 
     it('should have unlimited API calls', () => {
       const enterprise = getPlanLimits('enterprise');
-      expect(enterprise.apiCallsPerHour).toBe(-1);
+      expect(enterprise.dataRequestsPerHour).toBe(-1);
       expect(enterprise.fileUploadsPerDay).toBe(-1);
       expect(enterprise.pdfExportsPerDay).toBe(-1);
       expect(enterprise.concurrentRequests).toBe(-1);
@@ -161,9 +161,9 @@ describe('Rate Limiting Configuration', () => {
     const professional = getPlanLimits('professional');
     const business = getPlanLimits('business');
 
-    expect(starter.apiCallsPerHour).toBeGreaterThan(free.apiCallsPerHour);
-    expect(professional.apiCallsPerHour).toBeGreaterThan(starter.apiCallsPerHour);
-    expect(business.apiCallsPerHour).toBeGreaterThan(professional.apiCallsPerHour);
+    expect(starter.dataRequestsPerHour).toBeGreaterThan(free.dataRequestsPerHour);
+    expect(professional.dataRequestsPerHour).toBeGreaterThan(starter.dataRequestsPerHour);
+    expect(business.dataRequestsPerHour).toBeGreaterThan(professional.dataRequestsPerHour);
   });
 
   it('should have consistent tier progression for uploads', () => {
@@ -294,7 +294,7 @@ describe('Plan Consistency', () => {
     
     for (const tier of tiers) {
       const limits = getPlanLimits(tier as any);
-      expect(limits.apiCallsPerHour).toBeDefined();
+      expect(limits.dataRequestsPerHour).toBeDefined();
       expect(limits.fileUploadsPerDay).toBeDefined();
       expect(limits.pdfExportsPerDay).toBeDefined();
       expect(limits.concurrentRequests).toBeDefined();

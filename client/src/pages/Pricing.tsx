@@ -56,11 +56,11 @@ export default function Pricing() {
         included: true 
       },
       
-      // API features
+      // Data Request features
       { 
-        text: limits.apiCallsPerHour === -1 
-          ? "Unlimited API calls" 
-          : `${limits.apiCallsPerHour} API calls/hour`,
+        text: limits.dataRequestsPerHour === -1 
+          ? "Unlimited data requests" 
+          : `${limits.dataRequestsPerHour} data requests/hour`,
         included: true 
       },
       
@@ -282,10 +282,10 @@ export default function Pricing() {
 
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                What are the rate limits for API access?
+                What are the data request limits?
               </h3>
               <p className="text-slate-400">
-                API rate limits vary by plan. Free tier: 100 calls/hour, Starter: 500 calls/hour, Professional: 2,000 calls/hour, Business: 10,000 calls/hour, Enterprise: Unlimited.
+                Data request limits vary by plan. Free tier: 100 requests/hour, Starter: 500 requests/hour, Professional: 2,000 requests/hour, Business: 10,000 requests/hour, Enterprise: Unlimited.
               </p>
             </div>
 

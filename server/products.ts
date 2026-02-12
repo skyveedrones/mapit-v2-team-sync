@@ -14,7 +14,7 @@ export interface PlanLimits {
   maxStoragePerProjectGB: number;
   maxStorageTotalGB: number; // -1 for unlimited
   maxTeamMembers: number; // -1 for unlimited
-  apiCallsPerHour: number; // -1 for unlimited
+  dataRequestsPerHour: number; // -1 for unlimited
   fileUploadsPerDay: number; // -1 for unlimited
   pdfExportsPerDay: number; // -1 for unlimited
   concurrentRequests: number; // -1 for unlimited
@@ -57,7 +57,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxStoragePerProjectGB: 1,
     maxStorageTotalGB: 1,
     maxTeamMembers: 1,
-    apiCallsPerHour: 100,
+    dataRequestsPerHour: 100,
     fileUploadsPerDay: 10,
     pdfExportsPerDay: 5,
     concurrentRequests: 5,
@@ -87,7 +87,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxStoragePerProjectGB: 10,
     maxStorageTotalGB: 10,
     maxTeamMembers: 1,
-    apiCallsPerHour: 500,
+    dataRequestsPerHour: 500,
     fileUploadsPerDay: 50,
     pdfExportsPerDay: 20,
     concurrentRequests: 10,
@@ -117,7 +117,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxStoragePerProjectGB: 100,
     maxStorageTotalGB: 100,
     maxTeamMembers: 5,
-    apiCallsPerHour: 2000,
+    dataRequestsPerHour: 2000,
     fileUploadsPerDay: 500,
     pdfExportsPerDay: 100,
     concurrentRequests: 50,
@@ -147,7 +147,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxStoragePerProjectGB: 500,
     maxStorageTotalGB: 500,
     maxTeamMembers: -1, // unlimited
-    apiCallsPerHour: 10000,
+    dataRequestsPerHour: 10000,
     fileUploadsPerDay: 5000,
     pdfExportsPerDay: 500,
     concurrentRequests: 100,
@@ -177,7 +177,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxStoragePerProjectGB: -1, // unlimited
     maxStorageTotalGB: -1, // unlimited
     maxTeamMembers: -1, // unlimited
-    apiCallsPerHour: -1, // unlimited
+    dataRequestsPerHour: -1, // unlimited
     fileUploadsPerDay: -1, // unlimited
     pdfExportsPerDay: -1, // unlimited
     concurrentRequests: -1, // unlimited
