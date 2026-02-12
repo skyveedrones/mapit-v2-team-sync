@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 import { SUBSCRIPTION_PLANS, PLAN_LIMITS } from "../../../server/products";
 
 export default function Pricing() {
@@ -14,8 +15,9 @@ export default function Pricing() {
       // TODO: Add contact sales functionality
       alert("Contact sales functionality coming soon!");
     } else {
-      // TODO: Add subscription/checkout functionality
-      alert(`Starting free trial for ${planName} plan. Checkout integration coming soon!`);
+      // Redirect to login - user will be automatically assigned to free tier
+      // Paid tier upgrades coming soon via Stripe integration
+      window.location.href = getLoginUrl();
     }
   };
 
