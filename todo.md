@@ -1213,3 +1213,9 @@
 - [ ] Add usage dashboard showing storage, API calls, uploads, and exports
 - [ ] Test rate limiting with different subscription tiers
 - [ ] Configure Redis URL for production deployment
+
+
+## Free Tier Sign-Up
+- [x] Verify database schema has default subscriptionTier = "free"
+- [x] Confirm upsertUser automatically assigns free tier to new users
+- [x] Document free tier limits and features
