@@ -3,91 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
-
-const plans = [
-  {
-    name: "Starter",
-    description: "Perfect for individual drone pilots and freelancers",
-    monthlyPrice: 49,
-    annualPrice: 490,
-    features: [
-      { text: "Up to 5 active projects", included: true },
-      { text: "10 GB storage per project", included: true },
-      { text: "Unlimited photo/video uploads", included: true },
-      { text: "GPS tagging and flight paths", included: true },
-      { text: "Basic PDF reports", included: true },
-      { text: "KML & CSV export", included: true },
-      { text: "Email support (48h)", included: true },
-      { text: "Team collaboration", included: false },
-      { text: "White-labeling", included: false },
-      { text: "API access", included: false },
-    ],
-    cta: "Start Free Trial",
-    popular: false,
-  },
-  {
-    name: "Professional",
-    description: "For professional drone service providers",
-    monthlyPrice: 149,
-    annualPrice: 1490,
-    features: [
-      { text: "Unlimited active projects", included: true },
-      { text: "50 GB storage per project", included: true },
-      { text: "All Starter features", included: true },
-      { text: "Advanced map controls", included: true },
-      { text: "Marker clustering", included: true },
-      { text: "All export formats (KML, CSV, GeoJSON, GPX)", included: true },
-      { text: "Up to 5 team members", included: true },
-      { text: "White-labeling & custom branding", included: true },
-      { text: "Client sharing links", included: true },
-      { text: "Priority support (24h)", included: true },
-      { text: "API access", included: false },
-    ],
-    cta: "Start Free Trial",
-    popular: true,
-  },
-  {
-    name: "Business",
-    description: "For growing companies and teams",
-    monthlyPrice: 349,
-    annualPrice: 3490,
-    features: [
-      { text: "Unlimited active projects", included: true },
-      { text: "200 GB storage per project", included: true },
-      { text: "All Professional features", included: true },
-      { text: "Priority processing", included: true },
-      { text: "Unlimited team members", included: true },
-      { text: "Role-based access control", included: true },
-      { text: "API access & integrations", included: true },
-      { text: "Custom report templates", included: true },
-      { text: "Dedicated support (12h)", included: true },
-      { text: "Quarterly business reviews", included: true },
-    ],
-    cta: "Start Free Trial",
-    popular: false,
-  },
-  {
-    name: "Enterprise",
-    description: "For large organizations with custom needs",
-    monthlyPrice: null,
-    annualPrice: null,
-    customPricing: true,
-    features: [
-      { text: "Unlimited everything", included: true },
-      { text: "All Business features", included: true },
-      { text: "Dedicated account manager", included: true },
-      { text: "Custom integrations", included: true },
-      { text: "SSO & advanced security", included: true },
-      { text: "On-premise deployment options", included: true },
-      { text: "Custom SLA", included: true },
-      { text: "Priority support (4h)", included: true },
-      { text: "Custom training & onboarding", included: true },
-      { text: "Early access to beta features", included: true },
-    ],
-    cta: "Contact Sales",
-    popular: false,
-  },
-];
+import { SUBSCRIPTION_PLANS, PLAN_LIMITS } from "../../../server/products";
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
@@ -101,6 +17,86 @@ export default function Pricing() {
       // TODO: Add subscription/checkout functionality
       alert(`Starting free trial for ${planName} plan. Checkout integration coming soon!`);
     }
+  };
+
+  // Build feature list for each tier
+  const buildFeatures = (tier: string) => {
+    const limits = PLAN_LIMITS[tier as keyof typeof PLAN_LIMITS];
+    
+    return [
+      // Storage features
+      { 
+        text: limits.maxStoragePerProjectGB === -1 
+          ? "Unlimited storage per project" 
+          : `${limits.maxStoragePerProjectGB} GB storage per project`,
+        included: true 
+      },
+      { 
+        text: limits.maxStorageTotalGB === -1 
+          ? "Unlimited total storage" 
+          : `${limits.maxStorageTotalGB} GB total storage`,
+        included: true 
+      },
+      
+      // Project features
+      { 
+        text: limits.maxProjects === -1 
+          ? "Unlimited projects" 
+          : `Up to ${limits.maxProjects} projects`,
+        included: true 
+      },
+      
+      // Team features
+      { 
+        text: limits.maxTeamMembers === -1 
+          ? "Unlimited team members" 
+          : limits.maxTeamMembers === 1 
+          ? "Solo use only" 
+          : `Up to ${limits.maxTeamMembers} team members`,
+        included: true 
+      },
+      
+      // API features
+      { 
+        text: limits.apiCallsPerHour === -1 
+          ? "Unlimited API calls" 
+          : `${limits.apiCallsPerHour} API calls/hour`,
+        included: true 
+      },
+      
+      // Upload features
+      { 
+        text: limits.fileUploadsPerDay === -1 
+          ? "Unlimited daily uploads" 
+          : `${limits.fileUploadsPerDay} uploads/day`,
+        included: true 
+      },
+      
+      // Export features
+      { 
+        text: limits.pdfExportsPerDay === -1 
+          ? "Unlimited PDF exports" 
+          : `${limits.pdfExportsPerDay} PDF exports/day`,
+        included: true 
+      },
+      
+      // Feature toggles
+      { text: "GPS tagging and flight paths", included: limits.features.gpsTagging },
+      { text: "Basic PDF reports", included: limits.features.basicReports },
+      { text: "Advanced map controls", included: limits.features.advancedMapControls },
+      { text: "Marker clustering", included: limits.features.markerClustering },
+      { text: "All export formats (KML, CSV, GeoJSON, GPX)", included: limits.features.allExportFormats },
+      { text: "White-labeling & custom branding", included: limits.features.whiteLabeling },
+      { text: "Client sharing links", included: limits.features.clientSharing },
+      { text: "Priority support", included: limits.features.prioritySupport },
+      { text: "API access", included: limits.features.apiAccess },
+      { text: "Custom report templates", included: limits.features.customReports },
+      { text: "Role-based access control", included: limits.features.roleBasedAccess },
+      { text: "Dedicated support", included: limits.features.dedicatedSupport },
+      { text: "Custom integrations", included: limits.features.customIntegrations },
+      { text: "SSO & advanced security", included: limits.features.sso },
+      { text: "On-premise deployment", included: limits.features.onPremise },
+    ];
   };
 
   return (
@@ -167,71 +163,76 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {plans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`relative p-6 bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all ${
-                plan.popular ? "ring-2 ring-emerald-500/50 scale-105" : ""
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-sm font-semibold px-4 py-1 rounded-full">
-                  Most Popular
-                </div>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <p className="text-sm text-slate-400 mb-4">{plan.description}</p>
-
-                {plan.customPricing ? (
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-white">Custom</span>
-                  </div>
-                ) : (
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold text-white">
-                      ${billingPeriod === "monthly" ? plan.monthlyPrice : plan.annualPrice}
-                    </span>
-                    <span className="text-slate-400 ml-2">
-                      {billingPeriod === "monthly" ? "/month" : "/year"}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                onClick={() => handleGetStarted(plan.name)}
-                className={`w-full mb-6 ${
-                  plan.popular
-                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                    : "bg-slate-800 hover:bg-slate-700 text-white"
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+          {SUBSCRIPTION_PLANS.map((plan) => {
+            const features = buildFeatures(plan.id);
+            const isPopular = plan.id === "professional";
+            
+            return (
+              <Card
+                key={plan.name}
+                className={`relative p-6 bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all ${
+                  isPopular ? "ring-2 ring-emerald-500/50 scale-105" : ""
                 }`}
               >
-                {plan.cta}
-              </Button>
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-sm font-semibold px-4 py-1 rounded-full">
+                    Most Popular
+                  </div>
+                )}
 
-              <ul className="space-y-3">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    {feature.included ? (
-                      <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <X className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
-                    )}
-                    <span
-                      className={`text-sm ${
-                        feature.included ? "text-slate-300" : "text-slate-600"
-                      }`}
-                    >
-                      {feature.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ))}
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                  <p className="text-sm text-slate-400 mb-4">{plan.description}</p>
+
+                  {plan.id === "enterprise" ? (
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-white">Custom</span>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <span className="text-4xl font-bold text-white">
+                        ${billingPeriod === "monthly" ? plan.monthlyPrice : plan.annualPrice}
+                      </span>
+                      <span className="text-slate-400 ml-2">
+                        {billingPeriod === "monthly" ? "/month" : "/year"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => handleGetStarted(plan.name)}
+                  className={`w-full mb-6 ${
+                    isPopular
+                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                      : "bg-slate-800 hover:bg-slate-700 text-white"
+                  }`}
+                >
+                  {plan.id === "enterprise" ? "Contact Sales" : "Start Free Trial"}
+                </Button>
+
+                <ul className="space-y-3 max-h-96 overflow-y-auto">
+                  {features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      {feature.included ? (
+                        <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <X className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
+                      )}
+                      <span
+                        className={`text-sm ${
+                          feature.included ? "text-slate-300" : "text-slate-600"
+                        }`}
+                      >
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            );
+          })}
         </div>
       </section>
 
@@ -276,6 +277,24 @@ export default function Pricing() {
               </h3>
               <p className="text-slate-400">
                 You can export all your project data (photos, videos, GPS data, reports) before canceling. We retain your data for 30 days after cancellation in case you want to reactivate.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                What are the rate limits for API access?
+              </h3>
+              <p className="text-slate-400">
+                API rate limits vary by plan. Free tier: 100 calls/hour, Starter: 500 calls/hour, Professional: 2,000 calls/hour, Business: 10,000 calls/hour, Enterprise: Unlimited.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                How much storage do I get?
+              </h3>
+              <p className="text-slate-400">
+                Storage varies by plan. Free: 1 GB total, Starter: 10 GB total, Professional: 100 GB total, Business: 500 GB total, Enterprise: Unlimited storage.
               </p>
             </div>
           </div>
