@@ -50,9 +50,6 @@ async function startServer() {
     next(err);
   });
   
-  // Initialize Redis for rate limiting (non-blocking)
-  initializeRedisClient();
-  
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
@@ -98,9 +95,8 @@ async function startServer() {
   });
   
   // Graceful shutdown
-  process.on('SIGTERM', async () => {
+  process.on('SIGTERM', () => {
     console.log('[Server] SIGTERM received, closing connections...');
-    await closeRedisClient();
     server.close(() => {
       console.log('[Server] Server closed');
       process.exit(0);

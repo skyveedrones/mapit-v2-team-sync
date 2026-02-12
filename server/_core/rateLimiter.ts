@@ -18,36 +18,9 @@ let redisInitializing = false;
  * Starts connection in background without blocking server startup
  */
 export function initializeRedisClient(): void {
-  if (redisInitialized || redisInitializing) return;
-  
-  redisInitializing = true;
-  
-  // Start Redis connection in background without awaiting
-  (async () => {
-    try {
-      const client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        socket: {
-          reconnectStrategy: (retries: number) => Math.min(retries * 50, 500),
-        },
-      } as any);
-
-      client.on('error', (err: any) => console.error('[Redis] Error:', err));
-      client.on('connect', () => {
-        console.log('[Redis] Connected');
-        redisInitialized = true;
-      });
-      client.on('reconnecting', () => console.log('[Redis] Reconnecting...'));
-
-      await client.connect();
-      redisClient = client as any;
-      redisInitialized = true;
-      console.log('[Redis] Client initialized successfully');
-    } catch (error) {
-      console.warn('[Redis] Failed to initialize, using in-memory rate limiting:', error);
-      redisInitializing = false;
-    }
-  })();
+  // Redis disabled - always use in-memory rate limiting
+  console.log('[Redis] Disabled - using in-memory rate limiting only');
+  return;
 }
 
 /**
