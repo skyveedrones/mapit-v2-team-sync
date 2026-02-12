@@ -1188,3 +1188,28 @@
 - [x] Add getUserAccess endpoint to clientPortal router
 - [x] Restrict Users and Viewers from accessing Admin features
 - [x] Prevent Viewers from uploading, downloading, and deleting media
+
+
+## Subscription Plan Limits and Rate Limiting - Current Session
+- [x] Update PlanLimits interface with rate limiting fields (apiCallsPerHour, fileUploadsPerDay, pdfExportsPerDay, concurrentRequests)
+- [x] Update PLAN_LIMITS configuration with detailed tier limits:
+  - Free: 3 projects, 100 media/project, 1GB storage, 100 API calls/hour, 10 uploads/day
+  - Starter: 10 projects, 1000 media/project, 10GB storage, 500 API calls/hour, 50 uploads/day
+  - Professional: 50 projects, 10000 media/project, 100GB storage, 2000 API calls/hour, 500 uploads/day
+  - Business: 200 projects, 50000 media/project, 500GB storage, 10000 API calls/hour, 5000 uploads/day
+  - Enterprise: Unlimited everything
+- [x] Install rate limiting dependencies (express-rate-limit, rate-limit-redis, redis)
+- [x] Create Redis-based rate limiting middleware (server/_core/rateLimiter.ts)
+- [x] Implement per-user rate limiter based on subscription tier
+- [x] Implement file upload rate limiter (daily limits)
+- [x] Implement PDF export rate limiter (daily limits)
+- [x] Implement concurrent requests limiter
+- [x] Integrate rate limiting middleware into server (server/_core/index.ts)
+- [x] Add graceful shutdown handling for Redis connection
+- [x] Create comprehensive test suite (36 tests, all passing)
+- [ ] Add frontend UI indicators showing current usage vs plan limits
+- [ ] Add upgrade prompts when users approach or exceed limits
+- [ ] Implement quota checking in API endpoints (project creation, media upload, etc.)
+- [ ] Add usage dashboard showing storage, API calls, uploads, and exports
+- [ ] Test rate limiting with different subscription tiers
+- [ ] Configure Redis URL for production deployment

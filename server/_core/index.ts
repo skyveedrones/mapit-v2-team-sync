@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
+import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +34,14 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // Initialize Redis for rate limiting
+  try {
+    await initializeRedisClient();
+    console.log('[Server] Redis client initialized for rate limiting');
+  } catch (error) {
+    console.warn('[Server] Redis initialization failed, rate limiting will use in-memory store:', error);
+  }
+  
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
@@ -53,8 +62,13 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
+  // Apply rate limiting middleware to tRPC routes
+  app.use('/api/trpc', createPerUserRateLimiter());
+  app.use('/api/trpc', createConcurrentRequestsLimiter());
+  
   // TUS video upload routes (before body parser to handle raw streams)
   app.use("/api", tusRouter);
+  app.use("/api/upload", createUploadRateLimiter());
   
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
@@ -87,6 +101,16 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+  });
+  
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('[Server] SIGTERM received, closing connections...');
+    await closeRedisClient();
+    server.close(() => {
+      console.log('[Server] Server closed');
+      process.exit(0);
+    });
   });
 }
 

@@ -9,8 +9,15 @@ export type SubscriptionTier = "free" | "starter" | "professional" | "business" 
 
 export interface PlanLimits {
   maxProjects: number; // -1 for unlimited
+  maxMediaPerProject: number; // -1 for unlimited
+  maxTotalMedia: number; // -1 for unlimited
   maxStoragePerProjectGB: number;
+  maxStorageTotalGB: number; // -1 for unlimited
   maxTeamMembers: number; // -1 for unlimited
+  apiCallsPerHour: number; // -1 for unlimited
+  fileUploadsPerDay: number; // -1 for unlimited
+  pdfExportsPerDay: number; // -1 for unlimited
+  concurrentRequests: number; // -1 for unlimited
   features: {
     unlimitedUploads: boolean;
     gpsTagging: boolean;
@@ -44,9 +51,16 @@ export interface SubscriptionPlan {
 
 export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
   free: {
-    maxProjects: 1,
+    maxProjects: 3,
+    maxMediaPerProject: 100,
+    maxTotalMedia: 100,
     maxStoragePerProjectGB: 1,
+    maxStorageTotalGB: 1,
     maxTeamMembers: 1,
+    apiCallsPerHour: 100,
+    fileUploadsPerDay: 10,
+    pdfExportsPerDay: 5,
+    concurrentRequests: 5,
     features: {
       unlimitedUploads: false,
       gpsTagging: true,
@@ -67,9 +81,16 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     },
   },
   starter: {
-    maxProjects: 5,
+    maxProjects: 10,
+    maxMediaPerProject: 1000,
+    maxTotalMedia: 10000,
     maxStoragePerProjectGB: 10,
+    maxStorageTotalGB: 10,
     maxTeamMembers: 1,
+    apiCallsPerHour: 500,
+    fileUploadsPerDay: 50,
+    pdfExportsPerDay: 20,
+    concurrentRequests: 10,
     features: {
       unlimitedUploads: true,
       gpsTagging: true,
@@ -90,9 +111,16 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     },
   },
   professional: {
-    maxProjects: -1, // unlimited
-    maxStoragePerProjectGB: 50,
+    maxProjects: 50,
+    maxMediaPerProject: 10000,
+    maxTotalMedia: 100000,
+    maxStoragePerProjectGB: 100,
+    maxStorageTotalGB: 100,
     maxTeamMembers: 5,
+    apiCallsPerHour: 2000,
+    fileUploadsPerDay: 500,
+    pdfExportsPerDay: 100,
+    concurrentRequests: 50,
     features: {
       unlimitedUploads: true,
       gpsTagging: true,
@@ -113,9 +141,16 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     },
   },
   business: {
-    maxProjects: -1, // unlimited
-    maxStoragePerProjectGB: 200,
+    maxProjects: 200,
+    maxMediaPerProject: 50000,
+    maxTotalMedia: 500000,
+    maxStoragePerProjectGB: 500,
+    maxStorageTotalGB: 500,
     maxTeamMembers: -1, // unlimited
+    apiCallsPerHour: 10000,
+    fileUploadsPerDay: 5000,
+    pdfExportsPerDay: 500,
+    concurrentRequests: 100,
     features: {
       unlimitedUploads: true,
       gpsTagging: true,
@@ -137,8 +172,15 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
   },
   enterprise: {
     maxProjects: -1, // unlimited
+    maxMediaPerProject: -1, // unlimited
+    maxTotalMedia: -1, // unlimited
     maxStoragePerProjectGB: -1, // unlimited
+    maxStorageTotalGB: -1, // unlimited
     maxTeamMembers: -1, // unlimited
+    apiCallsPerHour: -1, // unlimited
+    fileUploadsPerDay: -1, // unlimited
+    pdfExportsPerDay: -1, // unlimited
+    concurrentRequests: -1, // unlimited
     features: {
       unlimitedUploads: true,
       gpsTagging: true,
