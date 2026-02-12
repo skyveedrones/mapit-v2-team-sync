@@ -311,9 +311,9 @@ export default function FlightDetail() {
             initial="hidden"
             animate="visible"
           >
-            {/* Back to Dashboard Navigation */}
+            {/* Back to Project Navigation */}
             <motion.div variants={fadeInUp} className="mb-6">
-              <BackToDashboard />
+              <BackToDashboard projectId={projectId} />
             </motion.div>
 
             {/* Flight Header */}
