@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { sendWelcomeEmail } from './_core/email';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -30,6 +31,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
+    // Check if this is a new user (for welcome email)
+    const existingUser = await getUserByOpenId(user.openId);
+    const isNewUser = !existingUser;
+
     const values: InsertUser = {
       openId: user.openId,
     };
@@ -71,6 +76,15 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
+
+    // Send welcome email to new users
+    if (isNewUser && user.email && user.name) {
+      console.log('[User] New user detected, sending welcome email to:', user.email);
+      sendWelcomeEmail(user.email, user.name).catch(error => {
+        console.error('[User] Failed to send welcome email:', error);
+        // Don't throw - email failure shouldn't block user creation
+      });
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;

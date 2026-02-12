@@ -1219,3 +1219,9 @@
 - [x] Verify database schema has default subscriptionTier = "free"
 - [x] Confirm upsertUser automatically assigns free tier to new users
 - [x] Document free tier limits and features
+
+
+## Welcome Email
+- [x] Create email service module for sending welcome emails via Resend
+- [x] Update upsertUser to detect new users and send welcome email
+- [x] Test welcome email functionality
