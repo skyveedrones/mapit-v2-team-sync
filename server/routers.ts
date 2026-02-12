@@ -5,7 +5,7 @@ import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { getDb } from "./db";
-import { media } from "../drizzle/schema";
+import { media, clientUsers } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -3200,6 +3200,53 @@ export const appRouter = router({
           });
         }
         return getClientUsers(input.clientId);
+      }),
+
+    // Change a user's role in a client
+    changeUserRole: protectedProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          userId: z.number(),
+          newRole: z.enum(["viewer", "user", "admin"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const client = await getOwnerClient(input.clientId, ctx.user.id);
+        if (!client) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Client not found",
+          });
+        }
+        
+        // Update the user's role in the client_users table
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database connection failed",
+          });
+        }
+        const result = await db
+          .update(clientUsers)
+          .set({ role: input.newRole })
+          .where(
+            and(
+              eq(clientUsers.clientId, input.clientId),
+              eq(clientUsers.userId, input.userId)
+            )
+          )
+          .execute();
+        
+        if (!result) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User not found in this client",
+          });
+        }
+        
+        return { success: true, newRole: input.newRole };
       }),
 
     // Remove a user from a client

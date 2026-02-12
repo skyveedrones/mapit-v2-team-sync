@@ -1152,3 +1152,20 @@
 ## Help Text Clarification - Current Session
 - [x] Add "For Full Screen" to help text to clarify purpose
 - [x] Test updated help text displays correctly
+
+## User Role Management Feature - Current Session
+- [ ] Explore current client management section structure
+- [ ] Create role management UI under "Manage User" button
+- [ ] Add role change functionality (admin/user roles)
+- [ ] Implement database updates for user role changes
+- [ ] Create API endpoint for role management
+- [ ] Test role change functionality
+- [ ] Verify role changes persist and take effect
+
+
+## User Role Management Feature - Current Session
+- [x] Create role management UI and database updates
+- [x] Implement role change functionality with API endpoints
+- [x] Test role management feature
+- [x] Successfully changed user role from "user" to "admin"
+- [x] Verified role change persists in the UI

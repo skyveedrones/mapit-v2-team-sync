@@ -114,7 +114,10 @@ export default function ClientManage() {
   const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; clientName: string } | null>(null);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null } | null>(null);
-  
+  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
+  const [userToChangeRole, setUserToChangeRole] = useState<{ id: number; name: string | null; currentRole: string } | null>(null);
+  const [newRole, setNewRole] = useState<"viewer" | "user" | "admin">("viewer");
+    
   // Form states
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"viewer" | "user" | "admin">("viewer");
@@ -257,7 +260,21 @@ export default function ClientManage() {
     },
   });
 
-  const revokeInvitationMutation = trpc.clientPortal.revokeInvitation.useMutation({
+
+  const changeUserRoleMutation = trpc.clientPortal.changeUserRole.useMutation({
+    onSuccess: () => {
+      toast.success("User role updated successfully");
+      setChangeRoleDialogOpen(false);
+      setUserToChangeRole(null);
+      setNewRole("viewer");
+      refetchUsers();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update user role");
+    },
+  });
+
+    const revokeInvitationMutation = trpc.clientPortal.revokeInvitation.useMutation({
     onSuccess: () => {
       toast.success("Invitation revoked");
       refetchInvitations();
@@ -677,6 +694,22 @@ export default function ClientManage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
+                            setUserToChangeRole({
+                              id: clientUserData.id,
+                              name: clientUserData.name,
+                              currentRole: clientUser.role,
+                            });
+                            setNewRole(clientUser.role as "viewer" | "user" | "admin");
+                            setChangeRoleDialogOpen(true);
+                          }}
+                        >
+                          <User className="h-4 w-4 mr-1" />
+                          Change Role
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
                             setSelectedUser({
                               id: clientUserData.id,
                               name: clientUserData.name,
@@ -1054,6 +1087,65 @@ export default function ClientManage() {
           userName={selectedUser.name || "User"}
         />
       )}
+      {/* Change User Role Dialog */}
+      <Dialog open={changeRoleDialogOpen} onOpenChange={setChangeRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Update the role for {userToChangeRole?.name || 'this user'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Current Role</Label>
+              <p className="text-sm text-muted-foreground capitalize">
+                {userToChangeRole?.currentRole}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="role-select">New Role</Label>
+              <Select value={newRole} onValueChange={(value: any) => setNewRole(value)}>
+                <SelectTrigger id="role-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer - View projects only</SelectItem>
+                  <SelectItem value="user">User - View, download, upload media</SelectItem>
+                  <SelectItem value="admin">Admin - Full portal management</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChangeRoleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!userToChangeRole || !client) return;
+                changeUserRoleMutation.mutate({
+                  clientId: client.id,
+                  userId: userToChangeRole.id,
+                  newRole,
+                });
+              }}
+              disabled={changeUserRoleMutation.isPending}
+            >
+              {changeUserRoleMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Role"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    
     </DashboardLayout>
   );
 }
