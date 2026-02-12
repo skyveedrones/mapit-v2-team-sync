@@ -10,32 +10,44 @@ import { getPlanLimits } from '../products';
 import type { Request } from 'express';
 
 let redisClient: RedisClientType | null = null;
+let redisInitialized = false;
+let redisInitializing = false;
 
 /**
- * Initialize Redis client for rate limiting
+ * Initialize Redis client for rate limiting (non-blocking)
+ * Starts connection in background without blocking server startup
  */
-export async function initializeRedisClient(): Promise<RedisClientType | null> {
-  if (redisClient) return redisClient;
+export function initializeRedisClient(): void {
+  if (redisInitialized || redisInitializing) return;
+  
+  redisInitializing = true;
+  
+  // Start Redis connection in background without awaiting
+  (async () => {
+    try {
+      const client = createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        socket: {
+          reconnectStrategy: (retries: number) => Math.min(retries * 50, 500),
+        },
+      } as any);
 
-  try {
-    const client = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-      socket: {
-        reconnectStrategy: (retries: number) => Math.min(retries * 50, 500),
-      },
-    } as any);
+      client.on('error', (err: any) => console.error('[Redis] Error:', err));
+      client.on('connect', () => {
+        console.log('[Redis] Connected');
+        redisInitialized = true;
+      });
+      client.on('reconnecting', () => console.log('[Redis] Reconnecting...'));
 
-    client.on('error', (err: any) => console.error('[Redis] Error:', err));
-    client.on('connect', () => console.log('[Redis] Connected'));
-    client.on('reconnecting', () => console.log('[Redis] Reconnecting...'));
-
-    await client.connect();
-    redisClient = client as any;
-    return client as any;
-  } catch (error) {
-    console.error('[Redis] Failed to initialize:', error);
-    return null;
-  }
+      await client.connect();
+      redisClient = client as any;
+      redisInitialized = true;
+      console.log('[Redis] Client initialized successfully');
+    } catch (error) {
+      console.warn('[Redis] Failed to initialize, using in-memory rate limiting:', error);
+      redisInitializing = false;
+    }
+  })();
 }
 
 /**
@@ -46,14 +58,20 @@ export function getRedisClient(): RedisClientType | null {
 }
 
 /**
+ * Check if Redis is ready
+ */
+export function isRedisReady(): boolean {
+  return redisInitialized && redisClient !== null;
+}
+
+/**
  * Create a rate limiter for a specific tier
  */
 function createTierLimiter(tier: string, limits: any) {
-  const redisClient = getRedisClient();
+  const client = getRedisClient();
 
-  if (!redisClient) {
+  if (!client) {
     // Fallback to in-memory store if Redis is not available
-    console.warn(`[RateLimit] Redis not available for ${tier} tier, using in-memory store`);
     return rateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       max: limits.apiCallsPerHour === -1 ? 1000000 : limits.apiCallsPerHour,
@@ -65,7 +83,7 @@ function createTierLimiter(tier: string, limits: any) {
 
   return rateLimit({
     store: new RedisStore({
-      client: redisClient,
+      client: client,
       prefix: `rl:${tier}:`,
     } as any),
     windowMs: 60 * 60 * 1000, // 1 hour
@@ -201,11 +219,17 @@ export function createConcurrentRequestsLimiter() {
 }
 
 /**
- * Cleanup Redis connection
+ * Close Redis client connection
  */
 export async function closeRedisClient(): Promise<void> {
   if (redisClient) {
-    await redisClient.quit();
+    try {
+      await redisClient.quit();
+    } catch (error) {
+      console.error('[Redis] Error closing connection:', error);
+    }
     redisClient = null;
+    redisInitialized = false;
+    redisInitializing = false;
   }
 }

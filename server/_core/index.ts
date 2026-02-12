@@ -50,11 +50,19 @@ async function startServer() {
     next(err);
   });
   
+  // Initialize Redis for rate limiting (non-blocking)
+  initializeRedisClient();
+  
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
+  // Apply rate limiting middleware to tRPC routes
+  app.use('/api/trpc', createPerUserRateLimiter());
+  app.use('/api/trpc', createConcurrentRequestsLimiter());
+  
   // TUS video upload routes (before body parser to handle raw streams)
   app.use("/api", tusRouter);
+  app.use("/api/upload", createUploadRateLimiter());
   
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
