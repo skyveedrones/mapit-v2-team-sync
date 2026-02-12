@@ -1128,3 +1128,10 @@
 - [x] Set popup to 320px width and 180px height
 - [x] Ensure no wasted space in popup container
 - [x] Test with different image dimensions (landscape, portrait, square)
+
+## Map Layout and Popup Fixes - Current Session
+- [x] Increase map container height from 300px to 500px
+- [x] Fix popup to show complete image without cropping
+- [x] Increase popup image height from 180px to 240px
+- [x] Ensure popup height accommodates full image display
+- [x] Test with various image sizes to verify no cropping
