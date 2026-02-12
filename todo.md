@@ -1148,3 +1148,7 @@
 - [x] Update help text to include "then click on new tab at top of browser"
 - [x] Polish help text for clarity and ease of use
 - [x] Test polished help text displays correctly
+
+## Help Text Clarification - Current Session
+- [x] Add "For Full Screen" to help text to clarify purpose
+- [x] Test updated help text displays correctly
