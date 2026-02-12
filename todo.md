@@ -1225,3 +1225,9 @@
 - [x] Create email service module for sending welcome emails via Resend
 - [x] Update upsertUser to detect new users and send welcome email
 - [x] Test welcome email functionality
+
+
+## Auto-Update Fix
+- [x] Investigate version checking system in Settings page
+- [x] Fix auto-update functionality issue
+- [x] Test version checking and update notifications

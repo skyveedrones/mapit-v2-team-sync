@@ -22,16 +22,49 @@ export default function VersionCheck() {
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
+      // Fetch the latest version from the deployed site's version.json
+      // This file should be generated during build and contain the latest commit hash
+      const response = await fetch('/version.json?_=' + Date.now(), {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch version info');
+      }
+      
+      const versionData = await response.json();
+      const deployedVersion = versionData.commit?.substring(0, 7) || currentVersion;
+      
+      setLatestVersion(deployedVersion);
+      setLastChecked(new Date());
+      
+      // Compare versions - if deployed version is different from current, update is available
+      const hasUpdate = deployedVersion !== currentVersion;
+      setUpdateAvailable(hasUpdate);
+      
+      if (hasUpdate) {
+        toast.info("New version available!", {
+          description: `Version ${deployedVersion} is ready. Refresh to update.`,
+          duration: 10000,
+        });
+      } else {
+        toast.success("You're up to date!", {
+          description: "You're using the latest version.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to check for updates:", error);
+      // Fallback: assume we're up to date if we can't check
       setLatestVersion(currentVersion);
       setLastChecked(new Date());
       setUpdateAvailable(false);
       
-      toast.success("You're up to date!", {
-        description: "You're using the latest version.",
+      toast.error("Failed to check for updates", {
+        description: "Unable to connect to update server.",
       });
-    } catch (error) {
-      console.error("Failed to check for updates:", error);
-      toast.error("Failed to check for updates");
     } finally {
       setIsChecking(false);
     }
@@ -44,11 +77,13 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
+    // Clear all caches before refresh to ensure latest version loads
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
       });
     }
+    // Force a hard reload
     window.location.reload();
   };
 
@@ -57,7 +92,7 @@ export default function VersionCheck() {
     if (autoCheck) {
       checkForUpdates();
     }
-  }, [autoCheck]);
+  }, []); // Only run on mount
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border/50">
