@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import net from "net";
@@ -34,14 +33,6 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
-  // Initialize Redis for rate limiting
-  try {
-    await initializeRedisClient();
-    console.log('[Server] Redis client initialized for rate limiting');
-  } catch (error) {
-    console.warn('[Server] Redis initialization failed, rate limiting will use in-memory store:', error);
-  }
-  
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
@@ -62,13 +53,8 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
-  // Apply rate limiting middleware to tRPC routes
-  app.use('/api/trpc', createPerUserRateLimiter());
-  app.use('/api/trpc', createConcurrentRequestsLimiter());
-  
   // TUS video upload routes (before body parser to handle raw streams)
   app.use("/api", tusRouter);
-  app.use("/api/upload", createUploadRateLimiter());
   
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
@@ -99,8 +85,8 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`[Server] Running on http://0.0.0.0:${port}/`);
   });
   
   // Graceful shutdown
@@ -112,6 +98,18 @@ async function startServer() {
       process.exit(0);
     });
   });
+  
+  // Global error handlers
+  process.on('uncaughtException', (error) => {
+    console.error('[Server] Uncaught Exception:', error);
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+  });
 }
 
-startServer().catch(console.error);
+startServer().catch((error) => {
+  console.error('[Server] Fatal startup error:', error);
+  process.exit(1);
+});
