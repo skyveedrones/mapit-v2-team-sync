@@ -34,13 +34,12 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
-  // Initialize Redis for rate limiting
-  try {
-    await initializeRedisClient();
+  // Initialize Redis for rate limiting (non-blocking)
+  initializeRedisClient().then(() => {
     console.log('[Server] Redis client initialized for rate limiting');
-  } catch (error) {
+  }).catch((error) => {
     console.warn('[Server] Redis initialization failed, rate limiting will use in-memory store:', error);
-  }
+  });
   
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
@@ -99,8 +98,8 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`[Server] Running on http://0.0.0.0:${port}/`);
   });
   
   // Graceful shutdown
