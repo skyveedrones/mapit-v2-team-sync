@@ -1231,3 +1231,10 @@
 - [x] Investigate version checking system in Settings page
 - [x] Fix auto-update functionality issue
 - [x] Test version checking and update notifications
+
+
+## Login Issue on Published Website
+- [x] Investigate OAuth configuration and callback URLs
+- [x] Check authentication flow and session handling
+- [x] Fix login issue on published site (changed sameSite from "none" to "lax")
+- [ ] Test login functionality on published site after deployment
