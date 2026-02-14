@@ -134,6 +134,7 @@ function extractExifData(buffer: Buffer): {
   cameraModel: string | null;
 } {
   try {
+    // Extract EXIF data from JPEG files
     const parser = ExifParser.create(buffer);
     const result = parser.parse();
     const tags = result.tags;
@@ -147,7 +148,9 @@ function extractExifData(buffer: Buffer): {
       cameraModel: tags.Model ?? null,
     };
   } catch (error) {
-    console.warn("[EXIF] Failed to parse EXIF data:", error);
+    // File doesn't have readable EXIF data (WEBP, PNG, or corrupted JPEG)
+    // Users can manually add GPS coordinates using the updateGPS procedure
+    console.warn("[EXIF] Could not extract EXIF data from file:", error instanceof Error ? error.message : error);
     return {
       latitude: null,
       longitude: null,
