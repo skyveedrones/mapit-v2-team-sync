@@ -1238,3 +1238,6 @@
 - [x] Check authentication flow and session handling
 - [x] Fix login issue on published site (changed sameSite from "none" to "lax")
 - [ ] Test login functionality on published site after deployment
+
+## Media Locations List Sorting
+- [x] Sort Media Locations list by Flight Path (capture time order) on ProjectMap.tsx

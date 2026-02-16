@@ -27,7 +27,7 @@ import {
   Image,
   Mountain,
 } from "lucide-react";
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { Link, useParams } from "wouter";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
@@ -102,6 +102,16 @@ export default function ProjectMap() {
       altitude: m.altitude ? parseFloat(String(m.altitude)) : null,
       capturedAt: m.capturedAt,
     }));
+
+  // Sort media by capture time (Flight Path order) for sidebar list
+  const sortedGeotaggedMedia = useMemo(() => {
+    return [...geotaggedMedia].sort((a, b) => {
+      if (a.capturedAt && b.capturedAt) {
+        return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
+      }
+      return a.id - b.id;
+    });
+  }, [geotaggedMedia]);
 
   // Calculate center from media locations
   const getMapCenter = useCallback(() => {
@@ -587,7 +597,7 @@ export default function ProjectMap() {
               </p>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {geotaggedMedia.map((media, index) => (
+              {sortedGeotaggedMedia.map((media, index) => (
                 <div
                   key={media.id}
                   className={`p-3 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors ${
