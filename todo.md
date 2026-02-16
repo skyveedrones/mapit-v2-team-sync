@@ -1245,3 +1245,9 @@
 ## Bug Fixes - Media Locations List
 - [x] Fix marker numbering in sidebar - numbers should match map marker numbers, not list index
 - [x] Increase z-index of info window popup so it appears in front of sidebar list
+
+
+## Project Media Sorting and Marker Consistency
+- [x] Set Project Media sort default to Flight Path (capture time order)
+- [x] Make embedded map use same sorted order as full screen map
+- [x] Fix marker points when clicking Full Screen - ensure they match embedded map

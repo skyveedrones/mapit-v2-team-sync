@@ -104,12 +104,15 @@ export default function ProjectMap() {
     }));
 
   // Sort media by capture time (Flight Path order) for sidebar list
+  // Must match EmbeddedProjectMap sorting logic exactly for consistent marker numbering
   const sortedGeotaggedMedia = useMemo(() => {
     return [...geotaggedMedia].sort((a, b) => {
       if (a.capturedAt && b.capturedAt) {
         return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
       }
-      return a.id - b.id;
+      if (a.capturedAt && !b.capturedAt) return -1;
+      if (!a.capturedAt && b.capturedAt) return 1;
+      return a.filename.localeCompare(b.filename);
     });
   }, [geotaggedMedia]);
 
