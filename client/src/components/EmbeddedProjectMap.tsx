@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
 import { Expand, MapPin, Navigation, X } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
@@ -35,10 +35,12 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
     ? trpc.media.listDemo.useQuery({ projectId, flightId })
     : trpc.media.list.useQuery({ projectId, flightId });
 
-  // Filter media with GPS coordinates
-  const mediaWithGPS = mediaList?.filter(
-    (m) => m.latitude && m.longitude
-  ) || [];
+  // Filter media with GPS coordinates - memoized to prevent unnecessary marker recalculation
+  const mediaWithGPS = useMemo(() => {
+    return mediaList?.filter(
+      (m) => m.latitude && m.longitude
+    ) || [];
+  }, [mediaList]);
 
   // Calculate center point from all GPS coordinates
   const getCenter = useCallback(() => {
@@ -77,13 +79,16 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
     // Create info window
     infoWindowRef.current = new google.maps.InfoWindow();
 
-    // Sort by capture time for flight path
+    // Sort by capture time for flight path (must match gallery sorting logic)
     const sortedMedia = [...mediaWithGPS].sort((a, b) => {
       if (a.capturedAt && b.capturedAt) {
         return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
       }
-      return 0;
+      if (a.capturedAt && !b.capturedAt) return -1;
+      if (!a.capturedAt && b.capturedAt) return 1;
+      return a.filename.localeCompare(b.filename);
     });
+    console.log('[Map Markers] Sorted', sortedMedia.length, 'media items for markers');
 
     // Create flight path polyline
     const pathCoordinates = sortedMedia.map((m) => ({
@@ -100,7 +105,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
       map,
     });
 
-    // Create markers for each media item
+    // Create markers for each media item (index + 1 is the marker number)
     sortedMedia.forEach((media, index) => {
       const position = {
         lat: parseFloat(media.latitude!),
@@ -127,14 +132,14 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           border: 2px solid white;
           box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           cursor: pointer;
-        ">${index + 1}</div>
+        >${index + 1}</div> <!-- Marker number based on capture time order -->>
       `;
 
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position,
         content: markerElement,
-        title: media.filename,
+        title: `${media.filename} (Marker #${index + 1})`,
       });
 
       // Add click listener for info window
@@ -189,6 +194,8 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
       });
 
       markersRef.current.push(marker);
+      // Store marker number for reference
+      (marker as any).markerNumber = index + 1;
     });
 
     // Initialize marker clusterer with custom styling

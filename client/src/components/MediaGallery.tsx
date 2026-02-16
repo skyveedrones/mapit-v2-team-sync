@@ -150,6 +150,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       numberMap.set(media.id, index + 1);
     });
     
+    console.log('[GPS Markers] Total GPS media:', gpsMedia.length, 'Mapped:', numberMap.size);
+    
     return numberMap;
   }, [mediaList]);
 
