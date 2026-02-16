@@ -2486,9 +2486,24 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-header.png');
-          const logoBuffer = await fs.readFile(logoPath);
-          skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+          const possiblePaths = [
+            path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-header.png'),
+            path.join(process.cwd(), 'public', 'images', 'mapit-logo-header.png'),
+            path.join(process.cwd(), 'dist', 'public', 'images', 'mapit-logo-header.png'),
+          ];
+          let logoBuffer: Buffer | null = null;
+          for (const logoPath of possiblePaths) {
+            try {
+              logoBuffer = await fs.readFile(logoPath);
+              console.log('[Report] Loaded MAPIT logo from:', logoPath);
+              break;
+            } catch (e) {
+              // Try next path
+            }
+          }
+          if (logoBuffer) {
+            skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+          }
         } catch (error) {
           console.error('[Report] Failed to load MAPIT logo:', error);
         }
@@ -2711,9 +2726,24 @@ export const appRouter = router({
         try {
           const fs = await import('fs/promises');
           const path = await import('path');
-          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-header.png');
-          const logoBuffer = await fs.readFile(logoPath);
-          skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+          const possiblePaths = [
+            path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-header.png'),
+            path.join(process.cwd(), 'public', 'images', 'mapit-logo-header.png'),
+            path.join(process.cwd(), 'dist', 'public', 'images', 'mapit-logo-header.png'),
+          ];
+          let logoBuffer: Buffer | null = null;
+          for (const logoPath of possiblePaths) {
+            try {
+              logoBuffer = await fs.readFile(logoPath);
+              console.log('[Report] Loaded MAPIT logo from:', logoPath);
+              break;
+            } catch (e) {
+              // Try next path
+            }
+          }
+          if (logoBuffer) {
+            skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+          }
         } catch (error) {
           console.error('[Report] Failed to load MAPIT logo:', error);
         }

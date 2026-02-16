@@ -1251,3 +1251,7 @@
 - [x] Set Project Media sort default to Flight Path (capture time order)
 - [x] Make embedded map use same sorted order as full screen map
 - [x] Fix marker points when clicking Full Screen - ensure they match embedded map
+
+
+## Bug Fixes - Report Generation
+- [x] Fix report generation error - user Tbechtol@forneytx.gov cannot generate report (fixed logo path resolution for production)
