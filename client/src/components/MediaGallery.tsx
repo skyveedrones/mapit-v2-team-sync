@@ -698,7 +698,14 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
               </div>
             )}
 
-            {/* GPS Marker Number Badge - Removed per user request */}
+            {/* GPS Marker Number Badge - Lower Right Corner */}
+            {gpsMarkerNumbers.has(item.id) && (
+              <div className="absolute bottom-2 right-2 z-10">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white">
+                  {gpsMarkerNumbers.get(item.id)}
+                </div>
+              </div>
+            )}
 
             {/* Selection Checkbox - Always visible */}
             {canEdit && (
