@@ -1241,3 +1241,7 @@
 
 ## Media Locations List Sorting
 - [x] Sort Media Locations list by Flight Path (capture time order) on ProjectMap.tsx
+
+## Bug Fixes - Media Locations List
+- [x] Fix marker numbering in sidebar - numbers should match map marker numbers, not list index
+- [x] Increase z-index of info window popup so it appears in front of sidebar list

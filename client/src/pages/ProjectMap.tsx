@@ -176,8 +176,8 @@ export default function ProjectMap() {
       infoWindowRef.current = new google.maps.InfoWindow();
     }
 
-    // Add markers for each geotagged media
-    geotaggedMedia.forEach((media, index) => {
+    // Add markers for each geotagged media (using sorted order for consistent numbering)
+    sortedGeotaggedMedia.forEach((media, index) => {
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: { lat: media.latitude, lng: media.longitude },
@@ -193,6 +193,7 @@ export default function ProjectMap() {
         const content = document.createElement("div");
         content.className = "p-4 max-w-lg";
         content.style.width = '400px';
+        content.style.zIndex = '1000';
         const isVideo = media.mediaType === 'video';
         const imageUrl = media.thumbnailUrl || (isVideo ? '' : media.url);
         
@@ -351,7 +352,7 @@ export default function ProjectMap() {
       }
     }, 300);
 
-  }, [mapReady, geotaggedMedia, showFlightPath]);
+  }, [mapReady, sortedGeotaggedMedia, showFlightPath]);
 
   // Handle map ready
   const handleMapReady = useCallback((map: google.maps.Map) => {
