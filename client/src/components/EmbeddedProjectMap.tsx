@@ -132,7 +132,7 @@ export function EmbeddedProjectMap({ projectId, projectName, flightId, isDemoPro
           border: 2px solid white;
           box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           cursor: pointer;
-        >${index + 1}</div> <!-- Marker number based on capture time order -->>
+        ">${index + 1}</div>
       `;
 
       const marker = new google.maps.marker.AdvancedMarkerElement({
