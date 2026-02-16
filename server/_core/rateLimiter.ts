@@ -85,6 +85,12 @@ export function createPerUserRateLimiter() {
   }
 
   return (req: Request, res: any, next: any) => {
+    // Skip rate limiting for core auth and user actions
+    const path = req.path || '';
+    if (path.includes('auth.me') || path.includes('updatePriority') || path.includes('deleteMedia')) {
+      return next();
+    }
+    
     // Get user's subscription tier from request context
     const tier = (req as any).user?.subscriptionTier || 'free';
     const limiter = limiters[tier] || limiters['free'];

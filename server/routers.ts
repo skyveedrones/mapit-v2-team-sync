@@ -134,12 +134,26 @@ function extractExifData(buffer: Buffer): {
   cameraModel: string | null;
 } {
   try {
+    console.log("[EXIF] Starting EXIF extraction, buffer size:", buffer.length);
+    
     // Extract EXIF data from JPEG files
     const parser = ExifParser.create(buffer);
     const result = parser.parse();
     const tags = result.tags;
 
-    return {
+    console.log("[EXIF] Parsed tags, total tags:", Object.keys(tags).length);
+    console.log("[EXIF] GPS tags:", {
+      GPSLatitude: tags.GPSLatitude,
+      GPSLongitude: tags.GPSLongitude,
+      GPSAltitude: tags.GPSAltitude,
+    });
+    console.log("[EXIF] Camera info:", {
+      Make: tags.Make,
+      Model: tags.Model,
+      DateTimeOriginal: tags.DateTimeOriginal,
+    });
+
+    const exifData = {
       latitude: tags.GPSLatitude ?? null,
       longitude: tags.GPSLongitude ?? null,
       altitude: tags.GPSAltitude ?? null,
@@ -147,10 +161,14 @@ function extractExifData(buffer: Buffer): {
       cameraMake: tags.Make ?? null,
       cameraModel: tags.Model ?? null,
     };
+    
+    console.log("[EXIF] Extracted data:", exifData);
+    return exifData;
   } catch (error) {
     // File doesn't have readable EXIF data (WEBP, PNG, or corrupted JPEG)
     // Users can manually add GPS coordinates using the updateGPS procedure
-    console.warn("[EXIF] Could not extract EXIF data from file:", error instanceof Error ? error.message : error);
+    console.error("[EXIF] Failed to extract EXIF data:", error instanceof Error ? error.message : error);
+    console.error("[EXIF] Error stack:", error instanceof Error ? error.stack : "No stack");
     return {
       latitude: null,
       longitude: null,

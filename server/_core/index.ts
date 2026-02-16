@@ -33,6 +33,9 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // Trust proxy for accurate rate limiting behind reverse proxy (Manus deployment)
+  app.set('trust proxy', 1);
+  
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
