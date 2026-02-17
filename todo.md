@@ -1261,3 +1261,17 @@
 - [x] Fix missing title/filename in media preview dialog - should show filename at top of dialog
 
 - [x] Fix GPS marker number in media preview - added GPS marker badge to lower right corner of media preview dialog
+
+
+## Vendor Role Feature
+- [x] Add Vendor role to database schema (projectInvitations and projectMembers table)
+- [x] Create projectMembers table with role-based permissions
+- [ ] Create Share Project feature with Vendor role assignment
+- [ ] Restrict Vendor users from navigating to dashboard
+- [ ] Hide "New Flight" button for Vendor users
+- [ ] Hide "Edit Project" button for Vendor users
+- [ ] Hide "Change Logo" button for Vendor users
+- [ ] Hide "Delete Project" button for Vendor users
+- [ ] Hide "Delete Selection" in Media Actions for Vendor users
+- [ ] Add permission checks in backend procedures for Vendor restrictions
+- [ ] Test Vendor role access and restrictions

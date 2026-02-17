@@ -181,8 +181,8 @@ export const projectCollaborators = mysqlTable("project_collaborators", {
   projectId: int("projectId").notNull(),
   /** Foreign key to users table (the collaborator) */
   userId: int("userId").notNull(),
-  /** Role of the collaborator: viewer can only view, editor can also upload/edit */
-  role: mysqlEnum("role", ["viewer", "editor"]).default("viewer").notNull(),
+  /** Role of the collaborator: viewer can only view, editor can also upload/edit, vendor has restricted access */
+  role: mysqlEnum("role", ["viewer", "editor", "vendor"]).default("viewer").notNull(),
   /** When the collaborator was added */
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -205,7 +205,7 @@ export const projectInvitations = mysqlTable("project_invitations", {
   /** Unique token for accepting the invitation */
   token: varchar("token", { length: 64 }).notNull().unique(),
   /** Role to assign when invitation is accepted */
-  role: mysqlEnum("role", ["viewer", "editor"]).default("viewer").notNull(),
+  role: mysqlEnum("role", ["viewer", "editor", "vendor"]).default("viewer").notNull(),
   /** Status of the invitation */
   status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
   /** When the invitation expires (7 days from creation) */
@@ -405,3 +405,28 @@ export const clientProjectAssignments = mysqlTable("client_project_assignments",
 
 export type ClientProjectAssignment = typeof clientProjectAssignments.$inferSelect;
 export type InsertClientProjectAssignment = typeof clientProjectAssignments.$inferInsert;
+
+/**
+ * Project members table - tracks which users have access to which projects and their role.
+ * Used for project sharing and collaboration features.
+ */
+export const projectMembers = mysqlTable("project_members", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Foreign key to users table */
+  userId: int("userId").notNull(),
+  /** Role of the user in this project: owner (full access), vendor (restricted access), viewer (read-only) */
+  role: mysqlEnum("role", ["owner", "vendor", "viewer"]).default("viewer").notNull(),
+  /** Whether the user can edit project details */
+  canEdit: mysqlEnum("canEdit", ["yes", "no"]).default("no").notNull(),
+  /** Whether the user can delete media */
+  canDeleteMedia: mysqlEnum("canDeleteMedia", ["yes", "no"]).default("no").notNull(),
+  /** Whether the user can create flights */
+  canCreateFlights: mysqlEnum("canCreateFlights", ["yes", "no"]).default("no").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type InsertProjectMember = typeof projectMembers.$inferInsert;

@@ -561,7 +561,10 @@ export async function getProjectWithAccess(projectId: number, userId: number) {
 /**
  * Get all projects a user has access to (owned + shared)
  */
-export async function getUserAccessibleProjects(userId: number) {
+export async function getUserAccessibleProjects(userId: number): Promise<{
+  owned: typeof projects.$inferSelect[];
+  shared: (typeof projects.$inferSelect & { sharedRole: 'viewer' | 'editor' | 'vendor' })[];
+}> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");

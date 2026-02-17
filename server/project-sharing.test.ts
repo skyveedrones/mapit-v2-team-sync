@@ -53,7 +53,7 @@ describe('Project Sharing', () => {
     // Each shared project should have a sharedRole
     shared.forEach(project => {
       if (project.sharedRole) {
-        expect(['viewer', 'editor']).toContain(project.sharedRole);
+        expect(['viewer', 'editor', 'vendor']).toContain(project.sharedRole);
       }
     });
   });

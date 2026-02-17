@@ -245,7 +245,7 @@ export default function Home() {
                 onClick={() => {
                   toggleTheme?.();
                   setMobileMenuOpen(false);
-                }}
+                }} style={{paddingRight: '12px', paddingLeft: '12px'}}
               >
                 {theme === 'dark' ? (
                   <><Sun className="h-4 w-4 mr-2" /> Light Mode</>
