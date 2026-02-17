@@ -1255,3 +1255,7 @@
 
 ## Bug Fixes - Report Generation
 - [x] Fix report generation error - user Tbechtol@forneytx.gov cannot generate report (fixed logo path resolution for production)
+
+
+## Bug Fixes - Media Preview
+- [x] Fix missing title/filename in media preview dialog - should show filename at top of dialog

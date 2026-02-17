@@ -778,13 +778,13 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           }`}
           showCloseButton={!isFullscreen}
         >
-          <DialogHeader className={`flex-shrink-0 ${isFullscreen ? "absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4" : "hidden"}`}>
+          <DialogHeader className={`flex-shrink-0 ${isFullscreen ? "absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4" : "border-b border-border p-4"}`}>
             <div className="flex items-center justify-between pr-8">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <DialogTitle className={`truncate ${isFullscreen ? "text-white" : ""}`}>
+                <DialogTitle className={`truncate text-lg font-semibold ${isFullscreen ? "text-white" : "text-foreground"}`}>
                   {selectedMedia?.filename}
                 </DialogTitle>
-                {canEdit && !isFullscreen && (
+                {canEdit && (
                   <Button
                     variant="ghost"
                     size="sm"
