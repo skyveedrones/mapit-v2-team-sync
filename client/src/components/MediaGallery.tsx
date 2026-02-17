@@ -1181,40 +1181,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   <Download className="h-4 w-4 mr-2" />
                   View High Resolution
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (selectedMedia && onUploadClick) {
-                      toast.info("High-resolution upload mode activated");
-                      onUploadClick();
-                    }
-                  }}
-                >
-                  <ImagePlus className="h-4 w-4 mr-2" />
-                  Upload High-Res
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (selectedMedia) {
-                      if (!selectedMedia?.highResUrl) {
-                        toast.info("No high-resolution version uploaded yet");
-                        return;
-                      }
-                      const highResUrl = selectedMedia.highResUrl;
-                      const link = document.createElement("a");
-                      link.href = highResUrl;
-                      link.download = `highres-${selectedMedia.filename}`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      toast.success("High-resolution download started");
-                    }
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
+
                 <Button variant="outline" onClick={() => setSelectedMedia(null)}>
                   Close
                 </Button>
