@@ -1259,3 +1259,5 @@
 
 ## Bug Fixes - Media Preview
 - [x] Fix missing title/filename in media preview dialog - should show filename at top of dialog
+
+- [x] Fix GPS marker number in media preview - added GPS marker badge to lower right corner of media preview dialog
