@@ -1275,3 +1275,7 @@
 - [ ] Hide "Delete Selection" in Media Actions for Vendor users
 - [ ] Add permission checks in backend procedures for Vendor restrictions
 - [ ] Test Vendor role access and restrictions
+
+
+## Bug Fixes - Notes Section
+- [x] Fix notes section in media preview - reordered permission checks to validate media access before checking client viewer role

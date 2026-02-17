@@ -1146,15 +1146,6 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-      // Check if user is a client user with viewer role - viewers cannot update
-        const clientAccess = await getUserClientAccess(ctx.user.id);
-        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Viewers cannot modify media",
-          });
-        }
-
         // Get the media item to verify ownership
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
@@ -1170,6 +1161,15 @@ export const appRouter = router({
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You don't have permission to edit this media",
+          });
+        }
+
+        // Check if user is a client user with viewer role - viewers cannot update
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
           });
         }
 
