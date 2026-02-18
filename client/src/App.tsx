@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useVersionCheckOnLogin } from "@/hooks/useVersionCheckOnLogin";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLoginUrl } from "@/const";
@@ -196,6 +197,15 @@ function Router() {
 // - Using dark theme for Aerospace Command Center design
 // - Colors managed with CSS variables in index.css
 
+/**
+ * Version Check on Login Component
+ * Automatically checks for version updates when user logs in
+ */
+function VersionCheckOnLoginWrapper() {
+  useVersionCheckOnLogin();
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -204,6 +214,7 @@ function App() {
           <GlobalBackground />
           <Toaster />
           <OfflineIndicator />
+          <VersionCheckOnLoginWrapper />
 
           <Router />
         </TooltipProvider>
