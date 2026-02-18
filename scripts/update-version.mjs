@@ -14,6 +14,7 @@
  * - Updates shared/version.ts with new version info
  * - Updates client/public/version.json for runtime checks
  * - Ensures version consistency across the application
+ * - Validates all files were created successfully
  * 
  * Usage: node scripts/update-version.mjs [version-number]
  */
@@ -77,10 +78,22 @@ function getVersionNumber(providedVersion) {
 }
 
 /**
+ * Ensure directory exists
+ */
+function ensureDirectoryExists(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+/**
  * Update shared/version.ts
  */
 function updateVersionFile(version, commit, branch) {
   const versionFilePath = path.join(projectRoot, 'shared', 'version.ts');
+  
+  // Ensure directory exists
+  ensureDirectoryExists(path.dirname(versionFilePath));
 
   const versionContent = `/**
  * Application version information
@@ -142,6 +155,13 @@ export function getVersionInfo() {
 
   try {
     fs.writeFileSync(versionFilePath, versionContent, 'utf-8');
+    
+    // Verify file was written
+    const written = fs.readFileSync(versionFilePath, 'utf-8');
+    if (!written.includes(version)) {
+      throw new Error('Version file verification failed - content mismatch');
+    }
+    
     console.log(`✓ Updated ${versionFilePath}`);
     return true;
   } catch (error) {
@@ -155,20 +175,59 @@ export function getVersionInfo() {
  */
 function updateVersionJson(version, commit) {
   const versionJsonPath = path.join(projectRoot, 'client', 'public', 'version.json');
+  
+  // Ensure directory exists
+  ensureDirectoryExists(path.dirname(versionJsonPath));
 
   const versionJson = {
     version: version,
-    commit: commit,
+    commit: commit.substring(0, 7),
+    fullCommit: commit,
     buildDate: new Date().toISOString(),
     timestamp: Date.now(),
   };
 
   try {
-    fs.writeFileSync(versionJsonPath, JSON.stringify(versionJson, null, 2), 'utf-8');
+    const jsonContent = JSON.stringify(versionJson, null, 2);
+    fs.writeFileSync(versionJsonPath, jsonContent, 'utf-8');
+    
+    // Verify file was written and is valid JSON
+    const written = fs.readFileSync(versionJsonPath, 'utf-8');
+    const parsed = JSON.parse(written);
+    
+    if (parsed.version !== version) {
+      throw new Error('Version JSON verification failed - version mismatch');
+    }
+    
     console.log(`✓ Updated ${versionJsonPath}`);
     return true;
   } catch (error) {
     console.error(`✗ Failed to update ${versionJsonPath}:`, error.message);
+    return false;
+  }
+}
+
+/**
+ * Create a version metadata file for deployment systems
+ */
+function createVersionMetadata(version, commit, branch) {
+  const metadataPath = path.join(projectRoot, '.version-metadata.json');
+  
+  const metadata = {
+    version: version,
+    commit: commit,
+    branch: branch,
+    buildDate: new Date().toISOString(),
+    timestamp: Date.now(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+    console.log(`✓ Created ${metadataPath}`);
+    return true;
+  } catch (error) {
+    console.error(`✗ Failed to create ${metadataPath}:`, error.message);
     return false;
   }
 }
@@ -192,8 +251,9 @@ function main() {
 
   const versionFileUpdated = updateVersionFile(version, commit, branch);
   const versionJsonUpdated = updateVersionJson(version, commit);
+  const metadataCreated = createVersionMetadata(version, commit, branch);
 
-  if (versionFileUpdated && versionJsonUpdated) {
+  if (versionFileUpdated && versionJsonUpdated && metadataCreated) {
     console.log('\n✓ Version update completed successfully');
     console.log('\nNext steps:');
     console.log('1. Rebuild the application: pnpm build');

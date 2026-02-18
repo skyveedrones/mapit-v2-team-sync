@@ -7,6 +7,14 @@ import { AlertCircle, CheckCircle2, Info, Loader2, RefreshCw } from "lucide-reac
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+interface VersionInfo {
+  version: string;
+  commit: string;
+  fullCommit?: string;
+  buildDate: string;
+  timestamp: number;
+}
+
 export default function VersionCheck() {
   const [autoCheck, setAutoCheck] = useState(() => {
     const saved = localStorage.getItem("autoCheckUpdates");
@@ -16,6 +24,8 @@ export default function VersionCheck() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [versionMismatch, setVersionMismatch] = useState(false);
+  const [backendVersion, setBackendVersion] = useState<string | null>(null);
 
   const currentVersion = APP_VERSION.commit.substring(0, 7);
 
@@ -35,8 +45,8 @@ export default function VersionCheck() {
         throw new Error('Failed to fetch version info');
       }
       
-      const versionData = await response.json();
-      const deployedVersion = versionData.commit?.substring(0, 7) || currentVersion;
+      const versionData: VersionInfo = await response.json();
+      const deployedVersion = versionData.commit?.substring(0, 7) || versionData.fullCommit?.substring(0, 7) || currentVersion;
       
       setLatestVersion(deployedVersion);
       setLastChecked(new Date());
@@ -45,12 +55,42 @@ export default function VersionCheck() {
       const hasUpdate = deployedVersion !== currentVersion;
       setUpdateAvailable(hasUpdate);
       
+      // Check backend version if available
+      try {
+        const backendResponse = await fetch('/api/version', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
+        if (backendResponse.ok) {
+          const backendData = await backendResponse.json();
+          const backendVer = backendData.commit?.substring(0, 7) || currentVersion;
+          setBackendVersion(backendVer);
+          
+          // Check if frontend and backend versions match
+          if (deployedVersion !== backendVer) {
+            setVersionMismatch(true);
+            toast.warning("Version mismatch detected", {
+              description: `Frontend: ${deployedVersion}, Backend: ${backendVer}. Please refresh.`,
+              duration: 10000,
+            });
+          } else {
+            setVersionMismatch(false);
+          }
+        }
+      } catch (error) {
+        // Backend version check is optional
+        console.debug("Could not verify backend version:", error);
+      }
+      
       if (hasUpdate) {
         toast.info("New version available!", {
           description: `Version ${deployedVersion} is ready. Refresh to update.`,
           duration: 10000,
         });
-      } else {
+      } else if (!versionMismatch) {
         toast.success("You're up to date!", {
           description: "You're using the latest version.",
         });
@@ -61,6 +101,7 @@ export default function VersionCheck() {
       setLatestVersion(currentVersion);
       setLastChecked(new Date());
       setUpdateAvailable(false);
+      setVersionMismatch(false);
       
       toast.error("Failed to check for updates", {
         description: "Unable to connect to update server.",
@@ -118,7 +159,7 @@ export default function VersionCheck() {
               {getVersionString()}
             </div>
           </div>
-          {updateAvailable ? (
+          {updateAvailable || versionMismatch ? (
             <div className="flex items-center gap-2 text-amber-500">
               <AlertCircle className="h-5 w-5" />
               <span className="text-sm font-medium">Update Available</span>
@@ -131,8 +172,34 @@ export default function VersionCheck() {
           ) : null}
         </div>
 
+        {/* Version Mismatch Banner */}
+        {versionMismatch && backendVersion && (
+          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-medium text-red-500">Version Mismatch Detected</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Frontend: {latestVersion} | Backend: {backendVersion}
+                </div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  The frontend and backend versions don't match. This may cause issues. Please refresh the page.
+                </div>
+                <Button
+                  onClick={handleRefresh}
+                  className="mt-3 bg-red-500 hover:bg-red-600 text-white"
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Now
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Update Available Banner */}
-        {updateAvailable && latestVersion && (
+        {updateAvailable && !versionMismatch && latestVersion && (
           <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />

@@ -483,6 +483,31 @@ export const appRouter = router({
     }),
   }),
 
+  // Version information endpoint
+  version: router({
+    getInfo: publicProcedure.query(async () => {
+      try {
+        const { APP_VERSION } = await import("../shared/version");
+        return {
+          version: APP_VERSION.version,
+          commit: APP_VERSION.commit,
+          branch: APP_VERSION.branch,
+          buildDate: APP_VERSION.buildDate,
+          buildTimestamp: APP_VERSION.buildTimestamp,
+        };
+      } catch (error) {
+        console.error("Failed to get version info:", error);
+        return {
+          version: "unknown",
+          commit: "unknown",
+          branch: "unknown",
+          buildDate: new Date().toISOString(),
+          buildTimestamp: Date.now(),
+        };
+      }
+    }),
+  }),
+
   // Project management procedures
   project: router({
     // Get demo project without authentication
