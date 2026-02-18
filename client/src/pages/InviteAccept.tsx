@@ -71,14 +71,11 @@ export default function InviteAccept() {
       !isAccepting &&
       !acceptMutation.isPending
     ) {
-      // Check if the invitation email matches the logged-in user's email
-      const inviteEmail = inviteData.invitation.email.toLowerCase();
-      const userEmail = user.email?.toLowerCase();
-      
-      // Auto-accept if emails match or if user wants to accept anyway
-      // For now, we'll show the accept button and let the user click it
+      // Auto-accept the invitation after user logs in
+      setIsAccepting(true);
+      acceptMutation.mutate({ token });
     }
-  }, [user, inviteData, accepted, isAccepting, acceptMutation.isPending]);
+  }, [user, inviteData, accepted, isAccepting, acceptMutation, token]);
 
   const handleAccept = async () => {
     if (!user || !token) return;

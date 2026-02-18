@@ -1513,9 +1513,28 @@ export const appRouter = router({
       }),
 
     // Accept an invitation (called after user logs in)
-    acceptInvitation: protectedProcedure
+    acceptInvitation: publicProcedure
       .input(z.object({ token: z.string() }))
       .mutation(async ({ ctx, input }) => {
+        // Get the invitation to verify it exists and get the email
+        const invitation = await getInvitationByToken(input.token);
+        
+        if (!invitation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Invitation not found",
+          });
+        }
+
+        // If user is not authenticated, they need to log in first
+        // Store the token in session storage for after login
+        if (!ctx.user) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Please log in first to accept this invitation",
+          });
+        }
+
         const result = await acceptProjectInvitation(input.token, ctx.user.id);
         
         if (!result.success) {
