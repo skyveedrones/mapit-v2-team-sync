@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { clients, clientInvitations, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
+import { clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
 
@@ -2591,3 +2591,61 @@ export async function updateUserDetails(userId: number, data: { name?: string; r
 }
 
 
+/**
+ * Get a user's role in the client that owns a specific project
+ * Returns the role (viewer, user, admin, owner, collaborator) or null if user doesn't have access
+ */
+export async function getUserRoleForProject(projectId: number, userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database connection failed");
+  }
+
+  // First, check if user is the project owner
+  const ownerProject = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .limit(1);
+
+  if (ownerProject.length > 0) {
+    return "owner"; // Owner has full permissions
+  }
+
+  // Check if user is a project collaborator
+  const collaborator = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(eq(projectCollaborators.projectId, projectId), eq(projectCollaborators.userId, userId)))
+    .limit(1);
+
+  if (collaborator.length > 0) {
+    return "collaborator"; // Collaborators have edit permissions
+  }
+
+  // Check if project is assigned to a client
+  const assignment = await db
+    .select({ clientId: clientProjectAssignments.clientId })
+    .from(clientProjectAssignments)
+    .where(eq(clientProjectAssignments.projectId, projectId))
+    .limit(1);
+
+  if (assignment.length === 0) {
+    // Project not assigned to any client and user is not a collaborator
+    return null;
+  }
+
+  // Get user's role in that client
+  const clientId = assignment[0].clientId;
+  const userRole = await db
+    .select({ role: clientUsers.role })
+    .from(clientUsers)
+    .where(and(eq(clientUsers.clientId, clientId), eq(clientUsers.userId, userId)))
+    .limit(1);
+
+  if (userRole.length === 0) {
+    return null;
+  }
+
+  return userRole[0].role;
+}

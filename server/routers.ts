@@ -93,6 +93,7 @@ import {
   getClientLogo,
   updateUserPilotSettings,
   getUserPilotSettings,
+  getUserRoleForProject,
 } from "./db";
 import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
@@ -1180,18 +1181,17 @@ export const appRouter = router({
           });
         }
 
-        // Verify user has access to the project (owner or collaborator)
-        const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
-        if (!hasAccess) {
+        // Get user's role for this specific project
+        const userRole = await getUserRoleForProject(mediaItem.projectId, ctx.user.id);
+        if (!userRole) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You don't have permission to edit this media",
           });
         }
 
-        // Check if user is a client user with viewer role - viewers cannot update
-        const clientAccess = await getUserClientAccess(ctx.user.id);
-        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+        // Check if user is a viewer - viewers cannot modify media
+        if (userRole === 'viewer') {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Viewers cannot modify media",
@@ -1213,16 +1213,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-      // Check if user is a client user with viewer role - viewers cannot update
-        const clientAccess = await getUserClientAccess(ctx.user.id);
-        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Viewers cannot modify media",
-          });
-        }
-
-        // Get the media item to verify ownership
+      // Get the media item to verify it exists
         const mediaItem = await getMediaById(input.id, ctx.user.id);
         if (!mediaItem) {
           throw new TRPCError({
@@ -1231,12 +1222,20 @@ export const appRouter = router({
           });
         }
 
-        // Verify user has access to the project (owner or collaborator)
-        const hasAccess = await userHasProjectAccess(mediaItem.projectId, ctx.user.id);
-        if (!hasAccess) {
+        // Get user's role for this specific project
+        const userRole = await getUserRoleForProject(mediaItem.projectId, ctx.user.id);
+        if (!userRole) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You don't have permission to edit this media",
+          });
+        }
+
+        // Check if user is a viewer - viewers cannot modify media
+        if (userRole === 'viewer') {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers cannot modify media",
           });
         }
 
