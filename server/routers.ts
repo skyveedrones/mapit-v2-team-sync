@@ -3495,7 +3495,10 @@ export const appRouter = router({
           });
         }
         
-        return { success: true, newRole: input.newRole };
+        // Log the role change for audit trail
+        console.log(`[Audit] User ${input.userId} role changed to ${input.newRole} in client ${input.clientId} by ${ctx.user.id}`);
+        
+        return { success: true, newRole: input.newRole, changedUserId: input.userId };
       }),
 
     // Remove a user from a client

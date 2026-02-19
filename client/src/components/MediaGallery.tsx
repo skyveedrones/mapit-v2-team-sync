@@ -491,7 +491,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
         <p>No media uploaded yet</p>
         <p className="text-sm mb-4">Upload drone photos and videos to see them here</p>
-        {canEdit && onUploadClick && (
+        {canEditMedia && onUploadClick && (
           <Button onClick={onUploadClick}>
             <Upload className="h-4 w-4 mr-2" />
             Upload Media
@@ -542,7 +542,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     <Download className="h-4 w-4 mr-2" />
                     Download Selected ({selectedIds.size})
                   </DropdownMenuItem>
-                  {canEdit && (
+                  {canEditMedia && (
                     <>
                       <DropdownMenuItem
                         onClick={() => setWatermarkDialogOpen(true)}
@@ -653,7 +653,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-border">
         <p className="text-xs text-muted-foreground">
           <strong>Tip:</strong> Click on any image to view details and metadata. 
-          {canEdit && " Use checkboxes to select multiple items, then use the Action menu to download, watermark, or delete them in bulk."}
+          {canEditMedia && " Use checkboxes to select multiple items, then use the Action menu to download, watermark, or delete them in bulk."}
           {" "}Images with GPS data will appear on the project map.
         </p>
       </div>
@@ -710,7 +710,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
             )}
 
             {/* Selection Checkbox - Always visible */}
-            {canEdit && (
+            {canEditMedia && (
               <div
                 className="absolute top-2 left-2 z-10"
                 onClick={(e) => toggleSelection(item.id, e)}
@@ -784,7 +784,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 <DialogTitle className={`truncate text-lg font-semibold ${isFullscreen ? "text-white" : "text-foreground"}`}>
                   {selectedMedia?.filename}
                 </DialogTitle>
-                {canEdit && (
+                {canEditMedia && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -978,7 +978,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                               priority: newPriority,
                             });
                           }}
-                          disabled={!canEdit}
+                          disabled={!canEditMedia}
                           className="w-4 h-4"
                         />
                         <span className="text-sm">None</span>
@@ -997,7 +997,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                               priority: newPriority,
                             });
                           }}
-                          disabled={!canEdit}
+                          disabled={!canEditMedia}
                           className="w-4 h-4"
                         />
                         <span className="text-sm flex items-center gap-1">
@@ -1019,7 +1019,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                               priority: newPriority,
                             });
                           }}
-                          disabled={!canEdit}
+                          disabled={!canEditMedia}
                           className="w-4 h-4"
                         />
                         <span className="text-sm flex items-center gap-1">
@@ -1053,7 +1053,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                           notes: e.target.value || null,
                         });
                       }}
-                      disabled={!canEdit}
+                      disabled={!canEditMedia}
                     />
                   </div>
                 </div>
@@ -1069,7 +1069,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                         <MapPin className="h-4 w-4" />
                         <span className="text-xs uppercase tracking-wide">Location</span>
                       </div>
-                      {canEdit && (
+                      {canEditMedia && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1146,7 +1146,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           {/* Actions - Hidden in fullscreen */}
           {!isFullscreen && (
           <div className="flex justify-between items-center pt-4 border-t border-border flex-shrink-0">
-            {canEdit ? (
+            {canEditMedia ? (
               <Button
                 variant="outline"
                 className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"

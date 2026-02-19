@@ -262,12 +262,22 @@ export default function ClientManage() {
 
 
   const changeUserRoleMutation = trpc.clientPortal.changeUserRole.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("User role updated successfully");
       setChangeRoleDialogOpen(false);
       setUserToChangeRole(null);
       setNewRole("viewer");
       refetchUsers();
+      
+      // Invalidate all relevant caches to ensure role changes are reflected sitewide
+      const utils = trpc.useUtils();
+      
+      // Invalidate the changed users data
+      utils.clientPortal.getUserAccess.invalidate();
+      utils.clientPortal.getUsers.invalidate();
+      utils.project.list.invalidate();
+      utils.project.get.invalidate();
+      utils.auth.me.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update user role");
