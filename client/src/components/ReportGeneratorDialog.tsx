@@ -540,6 +540,7 @@ export function ReportGeneratorDialog({
         <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${projectName} - Report</title>
           <style>
             @page {
@@ -558,7 +559,31 @@ export function ReportGeneratorDialog({
               color: #1a1a1a;
               background: #fff;
             }
+            .mobile-close-button {
+              display: none;
+              position: fixed;
+              top: 10px;
+              right: 10px;
+              z-index: 10000;
+              background: #ef4444;
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 4px;
+              font-size: 14px;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            @media (max-width: 768px) {
+              .mobile-close-button {
+                display: block;
+              }
+            }
             @media print {
+              .mobile-close-button {
+                display: none !important;
+              }
               body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -570,6 +595,7 @@ export function ReportGeneratorDialog({
           </style>
         </head>
         <body>
+          <button class="mobile-close-button" onclick="window.close()">← Back to MapIt</button>
           ${previewHtml}
         </body>
         </html>
