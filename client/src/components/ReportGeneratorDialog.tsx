@@ -608,7 +608,21 @@ export function ReportGeneratorDialog({
         setTimeout(() => {
           // Trigger print dialog
           printWindow.print();
-          toast.success('Print dialog opened! Save as PDF to download. Close the window to return to MapIt.');
+          
+          // On mobile, show clear instructions and auto-close after print dialog closes
+          const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+          if (isMobile) {
+            toast.success('Tap the back button to return. Or close this window after saving.');
+            
+            // Auto-close the window after 5 seconds if still open (user likely closed print dialog)
+            setTimeout(() => {
+              if (printWindow && !printWindow.closed) {
+                printWindow.close();
+              }
+            }, 5000);
+          } else {
+            toast.success('Print dialog opened! Save as PDF to download. Close the window to return to MapIt.');
+          }
           setIsDownloading(false);
         }, 500);
       };
