@@ -106,11 +106,8 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               width: 100%;
               box-sizing: border-box;
             }
-            .logo {
-              height: 80px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
+            .logo-container {
+              text-align: center;
               margin: 0 auto 10px auto;
               width: 100%;
             }
@@ -118,7 +115,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               height: 80px;
               width: auto;
               max-width: 100%;
-              display: block;
+              display: inline-block;
             }
             .content {
               background: white !important;
@@ -143,7 +140,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         </head>
         <body>
           <div class="header">
-            <div class="logo">
+            <div class="logo-container">
               <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" />
             </div>
             <p style="margin: 0; color: #10b981; font-weight: 600; font-size: 16px;">Drone Mapping Report</p>
@@ -219,11 +216,8 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               width: 100%;
               box-sizing: border-box;
             }
-            .logo {
-              height: 80px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
+            .logo-container {
+              text-align: center;
               margin: 0 auto 10px auto;
               width: 100%;
             }
@@ -231,7 +225,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               height: 80px;
               width: auto;
               max-width: 100%;
-              display: block;
+              display: inline-block;
             }
             .content {
               background: white !important;
@@ -273,7 +267,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         </head>
         <body>
           <div class="header">
-            <div class="logo">
+            <div class="logo-container">
               <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" />
             </div>
             <p style="margin: 0; color: #10b981; font-weight: 600; font-size: 16px;">Drone Mapping Report</p>
