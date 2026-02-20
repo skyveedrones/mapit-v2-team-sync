@@ -66,6 +66,27 @@ async function startServer() {
   
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
+
+  // PDF generation endpoint
+  app.post("/api/generate-pdf", async (req, res) => {
+    try {
+      const { html, filename } = req.body;
+      
+      if (!html) {
+        return res.status(400).json({ error: 'HTML content is required' });
+      }
+      
+      const { generatePdfFromHtml } = await import('../pdf-generator');
+      const pdfBuffer = await generatePdfFromHtml(html);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename || 'report.pdf'}"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('[PDF Generation Error]:', error);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+  });
   
   // tRPC API
   app.use(

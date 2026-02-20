@@ -526,114 +526,47 @@ export function ReportGeneratorDialog({
     setIsDownloading(true);
     
     try {
-      // Create a new window with the HTML content
-      const printWindow = window.open('', '_blank');
-      
-      if (!printWindow) {
-        toast.error('Please allow popups to download PDF');
-        return;
+      // Send HTML to server for PDF generation
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: previewHtml,
+          filename: `${projectName}-report.pdf`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
       }
+
+      // Get the PDF blob
+      const blob = await response.blob();
       
-      // Write the HTML with complete print styles matching the server-generated PDF
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${projectName} - Report</title>
-          <style>
-            @page {
-              margin: 0.3in 0.4in;
-              size: letter;
-            }
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              font-size: 11px;
-              line-height: 1.4;
-              color: #1a1a1a;
-              background: #fff;
-            }
-            .mobile-close-button {
-              display: none;
-              position: fixed;
-              top: 10px;
-              right: 10px;
-              z-index: 10000;
-              background: #ef4444;
-              color: white;
-              border: none;
-              padding: 8px 16px;
-              border-radius: 4px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            }
-            @media (max-width: 768px) {
-              .mobile-close-button {
-                display: block;
-              }
-            }
-            @media print {
-              .mobile-close-button {
-                display: none !important;
-              }
-              body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              .page-break {
-                page-break-before: always;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <button class="mobile-close-button" onclick="window.close()">← Back to MapIt</button>
-          ${previewHtml}
-        </body>
-        </html>
-      `);
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName}-report.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
-      printWindow.document.close();
-      
-      // Wait for images to load
-      printWindow.onload = () => {
-        setTimeout(() => {
-          // Trigger print dialog
-          printWindow.print();
-          
-          // On mobile, show clear instructions and auto-close after print dialog closes
-          const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-          if (isMobile) {
-            toast.success('Tap the back button to return. Or close this window after saving.');
-            
-            // Auto-close the window after 5 seconds if still open (user likely closed print dialog)
-            setTimeout(() => {
-              if (printWindow && !printWindow.closed) {
-                printWindow.close();
-              }
-            }, 5000);
-          } else {
-            toast.success('Print dialog opened! Save as PDF to download. Close the window to return to MapIt.');
-          }
-          setIsDownloading(false);
-        }, 500);
-      };
+      toast.success('PDF downloaded successfully!');
+      setIsDownloading(false);
       
     } catch (error: any) {
       console.error('[PDF Generation Error]:', error);
-        toast.error('Failed to open print dialog. Please try again. Make sure popups are allowed.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setTimeout(() => setIsDownloading(false), 2000);
     }
   };
+
+
 
   const handleClose = () => {
     setShowPreview(false);

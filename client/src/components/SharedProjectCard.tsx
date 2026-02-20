@@ -10,7 +10,7 @@ import { Calendar, Image, MapPin, Users } from "lucide-react";
 import { Link } from "wouter";
 
 interface SharedProjectCardProps {
-  project: Project & { sharedRole: "viewer" | "editor" };
+  project: Project & { sharedRole: "viewer" | "editor" | "vendor" };
 }
 
 export function SharedProjectCard({ project }: SharedProjectCardProps) {
