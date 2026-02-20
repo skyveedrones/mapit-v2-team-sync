@@ -68,35 +68,60 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="color-scheme" content="light">
+          <meta name="supported-color-schemes" content="light">
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               line-height: 1.6;
-              color: #333;
+              color: #333 !important;
+              background: white !important;
               max-width: 600px;
               margin: 0 auto;
               padding: 20px;
             }
+            @media (prefers-color-scheme: dark) {
+              body {
+                background: white !important;
+                color: #333 !important;
+              }
+              .header {
+                background: white !important;
+                color: #333 !important;
+              }
+              .content {
+                background: white !important;
+                color: #333 !important;
+              }
+              p, div, span {
+                color: #333 !important;
+              }
+            }
             .header {
-              background: white;
-              padding: 30px;
+              background: white !important;
+              padding: 30px 20px;
               border-radius: 8px 8px 0 0;
               text-align: center;
-              border-bottom: 3px solid #10b981;
+              border-bottom: 3px solid #10b981 !important;
+              width: 100%;
+              box-sizing: border-box;
             }
             .logo {
               height: 80px;
               display: flex;
               align-items: center;
               justify-content: center;
-              margin-bottom: 10px;
+              margin: 0 auto 10px auto;
+              width: 100%;
             }
             .logo img {
               height: 80px;
               width: auto;
+              max-width: 100%;
+              display: block;
             }
             .content {
-              background: #f9fafb;
+              background: white !important;
               padding: 30px;
               border-radius: 0 0 8px 8px;
             }
@@ -156,35 +181,60 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="color-scheme" content="light">
+          <meta name="supported-color-schemes" content="light">
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               line-height: 1.6;
-              color: #333;
+              color: #333 !important;
+              background: white !important;
               max-width: 600px;
               margin: 0 auto;
               padding: 20px;
             }
+            @media (prefers-color-scheme: dark) {
+              body {
+                background: white !important;
+                color: #333 !important;
+              }
+              .header {
+                background: white !important;
+                color: #333 !important;
+              }
+              .content {
+                background: white !important;
+                color: #333 !important;
+              }
+              p, div, span {
+                color: #333 !important;
+              }
+            }
             .header {
-              background: white;
-              padding: 30px;
+              background: white !important;
+              padding: 30px 20px;
               border-radius: 8px 8px 0 0;
               text-align: center;
-              border-bottom: 3px solid #10b981;
+              border-bottom: 3px solid #10b981 !important;
+              width: 100%;
+              box-sizing: border-box;
             }
             .logo {
               height: 80px;
               display: flex;
               align-items: center;
               justify-content: center;
-              margin-bottom: 10px;
+              margin: 0 auto 10px auto;
+              width: 100%;
             }
             .logo img {
               height: 80px;
               width: auto;
+              max-width: 100%;
+              display: block;
             }
             .content {
-              background: #f9fafb;
+              background: white !important;
               padding: 30px;
               border-radius: 0 0 8px 8px;
             }
