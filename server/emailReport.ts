@@ -246,14 +246,12 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
     }
     
     // Send email
-    // Use Resend's verified domain (onboarding@resend.dev) to avoid domain verification issues
-    // Custom domains can be configured in Resend dashboard after verification
+    // Using verified domain: skyveedrones.com
     const { error } = await resend.emails.send({
-      from: 'Mapit Reports <onboarding@resend.dev>',
+      from: 'Mapit Reports <noreply@skyveedrones.com>',
       to: [to],
       subject: `Mapit Report - ${projectName}`,
       html: emailHtml,
-      replyTo: 'support@mapit.app',
       attachments: attachments.length > 0 ? attachments : undefined,
     });
 
