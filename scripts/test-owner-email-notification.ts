@@ -25,7 +25,7 @@ async function testOwnerEmailNotification() {
     
     if (result.success) {
       console.log('✅ Email notification sent successfully!');
-      console.log('📧 Check claybechtol@yahoo.com for the notification email.\n');
+      console.log('📧 Check clay@skyveedrones.com for the notification email.\n');
     } else {
       console.log('❌ Failed to send email notification');
       console.log(`Error: ${result.error}\n`);

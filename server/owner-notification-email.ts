@@ -9,7 +9,7 @@ import { generateEmailTemplate, EMAIL_CONFIG } from './email-config';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Owner email - Clay's email
-const OWNER_EMAIL = 'claybechtol@yahoo.com';
+const OWNER_EMAIL = 'clay@skyveedrones.com';
 
 export interface NewUserSignupData {
   userName: string;
