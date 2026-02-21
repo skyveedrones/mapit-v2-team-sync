@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
+import { notifyOwner } from './_core/notification';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -83,6 +84,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       sendWelcomeEmail(user.email, user.name).catch(error => {
         console.error('[User] Failed to send welcome email:', error);
         // Don't throw - email failure shouldn't block user creation
+      });
+
+      // Notify owner about new user signup
+      console.log('[User] Notifying owner about new user signup:', user.email);
+      notifyOwner({
+        title: '🎉 New User Signup',
+        content: `A new user has signed up to MAPit!\n\nName: ${user.name}\nEmail: ${user.email}\nLogin Method: ${user.loginMethod || 'OAuth'}\nOrganization: ${user.organization || 'Not specified'}`,
+      }).catch(error => {
+        console.error('[User] Failed to send owner notification:', error);
+        // Don't throw - notification failure shouldn't block user creation
       });
     }
   } catch (error) {

@@ -1279,3 +1279,8 @@
 
 ## Bug Fixes - Notes Section
 - [x] Fix notes section in media preview - reordered permission checks to validate media access before checking client viewer role
+
+## New User Signup Notifications
+- [x] Add notification to owner when new users sign up
+- [x] Include user email and name in notification
+- [x] Test notification system with new user signup
