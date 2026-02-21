@@ -1284,3 +1284,8 @@
 - [x] Add notification to owner when new users sign up
 - [x] Include user email and name in notification
 - [x] Test notification system with new user signup
+
+## Fix New User Signup Notifications
+- [x] Investigate why Manus notification API doesn't show in notification panel
+- [x] Implement email notification as alternative/backup to owner
+- [x] Test that owner receives notification via email

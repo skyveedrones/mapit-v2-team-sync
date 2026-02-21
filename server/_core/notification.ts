@@ -106,6 +106,7 @@ export async function notifyOwner(
       return false;
     }
 
+    console.log(`[Notification] Successfully sent notification to owner: "${title}"`);
     return true;
   } catch (error) {
     console.warn("[Notification] Error calling notification service:", error);

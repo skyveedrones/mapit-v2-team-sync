@@ -4,6 +4,7 @@ import { clients, clientInvitations, clientProjectAssignments, clientUsers, flig
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
 import { notifyOwner } from './_core/notification';
+import { sendOwnerNotificationEmail } from './owner-notification-email';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -86,13 +87,15 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         // Don't throw - email failure shouldn't block user creation
       });
 
-      // Notify owner about new user signup
+      // Notify owner about new user signup via email
       console.log('[User] Notifying owner about new user signup:', user.email);
-      notifyOwner({
-        title: '🎉 New User Signup',
-        content: `A new user has signed up to MAPit!\n\nName: ${user.name}\nEmail: ${user.email}\nLogin Method: ${user.loginMethod || 'OAuth'}\nOrganization: ${user.organization || 'Not specified'}`,
+      sendOwnerNotificationEmail({
+        userName: user.name,
+        userEmail: user.email,
+        loginMethod: user.loginMethod || 'OAuth',
+        organization: user.organization || 'Not specified',
       }).catch(error => {
-        console.error('[User] Failed to send owner notification:', error);
+        console.error('[User] Failed to send owner notification email:', error);
         // Don't throw - notification failure shouldn't block user creation
       });
     }
