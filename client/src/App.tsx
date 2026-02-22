@@ -26,6 +26,7 @@ import ManageUser from "./pages/ManageUser";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
+import Login from "./pages/Login";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -95,6 +96,7 @@ function Router() {
       <ScrollToTop />
       <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}

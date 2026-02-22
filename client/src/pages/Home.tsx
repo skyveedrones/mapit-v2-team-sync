@@ -111,7 +111,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
 
   const handleLogin = () => {
-    window.location.href = getLoginUrl();
+    setLocation("/login");
   };
 
   const handleLogout = async () => {
@@ -175,14 +175,14 @@ export default function Home() {
                   onClick={handleLogin}
                   disabled={loading}
                 >
-                  {loading ? "Loading..." : "Login"}
+                  {loading ? "Loading..." : "Sign In"}
                 </Button>
                 <Button
                   variant="outline"
                   className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => setLocation("/dashboard")}
+                  onClick={handleLogin}
                 >
-                  Client Portal
+                  Sign Up
                 </Button>
               </>
             )}
