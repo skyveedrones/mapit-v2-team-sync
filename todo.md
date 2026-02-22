@@ -1296,3 +1296,10 @@
 - [x] Include welcoming messaging and value propositions
 - [x] Ensure responsive design for mobile and desktop
 - [x] Test login flow from landing page to dashboard
+
+## Login Page Branding Updates
+- [x] Copy MAPit logo to public/images directory
+- [x] Replace text "MAPit" with branded logo image
+- [x] Remove all "OAuth" references from login page
+- [x] Change button text to "Continue to Login"
+- [x] Remove "Secured by Manus OAuth" footer line

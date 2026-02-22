@@ -33,7 +33,7 @@ export default function Login() {
   ];
 
   const benefits = [
-    "Secure OAuth authentication",
+    "Secure authentication",
     "Free tier available",
     "No credit card required to start",
     "Instant access after signup",
@@ -45,11 +45,11 @@ export default function Login() {
       <header className="border-b border-border bg-background/80 backdrop-blur-md">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold tracking-wider">
-              <span className="text-foreground">MAP</span>
-              <span className="text-primary">i</span>
-              <span className="text-foreground">T</span>
-            </div>
+            <img
+              src="/images/mapit-logo.webp"
+              alt="MAPit"
+              className="h-8 w-auto"
+            />
           </div>
           <Button onClick={handleLogin} size="sm">
             Sign In
@@ -69,10 +69,16 @@ export default function Login() {
               className="space-y-8"
             >
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                  Welcome to{" "}
-                  <span className="text-primary">MAPit</span>
-                </h1>
+                <div className="space-y-4">
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                    Welcome to
+                  </h1>
+                  <img
+                    src="/images/mapit-logo.webp"
+                    alt="MAPit"
+                    className="h-16 w-auto"
+                  />
+                </div>
                 <p className="text-xl text-muted-foreground">
                   Professional drone mapping solutions that empower smarter project planning, monitoring, and decision-making.
                 </p>
@@ -145,7 +151,7 @@ export default function Login() {
                     className="w-full text-lg h-12"
                   >
                     <Zap className="w-5 h-5 mr-2" />
-                    Continue with Manus OAuth
+                    Continue to Login
                   </Button>
 
                   <div className="relative">
@@ -164,7 +170,7 @@ export default function Login() {
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
                         1
                       </div>
-                      <p>Click the button above to open the secure Manus authentication portal</p>
+                      <p>Click the button above to open the secure authentication portal</p>
                     </div>
                     <div className="flex gap-3">
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
@@ -176,23 +182,18 @@ export default function Login() {
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
                         3
                       </div>
-                      <p>You'll be automatically redirected back to MAPit and ready to go</p>
+                      <p>You'll be automatically redirected back and ready to go</p>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
-                      <Shield className="w-4 h-4" />
-                      <span>Secured by Manus OAuth • Your data is protected</span>
-                    </div>
-                  </div>
+
                 </div>
               </Card>
 
               {/* Additional Info */}
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>
-                  New to MAPit?{" "}
+                  New user?{" "}
                   <button
                     onClick={handleLogin}
                     className="text-primary hover:underline font-medium"
