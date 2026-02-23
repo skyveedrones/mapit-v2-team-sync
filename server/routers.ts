@@ -485,6 +485,56 @@ export const appRouter = router({
   }),
 
   // Version information endpoint
+  payment: router({
+    createCheckoutSession: protectedProcedure
+      .input(
+        z.object({
+          priceId: z.string(),
+          planId: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY));
+        
+        if (!ctx.user?.email) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "User email not found" });
+        }
+
+        try {
+          const session = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [
+              {
+                price: input.priceId,
+                quantity: 1,
+              },
+            ],
+            mode: "subscription",
+            success_url: `${ctx.req.headers.origin}/dashboard?payment=success`,
+            cancel_url: `${ctx.req.headers.origin}/pricing?payment=cancelled`,
+            customer_email: ctx.user.email,
+            client_reference_id: ctx.user.id.toString(),
+            metadata: {
+              user_id: ctx.user.id.toString(),
+              plan_id: input.planId,
+            },
+          });
+
+          if (!session.url) {
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create checkout session" });
+          }
+
+          return {
+            checkoutUrl: session.url,
+            sessionId: session.id,
+          };
+        } catch (error) {
+          console.error("Stripe checkout error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create checkout session" });
+        }
+      }),
+  }),
+
   version: router({
     getInfo: publicProcedure.query(async () => {
       try {

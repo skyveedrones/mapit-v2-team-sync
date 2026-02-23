@@ -1303,3 +1303,16 @@
 - [x] Remove all "OAuth" references from login page
 - [x] Change button text to "Continue to Login"
 - [x] Remove "Secured by Manus OAuth" footer line
+
+## Login Page Logo Layout Adjustment
+- [ ] Place MAPit logo inline with "Welcome to" heading
+- [ ] Resize logo to match heading font size (4xl/5xl)
+
+## Complete Signup Flow Implementation
+- [x] Update login page "Continue to Login" to redirect new users to pricing
+- [x] Create payment page with Stripe checkout integration
+- [x] Implement subscription tier selection on pricing page
+- [x] Add post-payment success handler to redirect to dashboard (success_url configured)
+- [ ] Store user subscription tier in database (webhook handler needed)
+- [x] Test complete flow: Homepage → Login → Pricing → Payment → Dashboard
+- [x] Handle payment cancellation and errors gracefully

@@ -12,12 +12,11 @@ export default function Pricing() {
 
   const handleGetStarted = (planName: string) => {
     if (planName === "Enterprise") {
-      // TODO: Add contact sales functionality
       alert("Contact sales functionality coming soon!");
-    } else {
-      // Redirect to login - user will be automatically assigned to free tier
-      // Paid tier upgrades coming soon via Stripe integration
+    } else if (planName === "Free") {
       window.location.href = getLoginUrl();
+    } else {
+      setLocation(`/payment?plan=${planName.toLowerCase()}&billing=${billingPeriod}`);
     }
   };
 

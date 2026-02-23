@@ -69,16 +69,14 @@ export default function Login() {
               className="space-y-8"
             >
               <div className="space-y-4">
-                <div className="space-y-4">
-                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                    Welcome to
-                  </h1>
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight flex items-center gap-3 flex-wrap">
+                  <span>Welcome to</span>
                   <img
                     src="/images/mapit-logo.webp"
                     alt="MAPit"
-                    className="h-16 w-auto"
+                    className="h-12 md:h-16 w-auto"
                   />
-                </div>
+                </h1>
                 <p className="text-xl text-muted-foreground">
                   Professional drone mapping solutions that empower smarter project planning, monitoring, and decision-making.
                 </p>

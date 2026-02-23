@@ -27,6 +27,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
+import Payment from "./pages/Payment";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -98,6 +99,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/payment" component={Payment} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
