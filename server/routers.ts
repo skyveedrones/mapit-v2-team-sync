@@ -494,7 +494,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY));
+        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
         
         if (!ctx.user?.email) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "User email not found" });
@@ -510,8 +510,8 @@ export const appRouter = router({
               },
             ],
             mode: "subscription",
-            success_url: `${ctx.req.headers.origin}/dashboard?payment=success`,
-            cancel_url: `${ctx.req.headers.origin}/pricing?payment=cancelled`,
+            success_url: `${ctx.req.headers.origin || "http://localhost:3000"}/dashboard?payment=success`,
+            cancel_url: `${ctx.req.headers.origin || "http://localhost:3000"}/pricing?payment=cancelled`,
             customer_email: ctx.user.email,
             client_reference_id: ctx.user.id.toString(),
             metadata: {
