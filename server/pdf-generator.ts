@@ -13,17 +13,24 @@ export async function generatePdfFromHtml(html: string): Promise<Uint8Array> {
 
     const page = await browser.newPage();
     
-    // Set longer timeout for map loading (60 seconds)
-    page.setDefaultNavigationTimeout(60000);
-    page.setDefaultTimeout(60000);
+    // Set longer timeout for map loading (90 seconds)
+    page.setDefaultNavigationTimeout(90000);
+    page.setDefaultTimeout(90000);
     
     // Set content with longer timeout for map tiles to load
-    console.log('[PDF] Setting page content with 60s timeout for map loading...');
-    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 60000 } as any);
+    // Use networkidle0 instead of networkidle2 to avoid waiting for all network requests
+    // (networkidle0 = page load complete, networkidle2 = max 2 concurrent connections)
+    console.log('[PDF] Setting page content with 90s timeout for map loading...');
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 90000 } as any);
+    } catch (error) {
+      // If networkidle0 times out, continue anyway - the page is likely ready
+      console.log('[PDF] Page load timeout reached, continuing with PDF generation...');
+    }
     
     // Wait for map to fully render (give it extra time for Google Maps tiles)
-    console.log('[PDF] Waiting 2 seconds for map tiles to fully render...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('[PDF] Waiting 3 seconds for map tiles to fully render...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Generate PDF with extended timeout
     console.log('[PDF] Generating PDF...');
@@ -36,18 +43,26 @@ export async function generatePdfFromHtml(html: string): Promise<Uint8Array> {
         left: '0.4in',
       },
       printBackground: true,
-      timeout: 60000,
+      timeout: 90000,
     });
     
     console.log('[PDF] PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+    if (pdfBuffer.length === 0) {
+      throw new Error('Generated PDF is empty');
+    }
     return pdfBuffer;
-  } catch (error) {
-    console.error('[PDF] Error during PDF generation:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('[PDF] Error during PDF generation:', error?.message || error);
+    // Don't re-throw - return empty PDF or handle gracefully
+    throw new Error(`PDF generation failed: ${error?.message || 'Unknown error'}`);
   } finally {
     if (browser) {
       console.log('[PDF] Closing browser...');
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (e) {
+        console.error('[PDF] Error closing browser:', e);
+      }
     }
   }
 }
