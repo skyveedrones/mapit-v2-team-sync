@@ -8,6 +8,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
+import { handleStripeWebhook } from "../stripe-webhook";
 import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -67,6 +68,9 @@ async function startServer() {
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
 
+  // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
+
   // PDF generation endpoint
   app.post("/api/generate-pdf", async (req, res) => {
     try {
@@ -76,6 +80,9 @@ async function startServer() {
         return res.status(400).json({ error: 'HTML content is required' });
       }
       
+      // Set socket timeout to 120 seconds for map rendering
+      req.socket.setTimeout(120000);
+      
       const { generatePdfFromHtml } = await import('../pdf-generator');
       const pdfBuffer = await generatePdfFromHtml(html);
       
@@ -84,7 +91,7 @@ async function startServer() {
       res.send(pdfBuffer);
     } catch (error: any) {
       console.error('[PDF Generation Error]:', error);
-      res.status(500).json({ error: 'Failed to generate PDF' });
+      res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
     }
   });
   
@@ -114,6 +121,9 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Set global request timeout to 120 seconds for PDF generation
+  server.setTimeout(120000);
+  
   server.listen(port, '0.0.0.0', () => {
     console.log(`[Server] Running on http://0.0.0.0:${port}/`);
   });

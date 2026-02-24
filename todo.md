@@ -1316,3 +1316,22 @@
 - [ ] Store user subscription tier in database (webhook handler needed)
 - [x] Test complete flow: Homepage → Login → Pricing → Payment → Dashboard
 - [x] Handle payment cancellation and errors gracefully
+
+## Stripe Webhook Handler Implementation
+- [ ] Create Stripe webhook endpoint at /api/stripe/webhook
+- [ ] Add subscription fields to users table (stripe_subscription_id, subscription_tier, subscription_status)
+- [ ] Implement database functions to update subscription status
+- [ ] Handle checkout.session.completed event to create subscription record
+- [ ] Handle customer.subscription.updated event to update subscription status
+- [ ] Handle customer.subscription.deleted event to downgrade to free tier
+- [ ] Add webhook signature verification
+- [ ] Write and run webhook handler tests
+- [ ] Test webhook with Stripe CLI
+
+
+## PDF Generation Timeout Fix
+- [x] Increase server timeout for /api/generate-pdf endpoint
+- [x] Optimize map data loading in PDF generation
+- [x] Add better error logging for PDF generation failures
+- [ ] Implement retry logic with exponential backoff (optional enhancement)
+- [ ] Test PDF generation with map data and verify it completes (user to test)

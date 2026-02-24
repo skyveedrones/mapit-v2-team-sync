@@ -2663,3 +2663,99 @@ export async function getUserRoleForProject(projectId: number, userId: number): 
 
   return userRole[0].role;
 }
+
+
+// ============================================
+// Subscription Management Functions
+// ============================================
+
+/**
+ * Update user subscription status after successful payment
+ */
+export async function updateUserSubscription(
+  userId: number,
+  data: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    subscriptionTier: "free" | "starter" | "professional" | "business" | "enterprise";
+    subscriptionStatus?: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+    billingPeriod?: "monthly" | "annual";
+    currentPeriodStart?: Date;
+    currentPeriodEnd?: Date;
+    cancelAtPeriodEnd?: "yes" | "no";
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: Record<string, any> = {
+    subscriptionTier: data.subscriptionTier,
+    updatedAt: new Date(),
+  };
+
+  if (data.stripeCustomerId) updateData.stripeCustomerId = data.stripeCustomerId;
+  if (data.stripeSubscriptionId) updateData.stripeSubscriptionId = data.stripeSubscriptionId;
+  if (data.subscriptionStatus) updateData.subscriptionStatus = data.subscriptionStatus;
+  if (data.billingPeriod) updateData.billingPeriod = data.billingPeriod;
+  if (data.currentPeriodStart) updateData.currentPeriodStart = data.currentPeriodStart;
+  if (data.currentPeriodEnd) updateData.currentPeriodEnd = data.currentPeriodEnd;
+  if (data.cancelAtPeriodEnd) updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd;
+
+  await db.update(users).set(updateData).where(eq(users.id, userId));
+}
+
+/**
+ * Get user subscription details
+ */
+export async function getUserSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      subscriptionTier: users.subscriptionTier,
+      subscriptionStatus: users.subscriptionStatus,
+      billingPeriod: users.billingPeriod,
+      currentPeriodStart: users.currentPeriodStart,
+      currentPeriodEnd: users.currentPeriodEnd,
+      cancelAtPeriodEnd: users.cancelAtPeriodEnd,
+      stripeCustomerId: users.stripeCustomerId,
+      stripeSubscriptionId: users.stripeSubscriptionId,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Downgrade user to free tier
+ */
+export async function downgradeToFreeTier(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({
+      subscriptionTier: "free",
+      subscriptionStatus: "canceled",
+      stripeSubscriptionId: null,
+      billingPeriod: null,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: "no",
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
