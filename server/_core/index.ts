@@ -86,12 +86,25 @@ async function startServer() {
       const { generatePdfFromHtml } = await import('../pdf-generator');
       const pdfBuffer = await generatePdfFromHtml(html);
       
+      // Ensure pdfBuffer is a Buffer
+      const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+      
+      // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', buffer.length);
       res.setHeader('Content-Disposition', `attachment; filename="${filename || 'report.pdf'}"`);
-      res.send(pdfBuffer);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send buffer as binary data
+      res.end(buffer, 'binary');
+      console.log('[PDF] PDF sent successfully, size:', buffer.length, 'bytes');
     } catch (error: any) {
-      console.error('[PDF Generation Error]:', error);
-      res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
+      console.error('[PDF Generation Error]:', error?.message || error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
+      }
     }
   });
   

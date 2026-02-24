@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-export async function generatePdfFromHtml(html: string): Promise<Uint8Array> {
+export async function generatePdfFromHtml(html: string): Promise<Buffer> {
   let browser;
   try {
     console.log('[PDF] Starting PDF generation...');
@@ -50,7 +50,8 @@ export async function generatePdfFromHtml(html: string): Promise<Uint8Array> {
     if (pdfBuffer.length === 0) {
       throw new Error('Generated PDF is empty');
     }
-    return pdfBuffer;
+    // Convert Uint8Array to Buffer for proper binary handling in Express
+    return Buffer.from(pdfBuffer);
   } catch (error: any) {
     console.error('[PDF] Error during PDF generation:', error?.message || error);
     // Don't re-throw - return empty PDF or handle gracefully
