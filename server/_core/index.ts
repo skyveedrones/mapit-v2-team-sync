@@ -9,6 +9,7 @@ import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
+import { initializeVersion, getVersionJson } from "../version";
 import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -68,8 +69,16 @@ async function startServer() {
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
 
+  // Initialize version system
+  initializeVersion();
+
   // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
   app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
+
+  // Version endpoint - returns current deployed version
+  app.get("/api/version", (req, res) => {
+    res.json(getVersionJson());
+  });
 
   // PDF generation endpoint
   app.post("/api/generate-pdf", async (req, res) => {

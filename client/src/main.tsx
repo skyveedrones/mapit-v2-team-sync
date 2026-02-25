@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
+import { initializeVersionCheck, startPeriodicVersionCheck } from "@/lib/versionCheck";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -74,6 +75,11 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+// Initialize version checking on app load
+// This ensures the app always uses the latest deployed version
+initializeVersionCheck();
+startPeriodicVersionCheck();
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>

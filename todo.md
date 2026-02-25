@@ -1335,3 +1335,10 @@
 - [x] Add better error logging for PDF generation failures
 - [ ] Implement retry logic with exponential backoff (optional enhancement)
 - [ ] Test PDF generation with map data and verify it completes (user to test)
+
+
+## Version Mismatch Fix
+- [x] Investigate why published site shows old version (v1.0.9) instead of latest checkpoint
+- [x] Implement automatic version update mechanism to always deploy latest checkpoint
+- [x] Fix version number display to reflect actual deployed version
+- [x] Test that new checkpoints automatically update published site
