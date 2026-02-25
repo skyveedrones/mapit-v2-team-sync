@@ -1,6 +1,7 @@
 /**
  * Version Management
  * Tracks and provides the current deployed version
+ * Reads from public/version.json which is updated during deployment
  */
 
 import { readFileSync } from 'fs';
@@ -14,29 +15,44 @@ export interface VersionInfo {
 
 // Store the current version in memory
 let currentVersion: VersionInfo = {
-  checkpointId: process.env.VITE_APP_VERSION || 'unknown',
-  version: process.env.VITE_APP_SEMANTIC_VERSION || 'v1.0.0',
+  checkpointId: 'unknown',
+  version: 'v1.0.0',
   deployedAt: new Date().toISOString(),
 };
 
 /**
- * Initialize version from environment or package.json
+ * Initialize version from public/version.json (set during deployment)
+ * Falls back to environment variables and package.json
  */
 export function initializeVersion(): void {
   try {
-    // Try to read version from package.json
-    const packageJsonPath = join(process.cwd(), 'package.json');
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    // First, try to read from public/version.json (set during deployment)
+    const versionJsonPath = join(process.cwd(), 'public', 'version.json');
+    const versionJson = JSON.parse(readFileSync(versionJsonPath, 'utf-8'));
     
     currentVersion = {
-      checkpointId: process.env.VITE_APP_VERSION || 'unknown',
-      version: `v${packageJson.version || '1.0.0'}`,
-      deployedAt: new Date().toISOString(),
+      checkpointId: versionJson.checkpointId || process.env.VITE_APP_VERSION || 'unknown',
+      version: versionJson.version || `v${require('../package.json').version || '1.0.0'}`,
+      deployedAt: versionJson.deployedAt || new Date().toISOString(),
     };
 
-    console.log('[Version] Initialized:', currentVersion.version, `(${currentVersion.checkpointId})`);
+    console.log('[Version] Initialized from version.json:', currentVersion.version, `(${currentVersion.checkpointId})`);
   } catch (error) {
-    console.warn('[Version] Could not read package.json, using defaults');
+    try {
+      // Fallback: read from package.json
+      const packageJsonPath = join(process.cwd(), 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      
+      currentVersion = {
+        checkpointId: process.env.VITE_APP_VERSION || 'unknown',
+        version: `v${packageJson.version || '1.0.0'}`,
+        deployedAt: new Date().toISOString(),
+      };
+
+      console.log('[Version] Initialized from package.json (version.json not found):', currentVersion.version);
+    } catch (fallbackError) {
+      console.warn('[Version] Could not read version files, using defaults');
+    }
   }
 }
 
@@ -49,6 +65,7 @@ export function getCurrentVersion(): VersionInfo {
 
 /**
  * Update the version (called when deploying new checkpoint)
+ * This updates the in-memory version and writes to public/version.json
  */
 export function updateVersion(checkpointId: string, semanticVersion?: string): void {
   currentVersion = {
@@ -57,7 +74,15 @@ export function updateVersion(checkpointId: string, semanticVersion?: string): v
     deployedAt: new Date().toISOString(),
   };
 
-  console.log('[Version] Updated to:', currentVersion.version, `(${currentVersion.checkpointId})`);
+  // Try to write to public/version.json for persistence
+  try {
+    const versionJsonPath = join(process.cwd(), 'public', 'version.json');
+    const fs = require('fs');
+    fs.writeFileSync(versionJsonPath, JSON.stringify(currentVersion, null, 2));
+    console.log('[Version] Updated and saved to version.json:', currentVersion.version, `(${currentVersion.checkpointId})`);
+  } catch (error) {
+    console.log('[Version] Updated in memory:', currentVersion.version, `(${currentVersion.checkpointId})`);
+  }
 }
 
 /**

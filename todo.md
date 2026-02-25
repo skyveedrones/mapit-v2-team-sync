@@ -1342,3 +1342,10 @@
 - [x] Implement automatic version update mechanism to always deploy latest checkpoint
 - [x] Fix version number display to reflect actual deployed version
 - [x] Test that new checkpoints automatically update published site
+
+
+## Fix Version Update on Publish
+- [x] Ensure checkpoint ID is injected as environment variable during deployment
+- [x] Update version.ts to use checkpoint ID from environment
+- [x] Verify version updates when new checkpoint is published
+- [x] Test that published site shows latest version after publish
