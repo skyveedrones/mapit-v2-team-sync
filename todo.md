@@ -1349,3 +1349,11 @@
 - [x] Update version.ts to use checkpoint ID from environment
 - [x] Verify version updates when new checkpoint is published
 - [x] Test that published site shows latest version after publish
+
+## PDF Generation Production Fix (Feb 26, 2026)
+- [x] Fix PDF generation 500 error on published production site
+- [x] Identified root cause: endpoint was using old pdf-generator.ts without production Chromium support
+- [x] Updated endpoint to use pdfGenerator.ts with @sparticuz/chromium fallback
+- [x] Verified fix works on dev server
+- [ ] Publish fix to production
+- [ ] Test PDF generation on published site

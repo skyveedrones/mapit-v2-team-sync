@@ -92,7 +92,7 @@ async function startServer() {
       // Set socket timeout to 120 seconds for map rendering
       req.socket.setTimeout(120000);
       
-      const { generatePdfFromHtml } = await import('../pdf-generator');
+      const { generatePdfFromHtml } = await import('../pdfGenerator');
       const pdfBuffer = await generatePdfFromHtml(html);
       
       // Ensure pdfBuffer is a Buffer
