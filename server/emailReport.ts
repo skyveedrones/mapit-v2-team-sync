@@ -141,7 +141,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         <body>
           <div class="header">
             <div class="logo-container">
-              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" />
+              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" style="display: block; margin: 0 auto; height: 30px; width: auto;" />
             </div>
             <p style="margin: 0; color: #10b981; font-weight: 600; font-size: 16px;">Drone Mapping Report</p>
           </div>
@@ -268,7 +268,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
         <body>
           <div class="header">
             <div class="logo-container">
-              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" />
+              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/EbPjFbhZumznZdvu.png" alt="MAPit Logo" style="display: block; margin: 0 auto; height: 30px; width: auto;" />
             </div>
             <p style="margin: 0; color: #10b981; font-weight: 600; font-size: 16px;">Drone Mapping Report</p>
           </div>
