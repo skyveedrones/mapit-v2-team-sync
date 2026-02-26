@@ -92,6 +92,14 @@ const FORGE_BASE_URL =
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
 
+// Debug: Log the configuration
+if (!API_KEY) {
+  console.warn('[Map] VITE_FRONTEND_FORGE_API_KEY not set');
+}
+if (!FORGE_BASE_URL) {
+  console.warn('[Map] VITE_FRONTEND_FORGE_API_URL not set');
+}
+
 // Track script loading state to prevent duplicate loads
 let scriptLoadPromise: Promise<void> | null = null;
 let isScriptLoaded = false;
