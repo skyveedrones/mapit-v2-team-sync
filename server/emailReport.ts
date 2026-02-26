@@ -112,7 +112,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               width: 100%;
             }
             .logo img {
-              height: 80px;
+              height: 40px;
               width: auto;
               max-width: 100%;
               display: inline-block;
@@ -222,7 +222,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
               width: 100%;
             }
             .logo img {
-              height: 80px;
+              height: 40px;
               width: auto;
               max-width: 100%;
               display: inline-block;

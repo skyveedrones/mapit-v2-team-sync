@@ -1371,3 +1371,7 @@
 - [x] Verified MAPS_PROXY_URL structure is correct
 - [ ] Monitor console logs to verify environment variables are set correctly
 - [ ] Test Google Maps loads successfully on published site
+
+## Email Template and Report Preview Fixes (Feb 26, 2026)
+- [x] Reduce MAPIT logo size in email report template (reduced from 80px to 40px)
+- [x] Fix "Return to Report Options" button off-page in report preview (changed layout from justify-between to flex-wrap)

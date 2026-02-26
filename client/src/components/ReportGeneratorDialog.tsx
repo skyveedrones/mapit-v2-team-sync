@@ -665,12 +665,12 @@ export function ReportGeneratorDialog({
             />
           </div>
 
-          <DialogFooter className="flex gap-2 justify-between">
-            <Button variant="outline" onClick={() => setShowPreview(false)}>
+          <DialogFooter className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowPreview(false)} className="flex-shrink-0">
               <X className="h-4 w-4 mr-2" />
               Return to Report Options
             </Button>
-            <div className="flex gap-2"></div>
+            <div className="flex gap-2 flex-1"></div>
             <Button 
               variant="outline"
               onClick={() => setShowEmailDialog(true)}
