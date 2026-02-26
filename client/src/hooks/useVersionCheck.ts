@@ -16,7 +16,7 @@ interface VersionInfo {
  * Features:
  * - Checks version.json every 30 seconds
  * - Uses cache busting to always get fresh version info
- * - Automatically reloads page when new version is detected
+ * - Performs hard refresh when new version is detected
  * - Shows notification before auto-reload
  * - Prevents multiple simultaneous checks
  */
@@ -26,6 +26,33 @@ export function useVersionCheck() {
   const hasNotifiedRef = useRef<boolean>(false);
 
   useEffect(() => {
+    const performHardRefresh = async () => {
+      try {
+        // Clear all service worker caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        // Clear localStorage and sessionStorage
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {
+          console.debug('Could not clear storage:', e);
+        }
+        
+        // Perform hard refresh by navigating to same URL with cache-busting param
+        // This forces the browser to re-download all assets
+        const currentUrl = window.location.href.split('?')[0];
+        window.location.href = currentUrl + '?_=' + Date.now();
+      } catch (error) {
+        console.error('Hard refresh failed:', error);
+        // Fallback to regular reload
+        window.location.reload();
+      }
+    };
+
     const checkVersion = async () => {
       // Prevent multiple simultaneous checks
       if (isCheckingRef.current) {
@@ -35,7 +62,7 @@ export function useVersionCheck() {
       isCheckingRef.current = true;
 
       try {
-        // Fetch the latest version with cache busting
+        // Fetch the latest version with aggressive cache busting
         const response = await fetch('/version.json?_=' + Date.now(), {
           cache: 'no-store',
           headers: {
@@ -54,6 +81,8 @@ export function useVersionCheck() {
         const deployedVersion = versionData.commit?.substring(0, 7) || versionData.fullCommit?.substring(0, 7);
         const currentVersion = APP_VERSION.commit.substring(0, 7);
 
+        console.log(`Version check: current=${currentVersion}, deployed=${deployedVersion}`);
+
         // If versions don't match and we haven't notified yet
         if (deployedVersion && deployedVersion !== currentVersion && !hasNotifiedRef.current) {
           console.log(`Version update detected: ${currentVersion} → ${deployedVersion}`);
@@ -64,27 +93,14 @@ export function useVersionCheck() {
             description: 'Mapit is updating. Reloading in 5 seconds...',
             action: {
               label: 'Reload Now',
-              onClick: () => {
-                // Clear caches before refresh
-                if ('caches' in window) {
-                  caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
-                  });
-                }
-                window.location.reload();
-              },
+              onClick: () => performHardRefresh(),
             },
             duration: 5000,
           });
 
           // Auto-reload after 5 seconds
           setTimeout(() => {
-            if ('caches' in window) {
-              caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-              });
-            }
-            window.location.reload();
+            performHardRefresh();
           }, 5000);
         }
       } catch (error) {

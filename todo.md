@@ -1383,3 +1383,10 @@
 - [x] Automatically reload page when new version is detected
 - [x] Created useVersionCheck hook with continuous polling
 - [x] Added ContinuousVersionCheckWrapper to App component
+
+## Version Update Not Loading Latest Code (Feb 26, 2026)
+- [x] Implement hard refresh with cache-busting URL parameter
+- [x] Clear all service worker caches before reload
+- [x] Clear localStorage and sessionStorage
+- [x] Use window.location.href with timestamp query parameter for hard refresh
+- [x] Updated useVersionCheck hook with performHardRefresh function
