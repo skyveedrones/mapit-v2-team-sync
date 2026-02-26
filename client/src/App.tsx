@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useVersionCheckOnLogin } from "@/hooks/useVersionCheckOnLogin";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLoginUrl } from "@/const";
@@ -210,6 +211,15 @@ function VersionCheckOnLoginWrapper() {
   return null;
 }
 
+/**
+ * Continuous Version Check Component
+ * Periodically checks for version updates every 30 seconds
+ */
+function ContinuousVersionCheckWrapper() {
+  useVersionCheck();
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -219,6 +229,7 @@ function App() {
           <Toaster />
           <OfflineIndicator />
           <VersionCheckOnLoginWrapper />
+          <ContinuousVersionCheckWrapper />
 
           <Router />
         </TooltipProvider>

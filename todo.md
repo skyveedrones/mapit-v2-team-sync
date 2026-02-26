@@ -1376,3 +1376,10 @@
 - [x] Reduce MAPIT logo size in email report template (reduced from 80px to 40px to 30px)
 - [x] Reduce email header padding (30px → 10px) and logo container margin (10px → 5px)
 - [x] Fix "Return to Report Options" button off-page in report preview (changed layout from justify-between to flex-wrap)
+
+## Auto-Update Version Check Fix (Feb 26, 2026)
+- [x] Implement version check service with cache busting (add timestamp to version.json request)
+- [x] Add auto-refresh logic to App.tsx that checks version every 30 seconds
+- [x] Automatically reload page when new version is detected
+- [x] Created useVersionCheck hook with continuous polling
+- [x] Added ContinuousVersionCheckWrapper to App component
