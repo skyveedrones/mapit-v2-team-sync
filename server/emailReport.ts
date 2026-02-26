@@ -99,7 +99,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
             }
             .header {
               background: white !important;
-              padding: 30px 20px;
+              padding: 10px 20px;
               border-radius: 8px 8px 0 0;
               text-align: center;
               border-bottom: 3px solid #10b981 !important;
@@ -108,11 +108,11 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
             }
             .logo-container {
               text-align: center;
-              margin: 0 auto 10px auto;
+              margin: 0 auto 5px auto;
               width: 100%;
             }
             .logo img {
-              height: 40px;
+              height: 30px;
               width: auto;
               max-width: 100%;
               display: inline-block;
@@ -209,7 +209,7 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
             }
             .header {
               background: white !important;
-              padding: 30px 20px;
+              padding: 10px 20px;
               border-radius: 8px 8px 0 0;
               text-align: center;
               border-bottom: 3px solid #10b981 !important;
@@ -218,11 +218,11 @@ export async function sendReportEmail(params: EmailReportParams): Promise<{ succ
             }
             .logo-container {
               text-align: center;
-              margin: 0 auto 10px auto;
+              margin: 0 auto 5px auto;
               width: 100%;
             }
             .logo img {
-              height: 40px;
+              height: 30px;
               width: auto;
               max-width: 100%;
               display: inline-block;

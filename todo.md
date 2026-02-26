@@ -1373,5 +1373,6 @@
 - [ ] Test Google Maps loads successfully on published site
 
 ## Email Template and Report Preview Fixes (Feb 26, 2026)
-- [x] Reduce MAPIT logo size in email report template (reduced from 80px to 40px)
+- [x] Reduce MAPIT logo size in email report template (reduced from 80px to 40px to 30px)
+- [x] Reduce email header padding (30px → 10px) and logo container margin (10px → 5px)
 - [x] Fix "Return to Report Options" button off-page in report preview (changed layout from justify-between to flex-wrap)
