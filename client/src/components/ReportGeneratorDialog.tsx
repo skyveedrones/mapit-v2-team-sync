@@ -143,10 +143,6 @@ export function ReportGeneratorDialog({
       const markers = container.querySelectorAll('gmp-advanced-marker');
       markers.forEach((marker) => marker.remove());
 
-      // Also remove any other Google Maps elements that won't render in PDF
-      const gmapElements = container.querySelectorAll('gmp-map, gmp-internal-*');
-      gmapElements.forEach((el) => el.remove());
-
       const options = {
         margin: [0.3, 0.3, 0.3, 0.3],
         filename: `${projectName}-report.pdf`,

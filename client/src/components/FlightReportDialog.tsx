@@ -316,9 +316,6 @@ export function FlightReportDialog({
       const markers = container.querySelectorAll("gmp-advanced-marker");
       markers.forEach((marker) => marker.remove());
 
-      const gmapElements = container.querySelectorAll("gmp-map, gmp-internal-*");
-      gmapElements.forEach((el) => el.remove());
-
       const options = {
         margin: [0.3, 0.3, 0.3, 0.3],
         filename: `${flightName}-flight-report.pdf`,
