@@ -282,39 +282,52 @@ export function FlightReportDialog({
     toast.info("Generating PDF, please wait...");
 
     try {
-      // Create a temporary container with the report HTML
-      const container = document.createElement("div");
-      container.innerHTML = previewHtml;
+      // Create a hidden iframe to render the report HTML in complete isolation
+      // This prevents the page's oklch CSS variables from being inherited
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.left = "-9999px";
+      iframe.style.top = "-9999px";
+      iframe.style.width = "850px";
+      iframe.style.height = "1100px";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
 
-      // FIX 1: Convert oklch() colors to rgb() fallbacks
-      const allElements = container.querySelectorAll("*");
-      allElements.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        if (htmlEl.style) {
-          const cssText = htmlEl.style.cssText;
-          if (cssText && cssText.includes("oklch")) {
-            htmlEl.style.cssText = cssText.replace(
-              /oklch\([^)]*\)/g,
-              "rgb(0, 0, 0)"
-            );
+      // Write the report HTML into the iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error("Could not access iframe document");
+
+      iframeDoc.open();
+      iframeDoc.write(previewHtml);
+      iframeDoc.close();
+
+      // Wait for images to load
+      await new Promise<void>((resolve) => {
+        const images = iframeDoc.querySelectorAll("img");
+        let loaded = 0;
+        const total = images.length;
+        if (total === 0) {
+          resolve();
+          return;
+        }
+        const checkDone = () => {
+          loaded++;
+          if (loaded >= total) resolve();
+        };
+        images.forEach((img) => {
+          if (img.complete) {
+            checkDone();
+          } else {
+            img.addEventListener("load", checkDone);
+            img.addEventListener("error", checkDone);
           }
-        }
+        });
+        // Safety timeout after 30 seconds
+        setTimeout(resolve, 30000);
       });
 
-      // Also fix <style> tags that may contain oklch
-      const styleTags = container.querySelectorAll("style");
-      styleTags.forEach((styleTag) => {
-        if (styleTag.textContent && styleTag.textContent.includes("oklch")) {
-          styleTag.textContent = styleTag.textContent.replace(
-            /oklch\([^)]*\)/g,
-            "rgb(0, 0, 0)"
-          );
-        }
-      });
-
-      // FIX 2: Remove Google Maps AdvancedMarkerElements that crash html2canvas
-      const markers = container.querySelectorAll("gmp-advanced-marker");
-      markers.forEach((marker) => marker.remove());
+      // Small delay to ensure rendering is complete
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const options = {
         margin: [0.3, 0.3, 0.3, 0.3],
@@ -325,17 +338,24 @@ export function FlightReportDialog({
           useCORS: true,
           logging: false,
           allowTaint: true,
-          removeContainer: true,
         },
         jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
         pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       };
 
-      await html2pdf().from(container).set(options).save();
+      // Use the iframe's body as the source - it has NO oklch styles
+      await (window as any).html2pdf().from(iframeDoc.body).set(options).save();
+
+      // Clean up the iframe
+      document.body.removeChild(iframe);
+
       toast.success("PDF downloaded successfully!");
     } catch (error) {
       console.error("Failed to generate PDF:", error);
       toast.error("Failed to generate PDF. Please try again.");
+      // Clean up any leftover iframes
+      const leftover = document.querySelector("iframe[style*=\"-9999px\"]");
+      if (leftover) leftover.remove();
     } finally {
       setIsDownloading(false);
     }

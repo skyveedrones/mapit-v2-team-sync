@@ -42,42 +42,6 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
-/**
- * Convert an oklch() color string to an rgb() string.
- * Uses an off-screen canvas to let the browser resolve the color,
- * falling back to a manual approximation when canvas is unavailable
- * or the browser doesn't support oklch natively.
- */
-function oklchToRgb(oklchStr: string): string {
-  try {
-    // Try using the browser's canvas to resolve the color
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = oklchStr;
-      ctx.fillRect(0, 0, 1, 1);
-      const imageData = ctx.getImageData(0, 0, 1, 1).data;
-      const r = imageData[0];
-      const g = imageData[1];
-      const b = imageData[2];
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-  } catch {
-    // Canvas approach failed
-  }
-  // Fallback: return a neutral gray instead of black for better appearance
-  return 'rgb(128, 128, 128)';
-}
-
-/**
- * Replace every oklch(...) occurrence in a CSS string with its rgb() equivalent.
- */
-function replaceOklchInCss(css: string): string {
-  return css.replace(/oklch\([^)]*\)/g, (match) => oklchToRgb(match));
-}
-
 interface ReportGeneratorDialogProps {
   projectId: number;
   projectName: string;
@@ -141,35 +105,54 @@ export function ReportGeneratorDialog({
 
     setIsDownloading(true);
     toast.info('Generating PDF, this may take a moment...');
-    
+
     try {
-      // Create a temporary container with the report HTML
-      const container = document.createElement('div');
-      container.innerHTML = previewHtml;
+      // Create a hidden iframe to render the report HTML in complete isolation
+      // This prevents the page's oklch CSS variables from being inherited
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.left = '-9999px';
+      iframe.style.top = '-9999px';
+      iframe.style.width = '850px';
+      iframe.style.height = '1100px';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
 
-      // Sanitize oklch colors inside the container's inline styles
-      const allElements = container.querySelectorAll('*');
-      allElements.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        if (htmlEl.style) {
-          const cssText = htmlEl.style.cssText;
-          if (cssText && cssText.includes('oklch')) {
-            htmlEl.style.cssText = replaceOklchInCss(cssText);
+      // Write the report HTML into the iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Could not access iframe document');
+
+      iframeDoc.open();
+      iframeDoc.write(previewHtml);
+      iframeDoc.close();
+
+      // Wait for images to load
+      await new Promise<void>((resolve) => {
+        const images = iframeDoc.querySelectorAll('img');
+        let loaded = 0;
+        const total = images.length;
+        if (total === 0) {
+          resolve();
+          return;
+        }
+        const checkDone = () => {
+          loaded++;
+          if (loaded >= total) resolve();
+        };
+        images.forEach((img) => {
+          if (img.complete) {
+            checkDone();
+          } else {
+            img.addEventListener('load', checkDone);
+            img.addEventListener('error', checkDone);
           }
-        }
+        });
+        // Safety timeout after 30 seconds
+        setTimeout(resolve, 30000);
       });
 
-      // Sanitize <style> tags inside the container
-      const styleTags = container.querySelectorAll('style');
-      styleTags.forEach((styleTag) => {
-        if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
-          styleTag.textContent = replaceOklchInCss(styleTag.textContent);
-        }
-      });
-
-      // Remove Google Maps AdvancedMarkerElements inside the container
-      const markers = container.querySelectorAll('gmp-advanced-marker');
-      markers.forEach((marker) => marker.remove());
+      // Small delay to ensure rendering is complete
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const options = {
         margin: [0.3, 0.3, 0.3, 0.3],
@@ -180,97 +163,24 @@ export function ReportGeneratorDialog({
           useCORS: true,
           logging: false,
           allowTaint: true,
-          removeContainer: true,
-          /**
-           * onclone runs on the CLONED document that html2canvas creates
-           * inside an iframe. This is where the actual rendering happens,
-           * so we must fix oklch colors and remove AdvancedMarkerElements
-           * in the clone — not just in our container.
-           *
-           * Error 1 (oklch): html2canvas copies the page's full stylesheet
-           * into the iframe. Tailwind CSS v4 uses oklch() natively for its
-           * color palette, and html2canvas's color parser cannot handle it.
-           *
-           * Error 2 (AdvancedMarkerElement): html2canvas clones the entire
-           * DOM into an iframe. When a <gmp-advanced-marker> element is
-           * moved into the iframe it fires connectedCallback, which throws
-           * because its parent is not a <gmp-map>.
-           */
-          onclone: (clonedDoc: Document) => {
-            // --- FIX 1: Replace oklch() in all stylesheets of the cloned document ---
-            // Process <style> tags
-            const clonedStyles = clonedDoc.querySelectorAll('style');
-            clonedStyles.forEach((styleTag) => {
-              if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
-                styleTag.textContent = replaceOklchInCss(styleTag.textContent);
-              }
-            });
-
-            // Process inline styles on all elements
-            const clonedElements = clonedDoc.querySelectorAll('*');
-            clonedElements.forEach((el) => {
-              const htmlEl = el as HTMLElement;
-              if (htmlEl.style && htmlEl.style.cssText) {
-                const cssText = htmlEl.style.cssText;
-                if (cssText.includes('oklch')) {
-                  htmlEl.style.cssText = replaceOklchInCss(cssText);
-                }
-              }
-              // Also check the style attribute directly (catches cases
-              // where the browser hasn't parsed it into the style object)
-              const styleAttr = htmlEl.getAttribute?.('style');
-              if (styleAttr && styleAttr.includes('oklch')) {
-                htmlEl.setAttribute('style', replaceOklchInCss(styleAttr));
-              }
-            });
-
-            // Process cssRules in adopted/linked stylesheets
-            try {
-              for (const sheet of Array.from(clonedDoc.styleSheets)) {
-                try {
-                  const rules = sheet.cssRules || sheet.rules;
-                  if (!rules) continue;
-                  let needsRewrite = false;
-                  for (const rule of Array.from(rules)) {
-                    if (rule.cssText && rule.cssText.includes('oklch')) {
-                      needsRewrite = true;
-                      break;
-                    }
-                  }
-                  if (needsRewrite && sheet.ownerNode instanceof HTMLStyleElement) {
-                    sheet.ownerNode.textContent = replaceOklchInCss(
-                      sheet.ownerNode.textContent || ''
-                    );
-                  }
-                } catch {
-                  // CORS or security restrictions on external sheets — skip
-                }
-              }
-            } catch {
-              // styleSheets access failed — skip
-            }
-
-            // --- FIX 2: Remove all AdvancedMarkerElements from the clone ---
-            const clonedMarkers = clonedDoc.querySelectorAll('gmp-advanced-marker');
-            clonedMarkers.forEach((marker) => marker.remove());
-
-            // Also remove any Google Maps internal elements that may cause issues
-            const gmapInternals = clonedDoc.querySelectorAll(
-              'gmp-internal-advanced-marker, gmp-internal-marker'
-            );
-            gmapInternals.forEach((el) => el.remove());
-          },
         },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       };
 
-      // @ts-ignore — html2pdf is loaded globally via CDN script tag
-      await html2pdf().from(container).set(options).save();
+      // Use the iframe's body as the source - it has NO oklch styles
+      await (window as any).html2pdf().from(iframeDoc.body).set(options).save();
+
+      // Clean up the iframe
+      document.body.removeChild(iframe);
+
       toast.success('PDF downloaded successfully!');
     } catch (error: any) {
       console.error('[PDF Generation Error]:', error);
       toast.error('Failed to generate PDF. Please try again.');
+      // Clean up any leftover iframes
+      const leftover = document.querySelector('iframe[style*="-9999px"]');
+      if (leftover) leftover.remove();
     } finally {
       setIsDownloading(false);
     }
