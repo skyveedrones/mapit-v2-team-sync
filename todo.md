@@ -1412,3 +1412,14 @@
 - [x] Update FlightReportDialog.tsx with same preprocessing
 - [x] Test PDF generation with OKLCH colors and maps
 - [ ] Deploy and verify on production
+
+
+## PDF Generation Complete Rewrite - Browser Native Print (Feb 27, 2026)
+- [x] Remove html2pdf.js script tag from client/index.html
+- [x] Delete client/src/types/html2pdf.d.ts file
+- [x] Replace handleDownloadPdf in ReportGeneratorDialog.tsx with print-based approach
+- [x] Replace handleDownloadPdf in FlightReportDialog.tsx with print-based approach
+- [x] Update button labels to "Print / Save as PDF"
+- [x] Add Printer icon import to both components
+- [ ] Test PDF generation on dev server
+- [ ] Deploy to production

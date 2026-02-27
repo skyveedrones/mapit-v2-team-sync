@@ -26,20 +26,13 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
 import {
-  Check,
   Download,
   Eye,
-  FileImage,
   FileText,
-  Image,
   Loader2,
-  Map,
-  MapPin,
-  Route,
-  Upload,
-  X,
+  Printer,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 interface ReportGeneratorDialogProps {
@@ -102,85 +95,98 @@ export function ReportGeneratorDialog({
 
   const handleDownloadPdf = async () => {
     if (!previewHtml) return;
-
     setIsDownloading(true);
-    toast.info('Generating PDF, this may take a moment...');
+    toast.info("Opening print dialog — select 'Save as PDF' as the destination.");
 
     try {
-      // Create a hidden iframe to render the report HTML in complete isolation
-      // This prevents the page's oklch CSS variables from being inherited
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.left = '-9999px';
-      iframe.style.top = '-9999px';
-      iframe.style.width = '850px';
-      iframe.style.height = '1100px';
-      iframe.style.border = 'none';
-      document.body.appendChild(iframe);
-
-      // Write the report HTML into the iframe
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!iframeDoc) throw new Error('Could not access iframe document');
-
-      iframeDoc.open();
-      iframeDoc.write(previewHtml);
-      iframeDoc.close();
-
-      // Wait for images to load
-      await new Promise<void>((resolve) => {
-        const images = iframeDoc.querySelectorAll('img');
-        let loaded = 0;
-        const total = images.length;
-        if (total === 0) {
-          resolve();
-          return;
-        }
-        const checkDone = () => {
-          loaded++;
-          if (loaded >= total) resolve();
-        };
-        images.forEach((img) => {
-          if (img.complete) {
-            checkDone();
-          } else {
-            img.addEventListener('load', checkDone);
-            img.addEventListener('error', checkDone);
+      // Inject print-optimized styles into the report HTML
+      const printStyles = `
+        <style>
+          @media print {
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            @page {
+              size: letter;
+              margin: 0.4in;
+            }
+            img {
+              max-width: 100% !important;
+              page-break-inside: avoid;
+            }
+            .page-break {
+              page-break-before: always;
+            }
           }
-        });
-        // Safety timeout after 30 seconds
-        setTimeout(resolve, 30000);
-      });
+          /* Also apply styles for screen view in the print window */
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        </style>
+        <script>
+          // Auto-trigger print once everything is loaded
+          window.addEventListener('load', function() {
+            // Wait for all images to finish loading
+            var images = document.querySelectorAll('img');
+            var loaded = 0;
+            var total = images.length;
+            
+            function checkReady() {
+              loaded++;
+              if (loaded >= total) {
+                // Small delay to ensure rendering is complete
+                setTimeout(function() { window.print(); }, 1500);
+              }
+            }
+            
+            if (total === 0) {
+              setTimeout(function() { window.print(); }, 1500);
+            } else {
+              images.forEach(function(img) {
+                if (img.complete) {
+                  checkReady();
+                } else {
+                  img.addEventListener('load', checkReady);
+                  img.addEventListener('error', checkReady);
+                }
+              });
+            }
+            
+            // Safety fallback: trigger print after 30 seconds no matter what
+            setTimeout(function() { window.print(); }, 30000);
+          });
+        </script>
+      `;
 
-      // Small delay to ensure rendering is complete
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Insert print styles before </head> or at the start of the HTML
+      let enhancedHtml = previewHtml;
+      if (enhancedHtml.includes('</head>')) {
+        enhancedHtml = enhancedHtml.replace('</head>', printStyles + '</head>');
+      } else {
+        enhancedHtml = printStyles + enhancedHtml;
+      }
 
-      const options = {
-        margin: [0.3, 0.3, 0.3, 0.3],
-        filename: `${projectName}-report.pdf`,
-        image: { type: 'jpeg', quality: 0.92 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          allowTaint: true,
-        },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-      };
+      // Open in a new window — the browser's native renderer handles oklch perfectly
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error("Pop-up blocked! Please allow pop-ups for this site and try again.");
+        setIsDownloading(false);
+        return;
+      }
 
-      // Use the iframe's body as the source - it has NO oklch styles
-      await (window as any).html2pdf().from(iframeDoc.body).set(options).save();
+      printWindow.document.open();
+      printWindow.document.write(enhancedHtml);
+      printWindow.document.close();
 
-      // Clean up the iframe
-      document.body.removeChild(iframe);
-
-      toast.success('PDF downloaded successfully!');
-    } catch (error: any) {
-      console.error('[PDF Generation Error]:', error);
-      toast.error('Failed to generate PDF. Please try again.');
-      // Clean up any leftover iframes
-      const leftover = document.querySelector('iframe[style*="-9999px"]');
-      if (leftover) leftover.remove();
+      toast.success("Print dialog will open automatically. Select 'Save as PDF' to download.");
+    } catch (error) {
+      console.error("[PDF Generation Error]:", error);
+      toast.error("Failed to generate PDF. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -353,7 +359,7 @@ export function ReportGeneratorDialog({
           <>
             <DialogHeader>
               <DialogTitle>Report Preview</DialogTitle>
-              <DialogDescription>Review before downloading or emailing</DialogDescription>
+              <DialogDescription>Review before printing or emailing</DialogDescription>
             </DialogHeader>
 
             <div className="border rounded-lg p-4 bg-white max-h-96 overflow-y-auto">
@@ -377,12 +383,12 @@ export function ReportGeneratorDialog({
                 {isDownloading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Downloading...
+                    Preparing...
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print / Save as PDF
                   </>
                 )}
               </Button>
