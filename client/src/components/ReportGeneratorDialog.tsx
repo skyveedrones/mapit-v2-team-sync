@@ -42,6 +42,42 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
+/**
+ * Convert an oklch() color string to an rgb() string.
+ * Uses an off-screen canvas to let the browser resolve the color,
+ * falling back to a manual approximation when canvas is unavailable
+ * or the browser doesn't support oklch natively.
+ */
+function oklchToRgb(oklchStr: string): string {
+  try {
+    // Try using the browser's canvas to resolve the color
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = oklchStr;
+      ctx.fillRect(0, 0, 1, 1);
+      const imageData = ctx.getImageData(0, 0, 1, 1).data;
+      const r = imageData[0];
+      const g = imageData[1];
+      const b = imageData[2];
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+  } catch {
+    // Canvas approach failed
+  }
+  // Fallback: return a neutral gray instead of black for better appearance
+  return 'rgb(128, 128, 128)';
+}
+
+/**
+ * Replace every oklch(...) occurrence in a CSS string with its rgb() equivalent.
+ */
+function replaceOklchInCss(css: string): string {
+  return css.replace(/oklch\([^)]*\)/g, (match) => oklchToRgb(match));
+}
+
 interface ReportGeneratorDialogProps {
   projectId: number;
   projectName: string;
@@ -111,35 +147,27 @@ export function ReportGeneratorDialog({
       const container = document.createElement('div');
       container.innerHTML = previewHtml;
 
-      // FIX 1: Convert oklch() colors to rgb() fallbacks
-      // Remove any stylesheets or inline styles that use oklch()
+      // Sanitize oklch colors inside the container's inline styles
       const allElements = container.querySelectorAll('*');
       allElements.forEach((el) => {
         const htmlEl = el as HTMLElement;
         if (htmlEl.style) {
           const cssText = htmlEl.style.cssText;
           if (cssText && cssText.includes('oklch')) {
-            // Replace oklch colors with safe fallbacks
-            htmlEl.style.cssText = cssText.replace(
-              /oklch\([^)]*\)/g,
-              'rgb(0, 0, 0)'
-            );
+            htmlEl.style.cssText = replaceOklchInCss(cssText);
           }
         }
       });
 
-      // Also fix <style> tags that may contain oklch
+      // Sanitize <style> tags inside the container
       const styleTags = container.querySelectorAll('style');
       styleTags.forEach((styleTag) => {
         if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
-          styleTag.textContent = styleTag.textContent.replace(
-            /oklch\([^)]*\)/g,
-            'rgb(0, 0, 0)'
-          );
+          styleTag.textContent = replaceOklchInCss(styleTag.textContent);
         }
       });
 
-      // FIX 2: Remove Google Maps AdvancedMarkerElements that crash html2canvas
+      // Remove Google Maps AdvancedMarkerElements inside the container
       const markers = container.querySelectorAll('gmp-advanced-marker');
       markers.forEach((marker) => marker.remove());
 
@@ -153,11 +181,91 @@ export function ReportGeneratorDialog({
           logging: false,
           allowTaint: true,
           removeContainer: true,
+          /**
+           * onclone runs on the CLONED document that html2canvas creates
+           * inside an iframe. This is where the actual rendering happens,
+           * so we must fix oklch colors and remove AdvancedMarkerElements
+           * in the clone — not just in our container.
+           *
+           * Error 1 (oklch): html2canvas copies the page's full stylesheet
+           * into the iframe. Tailwind CSS v4 uses oklch() natively for its
+           * color palette, and html2canvas's color parser cannot handle it.
+           *
+           * Error 2 (AdvancedMarkerElement): html2canvas clones the entire
+           * DOM into an iframe. When a <gmp-advanced-marker> element is
+           * moved into the iframe it fires connectedCallback, which throws
+           * because its parent is not a <gmp-map>.
+           */
+          onclone: (clonedDoc: Document) => {
+            // --- FIX 1: Replace oklch() in all stylesheets of the cloned document ---
+            // Process <style> tags
+            const clonedStyles = clonedDoc.querySelectorAll('style');
+            clonedStyles.forEach((styleTag) => {
+              if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
+                styleTag.textContent = replaceOklchInCss(styleTag.textContent);
+              }
+            });
+
+            // Process inline styles on all elements
+            const clonedElements = clonedDoc.querySelectorAll('*');
+            clonedElements.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              if (htmlEl.style && htmlEl.style.cssText) {
+                const cssText = htmlEl.style.cssText;
+                if (cssText.includes('oklch')) {
+                  htmlEl.style.cssText = replaceOklchInCss(cssText);
+                }
+              }
+              // Also check the style attribute directly (catches cases
+              // where the browser hasn't parsed it into the style object)
+              const styleAttr = htmlEl.getAttribute?.('style');
+              if (styleAttr && styleAttr.includes('oklch')) {
+                htmlEl.setAttribute('style', replaceOklchInCss(styleAttr));
+              }
+            });
+
+            // Process cssRules in adopted/linked stylesheets
+            try {
+              for (const sheet of Array.from(clonedDoc.styleSheets)) {
+                try {
+                  const rules = sheet.cssRules || sheet.rules;
+                  if (!rules) continue;
+                  let needsRewrite = false;
+                  for (const rule of Array.from(rules)) {
+                    if (rule.cssText && rule.cssText.includes('oklch')) {
+                      needsRewrite = true;
+                      break;
+                    }
+                  }
+                  if (needsRewrite && sheet.ownerNode instanceof HTMLStyleElement) {
+                    sheet.ownerNode.textContent = replaceOklchInCss(
+                      sheet.ownerNode.textContent || ''
+                    );
+                  }
+                } catch {
+                  // CORS or security restrictions on external sheets — skip
+                }
+              }
+            } catch {
+              // styleSheets access failed — skip
+            }
+
+            // --- FIX 2: Remove all AdvancedMarkerElements from the clone ---
+            const clonedMarkers = clonedDoc.querySelectorAll('gmp-advanced-marker');
+            clonedMarkers.forEach((marker) => marker.remove());
+
+            // Also remove any Google Maps internal elements that may cause issues
+            const gmapInternals = clonedDoc.querySelectorAll(
+              'gmp-internal-advanced-marker, gmp-internal-marker'
+            );
+            gmapInternals.forEach((el) => el.remove());
+          },
         },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       };
 
+      // @ts-ignore — html2pdf is loaded globally via CDN script tag
       await html2pdf().from(container).set(options).save();
       toast.success('PDF downloaded successfully!');
     } catch (error: any) {
@@ -187,156 +295,118 @@ export function ReportGeneratorDialog({
     }
   };
 
-  const handleSelectAllMedia = () => {
-    if (selectedMediaIndices.length === media.length) {
-      setSelectedMediaIndices([]);
-    } else {
-      setSelectedMediaIndices(media.map((_, i) => i));
-    }
-  };
-
-  const toggleMediaSelection = (index: number) => {
-    setSelectedMediaIndices(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
-
-  const handleClose = () => {
-    setShowPreview(false);
-    setPreviewHtml(null);
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {!showPreview ? (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-600" />
-                Generate Report
-              </DialogTitle>
+              <DialogTitle>Generate Report</DialogTitle>
               <DialogDescription>
-                Customize your report and generate a PDF for {projectName}
+                Create a customized PDF report for {projectName}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            <div className="space-y-6">
               {/* Report Options */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-sm">Report Options</h3>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="include-map" className="flex items-center gap-2 cursor-pointer">
-                      <Map className="w-4 h-4" />
-                      Include Map
-                    </Label>
-                    <Switch
-                      id="include-map"
-                      checked={reportOptions.includeMap}
-                      onCheckedChange={(checked) =>
-                        setReportOptions(prev => ({ ...prev, includeMap: checked }))
-                      }
-                    />
-                  </div>
+                <h3 className="font-semibold">Report Options</h3>
 
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="include-media" className="flex items-center gap-2 cursor-pointer">
-                      <Image className="w-4 h-4" />
-                      Include Media
-                    </Label>
-                    <Switch
-                      id="include-media"
-                      checked={reportOptions.includeMedia}
-                      onCheckedChange={(checked) =>
-                        setReportOptions(prev => ({ ...prev, includeMedia: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="include-stats" className="flex items-center gap-2 cursor-pointer">
-                      <FileImage className="w-4 h-4" />
-                      Include Statistics
-                    </Label>
-                    <Switch
-                      id="include-stats"
-                      checked={reportOptions.includeStats}
-                      onCheckedChange={(checked) =>
-                        setReportOptions(prev => ({ ...prev, includeStats: checked }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Map Zoom */}
-              {reportOptions.includeMap && (
-                <div className="space-y-2">
-                  <Label>Map Zoom Level: {reportOptions.mapZoom}</Label>
-                  <Slider
-                    value={[reportOptions.mapZoom]}
-                    onValueChange={([value]) =>
-                      setReportOptions(prev => ({ ...prev, mapZoom: value }))
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="include-map">Include Map</Label>
+                  <Switch
+                    id="include-map"
+                    checked={reportOptions.includeMap}
+                    onCheckedChange={(checked) =>
+                      setReportOptions({ ...reportOptions, includeMap: checked })
                     }
-                    min={5}
-                    max={20}
-                    step={1}
-                    className="w-full"
                   />
                 </div>
-              )}
 
-              {/* Image Quality */}
-              {reportOptions.includeMedia && (
+                {reportOptions.includeMap && (
+                  <div className="space-y-2 pl-4 border-l-2 border-green-500">
+                    <Label>Map Zoom Level: {reportOptions.mapZoom}</Label>
+                    <Slider
+                      value={[reportOptions.mapZoom]}
+                      onValueChange={([value]) =>
+                        setReportOptions({ ...reportOptions, mapZoom: value })
+                      }
+                      min={5}
+                      max={20}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="include-media">Include Media</Label>
+                  <Switch
+                    id="include-media"
+                    checked={reportOptions.includeMedia}
+                    onCheckedChange={(checked) =>
+                      setReportOptions({ ...reportOptions, includeMedia: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="include-stats">Include Statistics</Label>
+                  <Switch
+                    id="include-stats"
+                    checked={reportOptions.includeStats}
+                    onCheckedChange={(checked) =>
+                      setReportOptions({ ...reportOptions, includeStats: checked })
+                    }
+                  />
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="quality">Image Quality</Label>
+                  <Label htmlFor="image-quality">Image Quality</Label>
                   <Select
                     value={reportOptions.imageQuality}
-                    onValueChange={(value: any) =>
-                      setReportOptions(prev => ({ ...prev, imageQuality: value }))
+                    onValueChange={(value) =>
+                      setReportOptions({
+                        ...reportOptions,
+                        imageQuality: value as 'low' | 'medium' | 'high',
+                      })
                     }
                   >
-                    <SelectTrigger id="quality">
+                    <SelectTrigger id="image-quality">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low (Smaller file size)</SelectItem>
+                      <SelectItem value="low">Low (Smaller file)</SelectItem>
                       <SelectItem value="medium">Medium (Balanced)</SelectItem>
                       <SelectItem value="high">High (Best quality)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
+              </div>
 
               {/* Media Selection */}
               {reportOptions.includeMedia && media.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">Select Media to Include</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSelectAllMedia}
-                    >
-                      {selectedMediaIndices.length === media.length ? 'Deselect All' : 'Select All'}
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
-                    {media.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-2 p-2 border rounded cursor-pointer hover:bg-gray-50"
-                        onClick={() => toggleMediaSelection(index)}
-                      >
+                  <h3 className="font-semibold">Select Media to Include</h3>
+                  <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3">
+                    {media.map((m, idx) => (
+                      <div key={m.id} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={selectedMediaIndices.includes(index)}
-                          onCheckedChange={() => toggleMediaSelection(index)}
+                          id={`media-${idx}`}
+                          checked={selectedMediaIndices.includes(idx)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedMediaIndices([...selectedMediaIndices, idx]);
+                            } else {
+                              setSelectedMediaIndices(
+                                selectedMediaIndices.filter((i) => i !== idx)
+                              );
+                            }
+                          }}
                         />
-                        <span className="text-sm truncate">{item.filename}</span>
+                        <Label htmlFor={`media-${idx}`} className="cursor-pointer flex-1">
+                          {m.filename}
+                        </Label>
                       </div>
                     ))}
                   </div>
@@ -345,78 +415,74 @@ export function ReportGeneratorDialog({
             </div>
 
             <DialogFooter className="flex-wrap gap-2 justify-between">
-              <Button variant="outline" onClick={handleClose}>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleGeneratePreview}
-                disabled={isGenerating}
-                className="gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Preview Report
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleGeneratePreview}
+                  disabled={isGenerating}
+                  variant="outline"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
+                    </>
+                  )}
+                </Button>
+              </div>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5 text-emerald-600" />
-                Report Preview
-              </DialogTitle>
-              <DialogDescription>
-                Review your report before downloading
-              </DialogDescription>
+              <DialogTitle>Report Preview</DialogTitle>
+              <DialogDescription>Review before downloading or emailing</DialogDescription>
             </DialogHeader>
 
             <div className="border rounded-lg p-4 bg-white max-h-96 overflow-y-auto">
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
-            <DialogFooter className="flex-wrap gap-2 justify-between">
+            <DialogFooter className="flex-wrap gap-2">
               <Button
                 variant="outline"
-                onClick={() => setShowPreview(false)}
+                onClick={() => {
+                  setShowPreview(false);
+                  setPreviewHtml(null);
+                }}
               >
-                ← Return to Report Options
+                Back to Options
               </Button>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleEmailReport}
-                  className="gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Email Report
-                </Button>
-                <Button
-                  onClick={handleDownloadPdf}
-                  disabled={isDownloading}
-                  className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {isDownloading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4" />
-                      Download PDF
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleEmailReport}
+                variant="secondary"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Email Report
+              </Button>
             </DialogFooter>
           </>
         )}
