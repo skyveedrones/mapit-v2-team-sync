@@ -1390,3 +1390,11 @@
 - [x] Clear localStorage and sessionStorage
 - [x] Use window.location.href with timestamp query parameter for hard refresh
 - [x] Updated useVersionCheck hook with performHardRefresh function
+
+## PDF Download Endpoint Issue (Feb 26, 2026)
+- [x] Switched from server-side Puppeteer to client-side html2pdf.js library
+- [x] Added html2pdf.js CDN script to index.html
+- [x] Updated ReportGeneratorDialog.tsx with client-side PDF generation
+- [x] Fixed tRPC router references (report.generate, report.emailReport)
+- [x] Implemented handleDownloadPdf using html2pdf().from().set().save()
+- [ ] Test PDF download on published site after deployment
