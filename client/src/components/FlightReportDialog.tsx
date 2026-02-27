@@ -282,60 +282,60 @@ export function FlightReportDialog({
     toast.info("Generating PDF, please wait...");
 
     try {
-      const result = await downloadPdfMutation.mutateAsync({
-        html: previewHtml,
-        projectName: flightName,
+      // Create a temporary container with the report HTML
+      const container = document.createElement("div");
+      container.innerHTML = previewHtml;
+
+      // FIX 1: Convert oklch() colors to rgb() fallbacks
+      const allElements = container.querySelectorAll("*");
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.style) {
+          const cssText = htmlEl.style.cssText;
+          if (cssText && cssText.includes("oklch")) {
+            htmlEl.style.cssText = cssText.replace(
+              /oklch\([^)]*\)/g,
+              "rgb(0, 0, 0)"
+            );
+          }
+        }
       });
 
-      // Convert base64 to blob
-      const byteCharacters = atob(result.pdfData);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "application/pdf" });
-
-      // Try to use File System Access API for native Save As dialog
-      // This lets the user choose where to save the file
-      if ('showSaveFilePicker' in window) {
-        try {
-          const handle = await (window as any).showSaveFilePicker({
-            suggestedName: result.filename,
-            types: [{
-              description: 'PDF Document',
-              accept: { 'application/pdf': ['.pdf'] },
-            }],
-          });
-          const writable = await handle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-          toast.success("PDF saved successfully!");
-          return;
-        } catch (err: any) {
-          // User cancelled the save dialog
-          if (err.name === 'AbortError') {
-            setIsDownloading(false);
-            return;
-          }
-          // Fall through to alternative method if API fails
-          console.log("File System Access API not available, using fallback");
+      // Also fix <style> tags that may contain oklch
+      const styleTags = container.querySelectorAll("style");
+      styleTags.forEach((styleTag) => {
+        if (styleTag.textContent && styleTag.textContent.includes("oklch")) {
+          styleTag.textContent = styleTag.textContent.replace(
+            /oklch\([^)]*\)/g,
+            "rgb(0, 0, 0)"
+          );
         }
-      }
+      });
 
-      // Fallback for browsers without File System Access API
-      // This will trigger the browser's default download behavior
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = result.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up URL after a delay
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      toast.success("PDF download started!");
+      // FIX 2: Remove Google Maps AdvancedMarkerElements that crash html2canvas
+      const markers = container.querySelectorAll("gmp-advanced-marker");
+      markers.forEach((marker) => marker.remove());
+
+      const gmapElements = container.querySelectorAll("gmp-map, gmp-internal-*");
+      gmapElements.forEach((el) => el.remove());
+
+      const options = {
+        margin: [0.3, 0.3, 0.3, 0.3],
+        filename: `${flightName}-flight-report.pdf`,
+        image: { type: "jpeg", quality: 0.92 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          allowTaint: true,
+          removeContainer: true,
+        },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      };
+
+      await html2pdf().from(container).set(options).save();
+      toast.success("PDF downloaded successfully!");
     } catch (error) {
       console.error("Failed to generate PDF:", error);
       toast.error("Failed to generate PDF. Please try again.");

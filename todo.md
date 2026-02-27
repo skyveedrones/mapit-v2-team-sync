@@ -1405,3 +1405,10 @@
 - [x] Add HTML preprocessing to remove unsupported elements before PDF generation
 - [x] Strip gmp-map, gmp-advanced-marker, and .gm-style elements
 - [ ] Test PDF download with report containing maps and styled elements
+
+## PDF Generation - Comprehensive OKLCH and Maps Fix (Feb 27, 2026)
+- [x] Create TypeScript type declaration for html2pdf (client/src/types/html2pdf.d.ts)
+- [x] Update ReportGeneratorDialog.tsx with comprehensive preprocessing
+- [x] Update FlightReportDialog.tsx with same preprocessing
+- [x] Test PDF generation with OKLCH colors and maps
+- [ ] Deploy and verify on production
