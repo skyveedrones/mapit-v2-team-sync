@@ -1398,3 +1398,10 @@
 - [x] Fixed tRPC router references (report.generate, report.emailReport)
 - [x] Implemented handleDownloadPdf using html2pdf().from().set().save()
 - [ ] Test PDF download on published site after deployment
+
+## PDF Generation Errors - OKLCH Colors and Maps (Feb 27, 2026)
+- [x] Fix OKLCH color parsing error - convert to RGB/HEX colors
+- [x] Fix Google Maps element rendering - remove interactive maps and markers
+- [x] Add HTML preprocessing to remove unsupported elements before PDF generation
+- [x] Strip gmp-map, gmp-advanced-marker, and .gm-style elements
+- [ ] Test PDF download with report containing maps and styled elements

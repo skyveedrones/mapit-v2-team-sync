@@ -151,8 +151,29 @@ export function ReportGeneratorDialog({
     toast.info('Generating PDF, this may take a moment...');
     
     try {
+      // Prepare HTML for PDF by removing unsupported elements and colors
+      let pdfHtml = previewHtml;
+      
+      // Convert OKLCH colors to RGB hex for html2pdf compatibility
+      pdfHtml = pdfHtml.replace(/oklch\([^)]+\)/g, '#10b981');
+      
       const element = document.createElement('div');
-      element.innerHTML = previewHtml;
+      element.innerHTML = pdfHtml;
+      
+      // Remove interactive map elements and Google Maps markers
+      const mapContainers = element.querySelectorAll('[role="region"], .gm-style, gmp-map, [data-map]');
+      mapContainers.forEach(el => {
+        const staticImg = el.querySelector('img[src*="staticmap"]');
+        if (staticImg && el.parentElement) {
+          el.parentElement.replaceChild(staticImg.cloneNode(true), el);
+        } else if (el.parentElement) {
+          el.parentElement.removeChild(el);
+        }
+      });
+      
+      // Remove advanced marker elements
+      const markers = element.querySelectorAll('gmp-advanced-marker');
+      markers.forEach(marker => marker.remove());
       
       const options = {
         margin: [0.5, 0.5, 0.5, 0.5],
