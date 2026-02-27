@@ -66,6 +66,7 @@ export function ReportGeneratorDialog({
   });
 
   const generateReportMutation = trpc.report.generate.useMutation();
+  const emailReportMutation = trpc.report.emailReport.useMutation();
 
   const handleGeneratePreview = useCallback(async () => {
     setIsGenerating(true);
@@ -197,7 +198,7 @@ export function ReportGeneratorDialog({
 
     try {
       const userEmail = 'user@example.com'; // Get from auth context in real implementation
-      await trpc.report.emailReport.useMutation().mutateAsync({
+      await emailReportMutation.mutateAsync({
         html: previewHtml,
         projectName,
         recipientEmail: userEmail,

@@ -1429,3 +1429,9 @@
 - [x] Verify Select All button already exists in FlightReportDialog
 - [x] Test Select All functionality on dev server (compiles successfully)
 - [ ] Deploy to production
+
+## Fix Email Report "Invalid Hook Call" Error (Feb 27, 2026)
+- [x] Move emailReportMutation hook to top level in ReportGeneratorDialog
+- [x] Rewrite handleEmailReport to use emailReportMutation.mutateAsync()
+- [x] Verify FlightReportDialog does not have email report functionality
+- [ ] Test email report functionality on dev server
