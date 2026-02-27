@@ -1423,3 +1423,9 @@
 - [x] Add Printer icon import to both components
 - [ ] Test PDF generation on dev server
 - [ ] Deploy to production
+
+## Add Select All Media Feature to PDF Preview (Feb 27, 2026)
+- [x] Add Select All button to ReportGeneratorDialog media section
+- [x] Verify Select All button already exists in FlightReportDialog
+- [x] Test Select All functionality on dev server (compiles successfully)
+- [ ] Deploy to production

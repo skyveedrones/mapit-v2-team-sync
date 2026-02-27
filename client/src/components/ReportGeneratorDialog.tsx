@@ -303,7 +303,22 @@ export function ReportGeneratorDialog({
               {/* Media Selection */}
               {reportOptions.includeMedia && media.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-semibold">Select Media to Include</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Select Media to Include</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedMediaIndices.length === media.length) {
+                          setSelectedMediaIndices([]);
+                        } else {
+                          setSelectedMediaIndices(media.map((_, idx) => idx));
+                        }
+                      }}
+                    >
+                      {selectedMediaIndices.length === media.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                  </div>
                   <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3">
                     {media.map((m, idx) => (
                       <div key={m.id} className="flex items-center space-x-2">
