@@ -448,8 +448,18 @@ export function generateReportHtml(
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 11px;
       line-height: 1.4;
-      color: #1a1a1a;
-      background: #fff;
+      color: #ffffff;
+      background: #1a1a1a;
+    }
+    @media print {
+      body {
+        color: #ffffff;
+    }
+    @media print {
+      .info-value {
+        color: #1a1a1a;
+        background: #fff;
+      }
     }
     
     /* Header with dual logos */
@@ -466,6 +476,7 @@ export function generateReportHtml(
       display: flex;
       align-items: center;
       padding-left: 15px;
+      flex: 1;
     }
     .logo-left .mapit-logo-img {
       height: 30px;
@@ -474,7 +485,6 @@ export function generateReportHtml(
     }
     .logo-right {
       padding-right: 15px;
-      flex: 1;
       text-align: right;
     }
     .logo-right img {
@@ -491,7 +501,11 @@ export function generateReportHtml(
     .report-title h1 {
       font-size: 24px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: #ffffff;
+    }
+    @media print {
+      .info-value {
+        color: #1a1a1a;
       margin-bottom: 4px;
     }
     .report-title .subtitle {
@@ -506,12 +520,18 @@ export function generateReportHtml(
     .section-header {
       font-size: 13px;
       font-weight: 600;
-      color: #000000;
+      color: #ffffff;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 10px;
       padding-bottom: 4px;
-      border-bottom: 1px solid #e5e5e5;
+      border-bottom: 1px solid #444444;
+    }
+    @media print {
+      .section-header {
+        color: #000000;
+        border-bottom-color: #e5e5e5;
+      }
     }
     
     /* Horizontal info items with icons */
@@ -520,9 +540,15 @@ export function generateReportHtml(
       flex-wrap: wrap;
       gap: 20px 30px;
       padding: 12px 15px;
-      background: #f8f9fa;
+      background: #2a2a2a;
       border-radius: 8px;
-      border: 1px solid #e5e5e5;
+      border: 1px solid #444444;
+    }
+    @media print {
+      .info-row {
+        background: #f8f9fa;
+        border-color: #e5e5e5;
+      }
     }
     .info-item {
       display: flex;
@@ -536,12 +562,21 @@ export function generateReportHtml(
     }
     .info-label {
       font-size: 11px;
-      color: #666;
+      color: #aaaaaa;
+    }
+    @media print {
+      .info-label {
+        color: #666;
+      }
     }
     .info-value {
       font-size: 11px;
       font-weight: 600;
-      color: #1a1a1a;
+      color: #ffffff;
+    }
+    @media print {
+      .info-value {
+        color: #1a1a1a;
     }
     
     /* Map section */
@@ -627,7 +662,11 @@ export function generateReportHtml(
     .priority-filename {
       font-size: 15px;
       font-weight: 600;
-      color: #1a1a1a;
+      color: #ffffff;
+    }
+    @media print {
+      .info-value {
+        color: #1a1a1a;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
