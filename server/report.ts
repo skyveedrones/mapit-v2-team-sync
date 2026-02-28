@@ -293,7 +293,7 @@ export function generateReportHtml(
   // MAPIT logo - use the actual logo image passed from server
   const skyVeeLogo = skyVeeLogoDataUrl 
     ? `<img src="${skyVeeLogoDataUrl}" alt="MAPIT" class="mapit-logo-img" />`
-    : `<div style="color: #333; font-weight: bold; font-size: 24px;">MAPIT</div>`;
+    : `<div style="color: #333; font-weight: bold; font-size: 16px;">MAPIT</div>`;
 
   // Generate priority items section with thumbnails and notes
   const generatePrioritySection = () => {
@@ -448,12 +448,12 @@ export function generateReportHtml(
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 11px;
       line-height: 1.4;
-      color: #ffffff;
+      color: #1a1a1a;
       background: #1a1a1a;
     }
     @media print {
       body {
-        color: #ffffff;
+        color: #1a1a1a;
     }
     @media print {
       .info-value {
@@ -468,9 +468,9 @@ export function generateReportHtml(
       justify-content: space-between;
       align-items: center;
       background: #ffffff;
-      padding: 20px;
-      border-bottom: 3px solid #22c55e;
-      margin-bottom: 20px;
+      padding: 8px 12px;
+      border-bottom: 2px solid #22c55e;
+      margin-bottom: 12px;
     }
     .logo-left {
       display: flex;
@@ -479,29 +479,29 @@ export function generateReportHtml(
       flex: 1;
     }
     .logo-left .mapit-logo-img {
-      height: 30px;
+      height: 20px;
       width: auto;
-      max-width: 120px;
+      max-width: 80px;
     }
     .logo-right {
       padding-right: 15px;
       text-align: right;
     }
     .logo-right img {
-      max-height: 120px;
-      max-width: 350px;
+      max-height: 60px;
+      max-width: 200px;
       object-fit: contain;
     }
     
     /* Title section */
     .report-title {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     .report-title h1 {
-      font-size: 24px;
+      font-size: 16px;
       font-weight: 700;
-      color: #ffffff;
+      color: #1a1a1a;
     }
     @media print {
       .info-value {
@@ -520,7 +520,7 @@ export function generateReportHtml(
     .section-header {
       font-size: 13px;
       font-weight: 600;
-      color: #ffffff;
+      color: #1a1a1a;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 10px;
@@ -572,7 +572,7 @@ export function generateReportHtml(
     .info-value {
       font-size: 11px;
       font-weight: 600;
-      color: #ffffff;
+      color: #1a1a1a;
     }
     @media print {
       .info-value {
@@ -662,7 +662,7 @@ export function generateReportHtml(
     .priority-filename {
       font-size: 15px;
       font-weight: 600;
-      color: #ffffff;
+      color: #1a1a1a;
     }
     @media print {
       .info-value {
