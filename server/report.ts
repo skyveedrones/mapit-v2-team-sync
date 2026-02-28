@@ -466,6 +466,7 @@ export function generateReportHtml(
       display: flex;
       align-items: center;
       padding-left: 15px;
+      flex: 1;
     }
     .logo-left .mapit-logo-img {
       height: 30px;
@@ -474,7 +475,7 @@ export function generateReportHtml(
     }
     .logo-right {
       padding-right: 15px;
-      flex: 1;
+      
       text-align: right;
     }
     .logo-right img {
