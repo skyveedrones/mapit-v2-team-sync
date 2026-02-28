@@ -1435,3 +1435,11 @@
 - [x] Rewrite handleEmailReport to use emailReportMutation.mutateAsync()
 - [x] Verify FlightReportDialog does not have email report functionality
 - [ ] Test email report functionality on dev server
+
+## Report Preview Dialog UI Updates (Feb 28, 2026)
+- [x] Remove "Email Report" button from preview dialog
+- [x] Enlarge preview modal (max-w-2xl → max-w-4xl, max-h-[90vh] → max-h-[95vh])
+- [x] Add "Back to Report Options" button with ChevronLeft icon at bottom left
+- [x] Realign bottom buttons using flex justify-between layout
+- [x] Increased preview container height (max-h-96 → max-h-[60vh])
+- [ ] Test preview dialog layout on dev server

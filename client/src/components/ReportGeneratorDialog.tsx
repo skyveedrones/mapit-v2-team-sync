@@ -28,9 +28,9 @@ import { Media } from "../../../drizzle/schema";
 import {
   Download,
   Eye,
-  FileText,
   Loader2,
   Printer,
+  ChevronLeft,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -214,7 +214,7 @@ export function ReportGeneratorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
         {!showPreview ? (
           <>
             <DialogHeader>
@@ -378,19 +378,22 @@ export function ReportGeneratorDialog({
               <DialogDescription>Review before printing or emailing</DialogDescription>
             </DialogHeader>
 
-            <div className="border rounded-lg p-4 bg-white max-h-96 overflow-y-auto">
+            <div className="border rounded-lg p-4 bg-white max-h-[60vh] overflow-y-auto">
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
-            <DialogFooter className="flex-wrap gap-2">
+            <div className="flex items-center justify-between mt-4">
               <Button
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowPreview(false);
                   setPreviewHtml(null);
                 }}
+                className="gap-2"
               >
-                Back to Options
+                <ChevronLeft className="w-4 h-4" />
+                Back to Report Options
               </Button>
               <Button
                 onClick={handleDownloadPdf}
@@ -408,14 +411,7 @@ export function ReportGeneratorDialog({
                   </>
                 )}
               </Button>
-              <Button
-                onClick={handleEmailReport}
-                variant="secondary"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Email Report
-              </Button>
-            </DialogFooter>
+            </div>
           </>
         )}
       </DialogContent>
