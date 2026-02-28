@@ -385,7 +385,7 @@ export function FlightReportDialog({
   if (showPreview && previewHtml) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[98vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -399,12 +399,12 @@ export function FlightReportDialog({
           <div className="flex-1 overflow-auto border rounded-lg bg-white">
             <iframe
               srcDoc={previewHtml}
-              className="w-full h-full border-0"
+              className="w-full h-[60vh] border-0"
               title="Report Preview"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t">
+          <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setShowPreview(false)}>
               <X className="h-4 w-4 mr-2" />
               Back to Options
@@ -412,7 +412,7 @@ export function FlightReportDialog({
             <Button 
               onClick={handleDownloadPdf} 
               disabled={isDownloading}
-              className="ml-auto"
+              className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isDownloading ? (
                 <>
@@ -426,7 +426,7 @@ export function FlightReportDialog({
                 </>
               )}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     );
