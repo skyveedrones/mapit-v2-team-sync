@@ -62,7 +62,7 @@ export function ReportGeneratorDialog({
     includeMedia: true,
     includeStats: true,
     mapZoom: 15,
-    imageQuality: 'high' as 'low' | 'medium' | 'high',
+    imageQuality: 'medium' as 'low' | 'medium' | 'high',
   });
 
   const generateReportMutation = trpc.report.generate.useMutation();
@@ -382,9 +382,9 @@ export function ReportGeneratorDialog({
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-6 pt-4 border-t gap-4 px-4 pb-4">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   setShowPreview(false);
@@ -398,6 +398,7 @@ export function ReportGeneratorDialog({
               <Button
                 onClick={handleDownloadPdf}
                 disabled={isDownloading}
+                className="ml-auto"
               >
                 {isDownloading ? (
                   <>
