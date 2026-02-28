@@ -214,7 +214,7 @@ export function ReportGeneratorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[98vh] overflow-y-auto flex flex-col">
         {!showPreview ? (
           <>
             <DialogHeader>
@@ -378,14 +378,13 @@ export function ReportGeneratorDialog({
               <DialogDescription>Review before printing or emailing</DialogDescription>
             </DialogHeader>
 
-            <div className="border rounded-lg p-4 bg-white max-h-[60vh] overflow-y-auto">
+            <div className="flex-1 border rounded-lg p-4 bg-white overflow-y-auto">
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
                 onClick={() => {
                   setShowPreview(false);
                   setPreviewHtml(null);
@@ -398,6 +397,7 @@ export function ReportGeneratorDialog({
               <Button
                 onClick={handleDownloadPdf}
                 disabled={isDownloading}
+                className="ml-auto"
               >
                 {isDownloading ? (
                   <>
