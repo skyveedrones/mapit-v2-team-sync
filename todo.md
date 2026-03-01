@@ -1449,3 +1449,10 @@
 - [x] Task 1: Reorganize top navigation - delete Sign Up, move Sign In right, add Download App button
 - [x] Task 2: Replace Get Started/View Pricing with video section
 - [x] Task 3: Reorganize Ready to Map Projects section - delete Download App, move See Project Demo button
+
+
+## Home Page UI Refinements
+- [x] Delete "See Demo Project" button above "Ready to Map Your Projects?"
+- [x] Change "Start New Trial" button to outline style (remove green background)
+- [x] Make MAPIT logo in footer larger
+- [x] Remove blank space above "Ready to Map Your Projects?" section

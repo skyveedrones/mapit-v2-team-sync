@@ -449,7 +449,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
+      <section className="py-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
@@ -461,24 +461,6 @@ export default function Home() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto text-center"
           >
-            <motion.div
-              variants={fadeInUp}
-              className="mb-8"
-            >
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-base px-6 py-4"
-                onClick={() => {
-                  trackEvent('demo_button_click_homepage');
-                  setLocation("/demo");
-                }}
-              >
-                <Eye className="mr-2 h-5 w-5" />
-                See Demo Project
-              </Button>
-            </motion.div>
-
             <motion.h2
               variants={fadeInUp}
               className="text-3xl md:text-4xl font-bold mb-4"
@@ -507,7 +489,8 @@ export default function Home() {
               </Button>
               <Button
                 size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
                 onClick={() => {
                   trackEvent('demo_to_trial_click');
                   window.location.href = getLoginUrl();
@@ -529,7 +512,7 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="Mapit"
-                className="h-6 w-auto opacity-60"
+                className="h-12 w-auto opacity-60"
               />
             </div>
             <p className="text-sm text-muted-foreground">
