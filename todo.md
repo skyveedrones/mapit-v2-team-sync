@@ -1443,3 +1443,9 @@
 - [x] Realign bottom buttons using flex justify-between layout
 - [x] Increased preview container height (max-h-96 → max-h-[60vh])
 - [ ] Test preview dialog layout on dev server
+
+
+## Home Page UI Redesign
+- [x] Task 1: Reorganize top navigation - delete Sign Up, move Sign In right, add Download App button
+- [x] Task 2: Replace Get Started/View Pricing with video section
+- [x] Task 3: Reorganize Ready to Map Projects section - delete Download App, move See Project Demo button

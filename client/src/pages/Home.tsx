@@ -134,9 +134,6 @@ export default function Home() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-
-
-
             <Button
               variant="ghost"
               size="icon"
@@ -171,18 +168,19 @@ export default function Home() {
             ) : (
               <>
                 <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => setShowDownloadDialog(true)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download App
+                </Button>
+                <Button
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleLogin}
                   disabled={loading}
                 >
                   {loading ? "Loading..." : "Sign In"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={handleLogin}
-                >
-                  Sign Up
                 </Button>
               </>
             )}
@@ -331,35 +329,20 @@ export default function Home() {
               project planning, monitoring, and decision-making.
             </motion.p>
 
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              {isAuthenticated ? (
-                <Button
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                  onClick={() => setLocation("/dashboard")}
-                >
-                  Go to Dashboard
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                  onClick={handleLogin}
-                >
-                  Get Started
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              )}
-              <Link href="/pricing">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
-                >
-                  View Pricing
-                </Button>
-              </Link>
+            <motion.div variants={fadeInUp} className="w-full max-w-3xl mx-auto mt-12">
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-primary/30 shadow-2xl shadow-primary/20 bg-background">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                  <div className="text-center">
+                    <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                      </svg>
+                    </div>
+                    <p className="text-muted-foreground text-lg font-semibold">Your Video Here</p>
+                    <p className="text-sm text-muted-foreground/70 mt-2">Upload your drone mapping demo or product walkthrough</p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -512,23 +495,26 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
-                onClick={() => setShowDownloadDialog(true)}
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                onClick={() => {
+                  
+                  toast.info('Project demo coming soon!');
+                }}
               >
-                <Download className="mr-2 h-5 w-5" />
-                Download the App
+                <Eye className="mr-2 h-5 w-5" />
+                See Project Demo
               </Button>
               <Button
                 size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-lg shadow-lg shadow-primary/25"
                 onClick={() => {
                   trackEvent('demo_to_trial_click');
                   window.location.href = getLoginUrl();
                 }}
               >
                 <Zap className="mr-2 h-5 w-5" />
-                Start Free Trial
+                Start New Trial
               </Button>
             </motion.div>
           </motion.div>
