@@ -404,7 +404,7 @@ export function ReportGeneratorDialog({
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
-            <div className="flex items-center justify-between mt-6 pt-4 border-t gap-4 px-4 pb-4">
+            <div className="flex items-center justify-between mt-6 pt-4 border-t gap-4 px-4 pb-4 bg-gray-900 text-white relative z-50">
               <Button
                 variant="outline"
                 size="sm"
@@ -412,7 +412,7 @@ export function ReportGeneratorDialog({
                   setShowPreview(false);
                   setPreviewHtml(null);
                 }}
-                className="gap-2"
+                className="gap-2 text-white border-white hover:bg-gray-800"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back to Report Options
