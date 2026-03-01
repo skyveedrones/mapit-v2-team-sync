@@ -100,7 +100,7 @@ export default function Welcome() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6"
-                onClick={() => window.location.href = getLoginUrl()}
+                onClick={() => setLocation("/pricing")}
               >
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -219,7 +219,7 @@ export default function Welcome() {
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6"
-                onClick={() => window.location.href = getLoginUrl()}
+                onClick={() => setLocation("/pricing")}
               >
                 Create Free Account
                 <Zap className="ml-2 h-5 w-5" />

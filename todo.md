@@ -1463,3 +1463,8 @@
 - [x] Link "See Project Demo" button to "Explore Mapit" page
 - [x] Create Welcome.tsx page
 - [x] Add Welcome route to App.tsx
+
+
+## Pricing Page Button Links
+- [x] Link "Get Started" button on Welcome page to /pricing
+- [x] Link "Create Free Account" button on Welcome page to /pricing
