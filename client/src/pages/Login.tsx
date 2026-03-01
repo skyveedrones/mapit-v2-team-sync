@@ -1,12 +1,13 @@
 /**
  * Login/Signup Landing Page
  * Professional authentication page matching MAPit branding
+ * Dark theme with emerald accents
  */
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
-import { CheckCircle2, Shield, Zap, Map, Upload, Download } from "lucide-react";
+import { CheckCircle2, Shield, Zap, Map, Upload, FileText, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -26,7 +27,7 @@ export default function Login() {
       description: "Visualize flights on Google Maps with markers and flight paths",
     },
     {
-      icon: Download,
+      icon: FileText,
       title: "Professional Reports",
       description: "Generate branded PDF reports with maps and media galleries",
     },
@@ -39,19 +40,39 @@ export default function Login() {
     "Instant access after signup",
   ];
 
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <img
               src="/images/mapit-logo.webp"
               alt="MAPit"
               className="h-8 w-auto"
             />
+            <span className="text-xl font-bold hidden sm:inline">MAPit</span>
           </div>
-          <Button onClick={handleLogin} size="sm">
+          <Button 
+            onClick={handleLogin} 
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             Sign In
           </Button>
         </div>
@@ -63,42 +84,35 @@ export default function Login() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column - Information */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
               className="space-y-8"
             >
-              <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight flex items-center gap-3 flex-wrap">
-                  <span>Welcome to</span>
-                  <img
-                    src="/images/mapit-logo.webp"
-                    alt="MAPit"
-                    className="h-12 md:h-16 w-auto"
-                  />
+              <motion.div variants={fadeInUp} className="space-y-4">
+                <h1 className="text-5xl md:text-6xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
+                  Welcome to <span className="text-primary">MAPit</span>
                 </h1>
-                <p className="text-xl text-muted-foreground">
+                <p className="text-xl text-muted-foreground leading-relaxed">
                   Professional drone mapping solutions that empower smarter project planning, monitoring, and decision-making.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Features */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">What You Can Do</h2>
-                <div className="space-y-3">
+              <motion.div variants={fadeInUp} className="space-y-4">
+                <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>What You Can Do</h2>
+                <div className="space-y-4">
                   {features.map((feature, index) => (
                     <motion.div
                       key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 + 0.2 }}
-                      className="flex gap-3"
+                      variants={fadeInUp}
+                      className="flex gap-4 p-4 rounded-lg border border-border/50 hover:border-primary/50 transition-colors group"
                     >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <feature.icon className="w-5 h-5 text-primary" />
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <feature.icon className="w-6 h-6 text-primary" />
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{feature.title}</h3>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">{feature.title}</h3>
                         <p className="text-sm text-muted-foreground">
                           {feature.description}
                         </p>
@@ -106,23 +120,24 @@ export default function Login() {
                     </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Benefits */}
-              <div className="space-y-3">
-                {benefits.map((benefit, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 + 0.5 }}
-                    className="flex items-center gap-2 text-muted-foreground"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>{benefit}</span>
-                  </motion.div>
-                ))}
-              </div>
+              <motion.div variants={fadeInUp} className="space-y-3">
+                <h3 className="font-semibold text-foreground">Why Choose MAPit?</h3>
+                <div className="space-y-2">
+                  {benefits.map((benefit, index) => (
+                    <motion.div
+                      key={index}
+                      variants={fadeInUp}
+                      className="flex items-center gap-3 text-muted-foreground"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>{benefit}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Right Column - Login Card */}
@@ -130,13 +145,14 @@ export default function Login() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              className="lg:sticky lg:top-24"
             >
-              <Card className="p-8 space-y-6 bg-card/50 backdrop-blur-sm border-2 border-primary/20">
-                <div className="space-y-2 text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Card className="p-8 space-y-6 bg-card/50 backdrop-blur-sm border border-primary/30 shadow-xl">
+                <div className="space-y-3 text-center">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mx-auto">
                     <Shield className="w-8 h-8 text-primary" />
                   </div>
-                  <h2 className="text-2xl font-bold">Get Started</h2>
+                  <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>Get Started</h2>
                   <p className="text-muted-foreground">
                     Sign in or create your account to start mapping
                   </p>
@@ -146,69 +162,89 @@ export default function Login() {
                   <Button
                     onClick={handleLogin}
                     size="lg"
-                    className="w-full text-lg h-12"
+                    className="w-full text-lg h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                   >
                     <Zap className="w-5 h-5 mr-2" />
                     Continue to Login
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
 
-                  <div className="relative">
+                  <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-border"></div>
+                      <div className="w-full border-t border-border/30"></div>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">
+                      <span className="bg-card px-2 text-muted-foreground font-medium">
                         How it works
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-3 text-sm text-muted-foreground">
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                        1
+                  <div className="space-y-3 text-sm">
+                    {[
+                      "Click the button above to open the secure authentication portal",
+                      "Sign in with your existing account or create a new one",
+                      "You'll be automatically redirected back and ready to go"
+                    ].map((step, index) => (
+                      <div key={index} className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                          {index + 1}
+                        </div>
+                        <p className="text-muted-foreground pt-0.5">{step}</p>
                       </div>
-                      <p>Click the button above to open the secure authentication portal</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                        2
-                      </div>
-                      <p>Sign in with your existing account or create a new one</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                        3
-                      </div>
-                      <p>You'll be automatically redirected back and ready to go</p>
-                    </div>
+                    ))}
                   </div>
+                </div>
 
+                {/* Divider */}
+                <div className="border-t border-border/30" />
 
+                {/* Additional Info */}
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    New user?{" "}
+                    <button
+                      onClick={handleLogin}
+                      className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                    >
+                      Create a free account
+                    </button>
+                  </p>
                 </div>
               </Card>
 
-              {/* Additional Info */}
-              <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>
-                  New user?{" "}
-                  <button
-                    onClick={handleLogin}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Create a free account
-                  </button>
-                </p>
-              </div>
+              {/* Trust Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-6 text-center text-xs text-muted-foreground"
+              >
+                <p>🔒 Your data is secure and encrypted</p>
+              </motion.div>
             </motion.div>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2024 MAPit by SkyVee Drones. All rights reserved.</p>
+      <footer className="border-t border-border/50 py-8 mt-12">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-center md:text-left">
+              <p className="text-sm text-muted-foreground">
+                © 2026 MAPit by SkyVee Drones. All rights reserved.
+              </p>
+            </div>
+            <div className="flex items-center gap-6">
+              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Terms of Service
+              </a>
+              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Privacy Policy
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
