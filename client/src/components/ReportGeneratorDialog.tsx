@@ -236,7 +236,7 @@ export function ReportGeneratorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col">
         {!showPreview ? (
           <>
             <DialogHeader>
@@ -400,7 +400,7 @@ export function ReportGeneratorDialog({
               <DialogDescription>Review before printing or emailing</DialogDescription>
             </DialogHeader>
 
-            <div className="border rounded-lg p-4 bg-white max-h-[60vh] overflow-y-auto">
+            <div className="border rounded-lg p-4 bg-white flex-1 overflow-y-auto">
               <div dangerouslySetInnerHTML={{ __html: previewHtml || '' }} />
             </div>
 
