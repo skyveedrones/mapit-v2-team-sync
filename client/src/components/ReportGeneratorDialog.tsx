@@ -127,8 +127,30 @@ export function ReportGeneratorDialog({
             font-family: Arial, Helvetica, sans-serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            margin: 0;
+            padding: 0;
+          }
+          .print-close-button {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 10000;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s;
+          }
+          .print-close-button:hover {
+            background: #16a34a;
           }
         </style>
+        <button class="print-close-button" onclick="window.close()">Close</button>
         <script>
           // Auto-trigger print once everything is loaded
           window.addEventListener('load', function() {
