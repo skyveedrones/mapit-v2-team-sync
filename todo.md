@@ -1456,3 +1456,10 @@
 - [x] Change "Start New Trial" button to outline style (remove green background)
 - [x] Make MAPIT logo in footer larger
 - [x] Remove blank space above "Ready to Map Your Projects?" section
+
+
+## Button Navigation Links
+- [x] Link "Start New Trial" button to "Welcome to Mapit" page
+- [x] Link "See Project Demo" button to "Explore Mapit" page
+- [x] Create Welcome.tsx page
+- [x] Add Welcome route to App.tsx

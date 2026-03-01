@@ -480,8 +480,7 @@ export default function Home() {
                 variant="outline"
                 className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
                 onClick={() => {
-                  
-                  toast.info('Project demo coming soon!');
+                  setLocation('/demo');
                 }}
               >
                 <Eye className="mr-2 h-5 w-5" />
@@ -493,7 +492,7 @@ export default function Home() {
                 className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
                 onClick={() => {
                   trackEvent('demo_to_trial_click');
-                  window.location.href = getLoginUrl();
+                  setLocation('/welcome');
                 }}
               >
                 <Zap className="mr-2 h-5 w-5" />

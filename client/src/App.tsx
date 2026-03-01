@@ -39,6 +39,7 @@ import PdfMapOverlay from "./pages/features/PdfMapOverlay";
 import InstallAsApp from "./pages/features/InstallAsApp";
 import ProjectTemplates from "./pages/features/ProjectTemplates";
 import DemoProject from "./pages/DemoProject";
+import Welcome from "./pages/Welcome";
 
 /**
  * Protected Route Component
@@ -98,6 +99,7 @@ function Router() {
       <ScrollToTop />
       <Switch>
       <Route path="/" component={Home} />
+      <Route path="/welcome" component={Welcome} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
