@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { useLocation } from "wouter";
-import { ArrowRight, CheckCircle, Upload, Map, FileText, Shield, Zap, CreditCard } from "lucide-react";
+import { useLocation, Link } from "wouter";
+import { ArrowRight, ArrowLeft, CheckCircle, Upload, Map, FileText, Shield, Zap, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
 const fadeInUp = {
@@ -54,13 +54,10 @@ export default function Welcome() {
       {/* Navigation */}
       <nav className="border-b border-border py-4">
         <div className="container flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <img
-              src="/images/mapit-logo-new.png"
-              alt="Mapit"
-              className="h-8 w-auto"
-            />
-          </a>
+          <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+            <span className="font-medium">Back to Homepage</span>
+          </Link>
           <Button
             className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => window.location.href = getLoginUrl()}
