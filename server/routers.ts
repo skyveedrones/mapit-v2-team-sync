@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
 import { media, clientUsers } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -658,6 +659,18 @@ export const appRouter = router({
     create: protectedProcedure
       .input(createProjectSchema)
       .mutation(async ({ ctx, input }) => {
+        // Check plan limits
+        const userTier = (ctx.user.subscriptionTier || "free") as keyof typeof PLAN_LIMITS;
+        const limits = PLAN_LIMITS[userTier];
+        const projectCount = await getUserProjectCount(ctx.user.id);
+        
+        if (projectCount >= limits.maxProjects) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `You have reached the project limit of ${limits.maxProjects} for your ${userTier} plan. Upgrade to create more projects.`,
+          });
+        }
+        
         const project = await createProject({
           userId: ctx.user.id,
           name: input.name,

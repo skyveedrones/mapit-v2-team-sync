@@ -10,15 +10,15 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
  * Map Stripe price IDs to subscription tiers
  */
 const PRICE_TO_TIER: Record<string, "starter" | "professional" | "business"> = {
-  // Starter tier - add your actual Stripe price IDs here
-  "price_1QxxxxxStarterMonthly": "starter",
-  "price_1QxxxxxStarterAnnual": "starter",
+  // Starter tier
+  "price_1T6Xu3GEMT6mikKwPibBZGCg": "starter",
+  "price_1T6Xu4GEMT6mikKwqmc0MCVL": "starter",
   // Professional tier
-  "price_1QxxxxxProfessionalMonthly": "professional",
-  "price_1QxxxxxProfessionalAnnual": "professional",
+  "price_1T6Xu4GEMT6mikKwINYKHcuI": "professional",
+  "price_1T6Xu4GEMT6mikKwqgE63wB7": "professional",
   // Business tier
-  "price_1QxxxxxBusinessMonthly": "business",
-  "price_1QxxxxxBusinessAnnual": "business",
+  "price_1T6Xu5GEMT6mikKwaxgTw2dy": "business",
+  "price_1T6Xu5GEMT6mikKwCUBCrmlB": "business",
 };
 
 /**

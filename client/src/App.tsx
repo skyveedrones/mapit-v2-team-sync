@@ -29,6 +29,7 @@ import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
+import Billing from "./pages/Billing";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -164,6 +165,9 @@ function Router() {
       {/* Settings */}
       <Route path="/settings">
         {() => <ProtectedRoute component={Settings} />}
+      </Route>
+      <Route path="/billing">
+        {() => <ProtectedRoute component={Billing} />}
       </Route>
       
       {/* Client management */}

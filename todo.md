@@ -1500,3 +1500,31 @@
 - [x] Create Stripe products and prices for all three subscription tiers
 - [x] Update products.ts with real Stripe price IDs
 - [x] Test payment checkout flow - successfully redirects to Stripe
+
+## Stripe Webhook Handlers Implementation
+- [x] Create webhook endpoint at /api/stripe/webhook (already exists in stripe-webhook.ts)
+- [x] Implement checkout.session.completed handler to create/update subscription
+- [x] Implement customer.subscription.updated handler to update subscription status
+- [x] Implement invoice.payment_succeeded handler for payment confirmation
+- [x] Implement customer.subscription.deleted handler for cancellation
+- [x] Update webhook handlers with real Stripe price IDs
+
+## Subscription Management Dashboard
+- [x] Create Billing.tsx page component
+- [x] Display current subscription plan and billing period
+- [x] Show next billing date and amount
+- [x] Add upgrade/downgrade plan buttons
+- [x] Display payment method information
+- [x] Show billing history/invoices
+- [x] Add Billing link to dashboard navigation via App.tsx route
+- [x] Implement plan features display
+
+## Plan Limit Enforcement
+- [x] Create planLimits.ts utility with plan limits for all tiers
+- [x] Create UpgradePrompt component for showing upgrade suggestions
+- [x] Add project count check before project creation in routers.ts
+- [ ] Add media file count check before media upload
+- [ ] Add team member count check before invitations
+- [ ] Integrate UpgradePrompt component in Dashboard
+- [ ] Add usage display in Dashboard
+- [ ] Test all plan limit enforcement
