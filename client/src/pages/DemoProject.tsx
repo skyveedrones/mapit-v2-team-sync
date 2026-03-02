@@ -210,7 +210,7 @@ export default function DemoProject() {
               variants={fadeInUp}
               className="text-muted-foreground text-lg max-w-2xl mx-auto"
             >
-              Explore all the key features that make Mapit the leading drone mapping platform
+              Explore all the key features that make MAPIT the leading drone mapping platform
             </motion.p>
           </motion.div>
 
