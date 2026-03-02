@@ -1488,5 +1488,5 @@
 
 ## DemoProject Page Text Updates
 - [x] Update DemoProject.tsx to use "MAPIT" consistently (title and CTA text)
-- [x] Keep "See It In Action" badge visible
+- [x] Remove "See It In Action" badge completely
 - [x] Restore "Go to Dashboard" button for authenticated users

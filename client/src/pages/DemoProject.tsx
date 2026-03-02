@@ -148,14 +148,6 @@ export default function DemoProject() {
             variants={staggerContainer}
             className="text-center max-w-3xl mx-auto"
           >
-            <motion.div
-              variants={fadeInUp}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm mb-6"
-            >
-              <Eye className="h-4 w-4" />
-              See It In Action
-            </motion.div>
-
             <motion.h1
               variants={fadeInUp}
               className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6"
