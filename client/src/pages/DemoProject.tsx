@@ -161,7 +161,7 @@ export default function DemoProject() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Explore Mapit
+              Explore MAPIT
             </motion.h1>
 
             <motion.p
@@ -275,7 +275,7 @@ export default function DemoProject() {
               variants={fadeInUp}
               className="text-lg text-muted-foreground mb-8"
             >
-              Start using Mapit today to organize, visualize, and share your drone mapping data with your team.
+              Start using MAPIT today to organize, visualize, and share your drone mapping data with your team.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">

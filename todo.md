@@ -1485,3 +1485,8 @@
 
 ## Welcome Page Text Updates
 - [x] Update Welcome.tsx to use "MAPIT" consistently throughout (removed duplicate span, updated CTA text)
+
+## DemoProject Page Text Updates
+- [x] Update DemoProject.tsx to use "MAPIT" consistently (title and CTA text)
+- [x] Keep "See It In Action" badge visible
+- [x] Restore "Go to Dashboard" button for authenticated users
