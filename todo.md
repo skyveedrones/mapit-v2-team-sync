@@ -1478,3 +1478,10 @@
 ## Pricing Page Fixes
 - [x] Fix incorrect pricing tiers on pricing page (verified - pricing is correct)
 - [x] Verify each tier has correct pricing (Starter: $49/$490, Professional: $149/$1490, Business: $349/$3490)
+
+
+## Complete Purchase Page Price Display Bug
+- [x] Fix price display - prices are off by two decimal places (monthly showing $1.49 instead of $149.00, annual showing $149.00 instead of $1490.00)
+
+## Welcome Page Text Updates
+- [x] Update Welcome.tsx to use "MAPIT" consistently throughout (removed duplicate span, updated CTA text)

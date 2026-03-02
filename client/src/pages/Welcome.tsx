@@ -85,7 +85,7 @@ export default function Welcome() {
               className="text-5xl md:text-6xl font-bold mb-6"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Welcome to <span className="text-primary">MAPIT</span>
+              Welcome to MAPIT
             </motion.h1>
             <motion.p
               variants={fadeInUp}
@@ -170,7 +170,7 @@ export default function Welcome() {
               className="text-4xl font-bold mb-12 text-center"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Why Choose Mapit?
+              Why Choose MAPIT?
             </motion.h2>
             <div className="space-y-4">
               {benefits.map((benefit, index) => (
@@ -210,7 +210,7 @@ export default function Welcome() {
               variants={fadeInUp}
               className="text-xl text-muted-foreground mb-8"
             >
-              Join thousands of professionals using Mapit to streamline their drone mapping workflows.
+              Join thousands of professionals using MAPIT to streamline their drone mapping workflows.
             </motion.p>
             <motion.div
               variants={fadeInUp}

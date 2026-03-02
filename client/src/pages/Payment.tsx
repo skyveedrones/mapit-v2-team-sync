@@ -78,7 +78,7 @@ export default function Payment() {
   }
 
   const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-  const displayPrice = price / 100;
+  const displayPrice = price; // Price is already in dollars, no division needed
 
   return (
     <div className="min-h-screen bg-background">

@@ -283,7 +283,7 @@ export default function DemoProject() {
                 <>
                   <Link href="/dashboard">
                     <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      Go to Dashboard
+                      Sign Up Today!
                       <Zap className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
