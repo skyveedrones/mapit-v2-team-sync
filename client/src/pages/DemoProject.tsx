@@ -273,7 +273,7 @@ export default function DemoProject() {
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
                 <>
-                  <Link href="/dashboard">
+                  <Link href="/welcome">
                     <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
                       Sign Up Today!
                       <Zap className="ml-2 h-5 w-5" />

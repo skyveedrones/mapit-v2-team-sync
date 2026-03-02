@@ -1490,3 +1490,4 @@
 - [x] Update DemoProject.tsx to use "MAPIT" consistently (title and CTA text)
 - [x] Remove "See It In Action" badge completely
 - [x] Restore "Go to Dashboard" button for authenticated users
+- [x] Link "Sign Up Today!" button to Welcome page
