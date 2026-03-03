@@ -102,6 +102,7 @@ import { storagePut, storageGet } from "./storage";
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
 import { uploadHighResolutionMedia } from "./highres-upload";
+import { extractImageMetadata, formatMetadataForDisplay, isMapGradeAccuracy } from "./metadataExtractor";
 
 // Validation schemas for project operations
 const createProjectSchema = z.object({
@@ -127,50 +128,27 @@ const updateProjectSchema = z.object({
 });
 
 // Helper function to extract EXIF GPS data from image buffer
-function extractExifData(buffer: Buffer): {
+async function extractExifData(buffer: Buffer): Promise<{
   latitude: number | null;
   longitude: number | null;
   altitude: number | null;
   capturedAt: Date | null;
   cameraMake: string | null;
   cameraModel: string | null;
-} {
+}> {
   try {
-    console.log("[EXIF] Starting EXIF extraction, buffer size:", buffer.length);
+    const metadata = await extractImageMetadata(buffer);
     
-    // Extract EXIF data from JPEG files
-    const parser = ExifParser.create(buffer);
-    const result = parser.parse();
-    const tags = result.tags;
-
-    console.log("[EXIF] Parsed tags, total tags:", Object.keys(tags).length);
-    console.log("[EXIF] GPS tags:", {
-      GPSLatitude: tags.GPSLatitude,
-      GPSLongitude: tags.GPSLongitude,
-      GPSAltitude: tags.GPSAltitude,
-    });
-    console.log("[EXIF] Camera info:", {
-      Make: tags.Make,
-      Model: tags.Model,
-      DateTimeOriginal: tags.DateTimeOriginal,
-    });
-
-    const exifData = {
-      latitude: tags.GPSLatitude ?? null,
-      longitude: tags.GPSLongitude ?? null,
-      altitude: tags.GPSAltitude ?? null,
-      capturedAt: tags.DateTimeOriginal ? new Date(tags.DateTimeOriginal * 1000) : null,
-      cameraMake: tags.Make ?? null,
-      cameraModel: tags.Model ?? null,
+    return {
+      latitude: metadata.gpsLatitude ?? null,
+      longitude: metadata.gpsLongitude ?? null,
+      altitude: metadata.gpsAltitude ?? null,
+      capturedAt: metadata.dateTime ?? null,
+      cameraMake: metadata.make ?? null,
+      cameraModel: metadata.model ?? null,
     };
-    
-    console.log("[EXIF] Extracted data:", exifData);
-    return exifData;
   } catch (error) {
-    // File doesn't have readable EXIF data (WEBP, PNG, or corrupted JPEG)
-    // Users can manually add GPS coordinates using the updateGPS procedure
     console.error("[EXIF] Failed to extract EXIF data:", error instanceof Error ? error.message : error);
-    console.error("[EXIF] Error stack:", error instanceof Error ? error.stack : "No stack");
     return {
       latitude: null,
       longitude: null,
@@ -1001,7 +979,7 @@ export const appRouter = router({
         };
 
         if (input.mimeType.startsWith("image/")) {
-          exifData = extractExifData(buffer);
+          exifData = await extractExifData(buffer);
         }
 
         // Generate unique file key for reference

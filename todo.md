@@ -1545,9 +1545,10 @@
 - [x] Create metadataExtractor.ts for EXIF/GPS extraction
 - [x] Create photoUploadRoute.ts for direct-to-S3 chunked uploads
 - [x] Register photo upload route in server
-- [ ] Remove client-side compression for photos in MediaUploadDialog
-- [ ] Implement client-side chunked upload using signed URLs
-- [ ] Add metadata extraction to media tRPC procedures
+- [x] Remove client-side compression for photos in MediaUploadDialog
+- [x] Create photoUpload.ts utility for direct-to-S3 chunked uploads
+- [x] Update extractExifData to use metadataExtractor utility
+- [ ] Integrate photoUpload utility into MediaUploadDialog for photos
 - [ ] Add metadata display in media gallery
 - [ ] Create GIS export functionality (KML, GeoJSON)
 - [ ] Test HD uploads with real drone photos

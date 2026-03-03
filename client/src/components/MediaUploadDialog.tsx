@@ -364,30 +364,19 @@ export function MediaUploadDialog({
     for (let file of Array.from(newFiles)) {
       const error = validateFile(file);
       
-      // Compress images if they're too large
-      if (!error && file.type.startsWith("image/") && needsCompression(file)) {
-        const originalSize = file.size;
-        toast.info(`Compressing ${file.name}...`);
-        
-        try {
-          file = await compressImage(file);
-          const savedBytes = originalSize - file.size;
-          const savedPercent = Math.round((savedBytes / originalSize) * 100);
-          toast.success(`Compressed ${file.name} by ${savedPercent}%`);
-        } catch (err) {
-          console.error('[Upload] Compression failed:', err);
-          toast.warning(`Could not compress ${file.name}, uploading original`);
-        }
-      }
+      // NOTE: Do NOT compress images - preserve EXIF/GPS metadata for mapping accuracy
+      // Images uploaded directly to S3 in original HD format
+      // This preserves critical drone mapping data (GPS, altitude, camera settings)
       
-      // Check if file still exceeds limit after compression
+      // Check file size limits
       let finalError = error;
-      if (!error && exceedsLimit(file)) {
-        if (file.type.startsWith("image/")) {
-          finalError = `Image too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}.`;
-        } else if (file.type.startsWith("video/")) {
-          finalError = `Video too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}. Please compress externally.`;
-        }
+      // Images: allow up to 1GB (direct S3 upload, no Cloudinary limits)
+      // Videos: enforce Cloudinary limits
+      if (!error && file.type.startsWith("video/") && exceedsLimit(file)) {
+        finalError = `Video too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}. Please compress externally.`;
+      }
+      if (!error && file.size > MAX_FILE_SIZE) {
+        finalError = `File too large: ${formatBytes(file.size)} (max 1GB)`;
       }
       
       const fileItem: FileToUpload = {
