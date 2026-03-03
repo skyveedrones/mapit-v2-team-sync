@@ -1528,3 +1528,27 @@
 - [ ] Integrate UpgradePrompt component in Dashboard
 - [ ] Add usage display in Dashboard
 - [ ] Test all plan limit enforcement
+
+## HD Photo Upload with Metadata Preservation
+- [ ] Audit current upload pipeline to identify metadata stripping points
+- [ ] Implement direct-to-S3 chunked uploads with signed URLs (bypass Node.js compression)
+- [ ] Add server-side EXIF/GPS metadata extraction using exifparser
+- [ ] Store extracted metadata in database (GPS coordinates, timestamp, camera info)
+- [ ] Create metadata display in media gallery
+- [ ] Implement GPS location mapping from EXIF data
+- [ ] Add metadata export to GIS formats (KML, GeoJSON)
+- [ ] Test HD uploads with real drone photos (10MB+)
+- [ ] Verify metadata preservation end-to-end
+
+
+## HD Photo Upload Implementation (In Progress)
+- [x] Create metadataExtractor.ts for EXIF/GPS extraction
+- [x] Create photoUploadRoute.ts for direct-to-S3 chunked uploads
+- [x] Register photo upload route in server
+- [ ] Remove client-side compression for photos in MediaUploadDialog
+- [ ] Implement client-side chunked upload using signed URLs
+- [ ] Add metadata extraction to media tRPC procedures
+- [ ] Add metadata display in media gallery
+- [ ] Create GIS export functionality (KML, GeoJSON)
+- [ ] Test HD uploads with real drone photos
+- [ ] Verify metadata preservation end-to-end

@@ -7,6 +7,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
+import { photoUploadRouter } from "../photoUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
 import { initializeVersion, getVersionJson } from "../version";
@@ -38,6 +39,12 @@ async function startServer() {
   // Trust proxy for accurate rate limiting behind reverse proxy (Manus deployment)
   app.set('trust proxy', 1);
   
+  // Initialize version system
+  initializeVersion();
+
+  // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
+  
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
@@ -66,14 +73,11 @@ async function startServer() {
   app.use("/api", tusRouter);
   app.use("/api/upload", createUploadRateLimiter());
   
+  // Direct-to-S3 photo upload routes
+  app.use("/api", photoUploadRouter);
+  
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
-
-  // Initialize version system
-  initializeVersion();
-
-  // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
-  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
 
   // Version endpoint - returns current deployed version
   app.get("/api/version", (req, res) => {
