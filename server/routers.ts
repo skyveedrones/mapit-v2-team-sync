@@ -1092,6 +1092,97 @@ export const appRouter = router({
         return { success: true, deleted };
       }),
 
+    // Finalize photo upload from direct-to-S3 upload
+    finalizePhotoUpload: protectedProcedure
+      .input(z.object({
+        uploadId: z.string(),
+        projectId: z.number(),
+        flightId: z.number().optional(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+        s3Key: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user has access to project
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Get the S3 URL for the uploaded file
+        const { url: fileUrl } = await storageGet(input.s3Key);
+
+        // Extract metadata from the uploaded file
+        let exifData = {
+          latitude: null as number | null,
+          longitude: null as number | null,
+          altitude: null as number | null,
+          capturedAt: null as Date | null,
+          cameraMake: null as string | null,
+          cameraModel: null as string | null,
+        };
+
+        // For images, try to extract EXIF data from S3
+        if (input.mimeType.startsWith("image/")) {
+          try {
+            const response = await fetch(fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            exifData = await extractExifData(buffer);
+          } catch (error) {
+            console.error("[Photo Upload] Failed to extract EXIF:", error);
+            // Continue without EXIF data
+          }
+        }
+
+        // Generate thumbnail for images
+        let thumbnailUrl: string | null = null;
+        if (input.mimeType.startsWith("image/")) {
+          try {
+            const response = await fetch(fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const thumbBuffer = await generateThumbnail(buffer, 250);
+            const thumbKey = `projects/${input.projectId}/thumbnails/${nanoid(12)}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+            thumbnailUrl = thumbResult.url;
+          } catch (error) {
+            console.error("[Photo Upload] Failed to generate thumbnail:", error);
+            thumbnailUrl = fileUrl; // Fall back to original
+          }
+        }
+
+        // Create media record
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ctx.user.id,
+          filename: input.filename,
+          fileKey: input.s3Key,
+          url: fileUrl,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: exifData.latitude ? exifData.latitude.toString() : null,
+          longitude: exifData.longitude ? exifData.longitude.toString() : null,
+          altitude: exifData.altitude ? exifData.altitude.toString() : null,
+          capturedAt: exifData.capturedAt,
+          cameraMake: exifData.cameraMake,
+          cameraModel: exifData.cameraModel,
+          thumbnailUrl,
+        });
+
+        // Assign to flight if provided
+        if (input.flightId) {
+          await assignMediaToFlight(mediaItem.id, input.flightId);
+        }
+
+        return mediaItem;
+      }),
+
     // Create media record from URL (used after TUS upload)
     createFromUrl: protectedProcedure
       .input(z.object({

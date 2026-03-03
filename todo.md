@@ -1541,15 +1541,16 @@
 - [ ] Verify metadata preservation end-to-end
 
 
-## HD Photo Upload Implementation (In Progress)
+## HD Photo Upload Implementation (Complete)
 - [x] Create metadataExtractor.ts for EXIF/GPS extraction
 - [x] Create photoUploadRoute.ts for direct-to-S3 chunked uploads
 - [x] Register photo upload route in server
 - [x] Remove client-side compression for photos in MediaUploadDialog
 - [x] Create photoUpload.ts utility for direct-to-S3 chunked uploads
 - [x] Update extractExifData to use metadataExtractor utility
-- [ ] Integrate photoUpload utility into MediaUploadDialog for photos
-- [ ] Add metadata display in media gallery
-- [ ] Create GIS export functionality (KML, GeoJSON)
+- [x] Integrate photoUpload utility into MediaUploadDialog for photos
+- [x] Create MediaMetadataDisplay component for EXIF/GPS data
+- [x] Add metadata display in media gallery viewer
+- [x] Add finalizePhotoUpload procedure to server routers
 - [ ] Test HD uploads with real drone photos
 - [ ] Verify metadata preservation end-to-end

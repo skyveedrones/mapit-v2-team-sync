@@ -32,6 +32,7 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import * as tus from "tus-js-client";
 import { compressImage, needsCompression, exceedsLimit, CLOUDINARY_MAX_SIZE } from "@/lib/compression";
+import { uploadPhotoToS3, UploadProgress } from "@/lib/photoUpload";
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -331,6 +332,7 @@ export function MediaUploadDialog({
   const uploadMutation = trpc.media.upload.useMutation();
   const uploadChunkMutation = trpc.media.uploadChunk.useMutation();
   const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
+  const finalizePhotoUploadMutation = trpc.media.finalizePhotoUpload.useMutation();
   const uploadHighResMutation = trpc.media.uploadHighResolution.useMutation();
   const utils = trpc.useUtils();
 
@@ -718,6 +720,68 @@ export function MediaUploadDialog({
     toast.success("Pending upload removed");
   };
 
+  // Upload photo directly to S3 with chunking (preserves metadata)
+  const uploadPhotoDirectToS3 = async (
+    fileItem: FileToUpload,
+    index: number,
+    startTime: number
+  ): Promise<void> => {
+    const file = fileItem.file;
+    
+    try {
+      // Upload photo directly to S3 with chunking
+      const result = await uploadPhotoToS3(
+        file,
+        projectId,
+        (progress: UploadProgress) => {
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === index
+                ? {
+                    ...f,
+                    progress: progress.progress,
+                    uploadSpeed: progress.uploadSpeed,
+                    eta: progress.eta,
+                    bytesUploaded: progress.bytesUploaded,
+                    chunksUploaded: progress.uploadedChunks,
+                  }
+                : f
+            )
+          );
+        }
+      );
+
+      // Finalize the upload
+      await finalizePhotoUploadMutation.mutateAsync({
+        uploadId: result.uploadId,
+        projectId,
+        flightId,
+        filename: file.name,
+        mimeType: file.type,
+        fileSize: file.size,
+        s3Key: result.s3Key,
+      });
+
+      // Mark as success
+      setFiles((prev) =>
+        prev.map((f, idx) =>
+          idx === index ? { ...f, status: "success", progress: 100 } : f
+        )
+      );
+
+      toast.success(`${file.name} uploaded successfully with metadata preserved`);
+    } catch (error) {
+      console.error("[Photo Upload] Error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Upload failed";
+      setFiles((prev) =>
+        prev.map((f, idx) =>
+          idx === index ? { ...f, status: "error", error: errorMessage } : f
+        )
+      );
+      toast.error(`Failed to upload ${file.name}: ${errorMessage}`);
+    }
+  };
+
   // Upload video using TUS protocol for better reliability
   const uploadVideoWithTus = async (
     fileItem: FileToUpload,
@@ -945,18 +1009,18 @@ export function MediaUploadDialog({
       );
 
       try {
-        // Use TUS for video uploads (better reliability), chunked upload for large images
+        // Use TUS for video uploads, direct-to-S3 for photos
         const isVideo = fileItem.file.type.startsWith("video/");
-        const useChunkedUpload = !isVideo && fileItem.file.size > 50 * 1024 * 1024;
+        const isPhoto = fileItem.file.type.startsWith("image/");
         
         if (isVideo) {
           // Video: use TUS protocol for better reliability and resumability
           await uploadVideoWithTus(fileItem, i, startTime);
-        } else if (useChunkedUpload) {
-          // Large image: use chunked upload
-          await uploadInChunks(fileItem, i, startTime);
+        } else if (isPhoto) {
+          // Photo: use direct-to-S3 chunked upload to preserve metadata
+          await uploadPhotoDirectToS3(fileItem, i, startTime);
         } else {
-          // Small file: use base64 upload
+          // Other file types: use base64 upload
           const base64Data = await fileToBase64WithProgress(
             fileItem.file,
             (loaded, total) => {

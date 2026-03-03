@@ -60,6 +60,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { WatermarkDialog } from "./WatermarkDialog";
 import { GPSEditDialog } from "./GPSEditDialog";
+import { MediaMetadataDisplay } from "./MediaMetadataDisplay";
 
 interface MediaGalleryProps {
   isDemoProject?: boolean;
@@ -1054,6 +1055,27 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                         });
                       }}
                       disabled={!canEditMedia}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* EXIF/GPS Metadata Display */}
+              {!isFullscreen && (
+                <div className="mb-4">
+                  <div className="p-3 rounded-lg bg-card border border-border">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide">Metadata</span>
+                    </div>
+                    <MediaMetadataDisplay
+                      latitude={selectedMedia.latitude ? parseFloat(selectedMedia.latitude) : null}
+                      longitude={selectedMedia.longitude ? parseFloat(selectedMedia.longitude) : null}
+                      altitude={selectedMedia.altitude ? parseFloat(selectedMedia.altitude) : null}
+                      capturedAt={selectedMedia.createdAt}
+                      cameraMake={selectedMedia.cameraMake}
+                      cameraModel={selectedMedia.cameraModel}
+                      fileSize={selectedMedia.fileSize}
                     />
                   </div>
                 </div>
