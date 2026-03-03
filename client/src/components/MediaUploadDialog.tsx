@@ -731,8 +731,8 @@ export function MediaUploadDialog({
     try {
       // Upload photo directly to S3 with chunking
       const result = await uploadPhotoToS3(
-        file,
         projectId,
+        file,
         (progress: UploadProgress) => {
           setFiles((prev) =>
             prev.map((f, idx) =>

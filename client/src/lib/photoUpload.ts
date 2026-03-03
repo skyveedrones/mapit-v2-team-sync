@@ -1,6 +1,6 @@
 /**
  * Direct-to-S3 Photo Upload Utility
- * Handles chunked uploads directly to S3 using signed URLs
+ * Handles chunked uploads through server to S3
  * Preserves full metadata and HD quality without compression
  */
 
@@ -17,25 +17,28 @@ export interface UploadProgress {
   bytesUploaded: number;
 }
 
-export interface SignedUrlResponse {
+export interface ChunkUploadResponse {
   uploadId: string;
-  signedUrl: string;
   chunkIndex: number;
   s3Key: string;
+  publicUrl: string;
+  uploadedChunks: number[];
+  isComplete: boolean;
 }
 
 /**
- * Get signed URL for uploading a chunk to S3
+ * Upload a single chunk to server (which uploads to S3)
  */
-export async function getSignedUrl(
+export async function uploadChunkToServer(
   projectId: number,
   filename: string,
   fileSize: number,
   chunkIndex: number,
   totalChunks: number,
+  chunkData: ArrayBuffer,
   uploadId?: string
-): Promise<SignedUrlResponse> {
-  const response = await fetch("/api/photo-upload/signed-url", {
+): Promise<ChunkUploadResponse> {
+  const response = await fetch("/api/photo-upload/chunk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -45,228 +48,106 @@ export async function getSignedUrl(
       chunkIndex,
       totalChunks,
       uploadId,
+      chunk: Buffer.from(chunkData).toString('base64'), // Send as base64 in JSON
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get signed URL: ${response.statusText}`);
+    const errorBody = await response.text();
+    console.error(`[Photo Upload] Server error (${response.status}):`, errorBody);
+    throw new Error(`Failed to upload chunk: ${response.status} ${response.statusText} - ${errorBody}`);
   }
 
   return response.json();
 }
 
 /**
- * Upload a single chunk directly to S3 using signed URL
- */
-export async function uploadChunkToS3(
-  signedUrl: string,
-  chunk: Blob,
-  onProgress?: (loaded: number, total: number) => void
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-
-    // Track upload progress
-    if (onProgress) {
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          onProgress(e.loaded, e.total);
-        }
-      });
-    }
-
-    xhr.addEventListener("load", () => {
-      if (xhr.status === 200) {
-        resolve();
-      } else {
-        reject(new Error(`S3 upload failed with status ${xhr.status}`));
-      }
-    });
-
-    xhr.addEventListener("error", () => {
-      reject(new Error("Network error during S3 upload"));
-    });
-
-    xhr.addEventListener("abort", () => {
-      reject(new Error("S3 upload aborted"));
-    });
-
-    xhr.open("PUT", signedUrl);
-    xhr.setRequestHeader("Content-Type", "application/octet-stream");
-    xhr.send(chunk);
-  });
-}
-
-/**
- * Notify server that a chunk was uploaded
- */
-export async function notifyChunkUploaded(
-  uploadId: string,
-  chunkIndex: number
-): Promise<void> {
-  const response = await fetch("/api/photo-upload/chunk-uploaded", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uploadId, chunkIndex }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to notify chunk upload: ${response.statusText}`);
-  }
-}
-
-/**
- * Finalize the upload and trigger metadata extraction
- */
-export async function finalizePhotoUpload(
-  projectId: number,
-  uploadId: string,
-  filename: string,
-  fileSize: number,
-  mimeType: string
-): Promise<{ success: boolean; finalUrl: string; s3Key: string }> {
-  const response = await fetch("/api/photo-upload/finalize", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      projectId,
-      uploadId,
-      filename,
-      fileSize,
-      mimeType,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to finalize upload: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Get upload status
- */
-export async function getUploadStatus(uploadId: string): Promise<UploadProgress> {
-  const response = await fetch(`/api/photo-upload/status/${uploadId}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get upload status: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Upload a photo file directly to S3 with chunking and progress tracking
+ * Upload a photo file in chunks
  */
 export async function uploadPhotoToS3(
-  file: File,
   projectId: number,
-  onProgress?: (progress: UploadProgress) => void,
-  signal?: AbortSignal
-): Promise<{ uploadId: string; finalUrl: string; s3Key: string }> {
-  const fileSize = file.size;
-  const totalChunks = Math.ceil(fileSize / CHUNK_SIZE);
-  let uploadId: string = "";
+  file: File,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<{ uploadId: string; s3Key: string; publicUrl: string }> {
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const uploadId = generateUploadId();
+  let uploadedChunks = 0;
   const startTime = Date.now();
-  let uploadedBytes = 0;
 
   try {
+    // Upload all chunks
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-      // Check for abort signal
-      if (signal?.aborted) {
-        throw new Error("Upload aborted by user");
-      }
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+      const chunkBuffer = await chunk.arrayBuffer();
 
-      // Get signed URL for this chunk
-      const { uploadId: newUploadId, signedUrl } = await getSignedUrl(
+      const response = await uploadChunkToServer(
         projectId,
         file.name,
-        fileSize,
+        file.size,
         chunkIndex,
         totalChunks,
+        chunkBuffer,
         uploadId
       );
 
-      if (!uploadId) {
-        uploadId = newUploadId;
+      uploadedChunks++;
+
+      if (onProgress) {
+        const elapsed = (Date.now() - startTime) / 1000; // seconds
+        const bytesUploaded = uploadedChunks * CHUNK_SIZE;
+        const uploadSpeed = bytesUploaded / elapsed;
+        const remainingBytes = file.size - bytesUploaded;
+        const eta = uploadSpeed > 0 ? remainingBytes / uploadSpeed : 0;
+
+        onProgress({
+          uploadId,
+          chunkIndex,
+          totalChunks,
+          uploadedChunks,
+          progress: (uploadedChunks / totalChunks) * 100,
+          uploadSpeed,
+          eta,
+          bytesUploaded,
+        });
       }
-
-      // Extract chunk data
-      const start = chunkIndex * CHUNK_SIZE;
-      const end = Math.min(start + CHUNK_SIZE, fileSize);
-      const chunk = file.slice(start, end);
-
-      // Upload chunk to S3
-      let chunkUploadedBytes = 0;
-      await uploadChunkToS3(signedUrl, chunk, (loaded) => {
-        chunkUploadedBytes = loaded;
-
-        // Calculate overall progress
-        const totalUploaded = uploadedBytes + chunkUploadedBytes;
-        const elapsed = (Date.now() - startTime) / 1000;
-        const speed = totalUploaded / elapsed;
-        const remaining = fileSize - totalUploaded;
-        const eta = remaining / speed;
-        const progress = (totalUploaded / fileSize) * 90; // 90% for upload
-
-        if (onProgress) {
-          onProgress({
-            uploadId,
-            chunkIndex,
-            totalChunks,
-            uploadedChunks: chunkIndex + 1,
-            progress,
-            uploadSpeed: speed,
-            eta,
-            bytesUploaded: totalUploaded,
-          });
-        }
-      });
-
-      uploadedBytes += chunk.size;
-
-      // Notify server that chunk was uploaded
-      await notifyChunkUploaded(uploadId, chunkIndex);
     }
 
     // Finalize upload
-    if (!uploadId) {
-      throw new Error("Upload ID not set");
-    }
-
-    const result = await finalizePhotoUpload(
-      projectId,
-      uploadId,
-      file.name,
-      fileSize,
-      file.type
-    );
-
-    // Add uploadId to result
-    const finalResult = {
-      uploadId,
-      finalUrl: result.finalUrl,
-      s3Key: result.s3Key,
-    };
-
-    if (onProgress) {
-      onProgress({
+    const finalizeResponse = await fetch("/api/photo-upload/finalize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
         uploadId,
-        chunkIndex: totalChunks - 1,
-        totalChunks,
-        uploadedChunks: totalChunks,
-        progress: 100,
-        uploadSpeed: fileSize / ((Date.now() - startTime) / 1000),
-        eta: 0,
-        bytesUploaded: fileSize,
-      });
+        filename: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+      }),
+    });
+
+    if (!finalizeResponse.ok) {
+      const errorBody = await finalizeResponse.text();
+      throw new Error(`Failed to finalize upload: ${errorBody}`);
     }
 
-    return finalResult;
+    const finalizeData = await finalizeResponse.json();
+
+    return {
+      uploadId,
+      s3Key: finalizeData.s3Key,
+      publicUrl: finalizeData.publicUrl,
+    };
   } catch (error) {
     console.error("[Photo Upload] Error:", error);
     throw error;
   }
+}
+
+/**
+ * Generate a unique upload ID
+ */
+function generateUploadId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
