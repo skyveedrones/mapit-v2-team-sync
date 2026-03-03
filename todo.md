@@ -1552,5 +1552,6 @@
 - [x] Create MediaMetadataDisplay component for EXIF/GPS data
 - [x] Add metadata display in media gallery viewer
 - [x] Add finalizePhotoUpload procedure to server routers
+- [x] Fix photo upload endpoint route paths (removed /api prefix)
 - [ ] Test HD uploads with real drone photos
 - [ ] Verify metadata preservation end-to-end

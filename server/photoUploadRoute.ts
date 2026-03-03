@@ -57,7 +57,7 @@ const uploadSessions = new Map<string, {
  * GET /api/photo-upload/signed-url
  * Get a signed URL for uploading a chunk directly to S3
  */
-router.post("/api/photo-upload/signed-url", async (req: Request, res: Response) => {
+router.post("/photo-upload/signed-url", async (req: Request, res: Response) => {
   try {
     const data = GetSignedUrlRequest.parse(req.body);
     const { projectId, filename, fileSize, chunkIndex, totalChunks, uploadId: existingUploadId } = data;
@@ -114,7 +114,7 @@ router.post("/api/photo-upload/signed-url", async (req: Request, res: Response) 
  * POST /api/photo-upload/chunk-uploaded
  * Notify server that a chunk was uploaded
  */
-router.post("/api/photo-upload/chunk-uploaded", async (req: Request, res: Response) => {
+router.post("/photo-upload/chunk-uploaded", async (req: Request, res: Response) => {
   try {
     const { uploadId, chunkIndex } = req.body;
 
@@ -142,7 +142,7 @@ router.post("/api/photo-upload/chunk-uploaded", async (req: Request, res: Respon
  * POST /api/photo-upload/finalize
  * Finalize the upload by combining chunks and extracting metadata
  */
-router.post("/api/photo-upload/finalize", async (req: Request, res: Response) => {
+router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
   try {
     const data = FinalizeUploadRequest.parse(req.body);
     const { projectId, uploadId, filename, fileSize, mimeType } = data;
@@ -195,7 +195,7 @@ router.post("/api/photo-upload/finalize", async (req: Request, res: Response) =>
  * GET /api/photo-upload/status/:uploadId
  * Check upload status
  */
-router.get("/api/photo-upload/status/:uploadId", (req: Request, res: Response) => {
+router.get("/photo-upload/status/:uploadId", (req: Request, res: Response) => {
   const { uploadId } = req.params;
 
   const session = uploadSessions.get(uploadId);
