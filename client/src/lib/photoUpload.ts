@@ -48,7 +48,7 @@ export async function uploadChunkToServer(
       chunkIndex,
       totalChunks,
       uploadId,
-      chunk: Buffer.from(chunkData).toString('base64'), // Send as base64 in JSON
+      chunk: arrayBufferToBase64(chunkData), // Send as base64 in JSON
     }),
   });
 
@@ -143,6 +143,18 @@ export async function uploadPhotoToS3(
     console.error("[Photo Upload] Error:", error);
     throw error;
   }
+}
+
+/**
+ * Convert ArrayBuffer to base64 string (browser-compatible)
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const uint8Array = new Uint8Array(buffer);
+  let binaryString = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binaryString += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binaryString);
 }
 
 /**
