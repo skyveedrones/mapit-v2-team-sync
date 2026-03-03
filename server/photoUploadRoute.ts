@@ -10,19 +10,12 @@
  */
 
 import { Router, Request, Response } from "express";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { storageGetUploadUrl } from "./storage";
 
 const router = Router();
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-});
-
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || "";
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
 
 // Request/Response schemas
@@ -50,11 +43,12 @@ const uploadSessions = new Map<string, {
   fileSize: number;
   totalChunks: number;
   uploadedChunks: Set<number>;
+  s3Keys: Map<number, string>;
   createdAt: Date;
 }>();
 
 /**
- * GET /api/photo-upload/signed-url
+ * POST /api/photo-upload/signed-url
  * Get a signed URL for uploading a chunk directly to S3
  */
 router.post("/photo-upload/signed-url", async (req: Request, res: Response) => {
@@ -73,40 +67,32 @@ router.post("/photo-upload/signed-url", async (req: Request, res: Response) => {
         fileSize,
         totalChunks,
         uploadedChunks: new Set(),
+        s3Keys: new Map(),
         createdAt: new Date(),
       });
     }
 
     // Generate S3 key for this chunk
     const s3Key = `projects/${projectId}/photos/${uploadId}/${chunkIndex}`;
-
-    // Create signed URL for PUT request (valid for 1 hour)
-    const signedUrl = await getSignedUrl(
-      s3Client,
-      new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: s3Key,
-        ContentType: "application/octet-stream",
-        // Add metadata to S3 object for tracking
-        Metadata: {
-          "upload-id": uploadId,
-          "chunk-index": chunkIndex.toString(),
-          "total-chunks": totalChunks.toString(),
-          "original-filename": filename,
-        },
-      }),
-      { expiresIn: 3600 } // 1 hour expiration
-    );
+    
+    // Get presigned URL from storage proxy
+    const { uploadUrl, publicUrl } = await storageGetUploadUrl(s3Key, "application/octet-stream");
+    
+    // Store the S3 key in the session
+    const session = uploadSessions.get(uploadId)!;
+    session.s3Keys.set(chunkIndex, s3Key);
 
     res.json({
       uploadId,
-      signedUrl,
+      uploadUrl, // Use uploadUrl instead of signedUrl
       chunkIndex,
       s3Key,
+      publicUrl,
     });
   } catch (error) {
-    console.error("[Photo Upload] Error generating signed URL:", error);
-    res.status(400).json({ error: "Failed to generate signed URL" });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("[Photo Upload] Error generating signed URL:", msg);
+    res.status(400).json({ error: `Failed to get signed URL: ${msg}` });
   }
 });
 
@@ -128,19 +114,19 @@ router.post("/photo-upload/chunk-uploaded", async (req: Request, res: Response) 
     res.json({
       uploadId,
       chunkIndex,
-      uploadedChunks: Array.from(session.uploadedChunks).sort((a, b) => a - b),
-      totalChunks: session.totalChunks,
+      uploadedChunks: Array.from(session.uploadedChunks),
       isComplete: session.uploadedChunks.size === session.totalChunks,
     });
   } catch (error) {
-    console.error("[Photo Upload] Error tracking chunk upload:", error);
-    res.status(400).json({ error: "Failed to track chunk upload" });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("[Photo Upload] Error tracking chunk upload:", msg);
+    res.status(400).json({ error: msg });
   }
 });
 
 /**
  * POST /api/photo-upload/finalize
- * Finalize the upload by combining chunks and extracting metadata
+ * Finalize the upload and trigger metadata extraction
  */
 router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
   try {
@@ -159,76 +145,27 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
       });
     }
 
-    // Generate final S3 key
-    const timestamp = Date.now();
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const finalS3Key = `projects/${projectId}/photos/${timestamp}-${sanitizedFilename}`;
+    // Get the final S3 key (first chunk's key without the chunk index)
+    const finalS3Key = `projects/${projectId}/photos/${uploadId}/final`;
+    const { publicUrl } = await storageGetUploadUrl(finalS3Key, mimeType);
 
-    // In production, you would:
-    // 1. Combine chunks in S3 (using multipart upload)
-    // 2. Extract metadata from the combined file
-    // 3. Store metadata in database
-    // 4. Return the final URL
-
-    // For now, we'll return the upload completion info
-    const finalUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${finalS3Key}`;
-
-    // Clean up upload session
+    // Clean up session
     uploadSessions.delete(uploadId);
 
     res.json({
-      success: true,
       uploadId,
-      finalUrl,
-      s3Key: finalS3Key,
       filename,
       fileSize,
       mimeType,
+      s3Key: finalS3Key,
+      publicUrl,
+      message: "Upload finalized. Metadata extraction will be triggered by client.",
     });
   } catch (error) {
-    console.error("[Photo Upload] Error finalizing upload:", error);
-    res.status(400).json({ error: "Failed to finalize upload" });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("[Photo Upload] Error finalizing upload:", msg);
+    res.status(400).json({ error: msg });
   }
 });
 
-/**
- * GET /api/photo-upload/status/:uploadId
- * Check upload status
- */
-router.get("/photo-upload/status/:uploadId", (req: Request, res: Response) => {
-  const { uploadId } = req.params;
-
-  const session = uploadSessions.get(uploadId);
-  if (!session) {
-    return res.status(404).json({ error: "Upload session not found" });
-  }
-
-  res.json({
-    uploadId,
-    filename: session.filename,
-    fileSize: session.fileSize,
-    totalChunks: session.totalChunks,
-    uploadedChunks: Array.from(session.uploadedChunks).sort((a, b) => a - b),
-    progress: Math.round((session.uploadedChunks.size / session.totalChunks) * 100),
-    isComplete: session.uploadedChunks.size === session.totalChunks,
-  });
-});
-
-/**
- * Clean up expired upload sessions (older than 24 hours)
- */
-setInterval(() => {
-  const now = Date.now();
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-
-  const uploadIds = Array.from(uploadSessions.keys());
-  for (const uploadId of uploadIds) {
-    const session = uploadSessions.get(uploadId);
-    if (session && now - session.createdAt.getTime() > maxAge) {
-      uploadSessions.delete(uploadId);
-      console.log(`[Photo Upload] Cleaned up expired upload session: ${uploadId}`);
-    }
-  }
-}, 60 * 60 * 1000); // Check every hour
-
-export { router as photoUploadRouter };
+export default router;

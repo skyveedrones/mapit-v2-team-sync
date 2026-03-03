@@ -7,7 +7,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { tusRouter } from "../tusUploadRoute";
-import { photoUploadRouter } from "../photoUploadRoute";
+import photoUploadRouter from "../photoUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
 import { initializeVersion, getVersionJson } from "../version";
