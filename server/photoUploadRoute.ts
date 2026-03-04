@@ -1,31 +1,25 @@
 /**
- * Direct-to-S3 Photo Upload Route
- * Implements chunked, direct-to-S3 uploads for HD photos with full metadata preservation
- * 
- * Flow:
- * 1. Client sends chunk data to server
- * 2. Server uploads chunk directly to S3 using storagePut
- * 3. Client finalizes upload
- * 4. Server extracts metadata and stores in database
+ * Photo Upload Routes
+ * Handles chunked HD photo uploads with metadata extraction
+ * Preserves full EXIF/GPS data for mapping accuracy
  */
 
 import { Router, Request, Response } from "express";
-import { nanoid } from "nanoid";
 import { z } from "zod";
-import { storagePut } from "./storage";
+import { storagePut, storageGet } from "./storage";
+import { extractImageMetadata } from "./metadataExtractor";
 
 const router = Router();
 
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
-
-// Request/Response schemas
-const UploadChunkRequest = z.object({
+// Request validation schemas
+const ChunkUploadRequest = z.object({
   projectId: z.number(),
   filename: z.string(),
   fileSize: z.number(),
   chunkIndex: z.number(),
   totalChunks: z.number(),
   uploadId: z.string().optional(),
+  chunk: z.string(), // base64-encoded chunk data
 });
 
 const FinalizeUploadRequest = z.object({
@@ -36,27 +30,50 @@ const FinalizeUploadRequest = z.object({
   mimeType: z.string(),
 });
 
-// Store upload metadata temporarily (in production, use database)
-const uploadSessions = new Map<string, {
+// In-memory session storage for tracking uploads
+interface UploadSession {
   projectId: number;
   filename: string;
   fileSize: number;
   totalChunks: number;
   uploadedChunks: Set<number>;
-  s3Keys: Map<number, string>;
+  s3Keys: Map<number, string>; // chunkIndex -> s3Key
   createdAt: Date;
-}>();
+}
+
+const uploadSessions = new Map<string, UploadSession>();
+
+// Clean up old sessions every 30 minutes
+setInterval(() => {
+  const now = new Date();
+  const sessionsToDelete: string[] = [];
+  uploadSessions.forEach((session, uploadId) => {
+    const ageMs = now.getTime() - session.createdAt.getTime();
+    if (ageMs > 30 * 60 * 1000) {
+      sessionsToDelete.push(uploadId);
+    }
+  });
+  sessionsToDelete.forEach(uploadId => {
+    uploadSessions.delete(uploadId);
+    console.log(`[Photo Upload] Cleaned up expired session: ${uploadId}`);
+  });
+}, 30 * 60 * 1000);
 
 /**
  * POST /api/photo-upload/chunk
- * Upload a chunk directly - server handles S3 upload
+ * Upload a single chunk of a photo
  */
-router.post("/photo-upload/chunk", async (req: Request, res: Response) => {
+router.post("/chunk", async (req: Request, res: Response) => {
   try {
-    const { projectId, filename, fileSize, chunkIndex, totalChunks, uploadId: existingUploadId } = UploadChunkRequest.parse(req.body);
+    const data = ChunkUploadRequest.parse(req.body);
+    const { projectId, filename, fileSize, chunkIndex, totalChunks, uploadId: clientUploadId, chunk: base64Chunk } = data;
+
+    if (!base64Chunk) {
+      return res.status(400).json({ error: "Missing chunk data" });
+    }
 
     // Generate upload ID if not provided
-    const uploadId = existingUploadId || nanoid();
+    const uploadId = clientUploadId || `${projectId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Initialize or get upload session
     if (!uploadSessions.has(uploadId)) {
@@ -71,27 +88,29 @@ router.post("/photo-upload/chunk", async (req: Request, res: Response) => {
       });
     }
 
-    // Get chunk data from request body
-    // The client sends the chunk as binary data
-    const chunkBuffer = Buffer.from(req.body.chunk || req.body, 'binary');
-    
+    // Decode base64 chunk to binary buffer
+    const chunkBuffer = Buffer.from(base64Chunk, 'base64');
+    console.log(`[Photo Upload] Received chunk ${chunkIndex + 1}/${totalChunks} (${chunkBuffer.length} bytes) for upload ${uploadId}`);
+
     // Generate S3 key for this chunk
-    const s3Key = `projects/${projectId}/photos/${uploadId}/${chunkIndex}`;
-    
+    const s3Key = `projects/${projectId}/photos/${uploadId}/chunk-${chunkIndex}`;
+
     // Upload chunk directly to S3
     const { url } = await storagePut(s3Key, chunkBuffer, "application/octet-stream");
-    
+
     // Store the S3 key in the session
     const session = uploadSessions.get(uploadId)!;
     session.s3Keys.set(chunkIndex, s3Key);
     session.uploadedChunks.add(chunkIndex);
+
+    console.log(`[Photo Upload] Chunk ${chunkIndex} uploaded to S3: ${s3Key}`);
 
     res.json({
       uploadId,
       chunkIndex,
       s3Key,
       publicUrl: url,
-      uploadedChunks: Array.from(session.uploadedChunks),
+      uploadedChunks: Array.from(session.uploadedChunks).sort((a, b) => a - b),
       isComplete: session.uploadedChunks.size === session.totalChunks,
     });
   } catch (error) {
@@ -103,9 +122,9 @@ router.post("/photo-upload/chunk", async (req: Request, res: Response) => {
 
 /**
  * POST /api/photo-upload/finalize
- * Finalize the upload and trigger metadata extraction
+ * Combine all chunks and finalize the upload
  */
-router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
+router.post("/finalize", async (req: Request, res: Response) => {
   try {
     const data = FinalizeUploadRequest.parse(req.body);
     const { projectId, uploadId, filename, fileSize, mimeType } = data;
@@ -122,9 +141,60 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
       });
     }
 
-    // Get the final S3 key (first chunk's key without the chunk index)
+    console.log(`[Photo Upload] Finalizing upload ${uploadId}: combining ${session.totalChunks} chunks...`);
+
+    // Download all chunks from S3 and combine them
+    const chunks: Buffer[] = [];
+    for (let i = 0; i < session.totalChunks; i++) {
+      const s3Key = session.s3Keys.get(i);
+      if (!s3Key) {
+        throw new Error(`Missing chunk ${i} in S3 keys map`);
+      }
+
+      try {
+        // Get the download URL for this chunk
+        const { url: downloadUrl } = await storageGet(s3Key);
+        console.log(`[Photo Upload] Downloading chunk ${i} from: ${downloadUrl}`);
+
+        // Fetch the chunk data
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to download chunk ${i}: ${response.status} ${response.statusText}`);
+        }
+
+        const chunkBuffer = Buffer.from(await response.arrayBuffer());
+        chunks.push(chunkBuffer);
+        console.log(`[Photo Upload] Downloaded chunk ${i}: ${chunkBuffer.length} bytes`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error(`[Photo Upload] Error downloading chunk ${i}:`, msg);
+        throw error;
+      }
+    }
+
+    // Combine all chunks into a single buffer
+    const finalBuffer = Buffer.concat(chunks);
+    console.log(`[Photo Upload] Combined all chunks: ${finalBuffer.length} bytes total (expected: ${fileSize})`);
+
+    if (finalBuffer.length !== fileSize) {
+      console.warn(`[Photo Upload] Warning: Combined size (${finalBuffer.length}) doesn't match expected size (${fileSize})`);
+    }
+
+    // Upload the final combined image to S3
     const finalS3Key = `projects/${projectId}/photos/${uploadId}/final`;
-    const { url } = await storagePut(finalS3Key, Buffer.from(""), mimeType);
+    const { url: finalUrl } = await storagePut(finalS3Key, finalBuffer, mimeType);
+    console.log(`[Photo Upload] Final image uploaded to S3: ${finalS3Key}`);
+
+    // Extract metadata from the final image
+    let metadata = null;
+    try {
+      metadata = await extractImageMetadata(finalBuffer);
+      console.log(`[Photo Upload] Metadata extracted:`, metadata);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[Photo Upload] Warning: Failed to extract metadata: ${msg}`);
+      // Don't fail the upload if metadata extraction fails
+    }
 
     // Clean up session
     uploadSessions.delete(uploadId);
@@ -135,8 +205,9 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
       fileSize,
       mimeType,
       s3Key: finalS3Key,
-      publicUrl: url,
-      message: "Upload finalized. Metadata extraction will be triggered by client.",
+      publicUrl: finalUrl,
+      metadata,
+      message: "Upload finalized successfully",
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

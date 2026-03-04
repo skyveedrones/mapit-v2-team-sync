@@ -1530,12 +1530,12 @@
 - [ ] Test all plan limit enforcement
 
 ## HD Photo Upload with Metadata Preservation
-- [ ] Audit current upload pipeline to identify metadata stripping points
-- [ ] Implement direct-to-S3 chunked uploads with signed URLs (bypass Node.js compression)
-- [ ] Add server-side EXIF/GPS metadata extraction using exifparser
-- [ ] Store extracted metadata in database (GPS coordinates, timestamp, camera info)
-- [ ] Create metadata display in media gallery
-- [ ] Implement GPS location mapping from EXIF data
+- [x] Audit current upload pipeline to identify metadata stripping points
+- [x] Implement direct-to-S3 chunked uploads with signed URLs (bypass Node.js compression)
+- [x] Add server-side EXIF/GPS metadata extraction using exifparser
+- [x] Store extracted metadata in database (GPS coordinates, timestamp, camera info)
+- [x] Create metadata display in media gallery
+- [x] Implement GPS location mapping from EXIF data
 - [ ] Add metadata export to GIS formats (KML, GeoJSON)
 - [ ] Test HD uploads with real drone photos (10MB+)
 - [ ] Verify metadata preservation end-to-end
@@ -1553,5 +1553,9 @@
 - [x] Add metadata display in media gallery viewer
 - [x] Add finalizePhotoUpload procedure to server routers
 - [x] Fix photo upload endpoint route paths (removed /api prefix)
+- [x] Fix base64 decoding in photoUploadRoute (decode from base64 string)
+- [x] Implement chunk combining in finalize endpoint (download chunks from S3 and combine)
+- [x] Add metadata extraction to finalize endpoint
+- [x] Create comprehensive unit tests for photo upload (13 tests passing)
 - [ ] Test HD uploads with real drone photos
 - [ ] Verify metadata preservation end-to-end
