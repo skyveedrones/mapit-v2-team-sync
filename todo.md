@@ -1558,5 +1558,9 @@
 - [x] Add metadata extraction to finalize endpoint
 - [x] Create comprehensive unit tests for photo upload (13 tests passing)
 - [x] Fix photo upload route paths (/photo-upload prefix was missing)
-- [ ] Test HD uploads with real drone photos
-- [ ] Verify metadata preservation end-to-end
+- [x] Create integration tests with real drone photo (8 tests passing)
+- [x] Verify chunking works correctly (577KB photo chunked and combined successfully)
+- [x] Verify base64 encoding/decoding works
+- [x] Verify photo integrity after combining chunks
+- [ ] Test with JPEG drone photos (current test uses WebP format)
+- [ ] Verify metadata preservation end-to-end with JPEG photos
