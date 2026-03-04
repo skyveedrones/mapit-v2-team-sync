@@ -1557,5 +1557,6 @@
 - [x] Implement chunk combining in finalize endpoint (download chunks from S3 and combine)
 - [x] Add metadata extraction to finalize endpoint
 - [x] Create comprehensive unit tests for photo upload (13 tests passing)
+- [x] Fix photo upload route paths (/photo-upload prefix was missing)
 - [ ] Test HD uploads with real drone photos
 - [ ] Verify metadata preservation end-to-end

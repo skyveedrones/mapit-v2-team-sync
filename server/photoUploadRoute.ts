@@ -63,7 +63,7 @@ setInterval(() => {
  * POST /api/photo-upload/chunk
  * Upload a single chunk of a photo
  */
-router.post("/chunk", async (req: Request, res: Response) => {
+router.post("/photo-upload/chunk", async (req: Request, res: Response) => {
   try {
     const data = ChunkUploadRequest.parse(req.body);
     const { projectId, filename, fileSize, chunkIndex, totalChunks, uploadId: clientUploadId, chunk: base64Chunk } = data;
@@ -124,7 +124,7 @@ router.post("/chunk", async (req: Request, res: Response) => {
  * POST /api/photo-upload/finalize
  * Combine all chunks and finalize the upload
  */
-router.post("/finalize", async (req: Request, res: Response) => {
+router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
   try {
     const data = FinalizeUploadRequest.parse(req.body);
     const { projectId, uploadId, filename, fileSize, mimeType } = data;
