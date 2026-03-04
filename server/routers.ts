@@ -1102,6 +1102,13 @@ export const appRouter = router({
         mimeType: z.string(),
         fileSize: z.number(),
         s3Key: z.string(),
+        // Client-side extracted telemetry (takes precedence over server-side EXIF extraction)
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        absoluteAltitude: z.number().optional(),
+        relativeAltitude: z.number().optional(),
+        gimbalPitch: z.number().optional(),
+        capturedAt: z.date().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user has access to project
@@ -1116,27 +1123,39 @@ export const appRouter = router({
         // Get the S3 URL for the uploaded file
         const { url: fileUrl } = await storageGet(input.s3Key);
 
-        // Extract metadata from the uploaded file
+        // Use client-side extracted telemetry if available, otherwise fall back to server-side EXIF extraction
         let exifData = {
-          latitude: null as number | null,
-          longitude: null as number | null,
-          altitude: null as number | null,
-          capturedAt: null as Date | null,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          altitude: input.absoluteAltitude ?? null,
+          capturedAt: input.capturedAt ?? null,
           cameraMake: null as string | null,
           cameraModel: null as string | null,
         };
 
-        // For images, try to extract EXIF data from S3
-        if (input.mimeType.startsWith("image/")) {
+        // If client didn't provide GPS data, try to extract EXIF data from S3
+        if (!input.latitude && !input.longitude && input.mimeType.startsWith("image/")) {
+          console.log(`[Photo Upload] No client-side telemetry provided, attempting server-side EXIF extraction`);
           try {
             const response = await fetch(fileUrl);
             const arrayBuffer = await response.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
-            exifData = await extractExifData(buffer);
+            const serverExifData = await extractExifData(buffer);
+            // Merge server-extracted data with client data (client takes precedence)
+            exifData = {
+              latitude: exifData.latitude ?? serverExifData.latitude,
+              longitude: exifData.longitude ?? serverExifData.longitude,
+              altitude: exifData.altitude ?? serverExifData.altitude,
+              capturedAt: exifData.capturedAt ?? serverExifData.capturedAt,
+              cameraMake: serverExifData.cameraMake,
+              cameraModel: serverExifData.cameraModel,
+            };
           } catch (error) {
             console.error("[Photo Upload] Failed to extract EXIF:", error);
             // Continue without EXIF data
           }
+        } else if (input.latitude && input.longitude) {
+          console.log(`[Photo Upload] Using client-side telemetry: GPS (${input.latitude.toFixed(6)}, ${input.longitude.toFixed(6)}), Alt: ${input.absoluteAltitude}m`);
         }
 
         // Generate thumbnail for images

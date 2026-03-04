@@ -1564,3 +1564,14 @@
 - [x] Verify photo integrity after combining chunks
 - [ ] Test with JPEG drone photos (current test uses WebP format)
 - [ ] Verify metadata preservation end-to-end with JPEG photos
+
+
+## EXIF/Telemetry Extraction (Client-Side) - NEW
+- [ ] Install exifr library for client-side EXIF extraction
+- [ ] Create client/src/lib/exifExtraction.ts utility
+- [ ] Extract GPS, altitude, gimbal pitch, and timestamp on file selection
+- [ ] Modify MediaUploadDialog to extract telemetry before upload
+- [ ] Update tRPC mutation to accept telemetry data
+- [ ] Store extracted telemetry in database
+- [ ] Test with real DJI JPEG photos
+- [ ] Verify GPS data persists despite file format conversion

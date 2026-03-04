@@ -68,6 +68,10 @@ router.post("/photo-upload/chunk", async (req: Request, res: Response) => {
     const data = ChunkUploadRequest.parse(req.body);
     const { projectId, filename, fileSize, chunkIndex, totalChunks, uploadId: clientUploadId, chunk: base64Chunk } = data;
 
+    if (chunkIndex === 0) {
+      console.log(`[Photo Upload DEBUG] Chunk upload started: filename=${filename}, fileSize=${fileSize}`);
+    }
+
     if (!base64Chunk) {
       return res.status(400).json({ error: "Missing chunk data" });
     }
@@ -128,6 +132,7 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
   try {
     const data = FinalizeUploadRequest.parse(req.body);
     const { projectId, uploadId, filename, fileSize, mimeType } = data;
+    console.log(`[Photo Upload DEBUG] Finalize request: filename=${filename}, mimeType=${mimeType}, fileSize=${fileSize}`);
 
     const session = uploadSessions.get(uploadId);
     if (!session) {
@@ -182,14 +187,16 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
 
     // Upload the final combined image to S3
     const finalS3Key = `projects/${projectId}/photos/${uploadId}/final`;
+    console.log(`[Photo Upload DEBUG] Uploading final image with mimeType=${mimeType}`);
     const { url: finalUrl } = await storagePut(finalS3Key, finalBuffer, mimeType);
-    console.log(`[Photo Upload] Final image uploaded to S3: ${finalS3Key}`);
+    console.log(`[Photo Upload] Final image uploaded to S3: ${finalS3Key}, mimeType=${mimeType}`);
 
     // Extract metadata from the final image
     let metadata = null;
     try {
+      console.log(`[Photo Upload DEBUG] Extracting metadata from buffer: ${finalBuffer.length} bytes, mimeType=${mimeType}`);
       metadata = await extractImageMetadata(finalBuffer);
-      console.log(`[Photo Upload] Metadata extracted:`, metadata);
+      console.log(`[Photo Upload DEBUG] Metadata extracted:`, metadata);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.warn(`[Photo Upload] Warning: Failed to extract metadata: ${msg}`);
@@ -199,6 +206,7 @@ router.post("/photo-upload/finalize", async (req: Request, res: Response) => {
     // Clean up session
     uploadSessions.delete(uploadId);
 
+    console.log(`[Photo Upload DEBUG] Finalize response: s3Key=${finalS3Key}, mimeType=${mimeType}`);
     res.json({
       uploadId,
       filename,

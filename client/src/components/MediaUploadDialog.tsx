@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import * as tus from "tus-js-client";
 import { compressImage, needsCompression, exceedsLimit, CLOUDINARY_MAX_SIZE } from "@/lib/compression";
 import { uploadPhotoToS3, UploadProgress } from "@/lib/photoUpload";
+import { extractDroneTelemetry, DroneTelementry } from "@/lib/exifExtraction";
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -56,6 +57,7 @@ interface FileToUpload {
   uploadId?: string; // For resumable uploads
   chunksUploaded?: number; // Track which chunks have been uploaded
   isH265?: boolean; // Flag for H.265/HEVC videos that may have playback issues
+  telemetry?: any; // Extracted EXIF/XMP drone telemetry (GPS, altitude, etc.)
 }
 
 // Persisted upload state for resumable uploads
@@ -364,7 +366,18 @@ export function MediaUploadDialog({
     const filesToAdd: FileToUpload[] = [];
     
     for (let file of Array.from(newFiles)) {
+      console.log(`[Upload DEBUG] File selected: name=${file.name}, type=${file.type}, size=${file.size} bytes`);
       const error = validateFile(file);
+      
+      // Extract drone telemetry immediately (before any format conversion)
+      let telemetry: DroneTelementry | undefined = undefined;
+      if (file.type.startsWith("image/")) {
+        console.log(`[Upload] Extracting telemetry from: ${file.name}`);
+        telemetry = await extractDroneTelemetry(file);
+        if (telemetry.latitude && telemetry.longitude) {
+          console.log(`[Upload] Telemetry extracted: GPS (${telemetry.latitude.toFixed(6)}, ${telemetry.longitude.toFixed(6)}), Alt: ${telemetry.absoluteAltitude}m`);
+        }
+      }
       
       // NOTE: Do NOT compress images - preserve EXIF/GPS metadata for mapping accuracy
       // Images uploaded directly to S3 in original HD format
@@ -386,6 +399,7 @@ export function MediaUploadDialog({
         status: finalError ? "error" : "pending",
         progress: 0,
         error: finalError || undefined,
+        telemetry,
       };
       
       // Check for H.265 codec in video files
@@ -730,6 +744,7 @@ export function MediaUploadDialog({
     
     try {
       // Upload photo directly to S3 with chunking
+      console.log(`[Upload DEBUG] Starting photo upload: name=${file.name}, type=${file.type}, size=${file.size}`);
       const result = await uploadPhotoToS3(
         projectId,
         file,
@@ -752,6 +767,7 @@ export function MediaUploadDialog({
       );
 
       // Finalize the upload
+      console.log(`[Upload DEBUG] Finalizing photo: name=${file.name}, type=${file.type}, s3Key=${result.s3Key}`);
       await finalizePhotoUploadMutation.mutateAsync({
         uploadId: result.uploadId,
         projectId,
@@ -761,6 +777,7 @@ export function MediaUploadDialog({
         fileSize: file.size,
         s3Key: result.s3Key,
       });
+      console.log(`[Upload DEBUG] Finalize complete`);
 
       // Mark as success
       setFiles((prev) =>
@@ -769,10 +786,13 @@ export function MediaUploadDialog({
         )
       );
 
+      console.log(`[Upload DEBUG] Upload success for: ${file.name}`);
       toast.success(`${file.name} uploaded successfully with metadata preserved`);
     } catch (error) {
       console.error("[Photo Upload] Error:", error);
+      console.log(`[Upload DEBUG] Upload failed for: ${file.name}, error:`, error);
       const errorMessage = error instanceof Error ? error.message : "Upload failed";
+      console.log(`[Upload DEBUG] Setting error status: ${errorMessage}`);
       setFiles((prev) =>
         prev.map((f, idx) =>
           idx === index ? { ...f, status: "error", error: errorMessage } : f
@@ -782,6 +802,7 @@ export function MediaUploadDialog({
     }
   };
 
+  // Upload photo using chunked upload (for large files)
   // Upload video using TUS protocol for better reliability
   const uploadVideoWithTus = async (
     fileItem: FileToUpload,
