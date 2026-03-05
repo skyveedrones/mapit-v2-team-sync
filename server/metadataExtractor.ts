@@ -49,11 +49,12 @@ export async function extractImageMetadata(
     // Use exifr to parse EXIF data with explicit GPS handling
     // multiSegment: true enables parsing of multi-segment JPEG files (common in drone photos)
     // xmp: true enables XMP metadata parsing for drone-specific data
+    // CRITICAL: Include GPSLatitudeRef and GPSLongitudeRef to correctly apply hemisphere signs
     const data = await exifr.parse(imageBuffer, {
       gps: true,
       xmp: true,
       multiSegment: true,
-      pick: ['latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'RelativeAltitude', 'CreateDate', 'Make', 'Model', 'Orientation', 'PixelXDimension', 'PixelYDimension', 'FocalLength', 'FNumber', 'ExposureTime', 'ISOSpeedRatings']
+      pick: ['latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSLatitudeRef', 'GPSLongitudeRef', 'GPSAltitude', 'RelativeAltitude', 'CreateDate', 'Make', 'Model', 'Orientation', 'PixelXDimension', 'PixelYDimension', 'FocalLength', 'FNumber', 'ExposureTime', 'ISOSpeedRatings']
     });
 
     if (!data) {
@@ -76,28 +77,42 @@ export async function extractImageMetadata(
     if (data.Orientation) metadata.orientation = Number(data.Orientation);
 
     // Extract GPS data with validation and XMP fallback
-    // Check standard GPS fields first, then fallback to XMP fields
-    const lat = data.latitude ?? data.GPSLatitude ?? null;
-    const lng = data.longitude ?? data.GPSLongitude ?? null;
+    // 1. Try exifr's automatically formatted signed decimals first
+    let finalLat = data.latitude ? parseFloat(data.latitude.toString()) : null;
+    let finalLng = data.longitude ? parseFloat(data.longitude.toString()) : null;
     
-    // Convert to float and validate
-    const finalLat = lat ? parseFloat(lat.toString()) : null;
-    const finalLng = lng ? parseFloat(lng.toString()) : null;
+    // 2. If falling back to raw GPS tags, manually apply the negative sign for South/West
+    if (finalLat === null && data?.GPSLatitude !== undefined) {
+      finalLat = parseFloat(data.GPSLatitude.toString());
+      // South is negative
+      if (data?.GPSLatitudeRef === 'S') finalLat = finalLat * -1;
+    }
+    
+    if (finalLng === null && data?.GPSLongitude !== undefined) {
+      finalLng = parseFloat(data.GPSLongitude.toString());
+      // West is negative
+      if (data?.GPSLongitudeRef === 'W') finalLng = finalLng * -1;
+    }
     
     // Validate coordinate ranges and reject zero/invalid values
     const isValidLat = finalLat !== null && finalLat !== 0 && Math.abs(finalLat) <= 90;
     const isValidLng = finalLng !== null && finalLng !== 0 && Math.abs(finalLng) <= 180;
     
-    if (isValidLat) {
+    if (isValidLat && finalLat !== null) {
       metadata.gpsLatitude = finalLat;
     } else if (finalLat !== null) {
       console.warn(`[Metadata] Invalid latitude value: ${finalLat} (outside valid range)`);
     }
     
-    if (isValidLng) {
+    if (isValidLng && finalLng !== null) {
       metadata.gpsLongitude = finalLng;
     } else if (finalLng !== null) {
       console.warn(`[Metadata] Invalid longitude value: ${finalLng} (outside valid range)`);
+    }
+    
+    // Log hemisphere information for debugging
+    if (data?.GPSLatitudeRef || data?.GPSLongitudeRef) {
+      console.log(`[Metadata] GPS Hemisphere: Lat=${data?.GPSLatitudeRef || 'N'}, Lng=${data?.GPSLongitudeRef || 'E'}`);
     }
 
     // Extract altitude with fallback to RelativeAltitude

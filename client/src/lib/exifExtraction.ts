@@ -40,6 +40,7 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     // Parse EXIF, XMP, and IPTC data from the file
     // multiSegment: true enables parsing of multi-segment JPEG files (common in drone photos)
     // Aggressive DJI/Drone XMP data capture for maximum metadata preservation
+    // CRITICAL: Include GPSLatitudeRef and GPSLongitudeRef to correctly apply hemisphere signs
     const data = await exifr.parse(file, {
       gps: true,
       xmp: true,
@@ -47,7 +48,7 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
       multiSegment: true,
       // Specifically pick these for DJI/Drone support
       pick: [
-        'latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 
+        'latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSLatitudeRef', 'GPSLongitudeRef',
         'RelativeAltitude', 'GPSAltitude', 'GimbalPitchDegree'
       ],
     });
@@ -55,14 +56,23 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     console.log(`[EXIF] Raw extracted data:`, data);
 
     // Extract GPS coordinates with XMP fallback
-    // Check standard GPS fields first, then fallback to XMP fields
-    // This matches the server-side extraction logic for consistency
-    const lat = data?.latitude ?? data?.GPSLatitude ?? null;
-    const lng = data?.longitude ?? data?.GPSLongitude ?? null;
+    // 1. Try exifr's automatically formatted signed decimals first
+    let latitude = data?.latitude ? parseFloat(data.latitude.toString()) : null;
+    let longitude = data?.longitude ? parseFloat(data.longitude.toString()) : null;
     
-    // Convert to float and validate
-    let latitude = lat ? parseFloat(lat.toString()) : null;
-    let longitude = lng ? parseFloat(lng.toString()) : null;
+    // 2. If falling back to raw GPS tags, manually apply the negative sign for South/West
+    // This matches the server-side extraction logic for consistency
+    if (latitude === null && data?.GPSLatitude !== undefined) {
+      latitude = parseFloat(data.GPSLatitude.toString());
+      // South is negative
+      if (data?.GPSLatitudeRef === 'S') latitude = latitude * -1;
+    }
+    
+    if (longitude === null && data?.GPSLongitude !== undefined) {
+      longitude = parseFloat(data.GPSLongitude.toString());
+      // West is negative
+      if (data?.GPSLongitudeRef === 'W') longitude = longitude * -1;
+    }
 
     // Validate coordinate ranges and reject zero/invalid values
     const isValidLat = latitude !== null && latitude !== 0 && Math.abs(latitude) <= 90;
@@ -106,6 +116,8 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     console.log(`[EXIF] Extracted telemetry:`, {
       latitude: result.latitude,
       longitude: result.longitude,
+      latitudeRef: data?.GPSLatitudeRef || 'N',
+      longitudeRef: data?.GPSLongitudeRef || 'E',
       absoluteAltitude: result.absoluteAltitude,
       relativeAltitude: result.relativeAltitude,
       gimbalPitch: result.gimbalPitch,

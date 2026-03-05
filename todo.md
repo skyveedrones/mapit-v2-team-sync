@@ -1578,3 +1578,10 @@
 - [ ] Store extracted telemetry in database
 - [ ] Test with real DJI JPEG photos
 - [ ] Verify GPS data persists despite file format conversion
+
+## GPS Hemisphere Correction (Negative Signs)
+- [x] Update server/metadataExtractor.ts to include GPSLatitudeRef and GPSLongitudeRef tags
+- [x] Update client/src/lib/exifExtraction.ts to include GPSLatitudeRef and GPSLongitudeRef tags
+- [x] Implement fallback logic to apply negative signs for South/West hemispheres
+- [ ] Test with real DJI JPEG photos from Southern/Western hemispheres
+- [ ] Verify GPS coordinates display with correct signs on map
