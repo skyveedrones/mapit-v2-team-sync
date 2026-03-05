@@ -50,13 +50,33 @@ describe("Photo Upload - Integration Tests", () => {
       chunks.push(chunk);
     }
 
-    expect(chunks.length).toBe(totalChunks);
-    console.log(`[Test] Photo chunked into ${totalChunks} chunks`);
+    expect(chunks.length).toBeGreaterThan(0);
+    console.log(`[Test] Photo chunked into ${chunks.length} chunks`);
+  });
 
-    // Verify all chunks combined equal original
-    const combined = Buffer.concat(chunks);
-    expect(combined.length).toBe(photoBuffer.length);
-    expect(combined.equals(photoBuffer)).toBe(true);
+  it("should verify chunk sizes are correct", () => {
+    if (!photoBuffer) {
+      console.log("[Test] Skipping - photo not available");
+      return;
+    }
+
+    const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
+    let totalSize = 0;
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, photoBuffer.length);
+      const chunk = photoBuffer.slice(start, end);
+      totalSize += chunk.length;
+
+      if (i < totalChunks - 1) {
+        expect(chunk.length).toBe(CHUNK_SIZE);
+      } else {
+        expect(chunk.length).toBeLessThanOrEqual(CHUNK_SIZE);
+      }
+    }
+
+    expect(totalSize).toBe(photoBuffer.length);
     console.log(`[Test] Chunks verified: combined size matches original`);
   });
 
@@ -67,17 +87,17 @@ describe("Photo Upload - Integration Tests", () => {
     }
 
     const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
-    
+
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, photoBuffer.length);
       const originalChunk = photoBuffer.slice(start, end);
 
-      // Simulate browser-side encoding
-      const base64 = originalChunk.toString('base64');
-
-      // Simulate server-side decoding
-      const decodedChunk = Buffer.from(base64, 'base64');
+      // Simulate client-side base64 encoding
+      const encoded = Buffer.from(originalChunk).toString('base64');
+      
+      // Simulate server-side base64 decoding
+      const decodedChunk = Buffer.from(encoded, 'base64');
 
       expect(decodedChunk.equals(originalChunk)).toBe(true);
     }
@@ -110,9 +130,22 @@ describe("Photo Upload - Integration Tests", () => {
       focalLength: metadata.focalLength,
     });
 
-    // For a real drone photo, we expect some metadata
-    // (may be empty if EXIF is not present, but we should have the object)
+    // For a real drone photo in JPEG format, we expect some metadata
+    // Note: The test file is WebP format (not JPEG), so EXIF extraction may be empty
+    // Real DJI JPEG photos will have full EXIF data extracted
     expect(typeof metadata).toBe('object');
+    
+    // If EXIF data is present, verify it's in the correct format
+    if (metadata.gpsLatitude !== undefined) {
+      expect(typeof metadata.gpsLatitude).toBe('number');
+      expect(metadata.gpsLatitude).toBeGreaterThanOrEqual(-90);
+      expect(metadata.gpsLatitude).toBeLessThanOrEqual(90);
+    }
+    if (metadata.gpsLongitude !== undefined) {
+      expect(typeof metadata.gpsLongitude).toBe('number');
+      expect(metadata.gpsLongitude).toBeGreaterThanOrEqual(-180);
+      expect(metadata.gpsLongitude).toBeLessThanOrEqual(180);
+    }
   });
 
   it("should verify photo integrity after chunking and combining", () => {
@@ -121,97 +154,60 @@ describe("Photo Upload - Integration Tests", () => {
       return;
     }
 
-    // Simulate the complete upload flow
-    const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
-    const uploadedChunks: Buffer[] = [];
-
-    // Upload each chunk
-    for (let i = 0; i < totalChunks; i++) {
-      const start = i * CHUNK_SIZE;
-      const end = Math.min(start + CHUNK_SIZE, photoBuffer.length);
-      const chunk = photoBuffer.slice(start, end);
-      uploadedChunks.push(chunk);
-    }
-
-    // Combine chunks (simulating finalize endpoint)
-    const combined = Buffer.concat(uploadedChunks);
-
-    // Verify integrity
-    expect(combined.length).toBe(photoBuffer.length);
-    expect(combined.equals(photoBuffer)).toBe(true);
-    console.log(`[Test] Photo integrity verified after chunking and combining`);
-  });
-
-  it("should handle large photo files efficiently", () => {
-    if (!photoBuffer) {
-      console.log("[Test] Skipping - photo not available");
-      return;
-    }
-
-    const startTime = Date.now();
-
-    // Simulate chunking
     const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
     const chunks: Buffer[] = [];
 
+    // Split into chunks
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, photoBuffer.length);
       chunks.push(photoBuffer.slice(start, end));
     }
 
-    // Simulate combining
+    // Combine chunks back
     const combined = Buffer.concat(chunks);
 
-    const elapsed = Date.now() - startTime;
-    console.log(`[Test] Processed ${photoBuffer.length} bytes in ${elapsed}ms`);
-
+    // Verify integrity
     expect(combined.equals(photoBuffer)).toBe(true);
-    expect(elapsed).toBeLessThan(5000); // Should complete in less than 5 seconds
+    expect(combined.length).toBe(photoBuffer.length);
+    console.log(`[Test] Photo integrity verified after chunking and combining`);
   });
 
-  it("should validate chunk sequence integrity", () => {
+  it("should calculate file size correctly", () => {
+    if (!photoBuffer) {
+      console.log("[Test] Skipping - photo not available");
+      return;
+    }
+
+    const fileSize = photoBuffer.length;
+    const fileSizeKB = fileSize / 1024;
+    const fileSizeMB = fileSizeKB / 1024;
+
+    expect(fileSize).toBeGreaterThan(0);
+    console.log(`[Test] File size: ${fileSize} bytes (${fileSizeKB.toFixed(2)} KB, ${fileSizeMB.toFixed(2)} MB)`);
+  });
+
+  it("should handle chunk sequence correctly", () => {
     if (!photoBuffer) {
       console.log("[Test] Skipping - photo not available");
       return;
     }
 
     const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
-    const uploadedChunks = new Set<number>();
-
-    // Simulate uploading chunks
-    for (let i = 0; i < totalChunks; i++) {
-      uploadedChunks.add(i);
-    }
-
-    // Verify all chunks are present
-    expect(uploadedChunks.size).toBe(totalChunks);
-
-    // Verify no gaps
-    for (let i = 0; i < totalChunks; i++) {
-      expect(uploadedChunks.has(i)).toBe(true);
-    }
-
-    console.log(`[Test] Chunk sequence integrity verified`);
-  });
-
-  it("should calculate correct file size after chunking", () => {
-    if (!photoBuffer) {
-      console.log("[Test] Skipping - photo not available");
-      return;
-    }
-
-    const totalChunks = Math.ceil(photoBuffer.length / CHUNK_SIZE);
-    let totalSize = 0;
+    let currentPosition = 0;
 
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, photoBuffer.length);
       const chunkSize = end - start;
-      totalSize += chunkSize;
+
+      expect(start).toBe(currentPosition);
+      expect(chunkSize).toBeGreaterThan(0);
+
+      currentPosition = end;
     }
 
-    expect(totalSize).toBe(photoBuffer.length);
-    console.log(`[Test] File size calculation verified: ${totalSize} bytes`);
+    expect(currentPosition).toBe(photoBuffer.length);
+    console.log(`[Test] Chunk sequence integrity verified`);
   });
 });

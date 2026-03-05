@@ -47,9 +47,13 @@ export async function extractImageMetadata(
 ): Promise<ImageMetadata> {
   try {
     // Use exifr to parse EXIF data with explicit GPS handling
+    // multiSegment: true enables parsing of multi-segment JPEG files (common in drone photos)
+    // xmp: true enables XMP metadata parsing for drone-specific data
     const data = await exifr.parse(imageBuffer, {
       gps: true,
-      pick: ['latitude', 'longitude', 'GPSAltitude', 'CreateDate', 'Make', 'Model', 'Orientation', 'PixelXDimension', 'PixelYDimension', 'FocalLength', 'FNumber', 'ExposureTime', 'ISOSpeedRatings']
+      xmp: true,
+      multiSegment: true,
+      pick: ['latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'RelativeAltitude', 'CreateDate', 'Make', 'Model', 'Orientation', 'PixelXDimension', 'PixelYDimension', 'FocalLength', 'FNumber', 'ExposureTime', 'ISOSpeedRatings']
     });
 
     if (!data) {
@@ -71,30 +75,36 @@ export async function extractImageMetadata(
     }
     if (data.Orientation) metadata.orientation = Number(data.Orientation);
 
-    // Extract GPS data with validation
-    // exifr returns latitude/longitude as numbers directly
-    const lat = data.latitude ? Number(data.latitude) : null;
-    const lng = data.longitude ? Number(data.longitude) : null;
+    // Extract GPS data with validation and XMP fallback
+    // Check standard GPS fields first, then fallback to XMP fields
+    const lat = data.latitude ?? data.GPSLatitude ?? null;
+    const lng = data.longitude ?? data.GPSLongitude ?? null;
     
-    // Validate coordinate ranges to filter out garbage data
-    const isValidLat = lat !== null && lat >= -90 && lat <= 90;
-    const isValidLng = lng !== null && lng >= -180 && lng <= 180;
+    // Convert to float and validate
+    const finalLat = lat ? parseFloat(lat.toString()) : null;
+    const finalLng = lng ? parseFloat(lng.toString()) : null;
+    
+    // Validate coordinate ranges and reject zero/invalid values
+    const isValidLat = finalLat !== null && finalLat !== 0 && Math.abs(finalLat) <= 90;
+    const isValidLng = finalLng !== null && finalLng !== 0 && Math.abs(finalLng) <= 180;
     
     if (isValidLat) {
-      metadata.gpsLatitude = lat;
-    } else if (lat !== null) {
-      console.warn(`[Metadata] Invalid latitude value: ${lat} (outside -90 to 90 range)`);
+      metadata.gpsLatitude = finalLat;
+    } else if (finalLat !== null) {
+      console.warn(`[Metadata] Invalid latitude value: ${finalLat} (outside valid range)`);
     }
     
     if (isValidLng) {
-      metadata.gpsLongitude = lng;
-    } else if (lng !== null) {
-      console.warn(`[Metadata] Invalid longitude value: ${lng} (outside -180 to 180 range)`);
+      metadata.gpsLongitude = finalLng;
+    } else if (finalLng !== null) {
+      console.warn(`[Metadata] Invalid longitude value: ${finalLng} (outside valid range)`);
     }
 
-    // Extract altitude
+    // Extract altitude with fallback to RelativeAltitude
     if (data.GPSAltitude) {
       metadata.gpsAltitude = Number(data.GPSAltitude);
+    } else if (data.RelativeAltitude) {
+      metadata.gpsAltitude = Number(data.RelativeAltitude);
     }
 
     // Extract image dimensions

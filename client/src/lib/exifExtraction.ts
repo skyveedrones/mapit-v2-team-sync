@@ -38,54 +38,43 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     console.log(`[EXIF] Extracting telemetry from: ${file.name} (${file.type})`);
     
     // Parse EXIF, XMP, and IPTC data from the file
-    // Note: exifr returns GPS data as lowercase 'latitude' and 'longitude'
+    // multiSegment: true enables parsing of multi-segment JPEG files (common in drone photos)
+    // Aggressive DJI/Drone XMP data capture for maximum metadata preservation
     const data = await exifr.parse(file, {
       gps: true,
       xmp: true,
       iptc: true,
+      multiSegment: true,
+      // Specifically pick these for DJI/Drone support
       pick: [
-        'latitude',
-        'longitude',
-        'GPSAltitude',
-        'RelativeAltitude',
-        'GimbalPitchDegree',
-        'DateTimeOriginal',
-        'DateTime',
-        'Make',
-        'Model',
+        'latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 
+        'RelativeAltitude', 'GPSAltitude', 'GimbalPitchDegree'
       ],
     });
 
     console.log(`[EXIF] Raw extracted data:`, data);
 
-    // Extract GPS coordinates
-    // exifr may return GPS as object with lat/lon properties or as direct numbers
-    let latitude: number | null = null;
-    let longitude: number | null = null;
+    // Extract GPS coordinates with XMP fallback
+    // Check standard GPS fields first, then fallback to XMP fields
+    // This matches the server-side extraction logic for consistency
+    const lat = data?.latitude ?? data?.GPSLatitude ?? null;
+    const lng = data?.longitude ?? data?.GPSLongitude ?? null;
     
-    if (data?.latitude !== undefined && data?.latitude !== null) {
-      latitude = toNumber(data.latitude);
-    } else if (data?.GPSLatitude !== undefined && data?.GPSLatitude !== null) {
-      latitude = toNumber(data.GPSLatitude);
-    }
-    
-    if (data?.longitude !== undefined && data?.longitude !== null) {
-      longitude = toNumber(data.longitude);
-    } else if (data?.GPSLongitude !== undefined && data?.GPSLongitude !== null) {
-      longitude = toNumber(data.GPSLongitude);
-    }
+    // Convert to float and validate
+    let latitude = lat ? parseFloat(lat.toString()) : null;
+    let longitude = lng ? parseFloat(lng.toString()) : null;
 
-    // Validate coordinate ranges to filter out garbage data
-    const isValidLat = latitude !== null && latitude >= -90 && latitude <= 90;
-    const isValidLng = longitude !== null && longitude >= -180 && longitude <= 180;
+    // Validate coordinate ranges and reject zero/invalid values
+    const isValidLat = latitude !== null && latitude !== 0 && Math.abs(latitude) <= 90;
+    const isValidLng = longitude !== null && longitude !== 0 && Math.abs(longitude) <= 180;
     
     if (!isValidLat && latitude !== null) {
-      console.warn(`[EXIF] Invalid latitude: ${latitude} (outside -90 to 90)`);
+      console.warn(`[EXIF] Invalid latitude: ${latitude} (outside valid range)`);
       latitude = null;
     }
     
     if (!isValidLng && longitude !== null) {
-      console.warn(`[EXIF] Invalid longitude: ${longitude} (outside -180 to 180)`);
+      console.warn(`[EXIF] Invalid longitude: ${longitude} (outside valid range)`);
       longitude = null;
     }
 
