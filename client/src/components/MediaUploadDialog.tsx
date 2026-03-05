@@ -776,6 +776,12 @@ export function MediaUploadDialog({
         mimeType: file.type,
         fileSize: file.size,
         s3Key: result.s3Key,
+        latitude: fileItem.telemetry?.latitude,
+        longitude: fileItem.telemetry?.longitude,
+        absoluteAltitude: fileItem.telemetry?.absoluteAltitude,
+        relativeAltitude: fileItem.telemetry?.relativeAltitude,
+        gimbalPitch: fileItem.telemetry?.gimbalPitch,
+        capturedAt: fileItem.telemetry?.capturedAt,
       });
       console.log(`[Upload DEBUG] Finalize complete`);
 

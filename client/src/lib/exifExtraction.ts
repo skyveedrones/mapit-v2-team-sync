@@ -135,3 +135,21 @@ export function formatTelemetry(telemetry: DroneTelementry): string {
   
   return parts.join(' | ') || 'No telemetry data';
 }
+
+
+/**
+ * Debug helper: Extract ALL EXIF tags from a file for inspection
+ * Call this in browser console to see what tags are available
+ */
+export async function debugAllExifTags(file: File): Promise<any> {
+  try {
+    console.log('🔍 [DEBUG] Extracting ALL EXIF tags from:', file.name);
+    const allData = await exifr.parse(file);
+    console.log('🔍 [DEBUG] All EXIF tags found:', allData);
+    console.table(allData);
+    return allData;
+  } catch (error) {
+    console.error('❌ [DEBUG] Error extracting all EXIF tags:', error);
+    return null;
+  }
+}
