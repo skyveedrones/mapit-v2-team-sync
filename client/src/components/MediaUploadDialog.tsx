@@ -768,7 +768,9 @@ export function MediaUploadDialog({
 
       // Finalize the upload
       console.log(`[Upload DEBUG] Finalizing photo: name=${file.name}, type=${file.type}, s3Key=${result.s3Key}`);
-      await finalizePhotoUploadMutation.mutateAsync({
+      
+      // Filter out NaN and null values from telemetry before sending
+      const telemetryPayload: any = {
         uploadId: result.uploadId,
         projectId,
         flightId,
@@ -776,13 +778,30 @@ export function MediaUploadDialog({
         mimeType: file.type,
         fileSize: file.size,
         s3Key: result.s3Key,
-        latitude: fileItem.telemetry?.latitude,
-        longitude: fileItem.telemetry?.longitude,
-        absoluteAltitude: fileItem.telemetry?.absoluteAltitude,
-        relativeAltitude: fileItem.telemetry?.relativeAltitude,
-        gimbalPitch: fileItem.telemetry?.gimbalPitch,
-        capturedAt: fileItem.telemetry?.capturedAt,
-      });
+      };
+      
+      // Only include telemetry fields if they have valid numbers (not NaN, not null)
+      if (fileItem.telemetry?.latitude !== null && !isNaN(fileItem.telemetry?.latitude)) {
+        telemetryPayload.latitude = fileItem.telemetry.latitude;
+      }
+      if (fileItem.telemetry?.longitude !== null && !isNaN(fileItem.telemetry?.longitude)) {
+        telemetryPayload.longitude = fileItem.telemetry.longitude;
+      }
+      if (fileItem.telemetry?.absoluteAltitude !== null && !isNaN(fileItem.telemetry?.absoluteAltitude)) {
+        telemetryPayload.absoluteAltitude = fileItem.telemetry.absoluteAltitude;
+      }
+      if (fileItem.telemetry?.relativeAltitude !== null && !isNaN(fileItem.telemetry?.relativeAltitude)) {
+        telemetryPayload.relativeAltitude = fileItem.telemetry.relativeAltitude;
+      }
+      if (fileItem.telemetry?.gimbalPitch !== null && !isNaN(fileItem.telemetry?.gimbalPitch)) {
+        telemetryPayload.gimbalPitch = fileItem.telemetry.gimbalPitch;
+      }
+      if (fileItem.telemetry?.capturedAt) {
+        telemetryPayload.capturedAt = fileItem.telemetry.capturedAt;
+      }
+      
+      console.log(`[Upload DEBUG] Telemetry payload:`, telemetryPayload);
+      await finalizePhotoUploadMutation.mutateAsync(telemetryPayload);
       console.log(`[Upload DEBUG] Finalize complete`);
 
       // Mark as success

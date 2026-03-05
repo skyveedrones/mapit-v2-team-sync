@@ -1572,11 +1572,9 @@
 - [x] Modify MediaUploadDialog to extract telemetry on file selection
 - [x] Update finalizePhotoUpload mutation to accept and store telemetry
 - [x] Fix: Telemetry was not being sent to server - now passing all fields
+- [x] Fix: GPS coordinates were NaN - improved number conversion and filtering
+- [x] Filter out NaN and null values before sending to server
 - [ ] Test with real JPEG drone photo and verify GPS appears in media gallery
-- [ ] Create client/src/lib/exifExtraction.ts utility
-- [ ] Extract GPS, altitude, gimbal pitch, and timestamp on file selection
-- [ ] Modify MediaUploadDialog to extract telemetry before upload
-- [ ] Update tRPC mutation to accept telemetry data
 - [ ] Store extracted telemetry in database
 - [ ] Test with real DJI JPEG photos
 - [ ] Verify GPS data persists despite file format conversion

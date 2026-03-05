@@ -17,6 +17,15 @@ export interface DroneTelementry {
 }
 
 /**
+ * Helper to safely convert values to numbers, filtering out NaN
+ */
+function toNumber(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  const num = typeof val === 'number' ? val : Number(val);
+  return isNaN(num) ? null : num;
+}
+
+/**
  * Extract drone telemetry from a file before any format conversion
  * Uses exifr to read EXIF, XMP, and IPTC data from images
  * 
@@ -49,15 +58,28 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     console.log(`[EXIF] Raw extracted data:`, data);
 
     // Extract GPS coordinates
-    const latitude = data?.GPSLatitude ?? null;
-    const longitude = data?.GPSLongitude ?? null;
+    // exifr may return GPS as object with lat/lon properties or as direct numbers
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    
+    if (data?.latitude !== undefined && data?.latitude !== null) {
+      latitude = toNumber(data.latitude);
+    } else if (data?.GPSLatitude !== undefined && data?.GPSLatitude !== null) {
+      latitude = toNumber(data.GPSLatitude);
+    }
+    
+    if (data?.longitude !== undefined && data?.longitude !== null) {
+      longitude = toNumber(data.longitude);
+    } else if (data?.GPSLongitude !== undefined && data?.GPSLongitude !== null) {
+      longitude = toNumber(data.GPSLongitude);
+    }
 
     // Extract altitude (absolute from GPS, relative from XMP)
-    const absoluteAltitude = data?.GPSAltitude ?? null;
-    const relativeAltitude = data?.RelativeAltitude ?? null;
+    const absoluteAltitude = toNumber(data?.GPSAltitude);
+    const relativeAltitude = toNumber(data?.RelativeAltitude);
 
     // Extract gimbal pitch (DJI-specific XMP tag)
-    const gimbalPitch = data?.GimbalPitchDegree ?? null;
+    const gimbalPitch = toNumber(data?.GimbalPitchDegree);
 
     // Extract capture timestamp
     let capturedAt: Date | null = null;
@@ -68,11 +90,11 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     }
 
     const result: DroneTelementry = {
-      latitude: latitude ? Number(latitude) : null,
-      longitude: longitude ? Number(longitude) : null,
-      absoluteAltitude: absoluteAltitude ? Number(absoluteAltitude) : null,
-      relativeAltitude: relativeAltitude ? Number(relativeAltitude) : null,
-      gimbalPitch: gimbalPitch ? Number(gimbalPitch) : null,
+      latitude,
+      longitude,
+      absoluteAltitude,
+      relativeAltitude,
+      gimbalPitch,
       capturedAt,
       rawMetadata: data || null,
     };
@@ -135,7 +157,6 @@ export function formatTelemetry(telemetry: DroneTelementry): string {
   
   return parts.join(' | ') || 'No telemetry data';
 }
-
 
 /**
  * Debug helper: Extract ALL EXIF tags from a file for inspection
