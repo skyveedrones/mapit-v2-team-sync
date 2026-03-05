@@ -4,7 +4,7 @@
  * Used for drone mapping accuracy and GIS reporting
  */
 
-import ExifParser from "exif-parser";
+import exifr from 'exifr';
 
 export interface ImageMetadata {
   // EXIF Data
@@ -40,87 +40,84 @@ export interface ImageMetadata {
 /**
  * Extract metadata from image buffer
  * Preserves all EXIF data without modification
+ * Uses exifr library for consistent GPS coordinate extraction
  */
 export async function extractImageMetadata(
   imageBuffer: Buffer
 ): Promise<ImageMetadata> {
   try {
-    const parser = ExifParser.create(imageBuffer);
-    const result = parser.parse();
-    
-    if (!result.tags) {
-      console.warn("[Metadata] No EXIF tags found in image");
+    // Use exifr to parse EXIF data with explicit GPS handling
+    const data = await exifr.parse(imageBuffer, {
+      gps: true,
+      pick: ['latitude', 'longitude', 'GPSAltitude', 'CreateDate', 'Make', 'Model', 'Orientation', 'PixelXDimension', 'PixelYDimension', 'FocalLength', 'FNumber', 'ExposureTime', 'ISOSpeedRatings']
+    });
+
+    if (!data) {
+      console.warn("[Metadata] No EXIF data found in image");
       return {};
     }
 
-    const tags = result.tags;
     const metadata: ImageMetadata = {};
 
     // Extract EXIF data
-    if (tags.Make) metadata.make = tags.Make;
-    if (tags.Model) metadata.model = tags.Model;
-    if (tags.DateTime) {
+    if (data.Make) metadata.make = String(data.Make);
+    if (data.Model) metadata.model = String(data.Model);
+    if (data.CreateDate) {
       try {
-        // EXIF DateTime format: "YYYY:MM:DD HH:MM:SS"
-        const dateStr = tags.DateTime as string;
-        metadata.dateTime = new Date(dateStr.replace(/:/g, "-").replace(" ", "T"));
+        metadata.dateTime = new Date(data.CreateDate);
       } catch (e) {
-        console.warn("[Metadata] Failed to parse DateTime:", tags.DateTime);
+        console.warn("[Metadata] Failed to parse CreateDate:", data.CreateDate);
       }
     }
-    if (tags.Orientation) metadata.orientation = tags.Orientation as number;
+    if (data.Orientation) metadata.orientation = Number(data.Orientation);
 
-    // Extract GPS data (critical for mapping)
-    if (tags.GPSLatitude && tags.GPSLatitudeRef) {
-      const gpsLat = Array.isArray(tags.GPSLatitude) ? tags.GPSLatitude : [tags.GPSLatitude];
-      metadata.gpsLatitude = convertGPSToDecimal(
-        gpsLat as unknown as number[],
-        tags.GPSLatitudeRef as string
-      );
+    // Extract GPS data with validation
+    // exifr returns latitude/longitude as numbers directly
+    const lat = data.latitude ? Number(data.latitude) : null;
+    const lng = data.longitude ? Number(data.longitude) : null;
+    
+    // Validate coordinate ranges to filter out garbage data
+    const isValidLat = lat !== null && lat >= -90 && lat <= 90;
+    const isValidLng = lng !== null && lng >= -180 && lng <= 180;
+    
+    if (isValidLat) {
+      metadata.gpsLatitude = lat;
+    } else if (lat !== null) {
+      console.warn(`[Metadata] Invalid latitude value: ${lat} (outside -90 to 90 range)`);
     }
-    if (tags.GPSLongitude && tags.GPSLongitudeRef) {
-      const gpsLon = Array.isArray(tags.GPSLongitude) ? tags.GPSLongitude : [tags.GPSLongitude];
-      metadata.gpsLongitude = convertGPSToDecimal(
-        gpsLon as unknown as number[],
-        tags.GPSLongitudeRef as string
-      );
+    
+    if (isValidLng) {
+      metadata.gpsLongitude = lng;
+    } else if (lng !== null) {
+      console.warn(`[Metadata] Invalid longitude value: ${lng} (outside -180 to 180 range)`);
     }
-    if (tags.GPSAltitude) {
-      metadata.gpsAltitude = tags.GPSAltitude as number;
-    }
-    if (tags.GPSDOP) {
-      // DOP (Dilution of Precision) indicates GPS accuracy
-      // Lower values = better accuracy
-      metadata.gpsAccuracy = tags.GPSDOP as number;
+
+    // Extract altitude
+    if (data.GPSAltitude) {
+      metadata.gpsAltitude = Number(data.GPSAltitude);
     }
 
     // Extract image dimensions
-    if (tags.PixelXDimension) metadata.width = tags.PixelXDimension as number;
-    if (tags.PixelYDimension) metadata.height = tags.PixelYDimension as number;
+    if (data.PixelXDimension) metadata.width = Number(data.PixelXDimension);
+    if (data.PixelYDimension) metadata.height = Number(data.PixelYDimension);
 
     // Extract camera settings
-    if (tags.FocalLength) metadata.focalLength = tags.FocalLength as number;
-    if (tags.FNumber) metadata.fNumber = tags.FNumber as number;
-    if (tags.ExposureTime) metadata.exposureTime = tags.ExposureTime as number;
-    if (tags.ISOSpeedRatings) metadata.iso = tags.ISOSpeedRatings as number;
+    if (data.FocalLength) metadata.focalLength = Number(data.FocalLength);
+    if (data.FNumber) metadata.fNumber = Number(data.FNumber);
+    if (data.ExposureTime) metadata.exposureTime = Number(data.ExposureTime);
+    if (data.ISOSpeedRatings) metadata.iso = Number(data.ISOSpeedRatings);
 
     // Detect drone model from make/model
     if (metadata.make && metadata.make.toLowerCase().includes("dji")) {
       metadata.droneModel = `${metadata.make} ${metadata.model || ""}`.trim();
     }
 
-    // Extract drone-specific metadata if available (varies by drone)
-    // DJI drones store additional data in MakerNote tags
-    if (tags.MakerNote) {
-      // MakerNote contains drone-specific data
-      // This would require drone-specific parsing libraries
-      console.log("[Metadata] MakerNote data available for drone-specific parsing");
-    }
-
     console.log("[Metadata] Successfully extracted metadata:", {
       make: metadata.make,
       model: metadata.model,
-      gps: metadata.gpsLatitude ? `${metadata.gpsLatitude}, ${metadata.gpsLongitude}` : "Not available",
+      gps: metadata.gpsLatitude && metadata.gpsLongitude 
+        ? `${metadata.gpsLatitude.toFixed(6)}, ${metadata.gpsLongitude.toFixed(6)}` 
+        : "Not available",
       altitude: metadata.gpsAltitude,
       dateTime: metadata.dateTime,
     });
@@ -132,32 +129,6 @@ export async function extractImageMetadata(
     // This ensures upload continues even if metadata extraction fails
     return {};
   }
-}
-
-/**
- * Convert GPS coordinates from DMS (Degrees, Minutes, Seconds) to decimal degrees
- * GPS data in EXIF is stored as: [degrees, minutes, seconds]
- */
-function convertGPSToDecimal(
-  gpsArray: number[],
-  ref: string
-): number {
-  if (!Array.isArray(gpsArray) || gpsArray.length < 3) {
-    return 0;
-  }
-
-  const degrees = gpsArray[0];
-  const minutes = gpsArray[1];
-  const seconds = gpsArray[2];
-
-  let decimal = degrees + minutes / 60 + seconds / 3600;
-
-  // Apply reference direction (N/S for latitude, E/W for longitude)
-  if (ref === "S" || ref === "W") {
-    decimal = -decimal;
-  }
-
-  return decimal;
 }
 
 /**

@@ -74,6 +74,20 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
       longitude = toNumber(data.GPSLongitude);
     }
 
+    // Validate coordinate ranges to filter out garbage data
+    const isValidLat = latitude !== null && latitude >= -90 && latitude <= 90;
+    const isValidLng = longitude !== null && longitude >= -180 && longitude <= 180;
+    
+    if (!isValidLat && latitude !== null) {
+      console.warn(`[EXIF] Invalid latitude: ${latitude} (outside -90 to 90)`);
+      latitude = null;
+    }
+    
+    if (!isValidLng && longitude !== null) {
+      console.warn(`[EXIF] Invalid longitude: ${longitude} (outside -180 to 180)`);
+      longitude = null;
+    }
+
     // Extract altitude (absolute from GPS, relative from XMP)
     const absoluteAltitude = toNumber(data?.GPSAltitude);
     const relativeAltitude = toNumber(data?.RelativeAltitude);
