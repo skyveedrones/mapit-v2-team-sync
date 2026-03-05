@@ -128,10 +128,10 @@ export const media = mysqlTable("media", {
   fileSize: int("fileSize").notNull(),
   /** Media type: photo or video */
   mediaType: mysqlEnum("mediaType", ["photo", "video"]).notNull(),
-  /** GPS latitude from EXIF data (nullable if not available) */
-  latitude: decimal("latitude", { precision: 10, scale: 7 }),
-  /** GPS longitude from EXIF data (nullable if not available) */
-  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  /** GPS latitude from EXIF data (nullable if not available) - high precision for accurate mapping */
+  latitude: decimal("latitude", { precision: 12, scale: 9 }),
+  /** GPS longitude from EXIF data (nullable if not available) - high precision for accurate mapping */
+  longitude: decimal("longitude", { precision: 12, scale: 9 }),
   /** Altitude in meters from EXIF data */
   altitude: decimal("altitude", { precision: 10, scale: 2 }),
   /** Date/time the photo/video was captured (from EXIF) */

@@ -38,13 +38,14 @@ export async function extractDroneTelemetry(file: File): Promise<DroneTelementry
     console.log(`[EXIF] Extracting telemetry from: ${file.name} (${file.type})`);
     
     // Parse EXIF, XMP, and IPTC data from the file
+    // Note: exifr returns GPS data as lowercase 'latitude' and 'longitude'
     const data = await exifr.parse(file, {
       gps: true,
       xmp: true,
       iptc: true,
       pick: [
-        'GPSLatitude',
-        'GPSLongitude',
+        'latitude',
+        'longitude',
         'GPSAltitude',
         'RelativeAltitude',
         'GimbalPitchDegree',

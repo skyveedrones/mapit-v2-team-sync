@@ -176,6 +176,13 @@
       "when": 1771346062250,
       "tag": "0024_tough_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1772717985499,
+      "tag": "0025_acoustic_kat_farrell",
+      "breakpoints": true
     }
   ]
 }
