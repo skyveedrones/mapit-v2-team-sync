@@ -168,6 +168,23 @@ function getMediaType(mimeType: string): "photo" | "video" {
   return "photo";
 }
 
+// Helper to normalize media GPS coordinates from strings to numbers
+// Drizzle ORM returns DECIMAL fields as strings, but the client expects numbers
+function normalizeMediaGPS(mediaItem: any) {
+  if (!mediaItem) return mediaItem;
+  return {
+    ...mediaItem,
+    latitude: mediaItem.latitude ? parseFloat(String(mediaItem.latitude)) : null,
+    longitude: mediaItem.longitude ? parseFloat(String(mediaItem.longitude)) : null,
+    altitude: mediaItem.altitude ? parseFloat(String(mediaItem.altitude)) : null,
+  };
+}
+
+// Helper to normalize an array of media items
+function normalizeMediaArrayGPS(mediaArray: any[] | null) {
+  return (mediaArray || []).map(normalizeMediaGPS);
+}
+
 // GPS Export format types
 type MediaWithGPS = {
   id: number;
@@ -752,18 +769,21 @@ export const appRouter = router({
         // Use the access-aware function to get media
         const media = await getProjectMediaWithAccess(input.projectId, ctx.user.id);
         
+        // Normalize GPS coordinates from strings to numbers
+        const normalizedMedia = normalizeMediaArrayGPS(media);
+        
         // Filter by flight if flightId provided
         if (input.flightId !== undefined) {
-          return (media || []).filter(m => m.flightId === input.flightId);
+          return (normalizedMedia || []).filter(m => m.flightId === input.flightId);
         }
         
         // By default, exclude media assigned to flights (show only unassigned media on project page)
         // Unless includeFlightMedia is explicitly set to true
         if (!input.includeFlightMedia) {
-          return (media || []).filter(m => m.flightId === null);
+          return (normalizedMedia || []).filter(m => m.flightId === null);
         }
         
-        return media || [];
+        return normalizedMedia || [];
       }),
 
     // Get a single media item
@@ -777,7 +797,7 @@ export const appRouter = router({
             message: "Media not found",
           });
         }
-        return mediaItem;
+        return normalizeMediaGPS(mediaItem);
       }),
 
     // Upload a chunk of a large file (chunked upload for videos)
@@ -1844,7 +1864,7 @@ export const appRouter = router({
           });
         }
 
-        return media;
+        return normalizeMediaArrayGPS(media);
       }),
 
     // Get all projects shared with the current user
