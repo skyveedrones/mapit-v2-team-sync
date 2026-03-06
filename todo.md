@@ -1593,3 +1593,11 @@
 - [x] Revert custom connection pool (TiDB requires SSL - drizzle handles this)
 - [ ] Test bulk upload with 95+ photos
 - [ ] Verify no "Too many database clients" errors with queue limiting
+
+## MediaUploadDialog UI Updates (Deferred)
+- [x] Adjust video max size to 10 MB (no compression needed) - Done in compression.ts
+- [x] Implement chunked video uploads (2 MB chunks like photos) - Already implemented
+- [ ] Remove Standard/High-Resolution upload tabs - Deferred for cleaner rewrite
+- [ ] Remove "images are automatically compressed" line - Deferred
+- [ ] Add user guidance messages for upload limits - Deferred
+- [ ] Test video chunked uploads - Ready for testing

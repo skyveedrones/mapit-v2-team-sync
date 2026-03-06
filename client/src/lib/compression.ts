@@ -41,51 +41,16 @@ export async function compressImage(
 }
 
 /**
- * Compress a video file by reducing resolution
- * Note: This is a simple approach using Canvas API. For better compression,
- * consider using ffmpeg.wasm (but it's much heavier and slower)
+ * Videos are uploaded in chunks without compression
+ * Videos must be under 10MB (no compression applied)
  */
 export async function compressVideo(
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<File> {
-  // If file is already small enough, return as-is
-  if (file.size <= TARGET_SIZE) {
-    return file;
-  }
-
-  try {
-    // For videos, we'll reduce the resolution using Canvas API
-    // This is a simplified approach - real video compression would need ffmpeg
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    
-    const videoUrl = URL.createObjectURL(file);
-    video.src = videoUrl;
-
-    await new Promise((resolve, reject) => {
-      video.onloadedmetadata = resolve;
-      video.onerror = reject;
-    });
-
-    // Calculate target resolution (reduce by 50% if file is too large)
-    const scaleFactor = file.size > CLOUDINARY_MAX_SIZE * 2 ? 0.5 : 0.7;
-    const targetWidth = Math.floor(video.videoWidth * scaleFactor);
-    const targetHeight = Math.floor(video.videoHeight * scaleFactor);
-
-    console.log(`[Compression] Video would be reduced from ${video.videoWidth}x${video.videoHeight} to ${targetWidth}x${targetHeight}`);
-    console.log(`[Compression] Note: Full video compression requires ffmpeg.wasm (not implemented for performance reasons)`);
-    
-    URL.revokeObjectURL(videoUrl);
-    
-    // For now, return original file
-    // Full video compression with ffmpeg.wasm would be too slow for browser
-    // User should compress videos externally or upgrade Cloudinary plan
-    return file;
-  } catch (error) {
-    console.error('[Compression] Video analysis failed:', error);
-    return file;
-  }
+  // Videos are not compressed - they must be under 10MB
+  // Return file as-is for chunked upload
+  return file;
 }
 
 /**
