@@ -1,6 +1,5 @@
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2";
 import { clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
@@ -8,52 +7,12 @@ import { notifyOwner } from './_core/notification';
 import { sendOwnerNotificationEmail } from './owner-notification-email';
 
 let _db: ReturnType<typeof drizzle> | null = null;
-let _pool: mysql.Pool | null = null;
-
-// Create optimized connection pool for bulk operations
-async function createOptimizedPool() {
-  if (_pool) return _pool;
-  
-  if (!process.env.DATABASE_URL) {
-    console.warn("[Database] DATABASE_URL not set");
-    return null;
-  }
-
-  try {
-    // Parse DATABASE_URL to extract connection parameters
-    const url = new URL(process.env.DATABASE_URL);
-    const poolConfig = {
-      host: url.hostname,
-      port: url.port ? parseInt(url.port) : 3306,
-      user: url.username,
-      password: url.password,
-      database: url.pathname.substring(1),
-      waitForConnections: true,
-      connectionLimit: 20, // Max concurrent connections (prevents "Too many database clients" error)
-      queueLimit: 0, // Unlimited queue - requests wait instead of failing
-      enableKeepAlive: true,
-      decimalNumbers: true,
-    };
-
-    _pool = mysql.createPool(poolConfig);
-    console.log("[Database] Connection pool created with limit:", poolConfig.connectionLimit);
-    return _pool;
-  } catch (error) {
-    console.error("[Database] Failed to create pool:", error);
-    return null;
-  }
-}
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const pool = await createOptimizedPool();
-      if (pool) {
-        _db = drizzle(pool);
-      } else {
-        _db = drizzle(process.env.DATABASE_URL);
-      }
+      _db = drizzle(process.env.DATABASE_URL);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
