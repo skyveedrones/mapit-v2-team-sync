@@ -61,7 +61,7 @@ export function MediaMetadataDisplay({
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 <a
-                  href={`https://maps.google.com/?q=${latitude},${longitude}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"

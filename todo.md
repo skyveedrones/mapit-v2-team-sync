@@ -1601,3 +1601,8 @@
 - [ ] Remove "images are automatically compressed" line - Deferred
 - [ ] Add user guidance messages for upload limits - Deferred
 - [ ] Test video chunked uploads - Ready for testing
+
+## Google Maps Pinpoint Fix
+- [x] Fix "View on Google Maps" link to use Search API format (api=1&query) for precise placement
+- [x] Ensure full decimal precision is preserved in coordinates
+- [ ] Test with multiple images to verify correct pinpoint placement
