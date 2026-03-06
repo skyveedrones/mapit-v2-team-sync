@@ -34,6 +34,7 @@ import * as tus from "tus-js-client";
 import { compressImage, needsCompression, exceedsLimit, CLOUDINARY_MAX_SIZE } from "@/lib/compression";
 import { uploadPhotoToS3, UploadProgress } from "@/lib/photoUpload";
 import { extractDroneTelemetry, DroneTelementry } from "@/lib/exifExtraction";
+import { getGlobalUploadQueue, UploadTask } from "@/lib/uploadQueue";
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -1030,110 +1031,136 @@ export function MediaUploadDialog({
       return;
     }
 
-    // Standard upload mode
+    // Standard upload mode - use queue to limit concurrent uploads
     const pendingFiles = files.filter((f) => f.status === "pending");
     if (pendingFiles.length === 0) return;
 
     setIsUploading(true);
     abortControllerRef.current = new AbortController();
 
+    // Get upload queue with max 5 concurrent uploads to prevent DB connection pool exhaustion
+    const uploadQueue = getGlobalUploadQueue({ maxConcurrent: 5 });
+    uploadQueue.reset(); // Clear any previous uploads
+
+    // Create upload tasks for all pending files
+    const uploadTasks: UploadTask<void>[] = [];
+    
     for (let i = 0; i < files.length; i++) {
       const fileItem = files[i];
       if (fileItem.status !== "pending") continue;
 
       const startTime = Date.now();
-      setFiles((prev) =>
-        prev.map((f, idx) =>
-          idx === i ? { 
-            ...f, 
-            status: "uploading" as const, 
-            progress: 0,
-            startTime,
-            bytesUploaded: 0
-          } : f
-        )
-      );
+      const fileIndex = i; // Capture index for closure
 
-      try {
-        // Use TUS for video uploads, direct-to-S3 for photos
-        const isVideo = fileItem.file.type.startsWith("video/");
-        const isPhoto = fileItem.file.type.startsWith("image/");
-        
-        if (isVideo) {
-          // Video: use TUS protocol for better reliability and resumability
-          await uploadVideoWithTus(fileItem, i, startTime);
-        } else if (isPhoto) {
-          // Photo: use direct-to-S3 chunked upload to preserve metadata
-          await uploadPhotoDirectToS3(fileItem, i, startTime);
-        } else {
-          // Other file types: use base64 upload
-          const base64Data = await fileToBase64WithProgress(
-            fileItem.file,
-            (loaded, total) => {
-              const elapsed = (Date.now() - startTime) / 1000;
-              const speed = loaded / elapsed;
-              const remaining = total - loaded;
-              const eta = remaining / speed;
-              const progress = (loaded / total) * 50; // First 50% is reading
-              
-              setFiles((prev) =>
-                prev.map((f, idx) =>
-                  idx === i ? { 
-                    ...f, 
-                    progress,
-                    uploadSpeed: speed,
-                    eta,
-                    bytesUploaded: loaded
-                  } : f
-                )
-              );
-            }
-          );
-
+      const task: UploadTask<void> = {
+        id: `${projectId}-${fileItem.file.name}-${i}`,
+        execute: async () => {
+          // Mark as uploading
           setFiles((prev) =>
-            prev.map((f, idx) => (idx === i ? { ...f, progress: 60 } : f))
+            prev.map((f, idx) =>
+              idx === fileIndex ? { 
+                ...f, 
+                status: "uploading" as const, 
+                progress: 0,
+                startTime,
+                bytesUploaded: 0
+              } : f
+            )
           );
 
-          await uploadMutation.mutateAsync({
-            projectId,
-            flightId,
-            filename: fileItem.file.name,
-            mimeType: fileItem.file.type,
-            fileData: base64Data,
-            thumbnailData: fileItem.thumbnail?.split(",")[1],
-          });
-        }
+          try {
+            // Use TUS for video uploads, direct-to-S3 for photos
+            const isVideo = fileItem.file.type.startsWith("video/");
+            const isPhoto = fileItem.file.type.startsWith("image/");
+            
+            if (isVideo) {
+              // Video: use TUS protocol for better reliability and resumability
+              await uploadVideoWithTus(fileItem, fileIndex, startTime);
+            } else if (isPhoto) {
+              // Photo: use direct-to-S3 chunked upload to preserve metadata
+              await uploadPhotoDirectToS3(fileItem, fileIndex, startTime);
+            } else {
+              // Other file types: use base64 upload
+              const base64Data = await fileToBase64WithProgress(
+                fileItem.file,
+                (loaded, total) => {
+                  const elapsed = (Date.now() - startTime) / 1000;
+                  const speed = loaded / elapsed;
+                  const remaining = total - loaded;
+                  const eta = remaining / speed;
+                  const progress = (loaded / total) * 50; // First 50% is reading
+                  
+                  setFiles((prev) =>
+                    prev.map((f, idx) =>
+                      idx === fileIndex ? { 
+                        ...f, 
+                        progress,
+                        uploadSpeed: speed,
+                        eta,
+                        bytesUploaded: loaded
+                      } : f
+                    )
+                  );
+                }
+              );
 
-        // Mark as success
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { 
-              ...f, 
-              status: "success" as const, 
-              progress: 100,
-              uploadSpeed: undefined,
-              eta: undefined
-            } : f
-          )
-        );
-      } catch (error) {
-        console.error("Upload error:", error);
-        // Mark as error (chunked uploads will be marked as paused instead)
-        setFiles((prev) =>
-          prev.map((f, idx) => {
-            if (idx !== i) return f;
-            // If it's already paused (from chunked upload), keep that state
-            if (f.status === "paused") return f;
-            return {
-              ...f,
-              status: "error" as const,
-              error: error instanceof Error ? error.message : "Upload failed",
-              uploadSpeed: undefined,
-              eta: undefined
-            };
-          })
-        );
-      }
+              setFiles((prev) =>
+                prev.map((f, idx) => (idx === fileIndex ? { ...f, progress: 60 } : f))
+              );
+
+              await uploadMutation.mutateAsync({
+                projectId,
+                flightId,
+                filename: fileItem.file.name,
+                mimeType: fileItem.file.type,
+                fileData: base64Data,
+                thumbnailData: fileItem.thumbnail?.split(",")[1],
+              });
+            }
+
+            // Mark as success
+            setFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === fileIndex ? { 
+                  ...f, 
+                  status: "success" as const, 
+                  progress: 100,
+                  uploadSpeed: undefined,
+                  eta: undefined
+                } : f
+              )
+            );
+          } catch (error) {
+            console.error("Upload error:", error);
+            // Mark as error (chunked uploads will be marked as paused instead)
+            setFiles((prev) =>
+              prev.map((f, idx) => {
+                if (idx !== fileIndex) return f;
+                // If it's already paused (from chunked upload), keep that state
+                if (f.status === "paused") return f;
+                return {
+                  ...f,
+                  status: "error" as const,
+                  error: error instanceof Error ? error.message : "Upload failed",
+                  uploadSpeed: undefined,
+                  eta: undefined
+                };
+              })
+            );
+            throw error; // Re-throw to mark task as failed in queue
+          }
+        },
+      };
+
+      uploadTasks.push(task);
+    }
+
+    // Execute all tasks with concurrency control
+    try {
+      await uploadQueue.addTasks(uploadTasks);
+    } catch (error) {
+      console.error("Queue error:", error);
+      // Errors are already handled per-task, just log the queue error
     }
 
     setIsUploading(false);

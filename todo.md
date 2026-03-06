@@ -1585,3 +1585,11 @@
 - [x] Implement fallback logic to apply negative signs for South/West hemispheres
 - [ ] Test with real DJI JPEG photos from Southern/Western hemispheres
 - [ ] Verify GPS coordinates display with correct signs on map
+
+## Bulk Upload Concurrency Control
+- [x] Install p-limit package for concurrency control
+- [x] Create upload queue utility with max 5 concurrent uploads
+- [x] Update MediaUploadDialog to use upload queue
+- [x] Optimize database connection pool configuration (connectionLimit: 20)
+- [ ] Test bulk upload with 95+ photos
+- [ ] Verify no "Too many database clients" errors
