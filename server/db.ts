@@ -1,5 +1,7 @@
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import type { Pool } from "mysql2/promise";
+import mysql from "mysql2/promise";
 import { clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
@@ -7,12 +9,56 @@ import { notifyOwner } from './_core/notification';
 import { sendOwnerNotificationEmail } from './owner-notification-email';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
+
+// Create connection pool with explicit SSL for TiDB
+async function createPool() {
+  if (_pool) return _pool;
+  
+  if (!process.env.DATABASE_URL) {
+    console.warn("[Database] DATABASE_URL not set");
+    return null;
+  }
+
+  try {
+    // Parse DATABASE_URL to extract connection parameters
+    const url = new URL(process.env.DATABASE_URL);
+    
+    // Create pool with explicit SSL configuration for TiDB
+    _pool = mysql.createPool({
+      host: url.hostname,
+      port: url.port ? parseInt(url.port) : 3306,
+      user: url.username,
+      password: url.password,
+      database: url.pathname.substring(1),
+      ssl: { rejectUnauthorized: true }, // TiDB requires SSL
+      waitForConnections: true,
+      connectionLimit: 5,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      decimalNumbers: true,
+    });
+    
+    console.log("[Database] Connection pool created with SSL enabled for TiDB");
+    return _pool;
+  } catch (error) {
+    console.error("[Database] Failed to create pool:", error);
+    return null;
+  }
+}
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const pool = await createPool();
+      if (pool) {
+        _db = drizzle(pool as any);
+        console.log("[Database] Drizzle initialized with SSL-enabled pool");
+      } else {
+        console.warn("[Database] Failed to create pool, attempting direct connection");
+        _db = drizzle(process.env.DATABASE_URL);
+      }
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
