@@ -1615,3 +1615,9 @@
 ## Mobile Spacing Optimization
 - [x] Remove blank space above MAPIT logo on mobile/tablet versions (pt-4 md:pt-8 lg:pt-16)
 - [x] Test responsive layout on small screens
+
+## Video Playback Fix
+- [x] Debug video not displaying or playing on mobile (empty file issue)
+- [x] Re-uploaded VideoProject.mp4 (100MB) to CDN
+- [x] Updated Home.tsx with correct video URL
+- [x] Verified video rendering and autoplay on dev server

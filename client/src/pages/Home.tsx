@@ -341,7 +341,7 @@ export default function Home() {
                   poster="/images/video-placeholder.jpg"
                 >
                   <source
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/MAPITHomePageVideo_7156e11d.mp4"
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
                     type="video/mp4"
                   />
                   Your browser does not support the video tag.
