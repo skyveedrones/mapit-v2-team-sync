@@ -297,8 +297,8 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        <div className="container relative z-10 text-center py-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-4 md:pt-8 lg:pt-16">
+        <div className="container relative z-10 text-center py-8 md:py-12 lg:py-20">
           <motion.div
             initial="hidden"
             animate="visible"

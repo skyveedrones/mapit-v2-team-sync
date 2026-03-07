@@ -1611,3 +1611,7 @@
 - [x] Add edge-to-edge video section to Home.tsx with CDN video URL
 - [x] Implement autoplay, loop, and mute functionality
 - [ ] Test video rendering on mobile and desktop browsers
+
+## Mobile Spacing Optimization
+- [x] Remove blank space above MAPIT logo on mobile/tablet versions (pt-4 md:pt-8 lg:pt-16)
+- [x] Test responsive layout on small screens
