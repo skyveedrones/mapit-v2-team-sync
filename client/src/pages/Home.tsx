@@ -375,24 +375,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Partner Logos - Seamless Transition */}
-        <section className="relative bg-black pt-0 pb-16">
-          {/* Thin glow line separator */}
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent mb-12" />
-          <div className="max-w-7xl mx-auto px-6">
-            <p className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-10">
-              Strategic Partners & Clients
-            </p>
-
-            <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20">
-              {/* Partner logos with hover effects */}
-              <img src="/logos/dji-white.png" alt="DJI" className="h-6 md:h-8 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
-              <img src="/logos/webodm-white.png" alt="WebODM" className="h-8 md:h-10 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
-              <img src="/logos/forney-white.png" alt="City of Forney" className="h-10 md:h-12 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
-              <img src="/logos/cloudify-white.png" alt="Cloudify" className="h-6 md:h-8 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
-            </div>
-          </div>
-        </section>
 
 
       </section>
