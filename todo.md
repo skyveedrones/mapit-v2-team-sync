@@ -1606,3 +1606,8 @@
 - [x] Fix "View on Google Maps" link to use Search API format (api=1&query) for precise placement
 - [x] Ensure full decimal precision is preserved in coordinates
 - [ ] Test with multiple images to verify correct pinpoint placement
+
+## Home Page Video Section
+- [x] Add edge-to-edge video section to Home.tsx with CDN video URL
+- [x] Implement autoplay, loop, and mute functionality
+- [ ] Test video rendering on mobile and desktop browsers

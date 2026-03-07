@@ -329,21 +329,32 @@ export default function Home() {
               project planning, monitoring, and decision-making.
             </motion.p>
 
-            <motion.div variants={fadeInUp} className="w-full max-w-3xl mx-auto mt-12">
-              <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-primary/30 shadow-2xl shadow-primary/20 bg-background">
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                  <div className="text-center">
-                    <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                      </svg>
-                    </div>
-                    <p className="text-muted-foreground text-lg font-semibold">Your Video Here</p>
-                    <p className="text-sm text-muted-foreground/70 mt-2">Upload your drone mapping demo or product walkthrough</p>
-                  </div>
+            {/* Edge-to-Edge Video Section */}
+            <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black mt-12">
+              <div className="relative aspect-video w-full">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                  poster="/images/video-placeholder.jpg"
+                >
+                  <source
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/MAPITHomePageVideo_7156e11d.mp4"
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video tag.
+                </video>
+
+                {/* Optional Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-center p-6">
+                  <h2 className="text-white text-3xl md:text-5xl font-bold drop-shadow-lg">
+                    Precision in Motion
+                  </h2>
                 </div>
               </div>
-            </motion.div>
+            </section>
           </motion.div>
         </div>
 
