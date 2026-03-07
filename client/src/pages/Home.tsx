@@ -32,7 +32,7 @@ import {
   Eye,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useLocation, Link } from "wouter";
 
@@ -109,6 +109,15 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [, setLocation] = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogin = () => {
     setLocation("/login");
@@ -121,8 +130,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-foreground">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      {/* Navigation - Scroll-triggered transition */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled 
+          ? 'bg-background/90 backdrop-blur-md border-b border-border' 
+          : 'bg-transparent border-b border-transparent'
+      }`}>
         <div className="container flex items-center justify-between h-16">
           <a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
             <img
@@ -306,11 +319,17 @@ export default function Home() {
             className="max-w-4xl mx-auto"
           >
             <motion.div variants={fadeInUp} className="mb-8">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="Mapit - Professional Drone Mapping and Project Management Platform"
-                className="h-56 md:h-72 lg:h-80 w-auto mx-auto"
-              />
+              {/* Glassmorphism Logo Container */}
+              <div className="relative inline-block">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-2xl" />
+                <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
+                  <img
+                    src="/images/mapit-logo-new.png"
+                    alt="Mapit - Professional Drone Mapping and Project Management Platform"
+                    className="h-56 md:h-72 lg:h-80 w-auto mx-auto drop-shadow-lg"
+                  />
+                </div>
+              </div>
             </motion.div>
 
 
@@ -318,34 +337,46 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Edge-to-Edge Video Section */}
-        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black flex-1 h-96">
-          <div className="relative w-full h-full">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                  poster="/images/video-placeholder.jpg"
-                >
-                  <source
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
-                    type="video/mp4"
-                  />
-                  Your browser does not support the video tag.
-                </video>
+        {/* Edge-to-Edge Video Section - Robust Implementation */}
+        <section className="relative w-full overflow-hidden bg-black aspect-video max-h-[70vh] flex items-center justify-center" style={{
+          boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)'
+        }}>
+          <div className="absolute inset-0 w-full h-full">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              poster="/images/video-placeholder.jpg"
+            >
+              <source
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
 
-                {/* Overlay with Elevate Your Vision and Description */}
-                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center p-6">
-                  <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg mb-4" style={{ fontFamily: "var(--font-display)" }}>
-                    ELEVATE YOUR VISION
-                  </h1>
-                  <p className="text-gray-200 text-base md:text-lg lg:text-xl max-w-2xl drop-shadow-lg">
-                    Delivering precision drone mapping solutions that empower smarter
-                    project planning, monitoring, and decision-making.
-                  </p>
-                </div>
+            {/* Refined Overlay with Motion Animation */}
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-white text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-2xl mb-6 tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                ELEVATE YOUR <span className="text-primary">VISION</span>
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+                className="text-gray-100 text-lg md:text-xl max-w-2xl drop-shadow-lg leading-relaxed"
+              >
+                Delivering precision drone mapping solutions that empower <span className="font-semibold">smarter project planning</span>, monitoring, and decision-making.
+              </motion.p>
+            </div>
           </div>
         </section>
 
@@ -404,7 +435,7 @@ export default function Home() {
               <Link key={feature.title} href={feature.link}>
                 <motion.div
                   variants={fadeInUp}
-                  className="glow-card overflow-hidden cursor-pointer group h-full"
+                  className="glow-card overflow-hidden cursor-pointer group h-full transition-transform duration-300 hover:-translate-y-2"
                   onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const x = ((e.clientX - rect.left) / rect.width) * 100;
