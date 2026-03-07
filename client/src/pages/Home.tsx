@@ -318,14 +318,15 @@ export default function Home() {
         </div>
 
         {/* Video Section with CTA Buttons */}
-        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
+        <section className="relative w-full h-[70vh] flex flex-col overflow-hidden bg-black p-0 m-0 border-0 leading-[0]">
           {/* 1. THE VIDEO: Forced to cover every pixel */}
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover block m-0 p-0"
+            style={{ display: 'block', verticalAlign: 'middle' }}
           >
             <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4" type="video/mp4" />
           </video>
@@ -334,7 +335,7 @@ export default function Home() {
           {/* 3. THE TOP GRADIENT: Fades from black to clear for the Nav */}
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black via-black/60 to-transparent z-10" />
           {/* 4. THE CONTENT: Centered perfectly over the video */}
-          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
+          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6 leading-normal">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -371,7 +372,8 @@ export default function Home() {
               </button>
             </motion.div>
           </div>
-
+          {/* 5. THE BOTTOM GRADIENT: Smooth transition to next section */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent z-10" />
         </section>
 
 

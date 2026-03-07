@@ -1655,3 +1655,12 @@
 - [x] Enlarge navbar logo (h-12 md:h-14)
 - [x] Remove bottom gradient edge from video section
 - [x] Reduce bottom padding of video section (pb-0)
+
+## Pixel-Perfect Spacing Fixes
+- [x] Add flex flex-col to parent section
+- [x] Add leading-[0], p-0, m-0, border-0 to section
+- [x] Add block display and inline styles to video element
+- [x] Add verticalAlign: 'middle' inline style
+- [x] Add m-0 p-0 to video element
+- [x] Restore bottom gradient (h-24)
+- [x] Verify no spacing artifacts or gaps
