@@ -130,84 +130,100 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-foreground">
-      {/* Navigation - Scroll-triggered transition */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-background/90 backdrop-blur-md border-b border-border' 
-          : 'bg-transparent border-b border-transparent'
+      {/* Minimalist Navigation - Scroll-triggered transition */}
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+        scrolled
+          ? 'bg-black/60 backdrop-blur-md border-b border-white/10'
+          : 'bg-black/20 backdrop-blur-md border-b border-white/10'
       }`}>
-        <div className="container flex items-center justify-between h-16">
-          <a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-            <img
-              src={theme === "dark" ? "/images/skyvee-logo-white.png" : "/images/skyvee-logo-dark.png"}
-              alt="SkyVee Drones"
-              className="h-10 w-auto"
-            />
-          </a>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Minimalist Logo Group with Hover Glow */}
+          <div className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="relative">
+              {/* Subtle glow behind logo on hover */}
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <img
+                src="/images/mapit-logo-new.png"
+                alt="MAPIT"
+                className="h-7 md:h-8 w-auto relative z-10 transition-transform group-hover:scale-105"
+              />
+            </div>
+            <span className="text-white font-bold tracking-tighter text-lg md:text-xl relative z-10">
+              MAPIT
+            </span>
+          </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Navigation - Clean and Minimal */}
+          <div className="flex items-center gap-6">
+            {/* Desktop Navigation Links */}
+            <div className="hidden sm:flex items-center gap-6">
+              <button
+                onClick={() => setLocation("/demo")}
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              >
+                Services
+              </button>
+              <button
+                onClick={() => setLocation("/pricing")}
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              >
+                Projects
+              </button>
+            </div>
+
+            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="text-foreground hover:text-primary"
+              className="text-gray-300 hover:text-white"
               onClick={toggleTheme}
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+
+            {/* CTA Button or Auth Buttons */}
             {isAuthenticated && user ? (
               <>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>{user.name || user.email || "User"}</span>
-                </div>
                 <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-300 hover:text-white"
                   onClick={() => setLocation("/dashboard")}
                 >
                   Dashboard
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground"
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleLogout}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
                   Logout
                 </Button>
               </>
             ) : (
               <>
                 <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary/10"
-                  onClick={() => setShowDownloadDialog(true)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download App
-                </Button>
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  size="sm"
+                  className="px-5 py-2 bg-primary text-primary-foreground rounded-full hover:shadow-[0_0_20px_rgba(20,225,20,0.4)] transition-all transform hover:scale-105 font-bold"
                   onClick={handleLogin}
                   disabled={loading}
                 >
-                  {loading ? "Loading..." : "Sign In"}
+                  {loading ? "Loading..." : "Get a Quote"}
                 </Button>
               </>
             )}
-          </div>
 
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </Button>
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="sm:hidden text-gray-300 hover:text-white"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X /> : <Menu />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -216,98 +232,77 @@ export default function Home() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border bg-background"
+            className="sm:hidden border-t border-white/10 bg-black/40 backdrop-blur-md"
           >
-            <div className="container py-4 flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                className="w-full text-foreground"
+            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3">
+              <button
                 onClick={() => {
-                  trackEvent('demo_button_click_homepage');
                   setLocation("/demo");
                   setMobileMenuOpen(false);
                 }}
+                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
               >
-                See Demo
-              </Button>
-              <Link href="/pricing">
-                <Button
-                  variant="ghost"
-                  className="w-full text-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Pricing
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                className="w-full text-foreground"
+                Services
+              </button>
+              <button
                 onClick={() => {
-                  setShowDownloadDialog(true);
+                  setLocation("/pricing");
                   setMobileMenuOpen(false);
                 }}
+                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Download App
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full text-foreground justify-start"
-                onClick={() => {
-                  toggleTheme?.();
-                  setMobileMenuOpen(false);
-                }} style={{paddingRight: '12px', paddingLeft: '12px'}}
-              >
-                {theme === 'dark' ? (
-                  <><Sun className="h-4 w-4 mr-2" /> Light Mode</>
-                ) : (
-                  <><Moon className="h-4 w-4 mr-2" /> Dark Mode</>
-                )}
-              </Button>
+                Projects
+              </button>
               {isAuthenticated && user ? (
                 <>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <div className="flex items-center gap-2 text-sm text-gray-300 py-2">
                     <User className="h-4 w-4" />
                     <span>{user.name || user.email || "User"}</span>
                   </div>
                   <Button
                     variant="outline"
+                    size="sm"
                     className="w-full border-primary/50 text-primary"
-                    onClick={() => setLocation("/dashboard")}
+                    onClick={() => {
+                      setLocation("/dashboard");
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     Dashboard
                   </Button>
                   <Button
                     variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={handleLogout}
+                    size="sm"
+                    className="w-full text-gray-300"
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    className="w-full border-primary/50 text-primary"
-                    onClick={() => setLocation("/dashboard")}
-                  >
-                    Client Portal
-                  </Button>
-                  <Button
-                    className="w-full bg-primary text-primary-foreground"
-                    onClick={handleLogin}
-                    disabled={loading}
-                  >
-                    {loading ? "Loading..." : "Login"}
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  className="w-full bg-primary text-primary-foreground rounded-full font-bold mt-2"
+                  onClick={() => {
+                    handleLogin();
+                    setMobileMenuOpen(false);
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : "Get a Quote"}
+                </Button>
               )}
             </div>
           </motion.div>
         )}
       </nav>
+
+      {/* Top Gradient Overlay for Readability */}
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
 
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-start overflow-hidden pt-0">
@@ -380,12 +375,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator - Hidden on small screens */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 hidden md:flex"
         >
           <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex justify-center">
             <motion.div
