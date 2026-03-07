@@ -313,21 +313,7 @@ export default function Home() {
               />
             </motion.div>
 
-            <motion.h1
-              variants={fadeInUp}
-              className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-6"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              ELEVATE YOUR VISION
-            </motion.h1>
 
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
-            >
-              Delivering precision drone mapping solutions that empower smarter
-              project planning, monitoring, and decision-making.
-            </motion.p>
 
           </motion.div>
         </div>
