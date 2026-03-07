@@ -1650,3 +1650,8 @@
 - [x] Add motion animations to headline, description, and buttons
 - [x] Reduce padding between sections (py-24 to py-16 for features)
 - [x] Verify responsive design on mobile/tablet/desktop
+
+## Visual Refinements
+- [x] Enlarge navbar logo (h-12 md:h-14)
+- [x] Remove bottom gradient edge from video section
+- [x] Reduce bottom padding of video section (pb-0)

@@ -145,7 +145,7 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
-                className="h-10 md:h-12 w-auto relative z-10 transition-transform group-hover:scale-105"
+                className="h-12 md:h-14 w-auto relative z-10 transition-transform group-hover:scale-105"
               />
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function Home() {
         </div>
 
         {/* Video Section with CTA Buttons */}
-        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black">
+        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
           {/* 1. THE VIDEO: Forced to cover every pixel */}
           <video
             autoPlay
@@ -371,8 +371,7 @@ export default function Home() {
               </button>
             </motion.div>
           </div>
-          {/* 5. THE BOTTOM GRADIENT: Smooth transition to the next section */}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent z-10" />
+
         </section>
 
 
