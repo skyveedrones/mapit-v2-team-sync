@@ -145,12 +145,9 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
-                className="h-7 md:h-8 w-auto relative z-10 transition-transform group-hover:scale-105"
+                className="h-10 md:h-12 w-auto relative z-10 transition-transform group-hover:scale-105"
               />
             </div>
-            <span className="text-white font-bold tracking-tighter text-lg md:text-xl relative z-10">
-              MAPIT
-            </span>
           </div>
 
           {/* Navigation - Clean and Minimal */}
@@ -313,19 +310,7 @@ export default function Home() {
             variants={staggerContainer}
             className="max-w-4xl mx-auto"
           >
-            <motion.div variants={fadeInUp} className="mb-8">
-              {/* Glassmorphism Logo Container */}
-              <div className="relative inline-block">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-2xl" />
-                <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
-                  <img
-                    src="/images/mapit-logo-new.png"
-                    alt="Mapit - Professional Drone Mapping and Project Management Platform"
-                    className="h-56 md:h-72 lg:h-80 w-auto mx-auto drop-shadow-lg"
-                  />
-                </div>
-              </div>
-            </motion.div>
+
 
 
 
@@ -352,8 +337,8 @@ export default function Home() {
               Your browser does not support the video tag.
             </video>
 
-            {/* Refined Overlay with Motion Animation */}
-            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
+            {/* Refined Overlay with Motion Animation - Moved Up */}
+            <div className="absolute inset-0 top-1/4 bg-black/40 flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

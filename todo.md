@@ -1637,3 +1637,7 @@
 - [x] Verify scroll-triggered navbar transitions still work
 - [x] Add gradient overlay for readability
 - [x] Implement mobile menu with proper styling
+- [x] Remove "MAPIT" text from navbar (logo only)
+- [x] Enlarge navbar logo (h-10 md:h-12)
+- [x] Delete glassmorphism hero logo container
+- [x] Move video overlay up for better positioning
