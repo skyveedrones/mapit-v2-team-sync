@@ -1621,3 +1621,10 @@
 - [x] Re-uploaded VideoProject.mp4 (100MB) to CDN
 - [x] Updated Home.tsx with correct video URL
 - [x] Verified video rendering and autoplay on dev server
+
+## Hero Section Full-Video Optimization
+- [x] Remove top padding above MAPIT logo (pt-0)
+- [x] Reduce MAPIT logo size (h-24 md:h-32 lg:h-40)
+- [x] Move video section up to fill remaining space (flex-1)
+- [x] Replace "Precision in Motion" with "Elevate Your Vision" overlay
+- [x] Test responsive layout - full video visible without scrollinghout scrolling on mobile/tablet/desktop

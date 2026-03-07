@@ -297,8 +297,8 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-4 md:pt-8 lg:pt-16">
-        <div className="container relative z-10 text-center py-8 md:py-12 lg:py-20">
+      <section className="relative h-screen flex flex-col items-center justify-start overflow-hidden pt-0">
+        <div className="relative z-10 text-center pt-2 md:pt-3 lg:pt-4 w-full">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -309,7 +309,7 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="Mapit - Professional Drone Mapping and Project Management Platform"
-                className="h-56 md:h-72 lg:h-80 w-auto mx-auto"
+                className="h-24 md:h-32 lg:h-40 w-auto mx-auto"
               />
             </motion.div>
 
@@ -330,8 +330,8 @@ export default function Home() {
             </motion.p>
 
             {/* Edge-to-Edge Video Section */}
-            <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black mt-12">
-              <div className="relative aspect-video w-full">
+            <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black mt-0 flex-1">
+              <div className="relative w-full h-full">
                 <video
                   autoPlay
                   loop
@@ -347,11 +347,15 @@ export default function Home() {
                   Your browser does not support the video tag.
                 </video>
 
-                {/* Optional Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-center p-6">
-                  <h2 className="text-white text-3xl md:text-5xl font-bold drop-shadow-lg">
-                    Precision in Motion
-                  </h2>
+                {/* Overlay with Elevate Your Vision and Description */}
+                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center p-6">
+                  <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg mb-4" style={{ fontFamily: "var(--font-display)" }}>
+                    ELEVATE YOUR VISION
+                  </h1>
+                  <p className="text-gray-200 text-base md:text-lg lg:text-xl max-w-2xl drop-shadow-lg">
+                    Delivering precision drone mapping solutions that empower smarter
+                    project planning, monitoring, and decision-making.
+                  </p>
                 </div>
               </div>
             </section>
