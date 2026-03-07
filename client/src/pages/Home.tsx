@@ -309,7 +309,7 @@ export default function Home() {
               <img
                 src="/images/mapit-logo-new.png"
                 alt="Mapit - Professional Drone Mapping and Project Management Platform"
-                className="h-24 md:h-32 lg:h-40 w-auto mx-auto"
+                className="h-56 md:h-72 lg:h-80 w-auto mx-auto"
               />
             </motion.div>
 
@@ -329,9 +329,12 @@ export default function Home() {
               project planning, monitoring, and decision-making.
             </motion.p>
 
-            {/* Edge-to-Edge Video Section */}
-            <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black mt-0 flex-1">
-              <div className="relative w-full h-full">
+          </motion.div>
+        </div>
+
+        {/* Edge-to-Edge Video Section */}
+        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] overflow-hidden bg-black flex-1 h-96">
+          <div className="relative w-full h-full">
                 <video
                   autoPlay
                   loop
@@ -357,10 +360,8 @@ export default function Home() {
                     project planning, monitoring, and decision-making.
                   </p>
                 </div>
-              </div>
-            </section>
-          </motion.div>
-        </div>
+          </div>
+        </section>
 
         {/* Scroll indicator */}
         <motion.div
