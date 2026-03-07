@@ -318,14 +318,14 @@ export default function Home() {
         </div>
 
         {/* Video Section with CTA Buttons */}
-        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
+        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black leading-[0]">
           {/* 1. THE VIDEO: Forced to cover every pixel */}
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover block"
           >
             <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4" type="video/mp4" />
           </video>
@@ -333,8 +333,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/50" />
           {/* 3. THE TOP GRADIENT: Fades from black to clear for the Nav */}
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black via-black/60 to-transparent z-10" />
-          {/* 4. THE CONTENT: Centered perfectly over the video */}
-          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
+          {/* 4. THE BOTTOM GRADIENT: Smooth transition to next section */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent z-10" />
+          {/* 5. THE CONTENT: Centered perfectly over the video */}
+          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6 leading-normal">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -371,7 +373,25 @@ export default function Home() {
               </button>
             </motion.div>
           </div>
+        </section>
 
+        {/* Partner Logos - Seamless Transition */}
+        <section className="relative bg-black pt-0 pb-16">
+          {/* Thin glow line separator */}
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent mb-12" />
+          <div className="max-w-7xl mx-auto px-6">
+            <p className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-10">
+              Strategic Partners & Clients
+            </p>
+
+            <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20">
+              {/* Partner logos with hover effects */}
+              <img src="/logos/dji-white.png" alt="DJI" className="h-6 md:h-8 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
+              <img src="/logos/webodm-white.png" alt="WebODM" className="h-8 md:h-10 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
+              <img src="/logos/forney-white.png" alt="City of Forney" className="h-10 md:h-12 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
+              <img src="/logos/cloudify-white.png" alt="Cloudify" className="h-6 md:h-8 opacity-40 hover:opacity-100 transition-all filter grayscale hover:grayscale-0" />
+            </div>
+          </div>
         </section>
 
 
