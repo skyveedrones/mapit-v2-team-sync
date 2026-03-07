@@ -317,68 +317,69 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Edge-to-Edge Video Section - Robust Implementation */}
-        <section className="relative w-full overflow-hidden bg-black aspect-video max-h-[70vh] flex items-center justify-center" style={{
-          boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)'
-        }}>
-          <div className="absolute inset-0 w-full h-full">
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              poster="/images/video-placeholder.jpg"
+        {/* Video Section with CTA Buttons */}
+        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black">
+          {/* 1. THE VIDEO: Forced to cover every pixel */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4" type="video/mp4" />
+          </video>
+          {/* 2. THE BASE OVERLAY: Uniform dark tint */}
+          <div className="absolute inset-0 bg-black/50" />
+          {/* 3. THE TOP GRADIENT: Fades from black to clear for the Nav */}
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black via-black/60 to-transparent z-10" />
+          {/* 4. THE CONTENT: Centered perfectly over the video */}
+          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4"
             >
-              <source
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
-                type="video/mp4"
-              />
-              Your browser does not support the video tag.
-            </video>
+              ELEVATE YOUR <span className="text-primary">VISION</span>
+            </motion.h1>
 
-            {/* Refined Overlay with Motion Animation - Moved Up */}
-            <div className="absolute inset-0 top-1/4 bg-black/40 flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="text-white text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-2xl mb-6 tracking-tight"
-                style={{ fontFamily: "var(--font-display)" }}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-gray-200 text-lg md:text-xl max-w-2xl mb-8 leading-relaxed"
+            >
+              Precise drone mapping and geospatial data for smarter project planning.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              <button
+                onClick={() => setLocation("/welcome")}
+                className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(20,225,20,0.3)]"
               >
-                ELEVATE YOUR <span className="text-primary">VISION</span>
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
-                className="text-gray-100 text-lg md:text-xl max-w-2xl drop-shadow-lg leading-relaxed"
+                Get Started
+              </button>
+              <button
+                onClick={() => setLocation("/demo")}
+                className="px-8 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-all"
               >
-                Delivering precision drone mapping solutions that empower <span className="font-semibold">smarter project planning</span>, monitoring, and decision-making.
-              </motion.p>
-            </div>
+                Learn More
+              </button>
+            </motion.div>
           </div>
+          {/* 5. THE BOTTOM GRADIENT: Smooth transition to the next section */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent z-10" />
         </section>
 
-        {/* Scroll indicator - Hidden on small screens */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 hidden md:flex"
-        >
-          <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex justify-center">
-            <motion.div
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1.5 h-3 bg-primary rounded-full mt-2"
-            />
-          </div>
-        </motion.div>
+
       </section>
 
       {/* Features Section */}
-      <section className="py-24 relative">
+      <section className="py-16 relative">
         <div className="absolute inset-0 topo-pattern" />
         <div className="container relative z-10">
           <motion.div

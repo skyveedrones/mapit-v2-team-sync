@@ -1641,3 +1641,12 @@
 - [x] Enlarge navbar logo (h-10 md:h-12)
 - [x] Delete glassmorphism hero logo container
 - [x] Move video overlay up for better positioning
+
+## Video Section Improvements
+- [x] Replace video section with improved implementation
+- [x] Add layered overlays (base dark tint, top gradient, bottom gradient)
+- [x] Add "Get Started" and "Learn More" CTA buttons
+- [x] Implement button click handlers (navigate to /welcome and /demo)
+- [x] Add motion animations to headline, description, and buttons
+- [x] Reduce padding between sections (py-24 to py-16 for features)
+- [x] Verify responsive design on mobile/tablet/desktop
