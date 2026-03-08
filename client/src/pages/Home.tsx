@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { AppDownloadDialog } from "@/components/AppDownloadDialog";
 import { trackEvent } from "@/lib/analytics";
 import { motion } from "framer-motion";
+import Features from "@/components/Features";
+import Footer from "@/components/Footer";
 import {
   Upload,
   Map,
@@ -320,7 +322,7 @@ export default function Home() {
         </div>
 
         {/* Video Section with CTA Buttons */}
-        <section className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
+        <section className="relative w-full pt-20 lg:pt-24 h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
           {/* 1. THE VIDEO: Forced to cover every pixel */}
           <video
             autoPlay
@@ -441,8 +443,11 @@ export default function Home() {
 
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 relative">
+      {/* Features Section - Using new component */}
+      <Features />
+
+      {/* Old Features Section - Removed */}
+      <section className="hidden py-16 relative">
         <div className="absolute inset-0 topo-pattern" />
         <div className="container relative z-10">
           <motion.div
@@ -580,23 +585,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="Mapit"
-                className="h-12 w-auto opacity-60"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 Mapit. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer - Using new component */}
+      <Footer />
 
       {/* Download Dialog */}
       {showDownloadDialog && (
