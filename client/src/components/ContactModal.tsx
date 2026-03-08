@@ -166,3 +166,4 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
 };
 
 export default ContactModal;
+export { ContactModal };

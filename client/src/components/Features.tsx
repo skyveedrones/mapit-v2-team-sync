@@ -41,7 +41,7 @@ const Features = () => {
   ];
 
   return (
-    <section className="bg-black pt-32 pb-24 px-6 relative z-10 border-t border-white/5">
+    <section className="bg-white dark:bg-black pt-24 pb-24 px-6 relative z-10 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
