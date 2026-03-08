@@ -1685,3 +1685,8 @@
 - [x] Update Footer component with location change (Dallas, TX)
 - [x] Verify responsive layout on all devices
 - [x] Test image fallback behavior
+
+## Bug Fixes
+- [ ] Restore hero card images from previous version
+- [x] Reduce padding on step cards section (py-24 → py-16)
+- [x] Verify spacing between sections
