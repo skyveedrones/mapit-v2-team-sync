@@ -450,13 +450,18 @@ export default function Home() {
 
       </section>
 
-      {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-black py-24 border-y border-white/5 z-20">
+      {/* SECTION 3: FEATURES */}
+      <section id="features" className="relative bg-black pt-16 pb-16 px-6 z-10 border-t border-white/5">
+        <Features />
+      </section>
+
+      {/* SECTION 4: UNIVERSAL COMPATIBILITY */}
+      <section className="relative bg-black py-16 border-y border-white/5 z-20">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
               Universal Integration
             </h2>
@@ -497,7 +502,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-20 flex justify-center">
+          <div className="mt-12 flex justify-center">
             <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="text-gray-400 text-sm font-medium">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
@@ -506,13 +511,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-black pt-16 pb-32 px-6 z-10 border-t border-white/5">
-        <Features />
-      </section>
-
       {/* Old Features Section - Removed */}
-      <section className="hidden py-16 relative">
+      <section className="hidden py-8 relative">
         <div className="absolute inset-0 topo-pattern" />
         <div className="container relative z-10">
           <motion.div
@@ -595,8 +595,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-12 relative overflow-hidden">
+      {/* SECTION 5: CTA - Ready to Map */}
+      <section className="py-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
