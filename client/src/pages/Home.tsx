@@ -385,55 +385,74 @@ export default function Home() {
 
         </section>
 
-        {/* --- HOW IT WORKS SECTION --- */}
+        {/* How It Works Section */}
         <section className="relative bg-black pt-24 pb-48 px-6 z-30">
-          <div className="max-w-6xl mx-auto">
-            
-            {/* Heading Area */}
+          {/* z-30 makes this higher than the video and the features below */}
+          <div className="max-w-6xl mx-auto relative">
+            {/* Branded Background "Wing" Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
             <div className="text-center mb-24 relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                From Flight to <span className="text-[#14E114]">Data</span> in Minutes
+                From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto text-lg">
                 The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
-
-            {/* THE CARDS - Force to Front with z-50 */}
+            {/* FORCE TO FRONT: z-50 on this grid container is the key */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-50">
-              
-              {/* Step 01 */}
-              <div className="group bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl hover:border-[#14E114]/50 transition-all duration-500 shadow-2xl">
-                <div className="text-[#14E114] font-bold text-xs tracking-widest mb-4 opacity-50 uppercase">Step 01</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Upload</h3>
-                <p className="text-gray-400 leading-relaxed italic mb-4">"Drag, Drop, Done."</p>
-                <p className="text-gray-400 text-sm">Instant cloud sync for high-res drone media and metadata.</p>
-              </div>
-
-              {/* Step 02 */}
-              <div className="group bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl hover:border-[#14E114]/50 transition-all duration-500 shadow-2xl">
-                <div className="text-[#14E114] font-bold text-xs tracking-widest mb-4 opacity-50 uppercase">Step 02</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Process</h3>
-                <p className="text-gray-400 leading-relaxed italic mb-4">"Auto-Telemetry."</p>
-                <p className="text-gray-400 text-sm">AI-driven extraction of GPS coordinates and automated flight pathing.</p>
-              </div>
-
-              {/* Step 03 */}
-              <div className="group bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl hover:border-[#14E114]/50 transition-all duration-500 shadow-2xl">
-                <div className="text-[#14E114] font-bold text-xs tracking-widest mb-4 opacity-50 uppercase">Step 03</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Visualize</h3>
-                <p className="text-gray-400 leading-relaxed italic mb-4">"Map Your Success."</p>
-                <p className="text-gray-400 text-sm">Interactive 3D maps, project overlays, and pro-grade GIS exports.</p>
-              </div>
-
+              {[
+                {
+                  title: "Upload",
+                  impact: "Drag, Drop, Done.",
+                  desc: "Instant cloud sync for high-res drone media.",
+                  icon: Upload,
+                },
+                {
+                  title: "Process",
+                  impact: "Auto-Telemetry.",
+                  desc: "AI-driven extraction of GPS and flight paths.",
+                  icon: Cpu,
+                },
+                {
+                  title: "Visualize",
+                  impact: "Map Your Success.",
+                  desc: "Interactive 3D maps and pro-grade exports.",
+                  icon: LayoutDashboard,
+                },
+              ].map((step, index) => {
+                const IconComponent = step.icon;
+                return (
+                  <div 
+                    key={index} 
+                    className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-primary/40 transition-all duration-500"
+                  >
+                    <div className="flex items-start gap-5">
+                      {/* Icon with Mapit Glow */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(20,225,20,0.1)] group-hover:shadow-[0_0_25px_rgba(20,225,20,0.3)] transition-all">
+                        <IconComponent className="w-6 h-6 text-primary" />
+                      </div>
+                      
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1 block">
+                          Step 0{index + 1}
+                        </span>
+                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                        <p className="text-white font-medium mb-1">{step.impact}</p>
+                        <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
       </section>
 
-      {/* --- FEATURES SECTION --- */}
-      <section id="features" className="relative bg-black pt-64 pb-32 px-6 z-10 border-t border-white/5">
+      {/* Features Section */}
+      <section id="features" className="relative bg-black pt-56 pb-32 px-6 z-10 border-t border-white/5">
         {/* pt-56 creates a massive gap so the cards above have room to breathe */}
         <Features />
       </section>
