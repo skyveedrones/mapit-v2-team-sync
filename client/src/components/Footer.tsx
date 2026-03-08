@@ -8,14 +8,18 @@ const Footer = () => {
           
           {/* Brand Column */}
           <div className="space-y-6">
-            <img src="/logos/mapit-white.png" alt="Mapit Logo" className="h-10 w-auto" />
+            <img 
+              src="/images/mapit-logo-new.png" 
+              alt="Mapit Logo" 
+              className="h-10 w-auto" 
+            />
             <p className="text-gray-400 text-sm leading-relaxed">
               Precision drone mapping and geospatial intelligence. Elevating project visualization for professionals worldwide.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Linkedin size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Facebook size={20} /></a>
+              <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors"><Twitter size={20} /></a>
+              <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors"><Linkedin size={20} /></a>
+              <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors"><Facebook size={20} /></a>
             </div>
           </div>
 
@@ -23,10 +27,10 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-bold mb-6">Platform</h4>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-primary transition-colors">Mission Planning</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Data Analysis</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Cloud Storage</a></li>
-              <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing Plans</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Mission Planning</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Data Analysis</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Cloud Storage</a></li>
+              <li><a href="/pricing" className="hover:text-[#00ff88] transition-colors">Pricing Plans</a></li>
             </ul>
           </div>
 
@@ -34,10 +38,10 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-bold mb-6">Company</h4>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-primary transition-colors">About SkyVee</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Success Stories</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">About SkyVee</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Success Stories</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 
@@ -46,12 +50,12 @@ const Footer = () => {
             <h4 className="text-white font-bold mb-6">Contact</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-center gap-3">
-                <Mail size={16} className="text-primary" />
+                <Mail size={16} className="text-[#00ff88]" />
                 <span>support@skyveedrones.com</span>
               </li>
               <li className="flex items-center gap-3">
-                <MapPin size={16} className="text-primary" />
-                <span>Based in St. George, UT</span>
+                <MapPin size={16} className="text-[#00ff88]" />
+                <span>Based in Dallas, TX</span>
               </li>
             </ul>
           </div>
