@@ -446,7 +446,7 @@ export default function Home() {
       </section>
 
       {/* Features Section - Using new component */}
-      <section id="features" className="relative bg-black py-24 px-6 z-10 border-t border-white/5">
+      <section id="features" className="relative bg-black pt-8 pb-24 px-6 z-10 border-t border-white/5">
         <Features />
       </section>
 
