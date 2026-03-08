@@ -63,8 +63,10 @@ const Features = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title} 
-                  className="w-full h-full object-cover opacity-40 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" 
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-all duration-700" 
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80";
+                  }}
                 />
                 {/* Visual texture for cards with missing images */}
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
