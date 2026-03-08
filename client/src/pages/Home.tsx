@@ -367,7 +367,7 @@ export default function Home() {
         </section>
 
         {/* --- BUTTON BRIDGE --- */}
-        <div className="bg-black py-12 flex flex-col md:flex-row justify-center items-center gap-6 relative z-30">
+        <div className="bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
           {/* The Get Started Button triggers the Modal */}
           <button
             onClick={() => setShowContactModal(true)}
@@ -451,9 +451,9 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <div id="features" className="border-t border-white/5">
+      <section id="features" className="relative bg-black pt-48 pb-32 px-6 z-10 border-t border-white/5">
         <Features />
-      </div>
+      </section>
 
       {/* Old Features Section - Removed */}
       <section className="hidden py-16 relative">
