@@ -313,7 +313,7 @@ export default function Home() {
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
 
       {/* Hero Section */}
-      <section className="relative h-screen flex flex-col items-center justify-start overflow-hidden pt-0">
+      <section className="relative flex flex-col items-center justify-start pt-0">
         <div className="relative z-10 text-center pt-2 md:pt-3 lg:pt-4 w-full">
           <motion.div
             initial="hidden"
