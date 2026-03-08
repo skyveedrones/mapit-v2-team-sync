@@ -6,19 +6,19 @@ const Features = () => {
       title: "Easy Upload",
       desc: "Upload drone photos and videos with automatic GPS metadata extraction.",
       icon: <Upload className="w-6 h-6 text-primary" />,
-      image: "/images/feature-upload-new.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-efVpQXaN5Mmq982xJSV7KE.webp"
     },
     {
       title: "Interactive Maps",
       desc: "Visualize your flights on Google Maps with markers, popups, and key data.",
       icon: <MapIcon className="w-6 h-6 text-primary" />,
-      image: "/images/feature-maps-new.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp"
     },
     {
       title: "Flight Path Tracking",
       desc: "Automatic flight path visualization connecting sequential GPS points.",
       icon: <Navigation className="w-6 h-6 text-primary" />,
-      image: "/images/feature-flightpath-new.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-AfdMbjvVTNxTSKyUYDhpHo.webp"
     },
     {
       title: "GPS Data Export",
@@ -30,13 +30,13 @@ const Features = () => {
       title: "PDF Map Overlay",
       desc: "Overlay construction plans and blueprints on your maps with precise positioning.",
       icon: <Layers className="w-6 h-6 text-primary" />,
-      image: "/images/feature-overlay-new.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-dsC9P8JfjwrJGcb8zt4UXm.webp"
     },
     {
       title: "Project Templates",
       desc: "Save configurations as templates and create new projects in seconds.",
       icon: <Layout className="w-6 h-6 text-primary" />,
-      image: "/images/feature-templates.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-project-templates-DYfRa8TwAxvYPCdxorBVDg.webp"
     }
   ];
 
