@@ -377,47 +377,53 @@ export default function Home() {
         </section>
 
         {/* How It Works Section */}
-        <section className="bg-black py-20 px-6 border-t border-white/10">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                From Flight to <span className="text-primary">Data</span> in Minutes
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                The streamlined workflow designed for drone professionals and project managers.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-              {/* Connecting Line (Desktop Only) */}
-              <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-              
+        <section className="relative bg-black py-24 px-6 overflow-hidden">
+          {/* Branded Background "Wing" Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="max-w-6xl mx-auto relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  title: "1. Upload Media",
-                  desc: "Simply drop your drone photos or videos into the dashboard. We handle the heavy lifting.",
+                  title: "Upload",
+                  impact: "Drag, Drop, Done.",
+                  desc: "Instant cloud sync for high-res drone media.",
                   icon: Upload,
                 },
                 {
-                  title: "2. Automatic Processing",
-                  desc: "Our engine extracts GPS telemetry and flight paths instantly—no manual entry required.",
+                  title: "Process",
+                  impact: "Auto-Telemetry.",
+                  desc: "AI-driven extraction of GPS and flight paths.",
                   icon: Cpu,
                 },
                 {
-                  title: "3. Visualize & Export",
-                  desc: "View interactive maps, overlay PDF plans, and export data in KML, CSV, or GeoJSON.",
+                  title: "Visualize",
+                  impact: "Map Your Success.",
+                  desc: "Interactive 3D maps and pro-grade exports.",
                   icon: LayoutDashboard,
                 },
               ].map((step, index) => {
                 const IconComponent = step.icon;
                 return (
-                  <div key={index} className="relative flex flex-col items-center text-center group">
-                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(20,225,20,0.2)]">
-                      <IconComponent className="w-8 h-8 text-primary" />
+                  <div 
+                    key={index} 
+                    className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-primary/40 transition-all duration-500"
+                  >
+                    <div className="flex items-start gap-5">
+                      {/* Icon with Mapit Glow */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(20,225,20,0.1)] group-hover:shadow-[0_0_25px_rgba(20,225,20,0.3)] transition-all">
+                        <IconComponent className="w-6 h-6 text-primary" />
+                      </div>
+                      
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1 block">
+                          Step 0{index + 1}
+                        </span>
+                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                        <p className="text-white font-medium mb-1">{step.impact}</p>
+                        <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                    <p className="text-gray-400 leading-relaxed">
-                      {step.desc}
-                    </p>
                   </div>
                 );
               })}
