@@ -5,38 +5,38 @@ const Features = () => {
     {
       title: "Easy Upload",
       desc: "Upload drone photos and videos with automatic GPS metadata extraction.",
-      icon: <Upload className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-upload.jpg"
+      icon: <Upload className="w-6 h-6 text-primary" />,
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-upload.jpg"
     },
     {
       title: "Interactive Maps",
       desc: "Visualize your flights on Google Maps with markers, popups, and key data.",
-      icon: <MapIcon className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-maps.jpg"
+      icon: <MapIcon className="w-6 h-6 text-primary" />,
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-maps.jpg"
     },
     {
       title: "Flight Path Tracking",
       desc: "Automatic flight path visualization connecting sequential GPS points.",
-      icon: <Navigation className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-path.jpg"
+      icon: <Navigation className="w-6 h-6 text-primary" />,
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flightpath.jpg"
     },
     {
       title: "GPS Data Export",
       desc: "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software.",
-      icon: <Download className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-export.jpg"
+      icon: <Download className="w-6 h-6 text-primary" />,
+      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/gkNBTHRsPHDBWczp.png"
     },
     {
       title: "PDF Map Overlay",
       desc: "Overlay construction plans and blueprints on your maps with precise positioning.",
-      icon: <Layers className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-overlay.jpg"
+      icon: <Layers className="w-6 h-6 text-primary" />,
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-overlay.jpg"
     },
     {
       title: "Project Templates",
       desc: "Save configurations as templates and create new projects in seconds.",
-      icon: <Layout className="w-6 h-6 text-[#00ff88]" />,
-      image: "/images/feature-templates.jpg"
+      icon: <Layout className="w-6 h-6 text-primary" />,
+      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/SxjCbukJOAezRSZP.png"
     }
   ];
 

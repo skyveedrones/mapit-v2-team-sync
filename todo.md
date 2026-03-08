@@ -1697,3 +1697,14 @@
 - [x] Navbar theme toggle with tooltip (already implemented)
 - [x] Hamburger menu button to navbar (already implemented)
 - [x] Verify responsive layout on mobile
+
+## Lead Capture & Contact Modal Implementation
+- [ ] Create ContactModal component with form and success state
+- [ ] Fix HowItWorks section z-index (z-20) and spacing (pt-24 pb-40)
+- [ ] Fix Features section z-index (z-10) and spacing (py-24)
+- [ ] Update feature card images with verified Cloudfront URLs
+- [ ] Create email API endpoint (/api/send) using Resend
+- [ ] Integrate ContactModal with Home.tsx
+- [ ] Connect "Get Started" buttons to open modal
+- [ ] Test form submission and email delivery
+- [ ] Test modal success state and close functionality

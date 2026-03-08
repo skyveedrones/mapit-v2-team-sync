@@ -17,6 +17,7 @@ import { trackEvent } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
+import ContactModal from "@/components/ContactModal";
 import {
   Upload,
   Map,
@@ -112,6 +113,7 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
   const [scrolled, setScrolled] = useState(false);
 
@@ -362,13 +364,13 @@ export default function Home() {
               className="flex flex-col sm:flex-row gap-4"
             >
               <button
-                onClick={() => setLocation("/welcome")}
+                onClick={() => setShowContactModal(true)}
                 className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(20,225,20,0.3)]"
               >
                 Get Started
               </button>
               <button
-                onClick={() => setLocation("/demo")}
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                 className="px-8 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-all"
               >
                 Learn More
@@ -379,7 +381,7 @@ export default function Home() {
         </section>
 
         {/* How It Works Section */}
-        <section className="relative bg-black pt-0 pb-48 px-6 z-20 overflow-hidden">
+        <section className="relative bg-black pt-24 pb-40 px-6 z-20 overflow-hidden">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
@@ -444,9 +446,9 @@ export default function Home() {
       </section>
 
       {/* Features Section - Using new component */}
-      <div id="features" className="border-t border-white/5">
+      <section id="features" className="relative bg-black py-24 px-6 z-10 border-t border-white/5">
         <Features />
-      </div>
+      </section>
 
       {/* Old Features Section - Removed */}
       <section className="hidden py-16 relative">
@@ -597,6 +599,12 @@ export default function Home() {
           onOpenChange={setShowDownloadDialog}
         />
       )}
+      
+      {/* Contact Modal */}
+      <ContactModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+      />
     </div>
   );
 }

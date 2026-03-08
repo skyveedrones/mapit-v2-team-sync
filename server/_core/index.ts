@@ -12,6 +12,7 @@ import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
 import { initializeVersion, getVersionJson } from "../version";
 import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
+import emailRouter from "../routes/email";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -78,6 +79,9 @@ async function startServer() {
   
   // Image proxy routes for bypassing CloudFront 403 errors
   app.use("/api", imageProxyRouter);
+  
+  // Email/lead capture routes
+  app.use("/api", emailRouter);
 
   // Version endpoint - returns current deployed version
   app.get("/api/version", (req, res) => {
