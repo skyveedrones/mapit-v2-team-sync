@@ -31,6 +31,8 @@ import {
   Sun,
   Eye,
   Zap,
+  Cpu,
+  LayoutDashboard,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -374,6 +376,54 @@ export default function Home() {
 
         </section>
 
+        {/* How It Works Section */}
+        <section className="bg-black py-20 px-6 border-t border-white/10">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                From Flight to <span className="text-primary">Data</span> in Minutes
+              </h2>
+              <p className="text-gray-400 max-w-2xl mx-auto">
+                The streamlined workflow designed for drone professionals and project managers.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+              {/* Connecting Line (Desktop Only) */}
+              <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              
+              {[
+                {
+                  title: "1. Upload Media",
+                  desc: "Simply drop your drone photos or videos into the dashboard. We handle the heavy lifting.",
+                  icon: Upload,
+                },
+                {
+                  title: "2. Automatic Processing",
+                  desc: "Our engine extracts GPS telemetry and flight paths instantly—no manual entry required.",
+                  icon: Cpu,
+                },
+                {
+                  title: "3. Visualize & Export",
+                  desc: "View interactive maps, overlay PDF plans, and export data in KML, CSV, or GeoJSON.",
+                  icon: LayoutDashboard,
+                },
+              ].map((step, index) => {
+                const IconComponent = step.icon;
+                return (
+                  <div key={index} className="relative flex flex-col items-center text-center group">
+                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(20,225,20,0.2)]">
+                      <IconComponent className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      {step.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
       </section>
 

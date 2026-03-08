@@ -1655,3 +1655,8 @@
 - [x] Enlarge navbar logo (h-12 md:h-14)
 - [x] Remove bottom gradient edge from video section
 - [x] Reduce bottom padding of video section (pb-0)
+
+## HowItWorks Section
+- [x] Add HowItWorks component to Home.tsx
+- [x] Verify responsive layout on mobile and tablet
+- [x] Test icon rendering and hover effects
