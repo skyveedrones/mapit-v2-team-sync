@@ -358,44 +358,44 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-gray-200 text-lg md:text-xl max-w-2xl mb-8 leading-relaxed"
+              className="text-gray-200 text-lg md:text-xl max-w-2xl leading-relaxed"
             >
               Precise drone mapping and geospatial data for smarter project planning.
             </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <button
-                onClick={() => setShowContactModal(true)}
-                className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(20,225,20,0.3)]"
-              >
-                Get Started
-              </button>
-              <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-8 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-all"
-              >
-                Learn More
-              </button>
-            </motion.div>
           </div>
 
         </section>
 
+        {/* --- BUTTON BRIDGE --- */}
+        <div className="bg-black py-12 flex flex-col md:flex-row justify-center items-center gap-6 relative z-30">
+          {/* The Get Started Button triggers the Modal */}
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="px-10 py-4 bg-primary text-primary-foreground font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm"
+          >
+            Get Started
+          </button>
+
+          {/* The Learn More Button scrolls to Features */}
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-10 py-4 border border-white/20 text-white font-bold rounded-full hover:bg-white/5 transition-all tracking-wide uppercase text-sm"
+          >
+            Learn More
+          </button>
+        </div>
+
         {/* How It Works Section */}
-        <section className="relative bg-black pt-0 pb-48 px-6 z-20 overflow-hidden">
+        <section className="relative bg-black pt-12 pb-64 px-6 z-50 overflow-hidden">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
           <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <div className="text-center mb-24">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
                 From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
+              <p className="text-gray-400 max-w-2xl mx-auto text-lg">
                 The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
