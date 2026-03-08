@@ -63,7 +63,7 @@ const Features = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title} 
-                  className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-all duration-700" 
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-all duration-700"
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80";
                   }}

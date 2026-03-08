@@ -176,16 +176,19 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-300 hover:text-white"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+            {/* Theme Toggle with Tooltip */}
+            <div className="group relative">
+              <button 
+                onClick={toggleTheme} 
+                className="p-2 text-gray-300 hover:text-white transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+              <div className="absolute top-full right-0 mt-2 scale-0 group-hover:scale-100 transition-all origin-top-right bg-black border border-white/10 px-2 py-1 rounded text-[10px] text-primary font-bold tracking-widest uppercase z-[200] whitespace-nowrap">
+                Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
+              </div>
+            </div>
 
             {/* CTA Button or Auth Buttons */}
             {isAuthenticated && user ? (
@@ -383,20 +386,21 @@ export default function Home() {
         </section>
 
         {/* How It Works Section */}
-        <section className="relative bg-black pt-24 pb-64 px-6 z-20 overflow-hidden">
-          {/* Branded Background "Wing" Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          
-          <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-24">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+        <section className="relative bg-black pt-24 pb-48 px-6 z-30">
+          {/* z-30 makes this higher than the video and the features below */}
+          <div className="max-w-6xl mx-auto relative">
+            {/* Branded Background "Wing" Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="text-center mb-24 relative z-10">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
                 From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
+              <p className="text-gray-400 max-w-2xl mx-auto text-lg">
                 The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-50">
+            {/* FORCE TO FRONT: z-50 on this grid container is the key */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-50">
               {[
                 {
                   title: "Upload",
@@ -447,8 +451,9 @@ export default function Home() {
 
       </section>
 
-      {/* Features Section - Using new component */}
-      <section id="features" className="relative bg-black pt-16 pb-32 px-6 z-10 border-t border-white/5">
+      {/* Features Section */}
+      <section id="features" className="relative bg-black pt-56 pb-32 px-6 z-10 border-t border-white/5">
+        {/* pt-56 creates a massive gap so the cards above have room to breathe */}
         <Features />
       </section>
 
