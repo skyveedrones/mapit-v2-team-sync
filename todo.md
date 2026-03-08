@@ -1690,3 +1690,10 @@
 - [ ] Restore hero card images from previous version
 - [x] Reduce padding on step cards section (py-24 → py-16)
 - [x] Verify spacing between sections
+
+## New Implementation Tasks
+- [x] Update step cards section padding (pt-20 pb-32)
+- [x] Add features section anchor (id="features") and border
+- [x] Navbar theme toggle with tooltip (already implemented)
+- [x] Hamburger menu button to navbar (already implemented)
+- [x] Verify responsive layout on mobile
