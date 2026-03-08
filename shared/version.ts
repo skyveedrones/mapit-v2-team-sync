@@ -3,7 +3,7 @@
  * 
  * AUTOMATICALLY UPDATED - Do not edit manually
  * Updated by: scripts/update-version.mjs
- * Last updated: 2026-03-08T18:44:05.956Z
+ * Last updated: 2026-03-08T18:51:03.617Z
  * 
  * This file is automatically updated during build with:
  * - Latest version number from package.json
@@ -14,10 +14,10 @@
 
 export const APP_VERSION = {
   version: '1.0.9',
-  commit: 'cad0352cc9f337e63a70d3a0f544460286ed6a5c',
+  commit: 'c888d72019899243dfdd74ecc1b77acf0291790c',
   branch: 'main',
   buildDate: new Date().toISOString(),
-  buildTimestamp: 1772995445956,
+  buildTimestamp: 1772995863617,
 };
 
 /**

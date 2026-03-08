@@ -385,8 +385,8 @@ export default function Home() {
           </button>
         </div>
 
-        {/* How It Works Section */}
-        <section className="relative bg-black pt-12 pb-64 px-6 z-50 overflow-hidden">
+        {/* SECTION 2: STEPPER CARDS */}
+        <section className="relative bg-black pt-16 pb-64 px-6 z-40">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
@@ -450,8 +450,8 @@ export default function Home() {
 
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative bg-black pt-48 pb-32 px-6 z-10 border-t border-white/5">
+      {/* SECTION 3: FEATURES */}
+      <section id="features" className="relative bg-black pt-32 pb-32 px-6 z-10 border-t border-white/5">
         <Features />
       </section>
 
