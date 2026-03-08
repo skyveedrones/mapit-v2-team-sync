@@ -1667,3 +1667,8 @@
 - [x] Add branded glow background effect
 - [x] Enhance hover effects with primary color transitions
 - [x] Test responsive layout on mobile and tablet
+
+## HowItWorks Title Restoration
+- [x] Add "From Flight to Data in Minutes" title back
+- [x] Position title above stepper cards
+- [x] Verify spacing and layout

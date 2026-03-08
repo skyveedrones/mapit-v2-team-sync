@@ -382,6 +382,14 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
           <div className="max-w-6xl mx-auto relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                From Flight to <span className="text-primary">Data</span> in Minutes
+              </h2>
+              <p className="text-gray-400 max-w-2xl mx-auto">
+                The streamlined workflow designed for drone professionals and project managers.
+              </p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
