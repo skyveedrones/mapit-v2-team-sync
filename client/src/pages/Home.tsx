@@ -399,7 +399,7 @@ export default function Home() {
                 The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-50">
               {[
                 {
                   title: "Upload",
@@ -451,7 +451,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: FEATURES */}
-      <section id="features" className="relative bg-black pt-32 pb-32 px-6 z-10 border-t border-white/5">
+      <section id="features" className="relative bg-black pt-96 pb-32 px-6 z-10 border-t border-white/5">
         <Features />
       </section>
 
