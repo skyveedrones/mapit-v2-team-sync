@@ -24,7 +24,7 @@ const Features = () => {
       title: "GPS Data Export",
       desc: "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software.",
       icon: <Download className="w-6 h-6 text-primary" />,
-      image: "/images/feature-overlay-new.jpg"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/gps-data-export-3nXFptzNDFVoNB8V4s253R.webp"
     },
     {
       title: "PDF Map Overlay",
