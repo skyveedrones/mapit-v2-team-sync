@@ -812,6 +812,14 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 {selectedMedia && (
                   <div className={`flex items-center gap-1 ml-2 px-2 py-1 rounded-lg ${isFullscreen ? "bg-black/50" : "bg-muted"}`}>
                     <button
+                      onClick={handleResetZoom}
+                      disabled={zoomLevel <= 1}
+                      className={`p-1 rounded hover:bg-white/20 ${zoomLevel <= 1 ? "opacity-50 pointer-events-none" : ""} ${isFullscreen ? "text-white" : ""}`}
+                      title="Reset zoom (0)"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={handleZoomOut}
                       disabled={zoomLevel <= MIN_ZOOM}
                       className={`p-1 rounded hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed ${isFullscreen ? "text-white" : ""}`}
@@ -830,15 +838,6 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     >
                       <ZoomIn className="h-4 w-4" />
                     </button>
-                    {zoomLevel > 1 && (
-                      <button
-                        onClick={handleResetZoom}
-                        className={`p-1 rounded hover:bg-white/20 ml-1 ${isFullscreen ? "text-white" : ""}`}
-                        title="Reset zoom (0)"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </button>
-                    )}
                   </div>
                 )}
                 {/* Fullscreen toggle */}
