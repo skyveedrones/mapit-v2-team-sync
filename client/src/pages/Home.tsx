@@ -425,7 +425,7 @@ export default function Home() {
                 return (
                   <div 
                     key={index} 
-                    className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-primary/40 transition-all duration-500"
+                    className="group p-8 rounded-2xl bg-white dark:bg-gradient-to-b dark:from-white/5 dark:to-transparent border border-slate-200 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
                   >
                     <div className="flex items-start gap-5">
                       {/* Icon with Mapit Glow */}
@@ -437,9 +437,9 @@ export default function Home() {
                         <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1 block">
                           Step 0{index + 1}
                         </span>
-                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
-                        <p className="text-white font-medium mb-1">{step.impact}</p>
-                        <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-colors duration-300">{step.title}</h3>
+                        <p className="text-slate-900 dark:text-white font-medium mb-1 transition-colors duration-300">{step.impact}</p>
+                        <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed transition-colors duration-300">{step.desc}</p>
                       </div>
                     </div>
                   </div>
@@ -452,26 +452,26 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-white dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
               Universal Integration
             </h2>
-            <h3 className="text-3xl md:text-5xl font-bold text-white">
-              Compatible with <span className="text-white">All Major Drone Manufacturers</span>
+            <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white transition-colors duration-300">
+              Compatible with <span className="text-slate-900 dark:text-white">All Major Drone Manufacturers</span>
             </h3>
-            <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
+            <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg transition-colors duration-300">
               If your aircraft records GPS metadata, our system can process it.
               Zero proprietary hardware locks.
             </p>
           </div>
 
           {/* Brand Grid: Clean, minimalist logos */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60 dark:opacity-60">
             <div className="flex flex-col items-center group">
               <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">DJI</span>
               <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Enterprise</span>
@@ -499,9 +499,9 @@ export default function Home() {
           </div>
 
           <div className="mt-20 flex justify-center">
-            <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
+            <div className="px-6 py-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full flex items-center gap-3 transition-colors duration-300">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-gray-400 text-sm font-medium">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
+              <span className="text-slate-600 dark:text-gray-400 text-sm font-medium transition-colors duration-300">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
             </div>
           </div>
         </div>
@@ -513,7 +513,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 5: HIRE A PILOT SERVICE */}
-      <section className="relative bg-gradient-to-b from-slate-900 to-slate-950 dark:from-[#0a1628] dark:to-[#050a12] py-16 md:py-24 px-6 border-t border-slate-700 dark:border-white/5">
+      <section className="relative bg-gradient-to-b from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950 py-16 md:py-24 px-6 border-t border-slate-200 dark:border-slate-700 transition-colors duration-300">
         <div className="container max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
@@ -523,14 +523,14 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl md:text-4xl font-bold text-white mb-4"
+              className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 transition-colors duration-300"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Need a Professional Pilot?
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed"
+              className="text-slate-600 dark:text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed transition-colors duration-300"
             >
               Don't have a drone or a Part 107 pilot? SkyVee Drones provides full-service aerial data collection and infrastructure inspections nationwide.
             </motion.p>
@@ -632,8 +632,8 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
+      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-300 border-t border-slate-200 dark:border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 dark:from-primary/10 dark:via-transparent dark:to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
         <div className="container relative z-10">
@@ -646,14 +646,14 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 transition-colors duration-300"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Ready to Map Your Projects?
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-muted-foreground mb-8"
+              className="text-slate-600 dark:text-gray-400 mb-8 transition-colors duration-300"
             >
               Start organizing and visualizing your drone footage today
             </motion.p>
