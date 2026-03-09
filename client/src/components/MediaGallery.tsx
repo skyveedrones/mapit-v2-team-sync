@@ -1082,9 +1082,20 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       cameraModel={selectedMedia.cameraModel}
                       fileSize={selectedMedia.fileSize}
                       canEdit={canEditMedia}
+                      mediaId={selectedMedia.id}
                       onEditGps={() => {
                         setMediaForGpsEdit(selectedMedia);
                         setGpsEditDialogOpen(true);
+                      }}
+                      onViewOnMap={() => {
+                        // This callback will be set by the parent component
+                        window.dispatchEvent(new CustomEvent('viewOnProjectMap', {
+                          detail: {
+                            latitude: selectedMedia.latitude,
+                            longitude: selectedMedia.longitude,
+                            mediaId: selectedMedia.id,
+                          },
+                        }));
                       }}
                     />
                   </div>

@@ -24,6 +24,8 @@ interface MediaMetadataDisplayProps {
   fileSize?: number;
   onEditGps?: () => void;
   canEdit?: boolean;
+  onViewOnMap?: () => void;
+  mediaId?: string | number;
 }
 
 export function MediaMetadataDisplay({
@@ -36,6 +38,8 @@ export function MediaMetadataDisplay({
   fileSize,
   onEditGps,
   canEdit = false,
+  onViewOnMap,
+  mediaId,
 }: MediaMetadataDisplayProps) {
   // Check if we have any metadata
   const hasGpsData = latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined;
@@ -75,10 +79,7 @@ export function MediaMetadataDisplay({
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 <button
-                  onClick={() => {
-                    // Placeholder for project map navigation
-                    console.log('Navigate to project map for:', latitude, longitude);
-                  }}
+                  onClick={onViewOnMap}
                   className="text-blue-600 hover:underline"
                 >
                   View on Project Map

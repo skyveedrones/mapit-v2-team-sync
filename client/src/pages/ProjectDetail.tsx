@@ -8,7 +8,7 @@ import { useClientAccess } from "@/hooks/useClientAccess";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
-import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
+import { EmbeddedProjectMap, type EmbeddedProjectMapHandle } from "@/components/EmbeddedProjectMap";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -56,7 +56,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -92,12 +92,32 @@ export default function ProjectDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
+  const mapRef = useRef<EmbeddedProjectMapHandle>(null);
   
   // Check if this is the demo project (read-only mode)
   const isDemoProject = projectId === 1;
   
   // Check user access permissions for this project
   const { isClientOnly, canEdit, canDelete } = useClientAccess(projectId);
+  
+  // Listen for viewOnProjectMap events from MediaGallery
+  useEffect(() => {
+    const handleViewOnMap = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { latitude, longitude, mediaId } = customEvent.detail;
+      if (mapRef.current && latitude && longitude) {
+        mapRef.current.panToMedia(parseFloat(latitude), parseFloat(longitude), mediaId);
+        // Scroll to map
+        const mapElement = document.getElementById('project-map-section');
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+    
+    window.addEventListener('viewOnProjectMap', handleViewOnMap);
+    return () => window.removeEventListener('viewOnProjectMap', handleViewOnMap);
+  }, []);
   // Override permissions for demo project - lock to read-only
   const demoCanEdit = isDemoProject ? false : canEdit;
   const demoCanDelete = isDemoProject ? false : canDelete;
@@ -461,8 +481,9 @@ export default function ProjectDetail() {
             </motion.div>
 
             {/* Project Map Section */}
-            <motion.div variants={fadeInUp} className="mb-8">
+            <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
               <EmbeddedProjectMap
+                ref={mapRef}
                 projectId={project.id}
                 projectName={project.name}
                 isDemoProject={isDemoProject}
