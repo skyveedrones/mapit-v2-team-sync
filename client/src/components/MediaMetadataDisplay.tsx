@@ -22,6 +22,8 @@ interface MediaMetadataDisplayProps {
   cameraMake?: string | null;
   cameraModel?: string | null;
   fileSize?: number;
+  onEditGps?: () => void;
+  canEdit?: boolean;
 }
 
 export function MediaMetadataDisplay({
@@ -32,6 +34,8 @@ export function MediaMetadataDisplay({
   cameraMake,
   cameraModel,
   fileSize,
+  onEditGps,
+  canEdit = false,
 }: MediaMetadataDisplayProps) {
   // Check if we have any metadata
   const hasGpsData = latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined;
@@ -55,19 +59,30 @@ export function MediaMetadataDisplay({
           <div className="flex items-start gap-2">
             <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground">GPS Location</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-foreground">GPS Location</p>
+                {canEdit && onEditGps && (
+                  <button
+                    onClick={onEditGps}
+                    className="text-xs text-blue-600 hover:underline font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground font-mono break-all">
                 {latitude?.toFixed(7)}, {longitude?.toFixed(7)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    // Placeholder for project map navigation
+                    console.log('Navigate to project map for:', latitude, longitude);
+                  }}
                   className="text-blue-600 hover:underline"
                 >
-                  View on Google Maps
-                </a>
+                  View on Project Map
+                </button>
               </p>
               {/* Mapping Grade Indicator */}
               <div className="mt-2 flex items-center gap-2">
@@ -91,7 +106,7 @@ export function MediaMetadataDisplay({
             <div>
               <p className="text-xs font-medium text-foreground">Altitude</p>
               <p className="text-xs text-muted-foreground">
-                {parseFloat(altitude.toString()).toFixed(1)} m
+                {(parseFloat(altitude.toString()) / 12).toFixed(1)} ft
               </p>
             </div>
           </div>

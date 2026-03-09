@@ -1081,92 +1081,17 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       cameraMake={selectedMedia.cameraMake}
                       cameraModel={selectedMedia.cameraModel}
                       fileSize={selectedMedia.fileSize}
+                      canEdit={canEditMedia}
+                      onEditGps={() => {
+                        setMediaForGpsEdit(selectedMedia);
+                        setGpsEditDialogOpen(true);
+                      }}
                     />
                   </div>
                 </div>
               )}
 
-              {/* Metadata Grid - Hidden in fullscreen */}
-              {!isFullscreen && (
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Location with Altitude */}
-                  <div className="p-4 rounded-lg bg-card border border-border flex flex-col">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span className="text-xs uppercase tracking-wide">Location</span>
-                      </div>
-                      {canEditMedia && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => {
-                            setMediaForGpsEdit(selectedMedia);
-                            setGpsEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                      )}
-                    </div>
-                    {selectedMedia.latitude && selectedMedia.longitude ? (
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">
-                          {formatCoordinate(selectedMedia.latitude, "lat")}
-                        </p>
-                        <p className="text-sm font-medium">
-                          {formatCoordinate(selectedMedia.longitude, "lng")}
-                        </p>
-                        {selectedMedia.altitude && (
-                          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
-                            <Mountain className="h-3.5 w-3.5 text-muted-foreground" />
-                            <p className="text-sm font-medium">
-                              {parseFloat(selectedMedia.altitude).toFixed(1)} m altitude
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">No GPS data</p>
-                    )}
-                  </div>
 
-                  {/* Captured with Camera and File Info */}
-                  <div className="p-4 rounded-lg bg-card border border-border flex flex-col">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Captured</span>
-                    </div>
-                    <div className="space-y-1">
-                      {selectedMedia.capturedAt ? (
-                        <p className="text-sm font-medium">
-                          {formatDate(selectedMedia.capturedAt)}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">No capture date</p>
-                      )}
-                      
-                      {(selectedMedia.cameraMake || selectedMedia.cameraModel) && (
-                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
-                          <Camera className="h-3.5 w-3.5 text-muted-foreground" />
-                          <p className="text-sm font-medium">
-                            {[selectedMedia.cameraMake, selectedMedia.cameraModel]
-                              .filter(Boolean)
-                              .join(" ")}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
-                        <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
-                        <span>Uploaded {formatDate(selectedMedia.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1222,20 +1147,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                   Close
                 </Button>
               </div>
-              {selectedMedia && (
-                <div className="flex gap-4 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                  {selectedMedia.originalWidth && selectedMedia.originalHeight && (
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">Resolution:</span>
-                      <span>{selectedMedia.originalWidth} x {selectedMedia.originalHeight}px</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">File Size:</span>
-                    <span>{(selectedMedia.fileSize / 1024 / 1024).toFixed(2)} MB</span>
-                  </div>
-                </div>
-              )}
+
             </div>
           </div>
           )}
