@@ -262,6 +262,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
     e.preventDefault();
+    e.stopPropagation();
     if (e.deltaY < 0) {
       handleZoomIn();
     } else {
