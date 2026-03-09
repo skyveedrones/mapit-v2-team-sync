@@ -452,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-white dark:bg-black pt-12 pb-24 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-white dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -508,7 +508,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-slate-50 dark:bg-black pt-16 pb-32 px-6 z-10 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
+      <section id="features" className="relative bg-slate-50 dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
         <Features />
       </section>
 
@@ -597,7 +597,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 relative overflow-hidden">
+      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
