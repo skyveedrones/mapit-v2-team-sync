@@ -1,42 +1,51 @@
 import { Upload, Map as MapIcon, Navigation, Download, Layers, Layout } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 const Features = () => {
+  const [, setLocation] = useLocation();
+
   const featureList = [
     {
       title: "Easy Upload",
       desc: "Upload drone photos and videos with automatic GPS metadata extraction.",
       icon: <Upload className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-efVpQXaN5Mmq982xJSV7KE.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-efVpQXaN5Mmq982xJSV7KE.webp",
+      link: "/features/easy-upload"
     },
     {
       title: "Interactive Maps",
       desc: "Visualize your flights on Google Maps with markers, popups, and key data.",
       icon: <MapIcon className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp",
+      link: "/features/interactive-maps"
     },
     {
       title: "Flight Path Tracking",
       desc: "Automatic flight path visualization connecting sequential GPS points.",
       icon: <Navigation className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-AfdMbjvVTNxTSKyUYDhpHo.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-AfdMbjvVTNxTSKyUYDhpHo.webp",
+      link: "/features/flight-path-tracking"
     },
     {
       title: "GPS Data Export",
       desc: "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software.",
       icon: <Download className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/gps-data-export-3nXFptzNDFVoNB8V4s253R.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/gps-data-export-3nXFptzNDFVoNB8V4s253R.webp",
+      link: "/features/gps-data-export"
     },
     {
       title: "PDF Map Overlay",
       desc: "Overlay construction plans and blueprints on your maps with precise positioning.",
       icon: <Layers className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-dsC9P8JfjwrJGcb8zt4UXm.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-dsC9P8JfjwrJGcb8zt4UXm.webp",
+      link: "/features/pdf-map-overlay"
     },
     {
       title: "Project Templates",
       desc: "Save configurations as templates and create new projects in seconds.",
       icon: <Layout className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-project-templates-DYfRa8TwAxvYPCdxorBVDg.webp"
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-project-templates-DYfRa8TwAxvYPCdxorBVDg.webp",
+      link: "/features/project-templates"
     }
   ];
 
@@ -56,7 +65,8 @@ const Features = () => {
           {featureList.map((feature, index) => (
             <div 
               key={index} 
-              className="group relative bg-[#0a0a0a] rounded-2xl border border-white/5 overflow-hidden hover:border-[#00ff88]/30 transition-all duration-500"
+              onClick={() => setLocation(feature.link)}
+              className="group relative bg-[#0a0a0a] rounded-2xl border border-white/5 overflow-hidden hover:border-[#00ff88]/30 transition-all duration-500 cursor-pointer"
             >
               {/* Image Preview Area with Fallback */}
               <div className="h-48 overflow-hidden bg-gradient-to-br from-gray-900 to-black relative">

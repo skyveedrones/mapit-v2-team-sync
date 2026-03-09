@@ -365,26 +365,20 @@ export default function Home() {
           </div>
 
         </section>
+      </section>
 
-        {/* --- 1. BUTTON BRIDGE & TOP DIVIDER --- */}
-        <div className="relative bg-white dark:bg-black transition-colors duration-300">
-          {/* SVG Curve Divider from Video */}
-          <svg className="absolute bottom-full left-0 w-full h-20 text-white dark:text-black fill-current" preserveAspectRatio="none" viewBox="0 0 1440 320">
-            <path d="M0,160L80,176C160,192,320,224,480,213.3C640,203,800,149,960,128C1120,107,1280,117,1360,122.7L1440,128L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
-          </svg>
-          
-          <div className="py-12 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
+      {/* --- 1. BUTTON BRIDGE & TOP DIVIDER --- */}
+      <div className="bg-black py-12 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
             <button onClick={() => setShowContactModal(true)} className="px-10 py-4 bg-[#14E114] text-black font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm">
               Get Started
             </button>
             <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="px-10 py-4 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-50 dark:hover:bg-white/5 transition-all tracking-wide uppercase text-sm">
               Learn More
             </button>
-          </div>
-        </div>
+      </div>
 
-        {/* --- 2. HOW IT WORKS (The Stepper) --- */}
-        <section className="relative bg-white dark:bg-black pt-16 pb-32 px-6 z-40 transition-colors duration-300">
+      {/* --- 2. HOW IT WORKS (The Stepper) --- */}
+      <section className="relative bg-white dark:bg-black pt-16 pb-32 px-6 z-40 transition-colors duration-300">
           <div className="max-w-6xl mx-auto relative z-10">
             <div className="text-center mb-20">
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 font-orbitron">
@@ -418,8 +412,6 @@ export default function Home() {
             </svg>
           </div>
         </section>
-
-      </section>
 
       {/* --- 3. FEATURES SECTION (Clickable Cards) --- */}
       <section id="features" className="relative bg-slate-100 dark:bg-[#050505] pt-32 pb-24 px-6 z-10 transition-colors duration-300">
