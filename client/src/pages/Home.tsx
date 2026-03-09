@@ -340,8 +340,8 @@ export default function Home() {
           >
             <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4" type="video/mp4" />
           </video>
-          {/* 2. THE BASE OVERLAY: Uniform dark tint */}
-          <div className="absolute inset-0 bg-black/50" />
+          {/* 2. THE BASE OVERLAY: Subtle and clean */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-white/10" />
           {/* 3. THE TOP GRADIENT: Fades from black to clear for the Nav */}
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black via-black/60 to-transparent z-10" />
           {/* 4. THE CONTENT: Centered perfectly over the video */}
@@ -349,7 +349,8 @@ export default function Home() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4"
+              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4 drop-shadow-lg"
+              style={{ textShadow: '0 4px 12px rgba(0, 0, 0, 0.8)' }}
             >
               ELEVATE YOUR <span className="text-primary">VISION</span>
             </motion.h1>
@@ -393,7 +394,7 @@ export default function Home() {
           
           <div className="max-w-6xl mx-auto relative z-10">
             <div className="text-center mb-24">
-              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+              <h2 className="text-3xl md:text-5xl font-bold font-semibold tracking-tight text-slate-900 dark:text-white mb-6">
                 From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
               <p className="text-slate-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
@@ -425,7 +426,7 @@ export default function Home() {
                 return (
                   <div 
                     key={index} 
-                    className="group p-8 rounded-2xl bg-slate-100/50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
+                    className="group p-8 rounded-2xl bg-slate-100/50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 hover:border-[#22c55e] dark:hover:border-[#22c55e] hover:-translate-y-1 shadow-sm dark:shadow-none hover:shadow-lg transition-all duration-300"
                   >
                     <div className="flex items-start gap-5">
                       {/* Icon with Mapit Glow */}
