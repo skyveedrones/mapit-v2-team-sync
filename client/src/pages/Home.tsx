@@ -462,7 +462,7 @@ export default function Home() {
               Universal Integration
             </h2>
             <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white">
-              <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-8 md:h-12 w-auto object-contain inline-block mr-3" /> is compatible with <span className="text-primary">any</span> drone.
+              <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-10 md:h-16 w-auto object-contain inline-block mr-4" /> is compatible with <span className="text-primary">any</span> drone.
             </h3>
             <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
               If your aircraft records GPS metadata, our system can process it.
