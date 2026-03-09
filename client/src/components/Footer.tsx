@@ -1,6 +1,10 @@
 import { Facebook, Twitter, Linkedin, Mail, MapPin } from 'lucide-react';
 
-const Footer = () => {
+interface FooterProps {
+  onContactClick?: () => void;
+}
+
+const Footer = ({ onContactClick }: FooterProps) => {
   return (
     <footer className="bg-[#050505] border-t border-white/10 pt-16 pb-8 px-6">
       <div className="max-w-7xl mx-auto">
@@ -38,7 +42,7 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-bold mb-6">Company</h4>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-[#00ff88] transition-colors">About SkyVee</a></li>
+              <li><a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ff88] transition-colors">About SkyVee</a></li>
               <li><a href="#" className="hover:text-[#00ff88] transition-colors">Success Stories</a></li>
               <li><a href="#" className="hover:text-[#00ff88] transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-[#00ff88] transition-colors">Terms of Service</a></li>
@@ -49,9 +53,9 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-bold mb-6">Contact</h4>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-3 cursor-pointer" onClick={onContactClick}>
                 <Mail size={16} className="text-[#00ff88]" />
-                <span>support@skyveedrones.com</span>
+                <a href="#" onClick={(e) => { e.preventDefault(); onContactClick?.(); }} className="hover:text-[#00ff88] transition-colors">support@skyveedrones.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <MapPin size={16} className="text-[#00ff88]" />

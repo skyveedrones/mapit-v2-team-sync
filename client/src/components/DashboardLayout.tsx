@@ -9,13 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, Users as UsersIcon } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
+  { icon: Plane, label: "Hire a Pilot", path: "https://www.skyveedrones.com", external: true },
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: UsersIcon, label: "Users", path: "/users" },
   { icon: Building2, label: "Clients", path: "/clients" },
@@ -139,10 +140,17 @@ function DashboardLayoutContent({
                 {menuItems.map(item => {
                   const Icon = item.icon;
                   const isActive = location === item.path;
+                  const isExternal = (item as any).external;
                   return (
                     <DropdownMenuItem
                       key={item.path}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => {
+                        if (isExternal) {
+                          window.open(item.path, '_blank');
+                        } else {
+                          setLocation(item.path);
+                        }
+                      }}
                       className={`cursor-pointer gap-2 ${
                         isActive ? "bg-primary/10 text-primary" : ""
                       }`}

@@ -17,7 +17,7 @@ import { trackEvent } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
-import ContactModal from "@/components/ContactModal";
+import { ContactModal } from "@/components/ContactModal";
 import {
   Upload,
   Map,
@@ -512,6 +512,41 @@ export default function Home() {
         <Features />
       </section>
 
+      {/* SECTION 5: HIRE A PILOT SERVICE */}
+      <section className="relative bg-gradient-to-b from-slate-900 to-slate-950 dark:from-[#0a1628] dark:to-[#050a12] py-16 md:py-24 px-6 border-t border-slate-700 dark:border-white/5">
+        <div className="container max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-3xl md:text-4xl font-bold text-white mb-4"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Need a Professional Pilot?
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed"
+            >
+              Don't have a drone or a Part 107 pilot? SkyVee Drones provides full-service aerial data collection and infrastructure inspections nationwide.
+            </motion.p>
+            <motion.div variants={fadeInUp}>
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-black font-bold"
+                onClick={() => window.open('https://www.skyveedrones.com', '_blank')}
+              >
+                Visit SkyVee Drones
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Old Features Section - Removed */}
       <section className="hidden py-16 relative">
         <div className="absolute inset-0 topo-pattern" />
@@ -628,11 +663,11 @@ export default function Home() {
                 variant="outline"
                 className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
                 onClick={() => {
-                  setLocation('/demo');
+                  setShowContactModal(true);
                 }}
               >
-                <Eye className="mr-2 h-5 w-5" />
-                See Project Demo
+                <Zap className="mr-2 h-5 w-5" />
+                Request a Briefing
               </Button>
               <Button
                 size="lg"
@@ -652,7 +687,7 @@ export default function Home() {
       </section>
 
       {/* Footer - Using new component */}
-      <Footer />
+      <Footer onContactClick={() => setShowContactModal(true)} />
 
       {/* Download Dialog */}
       {showDownloadDialog && (
@@ -664,8 +699,8 @@ export default function Home() {
       
       {/* Contact Modal */}
       <ContactModal
-        isOpen={showContactModal}
-        onClose={() => setShowContactModal(false)}
+        open={showContactModal}
+        onOpenChange={setShowContactModal}
       />
     </div>
   );

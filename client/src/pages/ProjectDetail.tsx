@@ -365,6 +365,11 @@ export default function ProjectDetail() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={() => window.open('https://www.skyveedrones.com', '_blank')}>
+                        <Plane className="h-4 w-4 mr-2 text-green-500" />
+                        Hire a Pilot
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       {/* Owner and editor actions */}
                       {demoCanEdit && (
                         <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>

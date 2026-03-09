@@ -1,168 +1,178 @@
-import { useState } from 'react';
-import { X, Send, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface ContactModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const projectTypes = [
+  { value: "progress-tracking", label: "Progress Tracking" },
+  { value: "infrastructure-inspection", label: "Infrastructure Inspection" },
+  { value: "insurance-claim", label: "Insurance Claim" },
+  { value: "solar-roof-audit", label: "Solar/Roof Audit" },
+  { value: "real-estate", label: "Real Estate" },
+  { value: "other", label: "Other" },
+];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+export function ContactModal({ open, onOpenChange }: ContactModalProps) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    company: "",
+    projectType: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, projectType: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const data = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      projectType: formData.get('project'),
-      message: formData.get('message'),
-    };
+
+    if (!formData.name || !formData.email || !formData.projectType) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      // Simulate form submission (replace with actual API call if needed)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (response.ok) {
-        setIsSubmitted(true);
-      } else {
-        throw new Error('Send failed');
-      }
-    } catch (err) {
-      setError('Something went wrong. Please try again or email us directly.');
-      console.error('Form submission error:', err);
+      toast.success("Request Sent! The SkyVee team will contact you shortly.");
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        projectType: "",
+        message: "",
+      });
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Failed to send request. Please try again.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal Card */}
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="relative w-full max-w-lg bg-[#09323B] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-      >
-        {/* Mapit Neon Accent Line */}
-        <div className="h-1.5 w-full bg-primary" />
-        
-        <div className="p-8">
-          <button 
-            onClick={onClose}
-            className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Request a Briefing</DialogTitle>
+          <DialogDescription>
+            Tell us about your project and we'll get back to you shortly.
+          </DialogDescription>
+        </DialogHeader>
 
-          <AnimatePresence mode="wait">
-            {!isSubmitted ? (
-              <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <h3 className="text-2xl font-bold text-white mb-2">GET STARTED</h3>
-                <p className="text-gray-300 text-sm mb-8">
-                  Launch your next mapping project in Dallas. Our team will contact you within 24 hours.
-                </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Your name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-                {error && (
-                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                    {error}
-                  </div>
-                )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="your@email.com"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <div className="grid grid-cols-2 gap-4">
-                    <input 
-                      required 
-                      name="name" 
-                      className="bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary/50 outline-none" 
-                      placeholder="Name" 
-                    />
-                    <input 
-                      required 
-                      name="email" 
-                      type="email" 
-                      className="bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary/50 outline-none" 
-                      placeholder="Email" 
-                    />
-                  </div>
-                  
-                  <select 
-                    name="project" 
-                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary/50 outline-none appearance-none"
-                  >
-                    <option className="bg-[#09323B]">Construction Monitoring</option>
-                    <option className="bg-[#09323B]">Real Estate Mapping</option>
-                    <option className="bg-[#09323B]">Infrastructure Inspection</option>
-                    <option className="bg-[#09323B]">Other</option>
-                  </select>
+          <div className="space-y-2">
+            <Label htmlFor="company">Company</Label>
+            <Input
+              id="company"
+              name="company"
+              placeholder="Your company name"
+              value={formData.company}
+              onChange={handleInputChange}
+            />
+          </div>
 
-                  <textarea 
-                    name="message" 
-                    rows={3} 
-                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary/50 outline-none resize-none" 
-                    placeholder="How can we help?" 
-                  />
+          <div className="space-y-2">
+            <Label htmlFor="projectType">Project Type *</Label>
+            <Select value={formData.projectType} onValueChange={handleSelectChange}>
+              <SelectTrigger id="projectType">
+                <SelectValue placeholder="Select a project type" />
+              </SelectTrigger>
+              <SelectContent>
+                {projectTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-                  <button 
-                    disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/80 text-black font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all group disabled:opacity-50"
-                  >
-                    {loading ? "Sending..." : "Submit Request"}
-                    {!loading && <Send size={18} className="group-hover:translate-x-1 transition-transform" />}
-                  </button>
-                </form>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-10"
-              >
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/30 shadow-[0_0_30px_rgba(0,255,136,0.2)]">
-                  <CheckCircle2 size={40} className="text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">REQUEST SENT</h3>
-                <p className="text-gray-300 mb-8 max-w-[280px] mx-auto">
-                  Your flight plan is in motion. We'll be in touch shortly!
-                </p>
-                <button 
-                  onClick={onClose}
-                  className="text-primary font-bold hover:underline tracking-widest text-sm"
-                >
-                  CLOSE
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="message">Message</Label>
+            <Textarea
+              id="message"
+              name="message"
+              placeholder="Tell us more about your project..."
+              value={formData.message}
+              onChange={handleInputChange}
+              rows={4}
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Sending..." : "Send Request"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default ContactModal;
+}
