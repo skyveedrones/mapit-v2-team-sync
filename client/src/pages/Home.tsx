@@ -425,7 +425,7 @@ export default function Home() {
                 return (
                   <div 
                     key={index} 
-                    className="group p-8 rounded-2xl bg-white dark:bg-gradient-to-b dark:from-white/5 dark:to-transparent border border-slate-200 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
+                    className="group p-8 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
                   >
                     <div className="flex items-start gap-5">
                       {/* Icon with Mapit Glow */}
@@ -452,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-white dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-100 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -513,7 +513,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 5: HIRE A PILOT SERVICE */}
-      <section className="relative bg-gradient-to-b from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950 py-16 md:py-24 px-6 border-t border-slate-200 dark:border-slate-700 transition-colors duration-300">
+      <section className="relative bg-white dark:bg-slate-900 py-16 md:py-24 px-6 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none transition-colors duration-300 rounded-lg mx-6">
         <div className="container max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
@@ -632,7 +632,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-300 border-t border-slate-200 dark:border-white/5">
+      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-white dark:bg-black transition-colors duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 dark:from-primary/10 dark:via-transparent dark:to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
