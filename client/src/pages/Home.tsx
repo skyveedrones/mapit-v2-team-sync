@@ -213,11 +213,11 @@ export default function Home() {
               <>
                 <Button
                   size="sm"
-                  className="px-5 py-2 bg-primary text-primary-foreground rounded-full hover:shadow-[0_0_20px_rgba(20,225,20,0.4)] transition-all transform hover:scale-105 font-bold"
+                  className="px-5 py-2 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-all font-bold"
                   onClick={handleLogin}
                   disabled={loading}
                 >
-                  {loading ? "Loading..." : "Get a Quote"}
+                  {loading ? "Loading..." : "Sign In"}
                 </Button>
               </>
             )}
@@ -294,14 +294,14 @@ export default function Home() {
               ) : (
                 <Button
                   size="sm"
-                  className="w-full bg-primary text-primary-foreground rounded-full font-bold mt-2"
+                  className="w-full border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white rounded-full font-bold mt-2 hover:bg-slate-100 dark:hover:bg-white/5"
                   onClick={() => {
                     handleLogin();
                     setMobileMenuOpen(false);
                   }}
                   disabled={loading}
                 >
-                  {loading ? "Loading..." : "Get a Quote"}
+                  {loading ? "Loading..." : "Sign In"}
                 </Button>
               )}
             </div>
@@ -368,13 +368,14 @@ export default function Home() {
 
         {/* --- BUTTON BRIDGE --- */}
         <div className="bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
-          {/* The Get Started Button triggers the Modal */}
-          <button
-            onClick={() => setShowContactModal(true)}
-            className="px-10 py-4 bg-primary text-primary-foreground font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm"
-          >
-            Get Started
-          </button>
+          {/* The Get Started Button navigates to Welcome page */}
+          <Link href="/welcome">
+            <button
+              className="px-10 py-4 bg-primary text-primary-foreground font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm"
+            >
+              Get Started
+            </button>
+          </Link>
 
           {/* The Learn More Button scrolls to Features */}
           <button
@@ -386,16 +387,16 @@ export default function Home() {
         </div>
 
         {/* SECTION 2: STEPPER CARDS */}
-        <section className="relative bg-black pt-16 pb-64 px-6 z-40">
+        <section className="relative bg-slate-50 dark:bg-black pt-16 pb-64 px-6 z-40 transition-colors duration-300">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
           <div className="max-w-6xl mx-auto relative z-10">
             <div className="text-center mb-24">
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
                 From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              <p className="text-slate-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
                 The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
@@ -451,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-black py-24 border-y border-white/5 z-20">
+      <section className="relative bg-white dark:bg-black py-24 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -460,10 +461,10 @@ export default function Home() {
             <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
               Universal Integration
             </h2>
-            <h3 className="text-3xl md:text-5xl font-bold text-white">
-              MAPIT is compatible with <span className="text-primary">any</span> drone.
+            <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white">
+              <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-8 md:h-12 w-auto object-contain inline-block mr-3" /> is compatible with <span className="text-primary">any</span> drone.
             </h3>
-            <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
+            <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
               If your aircraft records GPS metadata, our system can process it.
               Zero proprietary hardware locks.
             </p>
@@ -472,28 +473,28 @@ export default function Home() {
           {/* Brand Grid: Clean, minimalist logos */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60">
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">DJI</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Enterprise</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">DJI</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Enterprise</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">AUTEL</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Robotics</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">AUTEL</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Robotics</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">PARROT</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Anafi Series</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">PARROT</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Anafi Series</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">SKYDIO</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Autonomous</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">SKYDIO</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Autonomous</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">MAVLINK</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Open Source</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">MAVLINK</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Open Source</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">FIXED WING</span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">VTOL / Professional</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">FIXED WING</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">VTOL / Professional</span>
             </div>
           </div>
 
@@ -507,7 +508,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-black pt-16 pb-32 px-6 z-10 border-t border-white/5">
+      <section id="features" className="relative bg-slate-50 dark:bg-black pt-16 pb-32 px-6 z-10 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
         <Features />
       </section>
 
