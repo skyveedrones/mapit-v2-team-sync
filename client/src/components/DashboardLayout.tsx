@@ -86,7 +86,7 @@ function DashboardLayoutContent({
         <div className="flex items-center justify-between h-16 px-4 md:px-6">
           {/* Left: Logo */}
           <div className="flex items-center">
-            <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-10 w-auto object-contain" />
+            <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-12 md:h-14 w-auto object-contain" />
           </div>
 
           {/* Right: Action Center (Theme Toggle, User Menu, Hamburger) */}
