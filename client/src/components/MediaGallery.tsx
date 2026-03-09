@@ -258,16 +258,26 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     }
   }, [selectedMedia?.id, handleResetZoom]);
 
-  // Handle mouse wheel zoom
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.deltaY < 0) {
-      handleZoomIn();
-    } else {
-      handleZoomOut();
-    }
+  // Handle mouse wheel zoom with native DOM listener (passive: false)
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.deltaY < 0) {
+        handleZoomIn();
+      } else {
+        handleZoomOut();
+      }
+    };
+
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+    };
   }, [selectedMedia, handleZoomIn, handleZoomOut]);
 
   // Handle drag/pan when zoomed
@@ -860,7 +870,6 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 className={`relative bg-black overflow-hidden group ${
                   isFullscreen ? "h-full" : "rounded-lg mb-4"
                 } ${zoomLevel > 1 ? "cursor-grab active:cursor-grabbing" : ""}`}
-                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
