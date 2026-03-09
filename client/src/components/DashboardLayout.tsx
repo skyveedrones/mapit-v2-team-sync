@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, Moon, Settings, Sun, Users as UsersIcon } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -84,36 +84,35 @@ function DashboardLayoutContent({
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
         <div className="flex items-center justify-between h-16 px-4 md:px-6">
-          {/* Left: Logo and Brand */}
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="MAPIT" className="h-8 w-auto object-contain" />
-            <span className="text-lg font-semibold tracking-tight hidden sm:inline">MAPIT</span>
+          {/* Left: Hamburger Menu and Logo */}
+          <div className="flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                {menuItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = location === item.path;
+                  return (
+                    <DropdownMenuItem
+                      key={item.path}
+                      onClick={() => setLocation(item.path)}
+                      className={`cursor-pointer gap-2 ${
+                        isActive ? "bg-primary/10 text-primary" : ""
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <img src="/logo.png" alt="MAPIT" className="h-10 w-auto object-contain" />
           </div>
-
-          {/* Center: Navigation Links (Desktop only) */}
-          {!isMobile && (
-            <nav className="flex items-center gap-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => setLocation(item.path)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          )}
 
           {/* Right: Theme Toggle and User Menu */}
           <div className="flex items-center gap-2">
@@ -166,31 +165,6 @@ function DashboardLayoutContent({
             </DropdownMenu>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {isMobile && (
-          <div className="border-t border-border px-4 py-2 flex gap-1 overflow-x-auto">
-            {menuItems.map(item => {
-              const isActive = location === item.path;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => setLocation(item.path)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors font-medium text-sm whitespace-nowrap ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  }`}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </header>
 
       {/* Main Content */}
