@@ -461,8 +461,8 @@ export default function Home() {
             <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
               Universal Integration
             </h2>
-            <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white">
-              Compatible with <span className="text-primary">All Major Drone Manufacturers</span>
+            <h3 className="text-3xl md:text-5xl font-bold text-white">
+              Compatible with <span className="text-white">All Major Drone Manufacturers</span>
             </h3>
             <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
               If your aircraft records GPS metadata, our system can process it.
