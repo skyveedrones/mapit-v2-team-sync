@@ -9,42 +9,42 @@ const Features = () => {
       title: "Easy Upload",
       desc: "Upload drone photos and videos with automatic GPS metadata extraction.",
       icon: <Upload className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-YyNrmaNMaNsFrfqEN977f.png",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-efVpQXaN5Mmq982xJSV7KE.webp",
       link: "/features/easy-upload"
     },
     {
       title: "Interactive Maps",
       desc: "Visualize your flights on Google Maps with markers, popups, and key data.",
       icon: <MapIcon className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp",
       link: "/features/interactive-maps"
     },
     {
       title: "Flight Path Tracking",
       desc: "Automatic flight path visualization connecting sequential GPS points.",
       icon: <Navigation className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-2V428qqsBzRA266c6MDHLo.png",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-AfdMbjvVTNxTSKyUYDhpHo.webp",
       link: "/features/flight-path-tracking"
     },
     {
       title: "GPS Data Export",
       desc: "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software.",
       icon: <Download className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/gps-data-export-3nXFptzNDFVoNB8V4s253R.webp",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/gps-data-export-3nXFptzNDFVoNB8V4s253R.webp",
       link: "/features/gps-data-export"
     },
     {
       title: "PDF Map Overlay",
       desc: "Overlay construction plans and blueprints on your maps with precise positioning.",
       icon: <Layers className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-id22WTkeeqz3WUxVnsdQSk.png",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-dsC9P8JfjwrJGcb8zt4UXm.webp",
       link: "/features/pdf-map-overlay"
     },
     {
       title: "Project Templates",
       desc: "Save configurations as templates and create new projects in seconds.",
       icon: <Layout className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-project-templates-DYfRa8TwAxvYPCdxorBVDg.webp",
+      image: "https://file-storage.manus.space/FiS5WF2NaftJTm6fu3BYQb/feature-project-templates-DYfRa8TwAxvYPCdxorBVDg.webp",
       link: "/features/project-templates"
     }
   ];
