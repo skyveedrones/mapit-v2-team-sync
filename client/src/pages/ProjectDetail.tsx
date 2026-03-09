@@ -265,7 +265,7 @@ export default function ProjectDetail() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-8 w-auto" />
+            <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-12 md:h-14 w-auto object-contain" />
           </Link>
 
           <div className="flex items-center gap-4">
@@ -273,15 +273,6 @@ export default function ProjectDetail() {
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">{user?.name || user?.email || "User"}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
           </div>
         </div>
       </nav>
