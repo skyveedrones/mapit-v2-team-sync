@@ -387,7 +387,7 @@ export default function Home() {
         </div>
 
         {/* SECTION 2: STEPPER CARDS */}
-        <section className="relative bg-slate-50 dark:bg-black pt-16 pb-64 px-6 z-40 transition-colors duration-300">
+        <section className="relative bg-slate-50 dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
@@ -452,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-white dark:bg-black py-24 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-white dark:bg-black pt-12 pb-24 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
