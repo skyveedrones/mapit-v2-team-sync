@@ -342,9 +342,9 @@ export function ReportGeneratorDialog({
                       {selectedMediaIndices.length === media.length ? 'Deselect All' : 'Select All'}
                     </Button>
                   </div>
-                  <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3">
+                  <div className="max-h-64 overflow-y-auto grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 p-3 border rounded-lg">
                     {media.map((m, idx) => (
-                      <div key={m.id} className="flex items-center space-x-2">
+                      <div key={m.id} className="flex flex-col items-center gap-2 relative">
                         <Checkbox
                           id={`media-${idx}`}
                           checked={selectedMediaIndices.includes(idx)}
@@ -357,9 +357,10 @@ export function ReportGeneratorDialog({
                               );
                             }
                           }}
+                          className="absolute top-1 left-1 z-10"
                         />
-                        <Label htmlFor={`media-${idx}`} className="cursor-pointer flex-1">
-                          {m.filename}
+                        <Label htmlFor={`media-${idx}`} className="cursor-pointer w-full">
+                          <img src={m.url} alt={m.filename} className="w-full aspect-square object-cover rounded border border-white/10 hover:border-white/30 transition-colors" />
                         </Label>
                       </div>
                     ))}
