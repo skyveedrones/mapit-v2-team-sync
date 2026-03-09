@@ -78,7 +78,7 @@ const features = [
     icon: Layers,
     title: "PDF Map Overlay",
     description:
-      "Overlay construction plans and blueprints on your maps with precise corner positioning",
+      "Overlay construction plans on your maps with precise corner positioning.",
     image: "/images/feature-overlay-new.jpg",
     link: "/features/pdf-map-overlay",
   },
@@ -367,7 +367,7 @@ export default function Home() {
         </section>
 
         {/* --- BUTTON BRIDGE --- */}
-        <div className="bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
+        <div className="bg-white dark:bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50 transition-colors duration-300">
           {/* The Get Started Button navigates to Welcome page */}
           <Link href="/welcome">
             <button
@@ -380,14 +380,14 @@ export default function Home() {
           {/* The Learn More Button scrolls to Features */}
           <button
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-10 py-4 border border-white/20 text-white font-bold rounded-full hover:bg-white/5 transition-all tracking-wide uppercase text-sm"
+            className="px-10 py-4 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-all tracking-wide uppercase text-sm"
           >
             Learn More
           </button>
         </div>
 
         {/* SECTION 2: STEPPER CARDS */}
-        <section className="relative bg-slate-50 dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
+        <section className="relative bg-white dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
           
@@ -425,7 +425,7 @@ export default function Home() {
                 return (
                   <div 
                     key={index} 
-                    className="group p-8 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
+                    className="group p-8 rounded-2xl bg-slate-100/50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 hover:border-primary/40 shadow-sm dark:shadow-none transition-all duration-500"
                   >
                     <div className="flex items-start gap-5">
                       {/* Icon with Mapit Glow */}
@@ -452,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-white dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-100 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-100 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -471,7 +471,8 @@ export default function Home() {
           </div>
 
           {/* Brand Grid: Clean, minimalist logos */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60 dark:opacity-60">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-12 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60 dark:opacity-60">
             <div className="flex flex-col items-center group">
               <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">DJI</span>
               <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Enterprise</span>
@@ -496,9 +497,10 @@ export default function Home() {
               <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">FIXED WING</span>
               <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">VTOL / Professional</span>
             </div>
+            </div>
           </div>
 
-          <div className="mt-20 flex justify-center">
+          <div className="mt-8 flex justify-center">
             <div className="px-6 py-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full flex items-center gap-3 transition-colors duration-300">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="text-slate-600 dark:text-gray-400 text-sm font-medium transition-colors duration-300">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
@@ -508,13 +510,13 @@ export default function Home() {
       </section>
 
       {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-slate-50 dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
+      <section id="features" className="relative bg-white dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 border-t border-slate-100 dark:border-white/5 transition-colors duration-300">
         <Features />
       </section>
 
       {/* SECTION 5: HIRE A PILOT SERVICE */}
-      <section className="relative bg-white dark:bg-slate-900 py-16 md:py-24 px-6 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none transition-colors duration-300 rounded-lg mx-6">
-        <div className="container max-w-4xl mx-auto text-center">
+      <section className="relative bg-white dark:bg-slate-900 py-16 md:py-24 px-6 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none transition-colors duration-300 rounded-lg mx-6 my-8">
+        <div className="container max-w-4xl mx-auto text-center relative z-10">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -530,7 +532,7 @@ export default function Home() {
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-slate-600 dark:text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed transition-colors duration-300"
+              className="text-slate-700 dark:text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed transition-colors duration-300"
             >
               Don't have a drone or a Part 107 pilot? SkyVee Drones provides full-service aerial data collection and infrastructure inspections nationwide.
             </motion.p>
@@ -634,7 +636,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-white dark:bg-black transition-colors duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 dark:from-primary/10 dark:via-transparent dark:to-primary/10" />
-        <div className="absolute inset-0 grid-pattern" />
+        <div className="absolute inset-0 grid-pattern dark:opacity-20" />
 
         <div className="container relative z-10">
           <motion.div
