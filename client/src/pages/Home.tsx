@@ -365,117 +365,238 @@ export default function Home() {
           </div>
 
         </section>
-      </section>
 
-      {/* --- 1. BUTTON BRIDGE & TOP DIVIDER --- */}
-      <div className="bg-black py-12 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
-            <button onClick={() => setShowContactModal(true)} className="px-10 py-4 bg-[#14E114] text-black font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm">
-              Get Started
-            </button>
-            <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="px-10 py-4 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-50 dark:hover:bg-white/5 transition-all tracking-wide uppercase text-sm">
-              Learn More
-            </button>
-      </div>
+        {/* --- BUTTON BRIDGE --- */}
+        <div className="bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50">
+          {/* The Get Started Button triggers the Modal */}
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="px-10 py-4 bg-primary text-primary-foreground font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm"
+          >
+            Get Started
+          </button>
 
-      {/* --- 2. HOW IT WORKS (The Stepper) --- */}
-      <section className="relative bg-white dark:bg-black pt-16 pb-32 px-6 z-40 transition-colors duration-300">
+          {/* The Learn More Button scrolls to Features */}
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-10 py-4 border border-white/20 text-white font-bold rounded-full hover:bg-white/5 transition-all tracking-wide uppercase text-sm"
+          >
+            Learn More
+          </button>
+        </div>
+
+        {/* SECTION 2: STEPPER CARDS */}
+        <section className="relative bg-black pt-16 pb-64 px-6 z-40">
+          {/* Branded Background "Wing" Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          
           <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-20">
-              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 font-orbitron">
-                From Flight to <span className="text-[#14E114]">Data</span> in Minutes
+            <div className="text-center mb-24">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                From Flight to <span className="text-primary">Data</span> in Minutes
               </h2>
-              <p className="text-slate-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
-                The streamlined workflow designed for drone professionals.
+              <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+                The streamlined workflow designed for drone professionals and project managers.
               </p>
             </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-50">
               {[
-                { step: "01", title: "Upload", impact: "Drag, Drop, Done.", desc: "Instant cloud sync for high-res drone media.", icon: Upload },
-                { step: "02", title: "Process", impact: "Auto-Telemetry.", desc: "AI-driven extraction of GPS and flight paths.", icon: Cpu },
-                { step: "03", title: "Visualize", impact: "Map Your Success.", desc: "Interactive 3D maps and pro-grade exports.", icon: LayoutDashboard },
-              ].map((item, idx) => (
-                <div key={idx} className="group p-8 rounded-2xl bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 hover:border-[#14E114]/40 transition-all duration-500 shadow-sm hover:shadow-xl">
-                  <div className="text-[#14E114] font-bold text-xs tracking-widest mb-4 opacity-60 uppercase font-orbitron">Step {item.step}</div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 font-orbitron">{item.title}</h3>
-                  <p className="text-[#14E114] font-medium italic mb-4 text-sm">{item.impact}</p>
-                  <p className="text-slate-600 dark:text-gray-400 text-sm">{item.desc}</p>
-                </div>
-              ))}
+                {
+                  title: "Upload",
+                  impact: "Drag, Drop, Done.",
+                  desc: "Instant cloud sync for high-res drone media.",
+                  icon: Upload,
+                },
+                {
+                  title: "Process",
+                  impact: "Auto-Telemetry.",
+                  desc: "AI-driven extraction of GPS and flight paths.",
+                  icon: Cpu,
+                },
+                {
+                  title: "Visualize",
+                  impact: "Map Your Success.",
+                  desc: "Interactive 3D maps and pro-grade exports.",
+                  icon: LayoutDashboard,
+                },
+              ].map((step, index) => {
+                const IconComponent = step.icon;
+                return (
+                  <div 
+                    key={index} 
+                    className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-primary/40 transition-all duration-500"
+                  >
+                    <div className="flex items-start gap-5">
+                      {/* Icon with Mapit Glow */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(20,225,20,0.1)] group-hover:shadow-[0_0_25px_rgba(20,225,20,0.3)] transition-all">
+                        <IconComponent className="w-6 h-6 text-primary" />
+                      </div>
+                      
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1 block">
+                          Step 0{index + 1}
+                        </span>
+                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                        <p className="text-white font-medium mb-1">{step.impact}</p>
+                        <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-
-          {/* DIVIDER: Topographic Slant into Features */}
-          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform rotate-180">
-            <svg className="relative block w-[calc(100%+1.3px)] h-20 text-slate-100 dark:text-[#050505] fill-current" viewBox="0 0 1200 120" preserveAspectRatio="none">
-              <path d="M1200 120L0 120 307.75 0 1200 120z"></path>
-            </svg>
           </div>
         </section>
 
-      {/* --- 3. FEATURES SECTION (Clickable Cards) --- */}
-      <section id="features" className="relative bg-slate-100 dark:bg-[#050505] pt-32 pb-24 px-6 z-10 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-6 font-orbitron">
-              Powerful Drone <span className="text-[#14E114]">Mapping</span> Features
+      </section>
+
+      {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
+      <section className="relative bg-black py-24 border-y border-white/5 z-20">
+        {/* Radial Glow for depth */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
+              Universal Integration
             </h2>
+            <h3 className="text-3xl md:text-5xl font-bold text-white">
+              MAPIT is compatible with <span className="text-primary">any</span> drone.
+            </h3>
+            <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
+              If your aircraft records GPS metadata, our system can process it.
+              Zero proprietary hardware locks.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Link key={index} href={feature.link}>
-                <div className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden group cursor-pointer hover:border-[#14E114]/50 transition-all duration-300 shadow-sm hover:shadow-xl">
-                  <div className="h-48 overflow-hidden bg-slate-200 dark:bg-gray-900 relative">
-                    <img src={feature.image} alt={feature.title} className="w-full h-full object-cover opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-all duration-700"
-                      onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80"; }} />
-                    <div className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-md rounded-lg text-[#14E114] opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight size={20} />
+          {/* Brand Grid: Clean, minimalist logos */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60">
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">DJI</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Enterprise</span>
+            </div>
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">AUTEL</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Robotics</span>
+            </div>
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">PARROT</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Anafi Series</span>
+            </div>
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">SKYDIO</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Autonomous</span>
+            </div>
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">MAVLINK</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">Open Source</span>
+            </div>
+            <div className="flex flex-col items-center group">
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">FIXED WING</span>
+              <span className="text-[9px] uppercase tracking-widest text-gray-500 mt-1">VTOL / Professional</span>
+            </div>
+          </div>
+
+          <div className="mt-20 flex justify-center">
+            <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-gray-400 text-sm font-medium">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: FEATURES */}
+      <section id="features" className="relative bg-black pt-16 pb-32 px-6 z-10 border-t border-white/5">
+        <Features />
+      </section>
+
+      {/* Old Features Section - Removed */}
+      <section className="hidden py-16 relative">
+        <div className="absolute inset-0 topo-pattern" />
+        <div className="container relative z-10">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+            className="text-center mb-16"
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-3xl md:text-4xl font-bold mb-4"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Powerful Drone Mapping Features
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-muted-foreground max-w-2xl mx-auto"
+            >
+              Everything you need to manage, visualize, and share your aerial
+              mapping projects
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {features.map((feature) => (
+              <Link key={feature.title} href={feature.link}>
+                <motion.div
+                  variants={fadeInUp}
+                  className="glow-card overflow-hidden cursor-pointer group h-full transition-transform duration-300 hover:-translate-y-2"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    e.currentTarget.style.setProperty("--mouse-x", `${x}%`);
+                    e.currentTarget.style.setProperty("--mouse-y", `${y}%`);
+                  }}
+                >
+                  {/* Feature Image */}
+                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  {/* Feature Content */}
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                        <feature.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3
+                          className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-8">
-                    <div className="flex items-center gap-3 mb-3">
-                      <feature.icon className="text-[#14E114]" size={20} />
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white font-orbitron">{feature.title}</h3>
-                    </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed">{feature.description}</p>
-                  </div>
-                </div>
+                </motion.div>
               </Link>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* --- 4. UNIVERSAL COMPATIBILITY (Neon Mapping Grid) --- */}
-      <section className="relative bg-white dark:bg-black py-24 border-y border-slate-200 dark:border-white/5 z-20 transition-colors duration-300 overflow-hidden">
-        <div 
-          className="absolute inset-0 pointer-events-none opacity-[0.05] dark:opacity-[0.15]"
-          style={{
-            backgroundImage: `linear-gradient(#14E114 1px, transparent 1px), linear-gradient(90deg, #14E114 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }}
-        />
-        
-        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-sm font-bold tracking-[0.3em] text-[#14E114] uppercase mb-4 font-orbitron">Universal Integration</h2>
-          <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white font-orbitron">MAPIT is compatible with <span className="text-[#14E114]">any</span> drone.</h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-12 items-center justify-items-center opacity-60 dark:opacity-40 mt-16">
-            {['DJI', 'AUTEL', 'PARROT', 'SKYDIO', 'MAVLINK', 'FIXED WING'].map((brand) => (
-              <div key={brand} className="flex flex-col items-center group">
-                <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-[#14E114] transition-colors">{brand}</span>
-                <span className="text-[9px] uppercase tracking-widest text-slate-500 mt-1">Professional</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* SECTION 5: CTA - Ready to Map */}
-      <section className="py-16 relative overflow-hidden">
+      {/* CTA Section */}
+      <section className="py-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute inset-0 grid-pattern" />
 
