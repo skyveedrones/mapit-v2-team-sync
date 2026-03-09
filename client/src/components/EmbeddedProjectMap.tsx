@@ -43,8 +43,8 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         
         const targetPosition = { lat: latitude, lng: longitude };
         
-        // Set zoom level first to 19 for detailed view
-        mapRef.current.setZoom(19);
+        // Set zoom level to 21 for ultra-close satellite view
+        mapRef.current.setZoom(21);
         
         // Pan to the location
         mapRef.current.panTo(targetPosition);
@@ -56,10 +56,10 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
             return content?.getAttribute('data-media-id') === mediaId;
           });
           if (marker) {
-            // Trigger click after a brief delay to ensure map has finished panning
+            // Trigger click after a brief delay to ensure map has finished panning and zooming
             setTimeout(() => {
               google.maps.event.trigger(marker, 'click');
-            }, 300);
+            }, 400);
           }
         }
       },
