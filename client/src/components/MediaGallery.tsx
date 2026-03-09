@@ -96,6 +96,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isHoveringImage, setIsHoveringImage] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
@@ -258,26 +259,16 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     }
   }, [selectedMedia?.id, handleResetZoom]);
 
-  // Handle mouse wheel zoom with native DOM listener (passive: false)
-  useEffect(() => {
-    const container = imageContainerRef.current;
-    if (!container) return;
-
-    const handleNativeWheel = (e: WheelEvent) => {
-      if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.deltaY < 0) {
-        handleZoomIn();
-      } else {
-        handleZoomOut();
-      }
-    };
-
-    container.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handleNativeWheel);
-    };
+  // Handle mouse wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (!selectedMedia || selectedMedia.mediaType !== "photo") return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
   }, [selectedMedia, handleZoomIn, handleZoomOut]);
 
   // Handle drag/pan when zoomed
@@ -863,17 +854,22 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           </DialogHeader>
 
           {selectedMedia && (
-            <div ref={dialogContentRef} className={`flex-1 ${isFullscreen ? "h-full overflow-hidden" : "overflow-y-auto"}`}>
+            <div ref={dialogContentRef} className={`flex-1 ${isFullscreen ? "h-full overflow-hidden" : isHoveringImage ? "overflow-hidden" : "overflow-y-auto"}`}>
               {/* Media Preview with Navigation */}
               <div 
                 ref={imageContainerRef}
                 className={`relative bg-black overflow-hidden group ${
                   isFullscreen ? "h-full" : "rounded-lg mb-4"
                 } ${zoomLevel > 1 ? "cursor-grab active:cursor-grabbing" : ""}`}
+                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                onMouseLeave={() => {
+                  handleMouseUp();
+                  setIsHoveringImage(false);
+                }}
+                onMouseEnter={() => setIsHoveringImage(true)}
               >
                 {selectedMedia.mediaType === "photo" ? (
                   <img
