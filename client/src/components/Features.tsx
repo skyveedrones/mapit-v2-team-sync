@@ -9,7 +9,7 @@ const Features = () => {
       title: "Easy Upload",
       desc: "Upload drone photos and videos with automatic GPS metadata extraction.",
       icon: <Upload className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-efVpQXaN5Mmq982xJSV7KE.webp",
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-easy-upload-YyNrmaNMaNsFrfqEN977f.png",
       link: "/features/easy-upload"
     },
     {
@@ -23,7 +23,7 @@ const Features = () => {
       title: "Flight Path Tracking",
       desc: "Automatic flight path visualization connecting sequential GPS points.",
       icon: <Navigation className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-AfdMbjvVTNxTSKyUYDhpHo.webp",
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-flight-path-2V428qqsBzRA266c6MDHLo.png",
       link: "/features/flight-path-tracking"
     },
     {
@@ -37,7 +37,7 @@ const Features = () => {
       title: "PDF Map Overlay",
       desc: "Overlay construction plans and blueprints on your maps with precise positioning.",
       icon: <Layers className="w-6 h-6 text-primary" />,
-      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-dsC9P8JfjwrJGcb8zt4UXm.webp",
+      image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-pdf-overlay-id22WTkeeqz3WUxVnsdQSk.png",
       link: "/features/pdf-map-overlay"
     },
     {
