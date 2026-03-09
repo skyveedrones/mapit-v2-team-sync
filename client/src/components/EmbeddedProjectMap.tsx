@@ -41,11 +41,13 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
       panToMedia: (latitude: number, longitude: number, mediaId?: string) => {
         if (!mapRef.current) return;
         
-        // Pan to the location
-        mapRef.current.panTo({ lat: latitude, lng: longitude });
+        const targetPosition = { lat: latitude, lng: longitude };
         
-        // Set zoom level to 18 for detailed view
-        mapRef.current.setZoom(18);
+        // Set zoom level first to 19 for detailed view
+        mapRef.current.setZoom(19);
+        
+        // Pan to the location
+        mapRef.current.panTo(targetPosition);
         
         // If mediaId provided, find and click the corresponding marker
         if (mediaId && markersRef.current.length > 0) {
@@ -54,7 +56,10 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
             return content?.getAttribute('data-media-id') === mediaId;
           });
           if (marker) {
-            google.maps.event.trigger(marker, 'click');
+            // Trigger click after a brief delay to ensure map has finished panning
+            setTimeout(() => {
+              google.maps.event.trigger(marker, 'click');
+            }, 300);
           }
         }
       },

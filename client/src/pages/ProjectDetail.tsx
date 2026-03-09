@@ -106,12 +106,14 @@ export default function ProjectDetail() {
       const customEvent = event as CustomEvent;
       const { latitude, longitude, mediaId } = customEvent.detail;
       if (mapRef.current && latitude && longitude) {
-        mapRef.current.panToMedia(parseFloat(latitude), parseFloat(longitude), mediaId);
-        // Scroll to map
-        const mapElement = document.getElementById('project-map-section');
-        if (mapElement) {
-          mapElement.scrollIntoView({ behavior: 'smooth' });
-        }
+        setTimeout(() => {
+          mapRef.current?.panToMedia(parseFloat(latitude), parseFloat(longitude), mediaId);
+          // Scroll to map
+          const mapElement = document.getElementById('project-map-section');
+          if (mapElement) {
+            mapElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300);
       }
     };
     

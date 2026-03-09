@@ -1088,7 +1088,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                         setGpsEditDialogOpen(true);
                       }}
                       onViewOnMap={() => {
-                        // This callback will be set by the parent component
+                        // Dispatch event to parent to pan map
                         window.dispatchEvent(new CustomEvent('viewOnProjectMap', {
                           detail: {
                             latitude: selectedMedia.latitude,
@@ -1096,6 +1096,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                             mediaId: selectedMedia.id,
                           },
                         }));
+                        // Close the modal immediately
+                        setSelectedMedia(null);
                       }}
                     />
                   </div>
