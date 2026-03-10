@@ -78,6 +78,13 @@ function generateEmailTemplate(content: {
       text-align: center;
     }
     
+    .header img {
+      max-width: 200px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    
     .header h1 {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -162,7 +169,7 @@ function generateEmailTemplate(content: {
   <div class="container">
     <div class="card">
       <div class="header">
-        <h1>MAPIT</h1>
+        <img src="https://mapit.skyveedrones.com/images/mapit-logo-branded.png" alt="MAPIT" style="max-width: 200px; height: auto;">
       </div>
       <div class="content">
         <div class="body-text">${content.body}</div>
