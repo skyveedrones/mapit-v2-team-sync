@@ -1574,9 +1574,34 @@ export async function createClient(client: InsertClient) {
 }
 
 /**
- * Get all clients for an owner
+ * Get all clients for an owner, or all clients if webmaster
  */
-export async function getOwnerClients(ownerId: number) {
+export async function getOwnerClients(ownerId: number, userRole?: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Webmaster role gets access to all clients
+  if (userRole === 'webmaster') {
+    return db
+      .select()
+      .from(clients)
+      .orderBy(desc(clients.updatedAt));
+  }
+
+  // Regular users/admins only see their own clients
+  return db
+    .select()
+    .from(clients)
+    .where(eq(clients.ownerId, ownerId))
+    .orderBy(desc(clients.updatedAt));
+}
+
+/**
+ * Get all clients (admin access - no row-level security)
+ */
+export async function getAllClients() {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
@@ -1585,7 +1610,6 @@ export async function getOwnerClients(ownerId: number) {
   return db
     .select()
     .from(clients)
-    .where(eq(clients.ownerId, ownerId))
     .orderBy(desc(clients.updatedAt));
 }
 
@@ -2628,7 +2652,7 @@ export async function getUserDetailsById(userId: number) {
 /**
  * Update a user's details
  */
-export async function updateUserDetails(userId: number, data: { name?: string; role?: 'user' | 'admin' }) {
+export async function updateUserDetails(userId: number, data: { name?: string; role?: 'user' | 'admin' | 'webmaster' }) {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");

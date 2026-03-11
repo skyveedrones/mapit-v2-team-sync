@@ -32,7 +32,7 @@ export function UserManagementDialog({
   userEmail,
 }: UserManagementDialogProps) {
   const [editName, setEditName] = useState(userName || "");
-  const [selectedRole, setSelectedRole] = useState<"user" | "admin">("user");
+  const [selectedRole, setSelectedRole] = useState<"user" | "admin" | "webmaster">("user");
 
   const [isSaving, setIsSaving] = useState(false);
 

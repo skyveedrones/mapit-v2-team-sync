@@ -71,6 +71,7 @@ import {
   getProjectLogo,
   // Client functions
   createClient,
+  getAllClients,
   getOwnerClients,
   getClientById,
   getOwnerClient,
@@ -450,7 +451,7 @@ export const appRouter = router({
       .input(z.object({
         userId: z.number(),
         name: z.string().min(1),
-        role: z.enum(['user', 'admin']),
+        role: z.enum(['user', 'admin', 'webmaster']),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -1606,9 +1607,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user has permission to share this project
-        // Admin users can share any project, others must be the owner
+        // Admin/webmaster users can share any project, others must be the owner
         let project;
-        if (ctx.user.role === 'admin') {
+        if (ctx.user.role === 'admin' || ctx.user.role === 'webmaster') {
           project = await getProjectById(input.projectId);
         } else {
           project = await getUserProject(input.projectId, ctx.user.id);
@@ -3422,9 +3423,9 @@ export const appRouter = router({
 
   // Client portal management
   clientPortal: router({
-    // List all clients for the current user (owner)
+    // List all clients for the current user (owner), or all clients if webmaster
     list: protectedProcedure.query(async ({ ctx }) => {
-      return getOwnerClients(ctx.user.id);
+      return getOwnerClients(ctx.user.id, ctx.user.role);
     }),
 
     // Get current user's client access (roles and permissions)

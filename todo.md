@@ -1714,3 +1714,14 @@
 - [x] Add image fallback logic to Features component with Unsplash drone image
 - [x] Polish navbar theme toggle with proper z-index layering
 - [x] Connect Services button to smooth scroll to features section
+
+## Webmaster Role Implementation (March 11, 2026)
+- [x] Add 'webmaster' to role enum in users table schema
+- [x] Update getOwnerClients() function to return all clients for webmaster users
+- [x] Update all admin permission checks to include webmaster role
+- [x] Create comprehensive vitest tests for webmaster access control
+- [x] Verify webmaster has global access to all clients/folders
+- [x] Verify admin role remains restricted to assigned clients only
+- [x] Run all tests - 10/10 webmaster tests passing
+- [x] TypeScript compilation - no errors
+- [x] Dev server running successfully

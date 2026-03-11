@@ -16,7 +16,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "webmaster"]).default("user").notNull(),
   /** User's company/client logo URL */
   logoUrl: varchar("logoUrl", { length: 500 }),
   /** S3 storage key for the logo */
