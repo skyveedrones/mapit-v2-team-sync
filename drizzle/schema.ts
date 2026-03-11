@@ -1,4 +1,4 @@
-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -164,6 +164,20 @@ export const media = mysqlTable("media", {
   notes: text("notes"),
   /** Priority level for PDF report inclusion: none (not included), low (yellow !), high (red !) */
   priority: mysqlEnum("priority", ["none", "low", "high"]).default("none").notNull(),
+  /** Video-specific metadata: duration in seconds */
+  duration: int("duration"),
+  /** Video resolution (e.g., "3840x2160") */
+  resolution: varchar("resolution", { length: 50 }),
+  /** Video frame rate (fps) */
+  frameRate: int("frameRate"),
+  /** DJI telemetry flight path as JSON array of {lat, lng, alt, timestamp} */
+  telemetryPath: json("telemetryPath"),
+  /** Session ID for resumable chunked uploads */
+  uploadSessionId: varchar("uploadSessionId", { length: 255 }),
+  /** Processing status for video telemetry extraction */
+  processingStatus: mysqlEnum("processingStatus", ["pending", "processing", "completed", "failed"]).default("pending"),
+  /** Error message if telemetry extraction failed */
+  processingError: text("processingError"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

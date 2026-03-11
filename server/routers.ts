@@ -1605,8 +1605,14 @@ export const appRouter = router({
         sendEmail: z.boolean().optional().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Verify user owns the project
-        const project = await getUserProject(input.projectId, ctx.user.id);
+        // Verify user has permission to share this project
+        // Admin users can share any project, others must be the owner
+        let project;
+        if (ctx.user.role === 'admin') {
+          project = await getProjectById(input.projectId);
+        } else {
+          project = await getUserProject(input.projectId, ctx.user.id);
+        }
         if (!project) {
           throw new TRPCError({
             code: "NOT_FOUND",

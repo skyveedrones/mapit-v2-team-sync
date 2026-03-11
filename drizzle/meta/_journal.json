@@ -183,6 +183,13 @@
       "when": 1772717985499,
       "tag": "0025_acoustic_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1773233294922,
+      "tag": "0026_vengeful_silvermane",
+      "breakpoints": true
     }
   ]
 }
