@@ -1725,3 +1725,7 @@
 - [x] Run all tests - 10/10 webmaster tests passing
 - [x] TypeScript compilation - no errors
 - [x] Dev server running successfully
+
+## User Role Updates (March 11, 2026)
+- [x] Update database role enum to include 'webmaster'
+- [x] Promote clay@skyveedrones.com to webmaster role
