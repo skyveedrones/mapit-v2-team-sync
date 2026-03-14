@@ -713,13 +713,14 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Update overlay corner coordinates (called after drag-to-align)
+    // Update overlay coordinates after manual alignment
     updateOverlayCoordinates: protectedProcedure
       .input(
         z.object({
           overlayId: z.number(),
           projectId: z.number(),
           coordinates: z.array(z.tuple([z.number(), z.number()])).length(4),
+          rotation: z.number().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -733,9 +734,12 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN", message: "No access to this project" });
         }
 
+        const updateData: Record<string, unknown> = { coordinates: input.coordinates };
+        if (input.rotation !== undefined) updateData.rotation = String(input.rotation);
+
         await db
           .update(projectOverlays)
-          .set({ coordinates: input.coordinates as any })
+          .set(updateData as any)
           .where(and(eq(projectOverlays.id, input.overlayId), eq(projectOverlays.projectId, input.projectId)));
 
         return { success: true };

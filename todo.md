@@ -1753,3 +1753,9 @@
 - [x] Live-update GroundOverlay opacity as slider moves (via go.setOpacity())
 - [x] Persist opacity value to project_overlays table on mouseup/touchend
 - [x] Add updateOverlayOpacity tRPC procedure to routers.ts
+
+## Interactive Transformation Layer (March 14, 2026)
+- [x] Add rotation column to project_overlays schema (decimal 7,4) and pushed via SQL ALTER TABLE
+- [x] Rewrite edit mode: amber rotation handle (top-center ↻), aspect-ratio lock toggle (🔒 AR), auto-save on every dragend
+- [x] Update updateOverlayCoordinates tRPC to accept optional rotation and save to DB
+- [x] Build passes cleanly (✓ built in 9.87s)

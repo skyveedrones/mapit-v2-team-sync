@@ -461,10 +461,12 @@ export const projectOverlays = mysqlTable("project_overlays", {
   coordinates: json("coordinates").default('[ [0,0],[0,0],[0,0],[0,0] ]'),
   /** Whether overlay is active */
   isActive: int("isActive").default(1),
-    /** Overlay label for version history */
-    label: varchar("label", { length: 100 }).default("Initial Plan"),
-    /** Overlay version number for history */
-    version_number: int("version_number").default(1),
+  /** Overlay label for version history */
+  label: varchar("label", { length: 100 }).default("Initial Plan"),
+  /** Overlay version number for history */
+  version_number: int("version_number").default(1),
+  /** Rotation in degrees (0-360) applied when rendering the overlay */
+  rotation: decimal("rotation", { precision: 7, scale: 4 }).default("0"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
