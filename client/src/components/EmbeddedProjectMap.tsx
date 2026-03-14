@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
-import { Check, Expand, MapPin, Navigation, Pencil, X } from "lucide-react";
+import { Check, Expand, Layers, MapPin, Navigation, Pencil, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Link } from "wouter";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
@@ -67,6 +67,40 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
     const cornerMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
     const editOverlayRef = useRef<google.maps.GroundOverlay | null>(null);
     const editRectRef = useRef<google.maps.Polygon | null>(null);
+
+    // ── Opacity state — keyed by overlay id ──────────────────────────────────
+    const [opacityMap, setOpacityMap] = useState<Record<number, number>>({});
+
+    // Initialise opacity from props when overlays first load
+    useEffect(() => {
+      const init: Record<number, number> = {};
+      for (const ov of overlays) {
+        if (!(ov.id in opacityMap)) {
+          const val = typeof ov.opacity === "string" ? parseFloat(ov.opacity) : (ov.opacity ?? 0.7);
+          init[ov.id] = isNaN(val) ? 0.7 : val;
+        }
+      }
+      if (Object.keys(init).length > 0) setOpacityMap((prev) => ({ ...prev, ...init }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [overlays]);
+
+    const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
+
+    const handleOpacityChange = (ovId: number, value: number) => {
+      setOpacityMap((prev) => ({ ...prev, [ovId]: value }));
+      // Live-update the rendered GroundOverlay
+      groundOverlaysRef.current.forEach((go, i) => {
+        const ov = overlays.filter((o) => o.isActive)[i];
+        if (ov?.id === ovId) go.setOpacity(value);
+      });
+    };
+
+    const handleOpacityCommit = (ovId: number, value: number) => {
+      updateOverlayOpacity.mutate(
+        { overlayId: ovId, projectId, opacity: value },
+        { onError: (err) => toast.error("Failed to save opacity: " + err.message) }
+      );
+    };
 
     const updateOverlayCoords = trpc.project.updateOverlayCoordinates.useMutation({
       onSuccess: () => {
@@ -486,14 +520,48 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
                   </div>
                 )}
               </div>
-              <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Tip:</span>{" "}
-                  {editMode
-                    ? "Drag the green corner handles to align the plan overlay with the satellite map, then click Finish."
-                    : "Click markers to preview media. Use Align Overlay to reposition a plan overlay."}
-                </p>
-              </div>
+              {/* Opacity slider(s) — shown when overlays are active and not in edit mode */}
+              {!editMode && activeOverlays.length > 0 && (
+                <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border space-y-3">
+                  {activeOverlays.map((ov) => {
+                    const opacity = opacityMap[ov.id] ?? 0.7;
+                    return (
+                      <div key={ov.id} className="flex items-center gap-3">
+                        <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground shrink-0 w-16 truncate">
+                          Opacity
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={opacity}
+                          onChange={(e) => handleOpacityChange(ov.id, parseFloat(e.target.value))}
+                          onMouseUp={(e) => handleOpacityCommit(ov.id, parseFloat((e.target as HTMLInputElement).value))}
+                          onTouchEnd={(e) => handleOpacityCommit(ov.id, parseFloat((e.target as HTMLInputElement).value))}
+                          className="flex-1 h-2 accent-emerald-500 cursor-pointer"
+                        />
+                        <span className="text-xs font-mono text-foreground w-8 text-right shrink-0">
+                          {Math.round(opacity * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Tip:</span>{" "}
+                    Drag the slider to fade the plan overlay. Use <span className="text-amber-400">Align Overlay</span> to reposition corners.
+                  </p>
+                </div>
+              )}
+              {editMode && (
+                <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Tip:</span>{" "}
+                    Drag the green corner handles to align the plan overlay with the satellite map, then click Finish.
+                  </p>
+                </div>
+              )}
             </>
           )}
 

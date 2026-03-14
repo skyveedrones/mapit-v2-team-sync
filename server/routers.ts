@@ -741,6 +741,33 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Update overlay opacity
+    updateOverlayOpacity: protectedProcedure
+      .input(
+        z.object({
+          overlayId: z.number(),
+          projectId: z.number(),
+          opacity: z.number().min(0).max(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+        const ownedProject = await getUserProject(input.projectId, ctx.user.id);
+        const sharedProject = !ownedProject ? await getProjectWithAccess(input.projectId, ctx.user.id) : null;
+        if (!ownedProject && !sharedProject && ctx.user.role !== "webmaster" && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "No access to this project" });
+        }
+
+        await db
+          .update(projectOverlays)
+          .set({ opacity: String(input.opacity) })
+          .where(and(eq(projectOverlays.id, input.overlayId), eq(projectOverlays.projectId, input.projectId)));
+
+        return { success: true };
+      }),
+
     // Delete an overlay
     deleteOverlay: protectedProcedure
       .input(z.object({ overlayId: z.number(), projectId: z.number() }))

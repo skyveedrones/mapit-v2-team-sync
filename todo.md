@@ -1747,3 +1747,9 @@
 - [x] Added full-screen uploading spinner modal with toast progress notifications
 - [x] Added toast.loading/success/error feedback chain with file name display
 - [ ] Test end-to-end on live site: file selected → upload fires → overlay appears on map
+
+## Overlay Opacity Slider (March 14, 2026)
+- [x] Add opacity slider (0-1.0) to EmbeddedProjectMap overlay controls
+- [x] Live-update GroundOverlay opacity as slider moves (via go.setOpacity())
+- [x] Persist opacity value to project_overlays table on mouseup/touchend
+- [x] Add updateOverlayOpacity tRPC procedure to routers.ts
