@@ -1714,3 +1714,8 @@
 - [x] Add image fallback logic to Features component with Unsplash drone image
 - [x] Polish navbar theme toggle with proper z-index layering
 - [x] Connect Services button to smooth scroll to features section
+
+## Overlay Upload Debug (March 14, 2026)
+- [x] Test PDF conversion with pdftoppm in sandbox
+- [x] Check overlay-upload.ts for bugs in conversion/coordinate saving - ROOT CAUSE: overlay route registered after express.json() which consumed the multipart stream
+- [x] Fix overlay not appearing on map after PDF upload - moved overlayUploadRouter before express.json() in index.ts
