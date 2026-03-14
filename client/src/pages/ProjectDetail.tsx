@@ -137,7 +137,7 @@ export default function ProjectDetail() {
   const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [sampleReportDialogOpen, setSampleReportDialogOpen] = useState(false);
-  const [comparisonMode, setComparisonMode] = useState(false);
+
 
   // Fetch project details - always call both hooks, enable only the correct one
   const demoProjectQuery = trpc.project.getDemo.useQuery(
@@ -292,7 +292,7 @@ export default function ProjectDetail() {
 
 
   // Helper: get overlays from project (if available)
-  const overlays = project.overlays || [];
+  const overlays = (project as any).overlays || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -385,15 +385,7 @@ export default function ProjectDetail() {
                       Client View
                     </span>
                   )}
-                  {/* Comparison Mode Toggle */}
-                  <Button
-                    variant={comparisonMode ? "primary" : "outline"}
-                    size="sm"
-                    className="ml-2"
-                    onClick={() => setComparisonMode((v) => !v)}
-                  >
-                    {comparisonMode ? "Exit Comparison Mode" : "Enter Comparison Mode"}
-                  </Button>
+
                   {/* Consolidated Project Actions Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -513,94 +505,52 @@ export default function ProjectDetail() {
             </motion.div>
             {/* Project Map Section */}
             <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
-              {comparisonMode && overlays.length >= 2 ? (
-                <ComparisonSlider
-                  beforeLayer={
-                    <Source
-                      key={overlays[0].id}
-                      id={`overlay-${overlays[0].id}`}
-                      type="image"
-                      url={overlays[0].fileUrl}
-                      coordinates={JSON.parse(overlays[0].coordinates)}
-                    >
-                      <Layer
-                        id={`layer-${overlays[0].id}`}
-                        type="raster"
-                        paint={{
-                          'raster-opacity': overlays[0].opacity || 0.5,
-                          'raster-fade-duration': 500
+              {/* Google Maps — GPS markers only (no overlays) */}
+              <EmbeddedProjectMap
+                ref={mapRef}
+                projectId={project.id}
+                projectName={project.name}
+                isDemoProject={isDemoProject}
+              />
+
+              {/* Mapbox Overlay Editor — sole overlay source of truth */}
+              {overlays.length > 0 && (
+                <div className="mt-6">
+                  <Card className="bg-card">
+                    <CardContent className="pt-4">
+                      <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-display)" }}>
+                        <Layers className="h-5 w-5 inline mr-2 text-blue-400" />
+                        Overlay Editor
+                      </h2>
+                      <Suspense fallback={<div className="w-full h-[600px] rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">Loading overlay editor...</div>}>
+                      <MapboxOverlayView
+                        projectId={project.id}
+                        overlays={overlays}
+                        center={(() => {
+                          const coords = overlays[0]?.coordinates;
+                          try {
+                            const parsed = typeof coords === 'string' ? JSON.parse(coords) : coords;
+                            if (Array.isArray(parsed) && parsed.length >= 4) {
+                              const avgLat = parsed.reduce((s: number, c: [number, number]) => s + c[1], 0) / parsed.length;
+                              const avgLng = parsed.reduce((s: number, c: [number, number]) => s + c[0], 0) / parsed.length;
+                              return { lat: avgLat, lng: avgLng };
+                            }
+                          } catch {}
+                          return { lat: 32.7767, lng: -96.797 };
+                        })()}
+                        isDemoProject={isDemoProject}
+                        onOverlayUpdated={() => {
+                          if (isDemoProject) {
+                            demoProjectQuery.refetch();
+                          } else {
+                            normalProjectQuery.refetch();
+                          }
                         }}
                       />
-                    </Source>
-                  }
-                  afterLayer={
-                    <Source
-                      key={overlays[1].id}
-                      id={`overlay-${overlays[1].id}`}
-                      type="image"
-                      url={overlays[1].fileUrl}
-                      coordinates={JSON.parse(overlays[1].coordinates)}
-                    >
-                      <Layer
-                        id={`layer-${overlays[1].id}`}
-                        type="raster"
-                        paint={{
-                          'raster-opacity': overlays[1].opacity || 0.5,
-                          'raster-fade-duration': 500
-                        }}
-                      />
-                    </Source>
-                  }
-                />
-              ) : (
-                <>
-                  <EmbeddedProjectMap
-                    ref={mapRef}
-                    projectId={project.id}
-                    projectName={project.name}
-                    isDemoProject={isDemoProject}
-                    overlays={overlays}
-                  />
-                  {/* Mapbox Overlay Editor — shows below Google Maps when overlays exist */}
-                  {overlays.length > 0 && (
-                    <div className="mt-6">
-                      <Card className="bg-card">
-                        <CardContent className="pt-4">
-                          <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-display)" }}>
-                            <Layers className="h-5 w-5 inline mr-2 text-blue-400" />
-                            Overlay Editor <span className="text-xs text-muted-foreground font-normal">(Mapbox)</span>
-                          </h2>
-                          <Suspense fallback={<div className="w-full h-[600px] rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">Loading Mapbox editor...</div>}>
-                          <MapboxOverlayView
-                            projectId={project.id}
-                            overlays={overlays}
-                            center={(() => {
-                              const coords = overlays[0]?.coordinates;
-                              try {
-                                const parsed = typeof coords === 'string' ? JSON.parse(coords) : coords;
-                                if (Array.isArray(parsed) && parsed.length >= 4) {
-                                  const avgLat = parsed.reduce((s: number, c: [number, number]) => s + c[1], 0) / parsed.length;
-                                  const avgLng = parsed.reduce((s: number, c: [number, number]) => s + c[0], 0) / parsed.length;
-                                  return { lat: avgLat, lng: avgLng };
-                                }
-                              } catch {}
-                              return { lat: 32.7767, lng: -96.797 };
-                            })()}
-                            isDemoProject={isDemoProject}
-                            onOverlayUpdated={() => {
-                              if (isDemoProject) {
-                                demoProjectQuery.refetch();
-                              } else {
-                                normalProjectQuery.refetch();
-                              }
-                            }}
-                          />
-                          </Suspense>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </>
+                      </Suspense>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </motion.div>
 

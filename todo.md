@@ -1817,3 +1817,14 @@
 - [x] Fix Delete Overlay: API call DELETE /api/projects/:projectId/overlays/:overlayId + clear React state + remove DB row + remove Mapbox source/layer
 - [x] Fix corner handle drag: link marker drag events to Mapbox image source via source.setCoordinates(newCoords) so image stretches/shrinks live
 - [x] Fix rotation handle: apply rotation matrix to all 4 corners when yellow handle is dragged, update source.setCoordinates(rotatedPoints) so image pivots
+
+## Full Google Maps Overlay Removal — Mapbox Only
+- [x] Remove all GroundOverlay references from EmbeddedProjectMap.tsx (keep map for GPS markers only)
+- [x] Remove overlay sidebar/edit mode/swipe mode from EmbeddedProjectMap.tsx
+- [x] Remove overlay props passed to EmbeddedProjectMap from ProjectDetail.tsx
+- [x] Remove ComparisonSlider/Source/Layer overlay code from ProjectDetail.tsx
+- [x] Ensure MapboxOverlayView is sole overlay source of truth
+- [x] Ensure delete removes from DB AND local React state (no ghost data)
+- [x] Verify source.setCoordinates(newCoords) in corner marker on('drag') handler
+- [x] Wipe all records from project_overlays database table
+- [x] Test: empty map on load, upload PDF appears in Mapbox, green handles stretch image live
