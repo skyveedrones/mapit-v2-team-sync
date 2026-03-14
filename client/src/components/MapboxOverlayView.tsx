@@ -2,10 +2,10 @@
  * MapboxOverlayView — Mapbox GL JS overlay editor
  * Renders a plan overlay as a Mapbox image source with:
  *   - 4 draggable corner markers (NW, NE, SE, SW)
- *   - Rotation handle (top-center)
- *   - Drag-to-reposition (click+drag the overlay image)
- *   - Floating sidebar: opacity slider, visibility toggle, edit/swipe/reset/delete
+ *   - Rotation handle (top-center) with rotation matrix applied to all 4 corners
+ *   - Floating sidebar: opacity slider, visibility toggle, edit/reset/delete
  *   - Auto-save on every marker drop
+ *   - Delete: API call + state clear + Mapbox source/layer removal + DB row removal
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,9 +18,7 @@ import {
   EyeOff,
   Layers,
   Move,
-  Pencil,
   RotateCcw,
-  SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
@@ -119,11 +117,11 @@ export function MapboxOverlayView({
   const [editCorners, setEditCorners] = useState<[number, number][] | null>(null);
   const [editRotation, setEditRotation] = useState(0);
   const [aspectLocked, setAspectLocked] = useState(true);
-  const origAspectRef = useRef<number>(1);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [opacityMap, setOpacityMap] = useState<Record<number, number>>({});
   const [visibilityMap, setVisibilityMap] = useState<Record<number, boolean>>({});
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
 
@@ -203,7 +201,6 @@ export function MapboxOverlayView({
       const layerId = `overlay-layer-${ov.id}`;
 
       // Mapbox image source expects coordinates as [[lng,lat]] in order: TL, TR, BR, BL
-      // Our DB stores [TL, TR, BR, BL] as [lng, lat] — perfect match
       try {
         map.addSource(srcId, {
           type: "image",
@@ -272,6 +269,7 @@ export function MapboxOverlayView({
     }
   }, []);
 
+  /** Update the Mapbox image source coordinates — THIS is the critical link between handles and image */
   const updateOverlaySource = useCallback((ovId: number, corners: [number, number][]) => {
     const map = mapRef.current;
     if (!map) return;
@@ -282,7 +280,22 @@ export function MapboxOverlayView({
     }
   }, []);
 
-  // Auto-save coordinates on drag end (silent)
+  /** Remove a specific overlay's Mapbox source and layer from the map */
+  const removeOverlayFromMap = useCallback((ovId: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const srcId = `overlay-src-${ovId}`;
+    const layerId = `overlay-layer-${ovId}`;
+    try {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(srcId)) map.removeSource(srcId);
+      console.log(`[MapboxOverlay] Removed source/layer for overlay ${ovId}`);
+    } catch (err) {
+      console.warn(`[MapboxOverlay] Error removing overlay ${ovId} from map:`, err);
+    }
+  }, []);
+
+  // Auto-save coordinates on drag end — saves the actual 4-corner array, not just cardinal bounds
   const autoSave = useCallback(async (ovId: number, corners: [number, number][], rotation?: number) => {
     try {
       const lats = corners.map((c) => c[1]);
@@ -315,12 +328,6 @@ export function MapboxOverlayView({
     setEditCorners([...coords]);
     const rot = typeof ov.rotation === "string" ? parseFloat(ov.rotation) : (ov.rotation ?? 0);
     setEditRotation(typeof rot === "number" && !isNaN(rot) ? rot : 0);
-
-    // Compute original aspect ratio
-    const w = Math.abs(coords[1][0] - coords[0][0]);
-    const h = Math.abs(coords[0][1] - coords[3][1]);
-    origAspectRef.current = h > 0 ? w / h : 1;
-
     setEditMode(true);
   }, []);
 
@@ -383,7 +390,8 @@ export function MapboxOverlayView({
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
 
-    const currentCorners = [...editCorners] as [number, number][];
+    // Use a mutable array that persists across drag events
+    const currentCorners: [number, number][] = [...editCorners];
 
     // ── Create corner markers ──
     currentCorners.forEach(([lng, lat], i) => {
@@ -413,12 +421,6 @@ export function MapboxOverlayView({
 
         // Aspect ratio lock: adjust adjacent corners
         if (aspectLocked) {
-          const opp = (i + 2) % 4; // opposite corner
-          const adj1 = (i + 1) % 4;
-          const adj3 = (i + 3) % 4;
-          // For NW(0): adj1=NE(1), adj3=SW(3)
-          // NW/SE share: NW sets north+west, SE sets south+east
-          // NE/SW share: NE sets north+east, SW sets south+west
           if (i === 0 || i === 2) {
             // NW or SE: update NE.lat and SW.lng
             currentCorners[1] = [currentCorners[1][0], currentCorners[0][1]]; // NE lat = NW lat
@@ -432,8 +434,11 @@ export function MapboxOverlayView({
           }
         }
 
-        // Update overlay source
-        updateOverlaySource(editingOverlayId!, currentCorners);
+        // *** CRITICAL: Update the Mapbox image source so the image stretches/shrinks live ***
+        const source = map.getSource(`overlay-src-${editingOverlayId}`) as mapboxgl.ImageSource | undefined;
+        if (source) {
+          source.setCoordinates(currentCorners as [[number, number], [number, number], [number, number], [number, number]]);
+        }
 
         // Sync all marker positions
         currentCorners.forEach(([lng2, lat2], j) => {
@@ -477,6 +482,11 @@ export function MapboxOverlayView({
     let rotStartAngle = 0;
     let rotBaseAngle = editRotation;
 
+    // Store the base (unrotated) corners for rotation calculations
+    const baseCorners = parseCoords(
+      activeOverlays.find((o) => o.id === editingOverlayId)?.coordinates ?? "[]"
+    );
+
     rotMarker.on("dragstart", () => {
       map.dragPan.disable();
       const c = centroid(currentCorners);
@@ -486,23 +496,28 @@ export function MapboxOverlayView({
     });
 
     rotMarker.on("drag", () => {
+      // Calculate the center point of the 4 coordinates
       const c = centroid(currentCorners);
       const pos = rotMarker.getLngLat();
+      // Determine the angle of the drag
       const currentAngle = Math.atan2(pos.lat - c[1], pos.lng - c[0]);
       const deltaAngle = ((currentAngle - rotStartAngle) * 180) / Math.PI;
       const newRotation = rotBaseAngle + deltaAngle;
 
-      // Rotate the base (unrotated) corners by the new rotation
-      const baseCorners = parseCoords(
-        activeOverlays.find((o) => o.id === editingOverlayId)?.coordinates ?? "[]"
-      );
+      // Apply a Rotation Matrix to all 4 corner points
       if (baseCorners) {
         const rotated = applyRotation(baseCorners, newRotation);
         rotated.forEach(([lng, lat], j) => {
           currentCorners[j] = [lng, lat];
           if (markersRef.current[j]) markersRef.current[j].setLngLat([lng, lat]);
         });
-        updateOverlaySource(editingOverlayId!, currentCorners);
+
+        // *** CRITICAL: Update the Mapbox image source so the image pivots with the handle ***
+        const source = map.getSource(`overlay-src-${editingOverlayId}`) as mapboxgl.ImageSource | undefined;
+        if (source) {
+          source.setCoordinates(rotated as [[number, number], [number, number], [number, number], [number, number]]);
+        }
+
         setEditRotation(newRotation);
       }
     });
@@ -542,19 +557,64 @@ export function MapboxOverlayView({
     }
   };
 
+  /**
+   * DELETE OVERLAY — Priority #1 fix
+   * 1. Sends DELETE /api/projects/:projectId/overlays/:overlayId
+   * 2. On success: removes Mapbox source/layer from map
+   * 3. Clears React state (edit mode, sidebar)
+   * 4. Backend removes DB row + S3 file
+   * 5. Calls onOverlayUpdated to refetch project data
+   */
   const handleDelete = async (ov: OverlayData) => {
     if (!confirm(`Delete "${ov.label || "this overlay"}"? This cannot be undone.`)) return;
+    setIsDeleting(true);
     try {
+      // 1. API call to delete from DB + S3
       const resp = await fetch(`/api/projects/${projectId}/overlays/${ov.id}`, {
         method: "DELETE",
         credentials: "include",
       });
-      if (!resp.ok) throw new Error(await resp.text());
-      toast.success("Overlay deleted");
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || `HTTP ${resp.status}`);
+      }
+
+      // 2. Remove the overlay source and layer from the Mapbox map immediately
+      removeOverlayFromMap(ov.id);
+
+      // 3. Clear edit state if we were editing this overlay
+      if (editingOverlayId === ov.id) {
+        clearEditMarkers();
+        setEditMode(false);
+        setEditingOverlayId(null);
+        setEditCorners(null);
+        setEditRotation(0);
+      }
+
+      // 4. Clear local state for this overlay
+      setOpacityMap((prev) => {
+        const next = { ...prev };
+        delete next[ov.id];
+        return next;
+      });
+      setVisibilityMap((prev) => {
+        const next = { ...prev };
+        delete next[ov.id];
+        return next;
+      });
+
+      // 5. Close sidebar
       setSidebarOpen(false);
+
+      toast.success("Overlay deleted successfully");
+
+      // 6. Refetch project data to remove overlay from parent state
       onOverlayUpdated?.();
     } catch (err: any) {
+      console.error("[MapboxOverlay] Delete failed:", err);
       toast.error("Delete failed: " + err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -726,14 +786,17 @@ export function MapboxOverlayView({
                     </button>
                   )}
 
-                  {/* Delete Overlay */}
+                  {/* Delete Overlay — Priority #1 */}
                   {activeOverlays[0] && (
                     <button
                       onClick={() => handleDelete(activeOverlays[0])}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all"
+                      disabled={isDeleting}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Trash2 size={18} />
-                      <span className="text-sm font-semibold">Delete Overlay</span>
+                      <span className="text-sm font-semibold">
+                        {isDeleting ? "Deleting..." : "Delete Overlay"}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -742,8 +805,8 @@ export function MapboxOverlayView({
               {/* Edit mode tip */}
               {editMode && (
                 <p className="text-xs text-slate-400 mt-auto">
-                  Drag <span className="text-emerald-400">green corners</span> to resize,{" "}
-                  <span className="text-amber-400">↻ yellow handle</span> to rotate. Toggle{" "}
+                  Drag <span className="text-emerald-400">green corners</span> to resize — the image stretches live.{" "}
+                  <span className="text-amber-400">↻ yellow handle</span> rotates all 4 corners via rotation matrix. Toggle{" "}
                   <span className="text-emerald-400">🔒 AR</span> to lock aspect ratio. Position auto-saves on drop.
                 </p>
               )}

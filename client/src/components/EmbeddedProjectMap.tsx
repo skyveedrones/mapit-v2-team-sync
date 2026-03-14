@@ -978,6 +978,24 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
                                       { method: "DELETE", credentials: "include" }
                                     );
                                     if (!resp.ok) throw new Error(await resp.text());
+
+                                    // Clear Google Maps ground overlays from the map
+                                    groundOverlaysRef.current.forEach((go) => go.setMap(null));
+                                    groundOverlaysRef.current = [];
+
+                                    // Clear edit state if editing this overlay
+                                    if (editingOverlayId === ov.id) {
+                                      cornerMarkersRef.current.forEach((m) => { m.map = null; });
+                                      cornerMarkersRef.current = [];
+                                      if (rotationMarkerRef.current) { rotationMarkerRef.current.map = null; rotationMarkerRef.current = null; }
+                                      if (editOverlayRef.current) { editOverlayRef.current.setMap(null); editOverlayRef.current = null; }
+                                      if (editRectRef.current) { editRectRef.current.setMap(null); editRectRef.current = null; }
+                                      setEditMode(false);
+                                      setEditingOverlayId(null);
+                                      setEditCorners(null);
+                                      setEditRotation(0);
+                                    }
+
                                     toast.success("Overlay deleted");
                                     setSidebarOpen(false);
                                     onOverlayUpdated?.();

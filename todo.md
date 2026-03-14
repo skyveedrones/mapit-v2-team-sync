@@ -1812,3 +1812,8 @@
 - [x] Integrated into ProjectDetail below EmbeddedProjectMap (lazy-loaded via React.lazy + Suspense)
 - [x] Map fills 100% width, 600px height, satellite-streets style default
 - [x] Build passes: main chunk 2.4MB, MapboxOverlayView chunk 1.7MB (lazy-loaded)
+
+## Critical Overlay Fixes (Priority)
+- [x] Fix Delete Overlay: API call DELETE /api/projects/:projectId/overlays/:overlayId + clear React state + remove DB row + remove Mapbox source/layer
+- [x] Fix corner handle drag: link marker drag events to Mapbox image source via source.setCoordinates(newCoords) so image stretches/shrinks live
+- [x] Fix rotation handle: apply rotation matrix to all 4 corners when yellow handle is dragged, update source.setCoordinates(rotatedPoints) so image pivots
