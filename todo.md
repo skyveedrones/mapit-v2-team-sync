@@ -1759,3 +1759,12 @@
 - [x] Rewrite edit mode: amber rotation handle (top-center ↻), aspect-ratio lock toggle (🔒 AR), auto-save on every dragend
 - [x] Update updateOverlayCoordinates tRPC to accept optional rotation and save to DB
 - [x] Build passes cleanly (✓ built in 9.87s)
+
+## OverlayManager Panel (March 14, 2026)
+- [x] Collapsible sidebar panel (right side of map) with Layers icon header, slides in/out
+- [x] Visibility toggle (Eye/EyeOff) per overlay, live-updates GroundOverlay opacity
+- [x] Opacity slider in sidebar (replaces old below-map slider)
+- [x] Edit Alignment mode button in sidebar (replaces old header button)
+- [x] Swipe Comparison mode: draggable ↔ white divider bar, clips overlay canvas left/right
+- [x] Save Changes button in sidebar when in edit/swipe mode
+- [x] Build passes cleanly (✓ built in 15.07s)
