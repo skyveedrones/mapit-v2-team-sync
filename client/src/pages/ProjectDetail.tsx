@@ -10,7 +10,6 @@ import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { EmbeddedProjectMap, type EmbeddedProjectMapHandle } from "@/components/EmbeddedProjectMap";
-const MapboxOverlayView = lazy(() => import("@/components/MapboxOverlayView").then(m => ({ default: m.MapboxOverlayView })));
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -76,6 +75,8 @@ const staggerContainer = {
     },
   },
 };
+
+const MapboxOverlayView = lazy(() => import("@/components/MapboxOverlayView").then(m => ({ default: m.MapboxOverlayView })));
 
 const statusColors = {
   active: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
