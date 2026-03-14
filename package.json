@@ -60,6 +60,7 @@
     "@tus/server": "^2.3.0",
     "@types/bcrypt": "^6.0.0",
     "@types/fluent-ffmpeg": "^2.1.28",
+    "@types/multer": "^2.1.0",
     "axios": "^1.12.0",
     "bcrypt": "^6.0.0",
     "browser-image-compression": "^2.0.2",
@@ -82,11 +83,13 @@
     "input-otp": "^1.4.2",
     "jose": "6.1.0",
     "lucide-react": "^0.453.0",
+    "multer": "^2.1.1",
     "mysql2": "^3.15.0",
     "nanoid": "^5.1.5",
     "next-themes": "^0.4.6",
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
+    "pdf-to-png-converter": "^3.14.0",
     "piexifjs": "^1.0.6",
     "puppeteer": "^24.36.1",
     "puppeteer-core": "^24.36.1",
@@ -149,6 +152,9 @@
     },
     "onlyBuiltDependencies": [
       "puppeteer"
+    ],
+    "ignoredBuiltDependencies": [
+      "canvas"
     ]
   }
 }

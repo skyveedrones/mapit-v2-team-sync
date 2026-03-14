@@ -47,7 +47,7 @@ async function startServer() {
   // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
   app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
 
-  // Overlay upload route - must be registered BEFORE express.json() so the raw multipart stream is not consumed
+  // Overlay upload route — uses multer for multipart parsing (registered before express.json for safety)
   app.use("/api", overlayUploadRouter);
   
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)

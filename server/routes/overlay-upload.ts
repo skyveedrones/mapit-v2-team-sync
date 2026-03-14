@@ -7,122 +7,61 @@
  *   - projectId: number
  *
  * If the file is a PDF, it is rendered to a high-resolution PNG using
- * poppler's pdftoppm (first page only) so that Mapbox can display it
- * as a raster image source.  PNG/JPG files are stored as-is.
+ * pdf-to-png-converter (pure JS, zero native deps) so that Google Maps
+ * can display it as a GroundOverlay raster image.  PNG/JPG files are
+ * stored as-is.
  *
  * The resulting image URL and GPS-derived corner coordinates are saved
  * to the project_overlays table.
  */
 import { Router, Request, Response } from "express";
+import multer from "multer";
 import { getDb } from "../db";
 import { projectOverlays, projects, media } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { sdk } from "../_core/sdk";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import os from "os";
-import path from "path";
-
-const execFileAsync = promisify(execFile);
 
 const router = Router();
+
+// ── Multer config — store files in memory (max 50 MB) ───────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
 
 // ── Session helper via SDK ────────────────────────────────────────────────
 async function getSessionUser(req: Request) {
   try {
     return await sdk.authenticateRequest(req);
-  } catch {
+  } catch (e) {
+    console.error("[Overlay Upload] Auth error:", e);
     return null;
   }
 }
 
-// ── Parse raw multipart body manually (no multer dependency) ───────────────
-function parseMultipart(
-  req: Request
-): Promise<{ fields: Record<string, string>; file: { buffer: Buffer; originalname: string; mimetype: string } | null }> {
-  return new Promise((resolve, reject) => {
-    const contentType = req.headers["content-type"] || "";
-    const boundaryMatch = contentType.match(/boundary=(.+)/);
-    if (!boundaryMatch) {
-      return reject(new Error("No multipart boundary found"));
-    }
-    const boundary = boundaryMatch[1];
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
-    req.on("end", () => {
-      try {
-        const body = Buffer.concat(chunks);
-        const boundaryBuf = Buffer.from(`--${boundary}`);
-        const parts: Buffer[] = [];
-        let start = 0;
-        while (start < body.length) {
-          const idx = body.indexOf(boundaryBuf, start);
-          if (idx === -1) break;
-          if (start > 0) parts.push(body.slice(start, idx - 2)); // strip \r\n before boundary
-          start = idx + boundaryBuf.length + 2; // skip boundary + \r\n
-        }
-        const fields: Record<string, string> = {};
-        let file: { buffer: Buffer; originalname: string; mimetype: string } | null = null;
-        for (const part of parts) {
-          const headerEnd = part.indexOf("\r\n\r\n");
-          if (headerEnd === -1) continue;
-          const headerStr = part.slice(0, headerEnd).toString("utf-8");
-          const content = part.slice(headerEnd + 4);
-          const nameMatch = headerStr.match(/name="([^"]+)"/);
-          const filenameMatch = headerStr.match(/filename="([^"]+)"/);
-          const mimeMatch = headerStr.match(/Content-Type:\s*([^\r\n]+)/i);
-          if (!nameMatch) continue;
-          const name = nameMatch[1];
-          if (filenameMatch) {
-            file = {
-              buffer: content,
-              originalname: filenameMatch[1],
-              mimetype: mimeMatch?.[1]?.trim() || "application/octet-stream",
-            };
-          } else {
-            fields[name] = content.toString("utf-8");
-          }
-        }
-        resolve({ fields, file });
-      } catch (e) {
-        reject(e);
-      }
-    });
-    req.on("error", reject);
-  });
-}
-
-// ── Convert PDF buffer to PNG buffer using pdftoppm ──────────────────────
+// ── Convert PDF buffer to PNG buffer using pdf-to-png-converter ─────────
 async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "overlay-"));
-  const pdfPath = path.join(tmpDir, "input.pdf");
-  const outPrefix = path.join(tmpDir, "page");
+  // Dynamic import because pdf-to-png-converter is ESM-only
+  const { pdfToPng: convert } = await import("pdf-to-png-converter");
+  // Convert Buffer to ArrayBuffer for the converter
+  const arrayBuffer = pdfBuffer.buffer.slice(
+    pdfBuffer.byteOffset,
+    pdfBuffer.byteOffset + pdfBuffer.byteLength
+  );
+  const pages = await convert(arrayBuffer, {
+    viewportScale: 2.0,          // 2x scale for good resolution
+    pagesToProcess: [1],          // First page only
+    disableFontFace: true,
+    verbosityLevel: 0,
+  });
 
-  try {
-    await fs.promises.writeFile(pdfPath, pdfBuffer);
-
-    // Render first page at 300 DPI as PNG
-    await execFileAsync("pdftoppm", [
-      "-png",
-      "-r", "300",
-      "-f", "1",
-      "-l", "1",
-      "-singlefile",
-      pdfPath,
-      outPrefix,
-    ]);
-
-    // pdftoppm with -singlefile writes <prefix>.png
-    const pngPath = outPrefix + ".png";
-    const pngBuffer = await fs.promises.readFile(pngPath);
-    return pngBuffer;
-  } finally {
-    // Clean up temp files
-    await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  if (!pages || pages.length === 0 || !pages[0].content) {
+    throw new Error("PDF conversion produced no output");
   }
+
+  return Buffer.from(pages[0].content);
 }
 
 // ── Default 4-corner coordinates centred on project GPS data ───────────────
@@ -146,16 +85,24 @@ async function getDefaultCoordinates(
   // Drizzle returns decimal columns as strings — parse to float
   const lats = valid.map((r) => parseFloat(String(r.lat)));
   const lngs = valid.map((r) => parseFloat(String(r.lng)));
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
+
+  // Filter out NaN values
+  const validLats = lats.filter((v) => !isNaN(v));
+  const validLngs = lngs.filter((v) => !isNaN(v));
+  if (validLats.length === 0 || validLngs.length === 0) {
+    return [[-97.1, 32.8], [-97.0, 32.8], [-97.0, 32.7], [-97.1, 32.7]];
+  }
+
+  const minLat = Math.min(...validLats);
+  const maxLat = Math.max(...validLats);
+  const minLng = Math.min(...validLngs);
+  const maxLng = Math.max(...validLngs);
 
   // Add 10% padding so the overlay extends slightly beyond the markers
   const latPad = (maxLat - minLat) * 0.10 || 0.001;
   const lngPad = (maxLng - minLng) * 0.10 || 0.001;
 
-  // Mapbox expects [lng, lat] corner order: TL, TR, BR, BL
+  // Corner order: TL, TR, BR, BL  —  each as [lng, lat]
   return [
     [minLng - lngPad, maxLat + latPad],
     [maxLng + lngPad, maxLat + latPad],
@@ -165,26 +112,37 @@ async function getDefaultCoordinates(
 }
 
 // ── POST /api/overlay/upload ───────────────────────────────────────────────
-router.post("/overlay/upload", async (req: Request, res: Response) => {
+router.post("/overlay/upload", upload.single("file"), async (req: Request, res: Response) => {
+  console.log("[Overlay Upload] ── Request received ──");
+  console.log("[Overlay Upload] Content-Type:", req.headers["content-type"]);
+
   try {
     // Auth check
     const user = await getSessionUser(req);
     if (!user) {
+      console.log("[Overlay Upload] Auth failed — no user");
       return res.status(401).json({ error: "Unauthorized" });
     }
+    console.log("[Overlay Upload] User:", user.id, user.email, "role:", user.role);
 
     // Role check — only webmaster, admin, and owner-role users may upload overlays
     const allowedRoles = ["webmaster", "admin", "user"];
     if (!allowedRoles.includes(user.role)) {
+      console.log("[Overlay Upload] Role rejected:", user.role);
       return res.status(403).json({ error: "Insufficient permissions" });
     }
 
-    // Parse multipart body
-    const { fields, file } = await parseMultipart(req);
-    const projectId = parseInt(fields.projectId, 10);
+    // Get form fields from multer
+    const projectId = parseInt(req.body?.projectId, 10);
+    console.log("[Overlay Upload] projectId:", projectId, "raw:", req.body?.projectId);
+
     if (!projectId || isNaN(projectId)) {
       return res.status(400).json({ error: "projectId is required" });
     }
+
+    const file = (req as any).file as Express.Multer.File | undefined;
+    console.log("[Overlay Upload] File:", file ? `${file.originalname} (${file.mimetype}, ${file.size} bytes)` : "NONE");
+
     if (!file) {
       return res.status(400).json({ error: "No file provided" });
     }
@@ -192,10 +150,11 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
     // Validate file type
     const allowed = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
     if (!allowed.includes(file.mimetype)) {
+      console.log("[Overlay Upload] Rejected mimetype:", file.mimetype);
       return res.status(400).json({ error: "Only PDF, PNG, and JPG files are supported" });
     }
 
-    // Verify the project belongs to this user (or user is webmaster)
+    // Verify the project exists
     const db = await getDb();
     if (!db) return res.status(503).json({ error: "Database unavailable" });
 
@@ -206,6 +165,7 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
       .limit(1);
 
     if (!project) {
+      console.log("[Overlay Upload] Project not found:", projectId);
       return res.status(404).json({ error: "Project not found" });
     }
     if (project.userId !== user.id && user.role !== "webmaster" && user.role !== "admin") {
@@ -218,21 +178,23 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
     let uploadExt: string = file.originalname.split(".").pop()?.toLowerCase() || "bin";
 
     if (file.mimetype === "application/pdf") {
-      console.log("[Overlay Upload] Converting PDF to PNG...");
+      console.log("[Overlay Upload] Converting PDF to PNG via pdf-to-png-converter...");
       try {
         uploadBuffer = await pdfToPng(file.buffer);
         uploadMimetype = "image/png";
         uploadExt = "png";
-        console.log("[Overlay Upload] PDF converted to PNG successfully, size:", uploadBuffer.length);
-      } catch (convErr) {
-        console.error("[Overlay Upload] PDF conversion failed:", convErr);
+        console.log("[Overlay Upload] PDF → PNG success, size:", uploadBuffer.length, "bytes");
+      } catch (convErr: any) {
+        console.error("[Overlay Upload] PDF conversion failed:", convErr?.message || convErr);
         return res.status(500).json({ error: "Failed to convert PDF to image. Please upload a PNG or JPG instead." });
       }
     }
 
     // Upload file to storage
     const storageKey = `overlays/${user.id}/${projectId}/${nanoid(10)}.${uploadExt}`;
+    console.log("[Overlay Upload] Uploading to S3, key:", storageKey);
     const { url: fileUrl } = await storagePut(storageKey, uploadBuffer, uploadMimetype);
+    console.log("[Overlay Upload] S3 upload success, url:", fileUrl);
 
     // Get existing overlay count for version numbering
     const existingOverlays = await db
@@ -243,6 +205,7 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
 
     // Build default corner coordinates from project GPS data
     const coordinates = await getDefaultCoordinates(projectId);
+    console.log("[Overlay Upload] Coordinates:", JSON.stringify(coordinates));
 
     // Insert overlay record
     await db.insert(projectOverlays).values({
@@ -254,6 +217,7 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
       label: `Plan v${versionNumber}`,
       version_number: versionNumber,
     });
+    console.log("[Overlay Upload] DB insert success");
 
     // Fetch the inserted record
     const [inserted] = await db
@@ -264,10 +228,11 @@ router.post("/overlay/upload", async (req: Request, res: Response) => {
       .limit(1)
       .offset(versionNumber - 1);
 
-    console.log("[Overlay Upload] Success — overlay saved:", inserted?.id, "fileUrl:", fileUrl);
+    console.log("[Overlay Upload] ✓ Complete — overlay id:", inserted?.id, "url:", fileUrl);
     return res.json({ success: true, overlay: inserted });
-  } catch (err) {
-    console.error("[Overlay Upload] Error:", err);
+  } catch (err: any) {
+    console.error("[Overlay Upload] Unhandled error:", err?.message || err);
+    console.error("[Overlay Upload] Stack:", err?.stack);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

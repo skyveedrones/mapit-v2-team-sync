@@ -1719,3 +1719,16 @@
 - [x] Test PDF conversion with pdftoppm in sandbox
 - [x] Check overlay-upload.ts for bugs in conversion/coordinate saving - ROOT CAUSE: overlay route registered after express.json() which consumed the multipart stream
 - [x] Fix overlay not appearing on map after PDF upload - moved overlayUploadRouter before express.json() in index.ts
+
+## Overlay Scaling Fix (March 14, 2026)
+- [ ] Increase bounding box padding in getDefaultCoordinates to properly size overlay
+- [ ] Consider aspect ratio of uploaded image when calculating bounds
+- [ ] Add overlay opacity slider and visibility toggle to project map UI
+
+## Overlay Upload Production Fix (March 14, 2026)
+- [x] Replace pdftoppm (system binary) with pdf-to-png-converter (pure JS, zero native deps) for PDF-to-PNG conversion
+- [x] Replace custom parseMultipart() with multer for reliable multipart form parsing
+- [x] Add comprehensive server-side logging to overlay upload route
+- [x] Verify PDF conversion works (Gail Wilson Way PDF: 2.1MB → 1.7MB PNG, 1584x1224px)
+- [x] Build compiles successfully with new dependencies
+- [x] Restore Clay's webmaster role in database
