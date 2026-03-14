@@ -172,22 +172,35 @@ export default function ProjectDetail() {
 
   // Overlay upload logic
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingOverlay, setIsUploadingOverlay] = useState(false);
   const handleOverlayClick = () => {
-    fileInputRef.current?.click();
+    // Defer the click until after the dropdown has fully closed (avoids browser
+    // security block on programmatic .click() inside a closing popover)
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 150);
   };
   const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset the input so the same file can be re-selected if needed
+    e.target.value = "";
     const formData = new FormData();
     formData.append("file", file);
+    setIsUploadingOverlay(true);
+    toast.loading(`Uploading "${file.name}"…`, { id: "overlay-upload" });
     try {
-      // Replace with your actual upload function
       const result = await uploadProjectOverlay(formData, projectId);
       if (result.success) {
+        toast.success("Overlay uploaded successfully!", { id: "overlay-upload" });
         window.location.reload();
+      } else {
+        toast.error("Upload completed but returned no data.", { id: "overlay-upload" });
       }
-    } catch (err) {
-      toast.error("Upload failed. Check your server logs.");
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err?.message || "Unknown error"}`, { id: "overlay-upload" });
+    } finally {
+      setIsUploadingOverlay(false);
     }
   };
 
@@ -415,14 +428,7 @@ export default function ProjectDetail() {
                         <Layers className="h-4 w-4 mr-2 text-orange-500" />
                         Project Map Overlay
                       </DropdownMenuItem>
-                      {/* Hidden file input for overlay upload */}
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept=".pdf,.png,.jpg"
-                        onChange={onFileSelected}
-                      />
+                      {/* file input is rendered at the bottom of the page, outside the dropdown */}
                       {/* Owner-only actions */}
                       {isOwner && !isDemoProject && (
                         <>
@@ -738,6 +744,30 @@ export default function ProjectDetail() {
                 <FileText className="h-4 w-4 mr-2" />
                 View PDF
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Hidden file input for overlay upload — MUST be outside all dropdowns/popovers */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept=".pdf,.png,.jpg,.jpeg"
+        onChange={onFileSelected}
+      />
+
+      {/* Full-screen uploading overlay */}
+      {isUploadingOverlay && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+          <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center gap-4 shadow-2xl max-w-sm w-full mx-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <Layers className="absolute inset-0 m-auto h-7 w-7 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-lg">Uploading Overlay</p>
+              <p className="text-sm text-muted-foreground mt-1">Converting PDF and saving to map…</p>
             </div>
           </div>
         </div>

@@ -1739,3 +1739,11 @@
 - [x] UI Edit Mode: save updated coordinates back to project_overlays on Finish via trpc.project.updateOverlayCoordinates
 - [x] PDF conversion: pdftoppm primary + pdf-to-png-converter pure-JS fallback (dual chain)
 - [x] Build compiles successfully with all changes (373kb server bundle)
+
+## Overlay Upload UI Fix (March 14, 2026 - v2)
+- [x] Found root cause: hidden file input was inside DropdownMenu, browser blocks programmatic .click() inside closing popover
+- [x] Fix: moved file input outside all dropdowns to bottom of page JSX
+- [x] Fix: deferred .click() call by 150ms so dropdown fully closes first
+- [x] Added full-screen uploading spinner modal with toast progress notifications
+- [x] Added toast.loading/success/error feedback chain with file name display
+- [ ] Test end-to-end on live site: file selected → upload fires → overlay appears on map
