@@ -1801,3 +1801,14 @@
 - [x] EmbeddedProjectMap: mapDraggable React state added, synced in all dragstart/dragend handlers alongside map.setOptions()
 - [x] EmbeddedProjectMap: map container is w-full h-[500px] via MapView className, parent is relative rounded-lg
 - [x] Build passes cleanly (✓ 379.3kb in 40ms)
+
+## Mapbox GL JS Migration for Overlay (Mar 14, 2026)
+- [x] Installed mapbox-gl and @types/mapbox-gl
+- [x] Validated VITE_MAPBOX_TOKEN via vitest (format + live API call)
+- [x] Created MapboxOverlayView.tsx: Mapbox image source, 4 draggable NW/NE/SE/SW markers, amber rotation handle
+- [x] Floating sidebar: opacity slider, visibility toggle, edit alignment, aspect-ratio lock, reset, delete
+- [x] Wired Save to PUT /api/projects/:id/overlays/:id with 4-point coordinate array
+- [x] Wired Delete to DELETE /api/projects/:id/overlays/:id with S3 cleanup
+- [x] Integrated into ProjectDetail below EmbeddedProjectMap (lazy-loaded via React.lazy + Suspense)
+- [x] Map fills 100% width, 600px height, satellite-streets style default
+- [x] Build passes: main chunk 2.4MB, MapboxOverlayView chunk 1.7MB (lazy-loaded)

@@ -10,6 +10,7 @@ import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { EmbeddedProjectMap, type EmbeddedProjectMapHandle } from "@/components/EmbeddedProjectMap";
+const MapboxOverlayView = lazy(() => import("@/components/MapboxOverlayView").then(m => ({ default: m.MapboxOverlayView })));
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -57,7 +58,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -551,13 +552,54 @@ export default function ProjectDetail() {
                   }
                 />
               ) : (
-                <EmbeddedProjectMap
-                  ref={mapRef}
-                  projectId={project.id}
-                  projectName={project.name}
-                  isDemoProject={isDemoProject}
-                  overlays={overlays}
-                />
+                <>
+                  <EmbeddedProjectMap
+                    ref={mapRef}
+                    projectId={project.id}
+                    projectName={project.name}
+                    isDemoProject={isDemoProject}
+                    overlays={overlays}
+                  />
+                  {/* Mapbox Overlay Editor — shows below Google Maps when overlays exist */}
+                  {overlays.length > 0 && (
+                    <div className="mt-6">
+                      <Card className="bg-card">
+                        <CardContent className="pt-4">
+                          <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-display)" }}>
+                            <Layers className="h-5 w-5 inline mr-2 text-blue-400" />
+                            Overlay Editor <span className="text-xs text-muted-foreground font-normal">(Mapbox)</span>
+                          </h2>
+                          <Suspense fallback={<div className="w-full h-[600px] rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">Loading Mapbox editor...</div>}>
+                          <MapboxOverlayView
+                            projectId={project.id}
+                            overlays={overlays}
+                            center={(() => {
+                              const coords = overlays[0]?.coordinates;
+                              try {
+                                const parsed = typeof coords === 'string' ? JSON.parse(coords) : coords;
+                                if (Array.isArray(parsed) && parsed.length >= 4) {
+                                  const avgLat = parsed.reduce((s: number, c: [number, number]) => s + c[1], 0) / parsed.length;
+                                  const avgLng = parsed.reduce((s: number, c: [number, number]) => s + c[0], 0) / parsed.length;
+                                  return { lat: avgLat, lng: avgLng };
+                                }
+                              } catch {}
+                              return { lat: 32.7767, lng: -96.797 };
+                            })()}
+                            isDemoProject={isDemoProject}
+                            onOverlayUpdated={() => {
+                              if (isDemoProject) {
+                                demoProjectQuery.refetch();
+                              } else {
+                                normalProjectQuery.refetch();
+                              }
+                            }}
+                          />
+                          </Suspense>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
 
