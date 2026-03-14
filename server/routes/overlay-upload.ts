@@ -278,16 +278,17 @@ router.post("/overlay/upload", upload.single("file"), async (req: Request, res: 
     const coordinates = await getDefaultCoordinates(projectId);
     console.log("[Overlay Upload] Coordinates:", JSON.stringify(coordinates));
 
-    // Insert overlay record
+    // Insert overlay record (save originalCoordinates for Reset to Default)
     await db.insert(projectOverlays).values({
       projectId,
       fileUrl,
       opacity: "0.5",
       coordinates,
+      originalCoordinates: coordinates,
       isActive: 1,
       label: `Plan v${versionNumber}`,
       version_number: versionNumber,
-    });
+    } as any);
     console.log("[Overlay Upload] DB insert success");
 
     // Fetch the inserted record
@@ -305,6 +306,71 @@ router.post("/overlay/upload", upload.single("file"), async (req: Request, res: 
     console.error("[Overlay Upload] Unhandled error:", err?.message || err);
     console.error("[Overlay Upload] Stack:", err?.stack);
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── DELETE /api/projects/:projectId/overlays/:overlayId ─────────────────
+router.delete("/projects/:projectId/overlays/:overlayId", async (req: Request, res: Response) => {
+  const user = await getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+  const projectId = parseInt(req.params.projectId, 10);
+  const overlayId = parseInt(req.params.overlayId, 10);
+  if (isNaN(projectId) || isNaN(overlayId)) {
+    return res.status(400).json({ error: "Invalid projectId or overlayId" });
+  }
+
+  try {
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "DB unavailable" });
+
+    await db
+      .delete(projectOverlays)
+      .where(eq(projectOverlays.id, overlayId));
+
+    console.log(`[Overlay DELETE] Deleted overlay ${overlayId} from project ${projectId}`);
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error("[Overlay DELETE] Error:", err?.message || err);
+    return res.status(500).json({ error: "Failed to delete overlay" });
+  }
+});
+
+// ── POST /api/projects/:projectId/overlays/:overlayId/reset ───────────────
+// Resets coordinates back to originalCoordinates (GPS-derived bounds at upload time)
+router.post("/projects/:projectId/overlays/:overlayId/reset", async (req: Request, res: Response) => {
+  const user = await getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+  const projectId = parseInt(req.params.projectId, 10);
+  const overlayId = parseInt(req.params.overlayId, 10);
+  if (isNaN(projectId) || isNaN(overlayId)) {
+    return res.status(400).json({ error: "Invalid projectId or overlayId" });
+  }
+
+  try {
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "DB unavailable" });
+
+    const [overlay] = await db
+      .select()
+      .from(projectOverlays)
+      .where(eq(projectOverlays.id, overlayId));
+
+    if (!overlay) return res.status(404).json({ error: "Overlay not found" });
+
+    const resetCoords = (overlay as any).originalCoordinates || overlay.coordinates;
+
+    await db
+      .update(projectOverlays)
+      .set({ coordinates: resetCoords, rotation: "0" } as any)
+      .where(eq(projectOverlays.id, overlayId));
+
+    console.log(`[Overlay RESET] Reset overlay ${overlayId} to original coordinates`);
+    return res.json({ success: true, coordinates: resetCoords });
+  } catch (err: any) {
+    console.error("[Overlay RESET] Error:", err?.message || err);
+    return res.status(500).json({ error: "Failed to reset overlay" });
   }
 });
 

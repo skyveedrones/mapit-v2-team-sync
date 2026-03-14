@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
-import { Check, ChevronRight, Eye, EyeOff, Expand, Layers, MapPin, Move, Navigation, Pencil, SlidersHorizontal, X } from "lucide-react";
+import { Check, ChevronRight, Eye, EyeOff, Expand, Layers, MapPin, Move, Navigation, Pencil, RotateCcw, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Link } from "wouter";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
@@ -874,6 +874,57 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
                               <SlidersHorizontal size={18} />
                               <span className="text-sm font-semibold">{swipeMode ? "Stop Swipe" : "Swipe Comparison"}</span>
                             </button>
+
+                            {/* Reset to Default */}
+                            {activeOverlays[0] && (
+                              <button
+                                onClick={async () => {
+                                  const ov = activeOverlays[0];
+                                  if (!confirm("Reset overlay to its original GPS-derived position? This cannot be undone.")) return;
+                                  try {
+                                    const resp = await fetch(
+                                      `/api/projects/${projectId}/overlays/${ov.id}/reset`,
+                                      { method: "POST", credentials: "include" }
+                                    );
+                                    if (!resp.ok) throw new Error(await resp.text());
+                                    toast.success("Overlay reset to original GPS bounds");
+                                    onOverlayUpdated?.();
+                                  } catch (err: any) {
+                                    toast.error("Reset failed: " + err.message);
+                                  }
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-amber-900/40 hover:text-amber-400 transition-all"
+                              >
+                                <RotateCcw size={18} />
+                                <span className="text-sm font-semibold">Reset to Default</span>
+                              </button>
+                            )}
+
+                            {/* Delete Overlay */}
+                            {activeOverlays[0] && (
+                              <button
+                                onClick={async () => {
+                                  const ov = activeOverlays[0];
+                                  if (!confirm(`Delete "${ov.label || 'this overlay'}"? This cannot be undone.`)) return;
+                                  try {
+                                    const resp = await fetch(
+                                      `/api/projects/${projectId}/overlays/${ov.id}`,
+                                      { method: "DELETE", credentials: "include" }
+                                    );
+                                    if (!resp.ok) throw new Error(await resp.text());
+                                    toast.success("Overlay deleted");
+                                    setSidebarOpen(false);
+                                    onOverlayUpdated?.();
+                                  } catch (err: any) {
+                                    toast.error("Delete failed: " + err.message);
+                                  }
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all"
+                              >
+                                <Trash2 size={18} />
+                                <span className="text-sm font-semibold">Delete Overlay</span>
+                              </button>
+                            )}
                           </div>
                         )}
 

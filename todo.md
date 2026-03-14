@@ -1777,3 +1777,12 @@
 - [x] Added PUT /api/projects/:projectId/overlays/:overlayId REST endpoint (accepts {north,south,east,west,rotation?}, converts to 4-corner array, persists to DB)
 - [x] Save Changes button computes cardinal bounds from editCorners and calls PUT endpoint via fetch with credentials
 - [x] Build passes cleanly (✓ built in ~15s, 375.8kb server bundle)
+
+## Reset & Delete Overlay (March 14, 2026)
+- [x] Added original_coordinates column to project_overlays (via SQL + schema update)
+- [x] Upload route now saves originalCoordinates alongside coordinates at insert time
+- [x] POST /api/projects/:id/overlays/:id/reset endpoint: restores coordinates to originalCoordinates, clears rotation
+- [x] DELETE /api/projects/:id/overlays/:id endpoint: removes overlay record from DB
+- [x] Reset to Default button in sidebar: amber hover, confirm dialog, calls reset endpoint
+- [x] Delete Overlay button in sidebar: red hover, confirm dialog, calls delete endpoint, closes sidebar
+- [x] Build passes cleanly (✓ 378.1kb)

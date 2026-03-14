@@ -467,6 +467,8 @@ export const projectOverlays = mysqlTable("project_overlays", {
   version_number: int("version_number").default(1),
   /** Rotation in degrees (0-360) applied when rendering the overlay */
   rotation: decimal("rotation", { precision: 7, scale: 4 }).default("0"),
+  /** Original GPS-derived bounding box at upload time — used for Reset to Default */
+  originalCoordinates: json("original_coordinates").$type<[number, number][]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
