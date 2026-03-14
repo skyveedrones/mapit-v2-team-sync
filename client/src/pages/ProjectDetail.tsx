@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { uploadProjectOverlay } from "@/app/actions/overlay";
 import { useClientAccess } from "@/hooks/useClientAccess";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
@@ -168,10 +169,25 @@ export default function ProjectDetail() {
         { enabled: projectId > 0 }
       );
 
-  const handleComingSoon = () => {
-    toast.info("Feature coming soon!", {
-      description: "This feature is currently under development.",
-    });
+  // Overlay upload logic
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleOverlayClick = () => {
+    fileInputRef.current?.click();
+  };
+  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      // Replace with your actual upload function
+      const result = await uploadProjectOverlay(formData, projectId);
+      if (result.success) {
+        window.location.reload();
+      }
+    } catch (err) {
+      toast.error("Upload failed. Check your server logs.");
+    }
   };
 
   const handleLogout = async () => {
@@ -258,16 +274,21 @@ export default function ProjectDetail() {
   // For display purposes: show badge if user is client-only
   const isOwner = !isClientOnly;
 
+
+  // Comparison Mode toggle state
+  const [comparisonMode, setComparisonMode] = useState(false);
+
+  // Helper: get overlays from project (if available)
+  const overlays = project.overlays || [];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <img src="/images/mapit-logo-new.png" alt="Mapit" className="h-12 md:h-14 w-auto object-contain" />
           </Link>
-
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
@@ -276,7 +297,6 @@ export default function ProjectDetail() {
           </div>
         </div>
       </nav>
-
       {/* Main Content */}
       <main className="pt-24 pb-12">
         <div className="container">
@@ -301,11 +321,9 @@ export default function ProjectDetail() {
                 </Button>
               </motion.div>
             )}
-
             {/* Back Button & Header */}
             <motion.div variants={fadeInUp} className="mb-6">
               <BackToDashboard />
-
               <div id="demo-welcome" className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex items-start gap-4">
                   {/* Project Logo */}
@@ -346,7 +364,6 @@ export default function ProjectDetail() {
                   )}
                 </div>
                 </div>
-
                 <div className="flex items-center gap-3">
                   {/* Show access role badge for shared projects */}
                   {isClientOnly && (
@@ -355,7 +372,15 @@ export default function ProjectDetail() {
                       Client View
                     </span>
                   )}
-                  
+                  {/* Comparison Mode Toggle */}
+                  <Button
+                    variant={comparisonMode ? "primary" : "outline"}
+                    size="sm"
+                    className="ml-2"
+                    onClick={() => setComparisonMode((v) => !v)}
+                  >
+                    {comparisonMode ? "Exit Comparison Mode" : "Enter Comparison Mode"}
+                  </Button>
                   {/* Consolidated Project Actions Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -377,7 +402,6 @@ export default function ProjectDetail() {
                           New Flight
                         </DropdownMenuItem>
                       )}
-
                       <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
                         <FileText className="h-4 w-4 mr-2 text-orange-500" />
                         Generate Report
@@ -389,11 +413,18 @@ export default function ProjectDetail() {
                         <Download className="h-4 w-4 mr-2 text-purple-500" />
                         Export GPS Data {isDemoProject && '(Demo)'}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleComingSoon}>
+                      <DropdownMenuItem onClick={handleOverlayClick}>
                         <Layers className="h-4 w-4 mr-2 text-orange-500" />
-                        PDF Overlay
+                        Project Map Overlay
                       </DropdownMenuItem>
-                      
+                      {/* Hidden file input for overlay upload */}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".pdf,.png,.jpg"
+                        onChange={onFileSelected}
+                      />
                       {/* Owner-only actions */}
                       {isOwner && !isDemoProject && (
                         <>
@@ -425,7 +456,6 @@ export default function ProjectDetail() {
                 </div>
               </div>
             </motion.div>
-
             {/* Condensed Project Info Tile */}
             <motion.div variants={fadeInUp} className="mb-6">
               <Card className="bg-card">
@@ -438,7 +468,6 @@ export default function ProjectDetail() {
                         <span className="font-medium">{project.location}</span>
                       </div>
                     )}
-
                     {formattedFlightDate && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
@@ -451,7 +480,6 @@ export default function ProjectDetail() {
                       <span className="text-muted-foreground">Media:</span>
                       <span className="font-medium">{project.mediaCount} items</span>
                     </div>
-
                     {/* Warranty Info */}
                     {project.warrantyEndDate && (
                       <div className="flex items-center gap-2">
@@ -477,15 +505,56 @@ export default function ProjectDetail() {
                 </CardContent>
               </Card>
             </motion.div>
-
             {/* Project Map Section */}
             <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
-              <EmbeddedProjectMap
-                ref={mapRef}
-                projectId={project.id}
-                projectName={project.name}
-                isDemoProject={isDemoProject}
-              />
+              {comparisonMode && overlays.length >= 2 ? (
+                <ComparisonSlider
+                  beforeLayer={
+                    <Source
+                      key={overlays[0].id}
+                      id={`overlay-${overlays[0].id}`}
+                      type="image"
+                      url={overlays[0].fileUrl}
+                      coordinates={JSON.parse(overlays[0].coordinates)}
+                    >
+                      <Layer
+                        id={`layer-${overlays[0].id}`}
+                        type="raster"
+                        paint={{
+                          'raster-opacity': overlays[0].opacity || 0.5,
+                          'raster-fade-duration': 500
+                        }}
+                      />
+                    </Source>
+                  }
+                  afterLayer={
+                    <Source
+                      key={overlays[1].id}
+                      id={`overlay-${overlays[1].id}`}
+                      type="image"
+                      url={overlays[1].fileUrl}
+                      coordinates={JSON.parse(overlays[1].coordinates)}
+                    >
+                      <Layer
+                        id={`layer-${overlays[1].id}`}
+                        type="raster"
+                        paint={{
+                          'raster-opacity': overlays[1].opacity || 0.5,
+                          'raster-fade-duration': 500
+                        }}
+                      />
+                    </Source>
+                  }
+                />
+              ) : (
+                <EmbeddedProjectMap
+                  ref={mapRef}
+                  projectId={project.id}
+                  projectName={project.name}
+                  isDemoProject={isDemoProject}
+                  overlays={overlays}
+                />
+              )}
             </motion.div>
 
             {/* Flights Section */}
