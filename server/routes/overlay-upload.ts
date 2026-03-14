@@ -138,7 +138,10 @@ async function getDefaultCoordinates(
     .where(and(eq(media.projectId, projectId)))
     .limit(200);
 
-  const valid = rows.filter((r) => r.lat != null && r.lng != null) as { lat: number; lng: number }[];
+  const valid = rows
+    .filter((r) => r.lat != null && r.lng != null)
+    .map((r) => ({ lat: parseFloat(String(r.lat)), lng: parseFloat(String(r.lng)) }))
+    .filter((r) => !isNaN(r.lat) && !isNaN(r.lng));
   if (valid.length === 0) {
     return [[-97.1, 32.8], [-97.0, 32.8], [-97.0, 32.7], [-97.1, 32.7]];
   }
