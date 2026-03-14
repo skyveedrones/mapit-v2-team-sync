@@ -1770,8 +1770,8 @@
 - [x] Build passes cleanly (✓ built in 15.07s)
 
 ## Corner Drag Bounds Math (March 14, 2026)
-- [ ] Integrate NW/SE/NE/SW bounds-update logic into existing 4-corner AdvancedMarker drag handlers
-- [ ] Ensure GroundOverlay bounds update live as each corner is dragged (not just on drop)
+- [x] Integrated cardinal bounds math (north=maxLat, south=minLat, east=maxLng, west=minLng) into rebuildOverlay()
+- [x] GroundOverlay bounds update live on every drag event via syncHandles() + rebuildOverlay()
 
 ## Save Changes REST Endpoint (March 14, 2026)
 - [x] Added PUT /api/projects/:projectId/overlays/:overlayId REST endpoint (accepts {north,south,east,west,rotation?}, converts to 4-corner array, persists to DB)
@@ -1786,3 +1786,12 @@
 - [x] Reset to Default button in sidebar: amber hover, confirm dialog, calls reset endpoint
 - [x] Delete Overlay button in sidebar: red hover, confirm dialog, calls delete endpoint, closes sidebar
 - [x] Build passes cleanly (✓ 378.1kb)
+
+## Overlay Interaction Stabilization (Mar 14, 2026)
+- [x] Map locking: map.setOptions({draggable:false, gestureHandling:'none'}) on dragstart, restored on dragend
+- [x] Affine transformation sync: syncHandles() recalculates all 4 corner positions + rotation handle on every drag
+- [x] Drag-to-reposition: mousedown/mousemove/mouseup on GroundOverlay translates all corners by dLat/dLng delta
+- [x] UI: map stays full 500px height, sidebar is absolute-positioned (translate-x-full/0 transition)
+- [x] Sidebar: X close button, Delete Overlay + Reset to Default buttons wired to REST endpoints
+- [x] Body parsing fix: express.json() added inline to PUT/DELETE/reset routes (were registered before global body parser)
+- [x] Build passes cleanly (✓ 378.2kb in 10.17s)

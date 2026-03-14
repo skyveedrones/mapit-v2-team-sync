@@ -14,7 +14,7 @@
  * The resulting image URL and GPS-derived corner coordinates are saved
  * to the project_overlays table.
  */
-import { Router, Request, Response } from "express";
+import express, { Router, Request, Response } from "express";
 import multer from "multer";
 import { getDb } from "../db";
 import { projectOverlays, projects, media } from "../../drizzle/schema";
@@ -310,7 +310,7 @@ router.post("/overlay/upload", upload.single("file"), async (req: Request, res: 
 });
 
 // ── DELETE /api/projects/:projectId/overlays/:overlayId ─────────────────
-router.delete("/projects/:projectId/overlays/:overlayId", async (req: Request, res: Response) => {
+router.delete("/projects/:projectId/overlays/:overlayId", express.json(), async (req: Request, res: Response) => {
   const user = await getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -338,7 +338,7 @@ router.delete("/projects/:projectId/overlays/:overlayId", async (req: Request, r
 
 // ── POST /api/projects/:projectId/overlays/:overlayId/reset ───────────────
 // Resets coordinates back to originalCoordinates (GPS-derived bounds at upload time)
-router.post("/projects/:projectId/overlays/:overlayId/reset", async (req: Request, res: Response) => {
+router.post("/projects/:projectId/overlays/:overlayId/reset", express.json(), async (req: Request, res: Response) => {
   const user = await getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -376,7 +376,8 @@ router.post("/projects/:projectId/overlays/:overlayId/reset", async (req: Reques
 
 // ── PUT /api/projects/:projectId/overlays/:overlayId ─────────────────────
 // Accepts { north, south, east, west, rotation? } and persists to DB
-router.put("/projects/:projectId/overlays/:overlayId", async (req: Request, res: Response) => {
+// express.json() is applied inline because the router is registered before the global body parser
+router.put("/projects/:projectId/overlays/:overlayId", express.json(), async (req: Request, res: Response) => {
   const user = await getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 

@@ -335,7 +335,7 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
       }
     }, [overlays, mapReady]);
 
-    // ── Edit Mode: rotation + corner handles + aspect-ratio lock + auto-save ──
+    // ── Edit Mode: affine sync, map locking, drag-to-reposition, rotation, aspect-ratio lock ──
     useEffect(() => {
       if (!mapReady || !mapRef.current) return;
       const map = mapRef.current;
@@ -354,13 +354,12 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
 
       const opacity = typeof ov.opacity === "string" ? parseFloat(ov.opacity as string) : (ov.opacity ?? 0.5);
 
-      // ── Helper: compute centre of 4 corners ──
+      // ── Helpers ──────────────────────────────────────────────────────────────
       const centroid = (corners: [number, number][]): [number, number] => [
         corners.reduce((s, c) => s + c[0], 0) / corners.length,
         corners.reduce((s, c) => s + c[1], 0) / corners.length,
       ];
 
-      // ── Helper: rotate a point around a pivot by angle (degrees) ──
       const rotatePoint = (pt: [number, number], pivot: [number, number], angleDeg: number): [number, number] => {
         const rad = (angleDeg * Math.PI) / 180;
         const dx = pt[0] - pivot[0];
@@ -371,32 +370,35 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         ];
       };
 
-      // ── Apply rotation to all 4 corners around centroid ──
       const applyRotation = (corners: [number, number][], angleDeg: number): [number, number][] => {
         const c = centroid(corners);
         return corners.map((pt) => rotatePoint(pt, c, angleDeg));
       };
 
-      // ── Rebuild the live-preview GroundOverlay from corners ──
-      // Uses explicit NW/SE cardinal assignment: north=maxLat, south=minLat, west=minLng, east=maxLng
+      // Top-center handle position — sits above the TL–TR edge
+      const topCenter = (corners: [number, number][]): [number, number] => [
+        (corners[0][0] + corners[1][0]) / 2,
+        Math.max(corners[0][1], corners[1][1]) + 0.0003,
+      ];
+
+      // ── Rebuild live-preview GroundOverlay from current corners ──
       const rebuildOverlay = (corners: [number, number][]) => {
         if (editOverlayRef.current) editOverlayRef.current.setMap(null);
         const lats = corners.map((c) => c[1]);
         const lngs = corners.map((c) => c[0]);
-        // Cardinal bounds — matches handleCornerDrag(NW/SE) pattern
         const north = Math.max(...lats);
         const south = Math.min(...lats);
         const west  = Math.min(...lngs);
         const east  = Math.max(...lngs);
         const bounds = new google.maps.LatLngBounds(
-          new google.maps.LatLng(south, west), // SW
-          new google.maps.LatLng(north, east)  // NE
+          new google.maps.LatLng(south, west),
+          new google.maps.LatLng(north, east)
         );
-        editOverlayRef.current = new google.maps.GroundOverlay(ov.fileUrl, bounds, { opacity, clickable: false });
+        editOverlayRef.current = new google.maps.GroundOverlay(ov.fileUrl, bounds, { opacity, clickable: true });
         editOverlayRef.current.setMap(map);
       };
 
-      // ── Rebuild the outline polygon ──
+      // ── Rebuild outline polygon (affine — follows actual corners, not bounding box) ──
       const rebuildRect = (corners: [number, number][]) => {
         if (editRectRef.current) editRectRef.current.setMap(null);
         editRectRef.current = new google.maps.Polygon({
@@ -409,6 +411,19 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         });
       };
 
+      // ── Sync all handle positions to current corners (affine alignment) ──
+      const syncHandles = (corners: [number, number][]) => {
+        corners.forEach(([lng, lat], i) => {
+          if (cornerMarkersRef.current[i]) {
+            cornerMarkersRef.current[i].position = { lat, lng };
+          }
+        });
+        const tc = topCenter(corners);
+        if (rotationMarkerRef.current) {
+          rotationMarkerRef.current.position = { lat: tc[1], lng: tc[0] };
+        }
+      };
+
       rebuildOverlay(editCorners);
       rebuildRect(editCorners);
 
@@ -417,11 +432,11 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
       let shiftHeld = false;
 
       const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Shift") shiftHeld = true; };
-      const onKeyUp = (e: KeyboardEvent) => { if (e.key === "Shift") shiftHeld = false; };
+      const onKeyUp   = (e: KeyboardEvent) => { if (e.key === "Shift") shiftHeld = false; };
       window.addEventListener("keydown", onKeyDown);
       window.addEventListener("keyup", onKeyUp);
 
-      // ── Corner handles ──
+      // ── Corner handles ────────────────────────────────────────────────────────
       currentCorners.forEach(([lng, lat], i) => {
         const el = document.createElement("div");
         el.style.cssText = `
@@ -429,16 +444,17 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
           color: white;
           border: 2px solid white;
           border-radius: 4px;
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 10px;
           font-weight: bold;
           cursor: grab;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.5);
           user-select: none;
+          touch-action: none;
         `;
         el.textContent = LABELS[i];
 
@@ -449,18 +465,21 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
           gmpDraggable: true,
         });
 
+        // Lock map panning while dragging a corner
+        marker.addListener("dragstart", () => {
+          map.setOptions({ draggable: false, gestureHandling: "none" });
+        });
+
         marker.addListener("drag", (e: google.maps.MapMouseEvent) => {
           if (!e.latLng) return;
           const newLng = e.latLng.lng();
           const newLat = e.latLng.lat();
 
           if ((aspectLocked || shiftHeld) && origAspectRef.current) {
-            // Aspect-ratio lock: opposite corner is fixed, scale the other two
             const opposite = currentCorners[(i + 2) % 4];
             const dLng = newLng - opposite[0];
             const dLat = newLat - opposite[1];
             const aspect = origAspectRef.current;
-            // Enforce aspect ratio by adjusting the shorter dimension
             const absDLng = Math.abs(dLng);
             const absDLat = Math.abs(dLat);
             let adjLng = dLng;
@@ -470,33 +489,28 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
             } else {
               adjLng = (absDLat * aspect) * Math.sign(dLng);
             }
-            // Rebuild all 4 corners from opposite + new corner
             const newCorner: [number, number] = [opposite[0] + adjLng, opposite[1] + adjLat];
             currentCorners[i] = newCorner;
-            // Rebuild adjacent corners
             const prev = (i + 3) % 4;
             const next = (i + 1) % 4;
             currentCorners[prev] = [opposite[0], newCorner[1]];
             currentCorners[next] = [newCorner[0], opposite[1]];
-            // Update adjacent marker positions
-            cornerMarkersRef.current[prev]?.position && (cornerMarkersRef.current[prev].position = { lat: currentCorners[prev][1], lng: currentCorners[prev][0] });
-            cornerMarkersRef.current[next]?.position && (cornerMarkersRef.current[next].position = { lat: currentCorners[next][1], lng: currentCorners[next][0] });
           } else {
             currentCorners[i] = [newLng, newLat];
           }
 
           rebuildOverlay(currentCorners);
           rebuildRect(currentCorners);
-          // Update rotation handle to top-center
-          const tc = topCenter(currentCorners);
-          if (rotationMarkerRef.current) rotationMarkerRef.current.position = { lat: tc[1], lng: tc[0] };
+          // Affine sync: update all handles to stay on corners
+          syncHandles(currentCorners);
         });
 
         marker.addListener("dragend", (e: google.maps.MapMouseEvent) => {
+          // Re-enable map panning
+          map.setOptions({ draggable: true, gestureHandling: "auto" });
           if (!e.latLng) return;
           currentCorners[i] = [e.latLng.lng(), e.latLng.lat()];
           setEditCorners([...currentCorners]);
-          // Auto-save on drop
           if (editingOverlayId != null) {
             autoSaveCoords.mutate({ overlayId: editingOverlayId, projectId, coordinates: currentCorners as [number,number][], rotation: editRotation });
           }
@@ -505,12 +519,7 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         cornerMarkersRef.current.push(marker);
       });
 
-      // ── Top-center rotation handle ──
-      const topCenter = (corners: [number, number][]): [number, number] => [
-        (corners[0][0] + corners[1][0]) / 2,
-        Math.max(corners[0][1], corners[1][1]) + 0.0003,
-      ];
-
+      // ── Rotation handle (top-center, amber) ──────────────────────────────────
       const tc = topCenter(currentCorners);
       const rotEl = document.createElement("div");
       rotEl.style.cssText = `
@@ -518,15 +527,16 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         color: white;
         border: 2px solid white;
         border-radius: 50%;
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 16px;
         cursor: grab;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
         user-select: none;
+        touch-action: none;
       `;
       rotEl.textContent = "↻";
       rotEl.title = "Drag to rotate";
@@ -543,6 +553,8 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
       let baseCorners: [number, number][] = [...currentCorners] as [number, number][];
 
       rotMarker.addListener("dragstart", () => {
+        // Lock map panning while rotating
+        map.setOptions({ draggable: false, gestureHandling: "none" });
         baseCorners = [...currentCorners] as [number, number][];
         lastAngle = editRotation;
       });
@@ -559,25 +571,74 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         currentCorners.splice(0, 4, ...rotated);
         rebuildOverlay(currentCorners);
         rebuildRect(currentCorners);
+        // Affine sync: keep all corner handles on the rotated corners
+        syncHandles(currentCorners);
         setEditRotation(angle);
       });
 
       rotMarker.addListener("dragend", () => {
+        // Re-enable map panning
+        map.setOptions({ draggable: true, gestureHandling: "auto" });
         setEditCorners([...currentCorners]);
-        // Auto-save rotation on drop
         if (editingOverlayId != null) {
           autoSaveCoords.mutate({ overlayId: editingOverlayId, projectId, coordinates: currentCorners as [number,number][], rotation: lastAngle });
         }
       });
 
+      // ── Center drag: move entire overlay ─────────────────────────────────────
+      // Listen for mousedown on the GroundOverlay to initiate a pan-drag
+      let centerDragStart: { x: number; y: number; corners: [number, number][] } | null = null;
+
+      const onOverlayMouseDown = (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return;
+        map.setOptions({ draggable: false, gestureHandling: "none" });
+        centerDragStart = { x: e.latLng.lng(), y: e.latLng.lat(), corners: currentCorners.map((c) => [...c]) as [number, number][] };
+      };
+
+      const onOverlayMouseMove = (e: google.maps.MapMouseEvent) => {
+        if (!centerDragStart || !e.latLng) return;
+        const dLng = e.latLng.lng() - centerDragStart.x;
+        const dLat = e.latLng.lat() - centerDragStart.y;
+        const moved = centerDragStart.corners.map(([lng, lat]) => [lng + dLng, lat + dLat] as [number, number]);
+        currentCorners.splice(0, 4, ...moved);
+        rebuildOverlay(currentCorners);
+        rebuildRect(currentCorners);
+        syncHandles(currentCorners);
+      };
+
+      const onOverlayMouseUp = () => {
+        if (!centerDragStart) return;
+        centerDragStart = null;
+        map.setOptions({ draggable: true, gestureHandling: "auto" });
+        setEditCorners([...currentCorners]);
+        if (editingOverlayId != null) {
+          autoSaveCoords.mutate({ overlayId: editingOverlayId, projectId, coordinates: currentCorners as [number,number][], rotation: editRotation });
+        }
+      };
+
+      let overlayMouseDownListener: google.maps.MapsEventListener | null = null;
+      let overlayMouseMoveListener: google.maps.MapsEventListener | null = null;
+      let overlayMouseUpListener: google.maps.MapsEventListener | null = null;
+
+      if (editOverlayRef.current) {
+        overlayMouseDownListener = editOverlayRef.current.addListener("mousedown", onOverlayMouseDown);
+        overlayMouseMoveListener = editOverlayRef.current.addListener("mousemove", onOverlayMouseMove);
+        overlayMouseUpListener   = editOverlayRef.current.addListener("mouseup",   onOverlayMouseUp);
+      }
+
       return () => {
         window.removeEventListener("keydown", onKeyDown);
         window.removeEventListener("keyup", onKeyUp);
+        // Re-enable map in case we unmount mid-drag
+        map.setOptions({ draggable: true, gestureHandling: "auto" });
         cornerMarkersRef.current.forEach((m) => (m.map = null));
         cornerMarkersRef.current = [];
         if (rotationMarkerRef.current) { rotationMarkerRef.current.map = null; rotationMarkerRef.current = null; }
         if (editOverlayRef.current) { editOverlayRef.current.setMap(null); editOverlayRef.current = null; }
         if (editRectRef.current) { editRectRef.current.setMap(null); editRectRef.current = null; }
+        overlayMouseDownListener?.remove();
+        overlayMouseMoveListener?.remove();
+        overlayMouseUpListener?.remove();
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editMode, editCorners, editingOverlayId, mapReady, overlays, aspectLocked]);
