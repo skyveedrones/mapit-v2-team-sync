@@ -1732,3 +1732,10 @@
 - [x] Verify PDF conversion works (Gail Wilson Way PDF: 2.1MB → 1.7MB PNG, 1584x1224px)
 - [x] Build compiles successfully with new dependencies
 - [x] Restore Clay's webmaster role in database
+
+## Overlay Fix - Three Logic Changes (March 14, 2026)
+- [x] Coordinate fallback: GPS media → geocode project.location → ±0.0005° Dallas fallback
+- [x] UI Edit Mode: add draggable corner handles (TL/TR/BR/BL) to GroundOverlay in EmbeddedProjectMap.tsx
+- [x] UI Edit Mode: save updated coordinates back to project_overlays on Finish via trpc.project.updateOverlayCoordinates
+- [x] PDF conversion: pdftoppm primary + pdf-to-png-converter pure-JS fallback (dual chain)
+- [x] Build compiles successfully with all changes (373kb server bundle)

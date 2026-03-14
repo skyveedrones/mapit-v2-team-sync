@@ -18,7 +18,7 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import { getDb } from "../db";
 import { projectOverlays, projects, media } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { sdk } from "../_core/sdk";
@@ -41,74 +41,145 @@ async function getSessionUser(req: Request) {
   }
 }
 
-// ── Convert PDF buffer to PNG buffer using pdf-to-png-converter ─────────
-async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
-  // Dynamic import because pdf-to-png-converter is ESM-only
+// ── Convert PDF to PNG: tries pdftoppm first, falls back to pure-JS ────────
+// ── Try pdftoppm (poppler-utils) first — fast & high-quality ─────────────
+async function pdfToPngViaPdftoppm(pdfBuffer: Buffer): Promise<Buffer> {
+  const { execFile } = await import("child_process");
+  const { promisify } = await import("util");
+  const { mkdtemp, readdir, readFile, rm } = await import("fs/promises");
+  const { tmpdir } = await import("os");
+  const { join } = await import("path");
+  const execFileAsync = promisify(execFile);
+
+  const tmpDir = await mkdtemp(join(tmpdir(), "overlay-"));
+  const inputPath = join(tmpDir, "input.pdf");
+  const outputPrefix = join(tmpDir, "page");
+
+  try {
+    await import("fs/promises").then((fs) => fs.writeFile(inputPath, pdfBuffer));
+    // -r 200 = 200 DPI, -f 1 -l 1 = first page only, -png = PNG output
+    await execFileAsync("pdftoppm", ["-r", "200", "-f", "1", "-l", "1", "-png", inputPath, outputPrefix]);
+    const files = (await readdir(tmpDir)).filter((f) => f.endsWith(".png"));
+    if (files.length === 0) throw new Error("pdftoppm produced no PNG files");
+    const pngBuffer = await readFile(join(tmpDir, files[0]));
+    return pngBuffer;
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+// ── Pure-JS fallback: pdf-to-png-converter (no native deps) ───────────────
+async function pdfToPngViaJs(pdfBuffer: Buffer): Promise<Buffer> {
   const { pdfToPng: convert } = await import("pdf-to-png-converter");
-  // Convert Buffer to ArrayBuffer for the converter
   const arrayBuffer = pdfBuffer.buffer.slice(
     pdfBuffer.byteOffset,
     pdfBuffer.byteOffset + pdfBuffer.byteLength
   );
   const pages = await convert(arrayBuffer, {
-    viewportScale: 2.0,          // 2x scale for good resolution
-    pagesToProcess: [1],          // First page only
+    viewportScale: 2.0,
+    pagesToProcess: [1],
     disableFontFace: true,
     verbosityLevel: 0,
   });
-
   if (!pages || pages.length === 0 || !pages[0].content) {
-    throw new Error("PDF conversion produced no output");
+    throw new Error("pdf-to-png-converter produced no output");
   }
-
   return Buffer.from(pages[0].content);
 }
 
+// ── Main converter: tries pdftoppm first, falls back to pure-JS ───────────
+async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
+  try {
+    const result = await pdfToPngViaPdftoppm(pdfBuffer);
+    console.log("[Overlay Upload] PDF converted via pdftoppm");
+    return result;
+  } catch (err: any) {
+    console.warn("[Overlay Upload] pdftoppm failed, falling back to pdf-to-png-converter:", err?.message);
+  }
+  const result = await pdfToPngViaJs(pdfBuffer);
+  console.log("[Overlay Upload] PDF converted via pdf-to-png-converter (JS fallback)");
+  return result;
+}
+
+// ── Build a bounding box around a center point with given half-size ──────
+function buildBoundingBox(
+  centerLat: number,
+  centerLng: number,
+  halfLat: number,
+  halfLng: number
+): [[number, number], [number, number], [number, number], [number, number]] {
+  return [
+    [centerLng - halfLng, centerLat + halfLat], // TL
+    [centerLng + halfLng, centerLat + halfLat], // TR
+    [centerLng + halfLng, centerLat - halfLat], // BR
+    [centerLng - halfLng, centerLat - halfLat], // BL
+  ];
+}
+
 // ── Default 4-corner coordinates centred on project GPS data ───────────────
+// Falls back to project.location geocode, then a ±0.0005° box if no GPS media
 async function getDefaultCoordinates(
   projectId: number
 ): Promise<[[number, number], [number, number], [number, number], [number, number]]> {
   const db = await getDb();
-  if (!db) return [[-97.1, 32.8], [-97.0, 32.8], [-97.0, 32.7], [-97.1, 32.7]];
+  if (!db) return buildBoundingBox(32.7767, -96.797, 0.005, 0.005);
 
+  // ── 1. Try GPS media for this project ────────────────────────────────
   const rows = await db
     .select({ lat: media.latitude, lng: media.longitude })
     .from(media)
-    .where(and(eq(media.projectId, projectId)))
+    .where(eq(media.projectId, projectId))
     .limit(200);
 
   const valid = rows.filter((r) => r.lat != null && r.lng != null);
-  if (valid.length === 0) {
-    return [[-97.1, 32.8], [-97.0, 32.8], [-97.0, 32.7], [-97.1, 32.7]];
+  const lats = valid.map((r) => parseFloat(String(r.lat))).filter((v) => !isNaN(v));
+  const lngs = valid.map((r) => parseFloat(String(r.lng))).filter((v) => !isNaN(v));
+
+  if (lats.length > 0 && lngs.length > 0) {
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    // Add 10% padding so the overlay extends slightly beyond the markers
+    const latPad = (maxLat - minLat) * 0.10 || 0.0005;
+    const lngPad = (maxLng - minLng) * 0.10 || 0.0005;
+    console.log(`[Overlay Upload] Coordinates from ${lats.length} GPS media points`);
+    return buildBoundingBox(
+      (minLat + maxLat) / 2,
+      (minLng + maxLng) / 2,
+      (maxLat - minLat) / 2 + latPad,
+      (maxLng - minLng) / 2 + lngPad
+    );
   }
 
-  // Drizzle returns decimal columns as strings — parse to float
-  const lats = valid.map((r) => parseFloat(String(r.lat)));
-  const lngs = valid.map((r) => parseFloat(String(r.lng)));
+  // ── 2. Fall back to project.location via geocoding ───────────────────
+  // Try to geocode the project's location string using Google Maps Geocoding API
+  const [project] = await db
+    .select({ location: projects.location })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
 
-  // Filter out NaN values
-  const validLats = lats.filter((v) => !isNaN(v));
-  const validLngs = lngs.filter((v) => !isNaN(v));
-  if (validLats.length === 0 || validLngs.length === 0) {
-    return [[-97.1, 32.8], [-97.0, 32.8], [-97.0, 32.7], [-97.1, 32.7]];
+  if (project?.location) {
+    try {
+      const { makeRequest } = await import("../_core/map");
+      type GeoResult = { results: Array<{ geometry: { location: { lat: number; lng: number } } }> };
+      const geoResult = await makeRequest<GeoResult>(
+        `/maps/api/geocode/json?address=${encodeURIComponent(project.location)}`
+      );
+      const loc = geoResult?.results?.[0]?.geometry?.location;
+      if (loc?.lat && loc?.lng) {
+        console.log(`[Overlay Upload] Coordinates from geocoded location: "${project.location}" → ${loc.lat}, ${loc.lng}`);
+        return buildBoundingBox(loc.lat, loc.lng, 0.0005, 0.0005);
+      }
+    } catch (geoErr: any) {
+      console.warn("[Overlay Upload] Geocoding failed:", geoErr?.message);
+    }
   }
 
-  const minLat = Math.min(...validLats);
-  const maxLat = Math.max(...validLats);
-  const minLng = Math.min(...validLngs);
-  const maxLng = Math.max(...validLngs);
-
-  // Add 10% padding so the overlay extends slightly beyond the markers
-  const latPad = (maxLat - minLat) * 0.10 || 0.001;
-  const lngPad = (maxLng - minLng) * 0.10 || 0.001;
-
-  // Corner order: TL, TR, BR, BL  —  each as [lng, lat]
-  return [
-    [minLng - lngPad, maxLat + latPad],
-    [maxLng + lngPad, maxLat + latPad],
-    [maxLng + lngPad, minLat - latPad],
-    [minLng - lngPad, minLat - latPad],
-  ];
+  // ── 3. Last resort: GPS centroid of ALL media in the system for this user ─
+  console.warn("[Overlay Upload] No GPS data or geocodable location — using default Dallas coords");
+  return buildBoundingBox(32.7767, -96.797, 0.0005, 0.0005);
 }
 
 // ── POST /api/overlay/upload ───────────────────────────────────────────────
