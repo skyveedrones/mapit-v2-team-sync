@@ -324,6 +324,43 @@ router.delete("/projects/:projectId/overlays/:overlayId", express.json(), async 
     const db = await getDb();
     if (!db) return res.status(500).json({ error: "DB unavailable" });
 
+    // 1. Fetch the overlay to get the S3 file URL
+    const [overlay] = await db
+      .select()
+      .from(projectOverlays)
+      .where(eq(projectOverlays.id, overlayId))
+      .limit(1);
+
+    if (!overlay) return res.status(404).json({ error: "Overlay not found" });
+
+    // 2. Delete from S3 — extract the key from the URL
+    if (overlay.fileUrl) {
+      try {
+        const { S3Client, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+        const s3 = new S3Client({
+          region: process.env.AWS_REGION || "us-east-1",
+          endpoint: process.env.S3_ENDPOINT,
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+          },
+          forcePathStyle: true,
+        });
+        // Extract key: everything after the bucket domain
+        const urlObj = new URL(overlay.fileUrl);
+        const s3Key = urlObj.pathname.replace(/^\//, ""); // strip leading slash
+        await s3.send(new DeleteObjectCommand({
+          Bucket: process.env.S3_BUCKET || process.env.AWS_BUCKET_NAME || "",
+          Key: s3Key,
+        }));
+        console.log(`[Overlay DELETE] S3 object deleted: ${s3Key}`);
+      } catch (s3Err: any) {
+        // Non-fatal: log but continue with DB delete
+        console.warn(`[Overlay DELETE] S3 delete failed (continuing): ${s3Err?.message}`);
+      }
+    }
+
+    // 3. Delete from database
     await db
       .delete(projectOverlays)
       .where(eq(projectOverlays.id, overlayId));

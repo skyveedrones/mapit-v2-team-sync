@@ -1795,3 +1795,9 @@
 - [x] Sidebar: X close button, Delete Overlay + Reset to Default buttons wired to REST endpoints
 - [x] Body parsing fix: express.json() added inline to PUT/DELETE/reset routes (were registered before global body parser)
 - [x] Build passes cleanly (✓ 378.2kb in 10.17s)
+
+## Overlay Code Pattern Integration (Mar 14, 2026)
+- [x] DELETE endpoint: fetches overlay, extracts S3 key from URL, deletes S3 object (non-fatal), then deletes DB record
+- [x] EmbeddedProjectMap: mapDraggable React state added, synced in all dragstart/dragend handlers alongside map.setOptions()
+- [x] EmbeddedProjectMap: map container is w-full h-[500px] via MapView className, parent is relative rounded-lg
+- [x] Build passes cleanly (✓ 379.3kb in 40ms)

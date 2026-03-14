@@ -74,8 +74,11 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
     // Store original aspect ratio (width/height in degrees) when edit starts
     const origAspectRef = useRef<number>(1);
 
+    // ── Map draggable state — locked during handle drags ────────────────────
+    const [mapDraggable, setMapDraggable] = useState(true);
+
     // ── Opacity state — keyed by overlay id ──────────────────────────────────
-    const [opacityMap, setOpacityMap] = useState<Record<number, number>>({});
+    const [opacityMap, setOpacityMap] = useState<Record<number, number>>({}); 
 
     // ── Overlay Manager sidebar & swipe state ────────────────────────────────
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -468,6 +471,7 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         // Lock map panning while dragging a corner
         marker.addListener("dragstart", () => {
           map.setOptions({ draggable: false, gestureHandling: "none" });
+          setMapDraggable(false);
         });
 
         marker.addListener("drag", (e: google.maps.MapMouseEvent) => {
@@ -508,6 +512,7 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
         marker.addListener("dragend", (e: google.maps.MapMouseEvent) => {
           // Re-enable map panning
           map.setOptions({ draggable: true, gestureHandling: "auto" });
+          setMapDraggable(true);
           if (!e.latLng) return;
           currentCorners[i] = [e.latLng.lng(), e.latLng.lat()];
           setEditCorners([...currentCorners]);
