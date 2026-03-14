@@ -1768,3 +1768,12 @@
 - [x] Swipe Comparison mode: draggable ↔ white divider bar, clips overlay canvas left/right
 - [x] Save Changes button in sidebar when in edit/swipe mode
 - [x] Build passes cleanly (✓ built in 15.07s)
+
+## Corner Drag Bounds Math (March 14, 2026)
+- [ ] Integrate NW/SE/NE/SW bounds-update logic into existing 4-corner AdvancedMarker drag handlers
+- [ ] Ensure GroundOverlay bounds update live as each corner is dragged (not just on drop)
+
+## Save Changes REST Endpoint (March 14, 2026)
+- [x] Added PUT /api/projects/:projectId/overlays/:overlayId REST endpoint (accepts {north,south,east,west,rotation?}, converts to 4-corner array, persists to DB)
+- [x] Save Changes button computes cardinal bounds from editCorners and calls PUT endpoint via fetch with credentials
+- [x] Build passes cleanly (✓ built in ~15s, 375.8kb server bundle)

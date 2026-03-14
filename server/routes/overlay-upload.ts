@@ -308,4 +308,54 @@ router.post("/overlay/upload", upload.single("file"), async (req: Request, res: 
   }
 });
 
+// ── PUT /api/projects/:projectId/overlays/:overlayId ─────────────────────
+// Accepts { north, south, east, west, rotation? } and persists to DB
+router.put("/projects/:projectId/overlays/:overlayId", async (req: Request, res: Response) => {
+  const user = await getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+  const projectId = parseInt(req.params.projectId, 10);
+  const overlayId = parseInt(req.params.overlayId, 10);
+  if (isNaN(projectId) || isNaN(overlayId)) {
+    return res.status(400).json({ error: "Invalid projectId or overlayId" });
+  }
+
+  const { north, south, east, west, rotation } = req.body as {
+    north?: number; south?: number; east?: number; west?: number; rotation?: number;
+  };
+
+  if (north == null || south == null || east == null || west == null) {
+    return res.status(400).json({ error: "Missing required bounds: north, south, east, west" });
+  }
+
+  // Convert cardinal bounds to 4-corner coordinate array: [TL, TR, BR, BL] as [lng, lat]
+  const coordinates: [number, number][] = [
+    [west, north],  // TL (NW)
+    [east, north],  // TR (NE)
+    [east, south],  // BR (SE)
+    [west, south],  // BL (SW)
+  ];
+
+  try {
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "DB unavailable" });
+
+    const updateData: Record<string, unknown> = { coordinates };
+    if (rotation !== undefined) updateData.rotation = String(rotation);
+
+    await db
+      .update(projectOverlays)
+      .set(updateData as any)
+      .where(
+        eq(projectOverlays.id, overlayId)
+      );
+
+    console.log(`[Overlay PUT] Saved bounds for overlay ${overlayId}: N=${north} S=${south} E=${east} W=${west}`);
+    return res.json({ success: true, coordinates, rotation });
+  } catch (err: any) {
+    console.error("[Overlay PUT] Error:", err?.message || err);
+    return res.status(500).json({ error: "Failed to save overlay bounds" });
+  }
+});
+
 export default router;

@@ -378,14 +378,20 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
       };
 
       // ── Rebuild the live-preview GroundOverlay from corners ──
+      // Uses explicit NW/SE cardinal assignment: north=maxLat, south=minLat, west=minLng, east=maxLng
       const rebuildOverlay = (corners: [number, number][]) => {
         if (editOverlayRef.current) editOverlayRef.current.setMap(null);
-        // GroundOverlay only supports axis-aligned bounds; use SW/NE of bounding box
         const lats = corners.map((c) => c[1]);
         const lngs = corners.map((c) => c[0]);
-        const sw = new google.maps.LatLng(Math.min(...lats), Math.min(...lngs));
-        const ne = new google.maps.LatLng(Math.max(...lats), Math.max(...lngs));
-        const bounds = new google.maps.LatLngBounds(sw, ne);
+        // Cardinal bounds — matches handleCornerDrag(NW/SE) pattern
+        const north = Math.max(...lats);
+        const south = Math.min(...lats);
+        const west  = Math.min(...lngs);
+        const east  = Math.max(...lngs);
+        const bounds = new google.maps.LatLngBounds(
+          new google.maps.LatLng(south, west), // SW
+          new google.maps.LatLng(north, east)  // NE
+        );
         editOverlayRef.current = new google.maps.GroundOverlay(ov.fileUrl, bounds, { opacity, clickable: false });
         editOverlayRef.current.setMap(map);
       };
@@ -874,8 +880,36 @@ export const EmbeddedProjectMap = forwardRef<EmbeddedProjectMapHandle, EmbeddedP
                         {/* Save / Done */}
                         {(editMode || swipeMode) && (
                           <button
-                            onClick={() => {
-                              if (editMode) handleFinishEdit();
+                            onClick={async () => {
+                              if (editMode && editCorners && editCorners.length === 4 && editingOverlayId != null) {
+                                // Compute cardinal bounds from the 4 corners
+                                const lats = editCorners.map((c) => c[1]);
+                                const lngs = editCorners.map((c) => c[0]);
+                                const bounds = {
+                                  north: Math.max(...lats),
+                                  south: Math.min(...lats),
+                                  east:  Math.max(...lngs),
+                                  west:  Math.min(...lngs),
+                                  ...(editRotation !== 0 ? { rotation: editRotation } : {}),
+                                };
+                                try {
+                                  const resp = await fetch(
+                                    `/api/projects/${projectId}/overlays/${editingOverlayId}`,
+                                    {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      credentials: "include",
+                                      body: JSON.stringify(bounds),
+                                    }
+                                  );
+                                  if (!resp.ok) throw new Error(await resp.text());
+                                  toast.success("Overlay position saved");
+                                  onOverlayUpdated?.();
+                                } catch (err: any) {
+                                  toast.error("Failed to save: " + err.message);
+                                }
+                                handleFinishEdit();
+                              }
                               setSwipeMode(false);
                               setSidebarOpen(false);
                             }}
