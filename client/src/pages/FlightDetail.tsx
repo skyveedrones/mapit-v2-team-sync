@@ -6,6 +6,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { MapboxProjectMap } from "@/components/MapboxProjectMap";
+import { LazyMapWrapper } from "@/components/LazyMapWrapper";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { FlightReportDialog } from "@/components/FlightReportDialog";
@@ -492,11 +493,13 @@ export default function FlightDetail() {
 
             {/* Flight Map Section */}
             <motion.div variants={fadeInUp} className="mb-8">
-              <MapboxProjectMap
-                projectId={projectId}
-                projectName={flight.name}
-                flightId={flightId}
-              />
+              <LazyMapWrapper height="500px" rootMargin="300px">
+                <MapboxProjectMap
+                  projectId={projectId}
+                  projectName={flight.name}
+                  flightId={flightId}
+                />
+              </LazyMapWrapper>
             </motion.div>
 
             {/* Media Section */}

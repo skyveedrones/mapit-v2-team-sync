@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLoginUrl } from "@/const";
 import NotFound from "@/pages/NotFound";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { GlobalBackground } from "./components/GlobalBackground";
@@ -14,9 +14,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
-import ProjectDetail from "./pages/ProjectDetail";
-import ProjectMap from "./pages/ProjectMap";
-import FlightDetail from "./pages/FlightDetail";
 import InviteAccept from "./pages/InviteAccept";
 import Clients from "./pages/Clients";
 import ClientProjects from "./pages/ClientProjects";
@@ -33,19 +30,24 @@ import Billing from "./pages/Billing";
 import Account from "./pages/Account";
 import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
-
-// Feature pages
-import EasyUpload from "./pages/features/EasyUpload";
-import InteractiveMaps from "./pages/features/InteractiveMaps";
-import FlightPathTracking from "./pages/features/FlightPathTracking";
-import GpsDataExport from "./pages/features/GpsDataExport";
-import PdfMapOverlay from "./pages/features/PdfMapOverlay";
-import InstallAsApp from "./pages/features/InstallAsApp";
-import ProjectTemplates from "./pages/features/ProjectTemplates";
-import DemoProject from "./pages/DemoProject";
-import CreationTutorial from "./pages/CreationTutorial";
 import Welcome from "./pages/Welcome";
 import Municipal from "./pages/Municipal";
+
+// Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const ProjectMap = lazy(() => import("./pages/ProjectMap"));
+const FlightDetail = lazy(() => import("./pages/FlightDetail"));
+const CreationTutorial = lazy(() => import("./pages/CreationTutorial"));
+const DemoProject = lazy(() => import("./pages/DemoProject"));
+
+// Lazy-loaded feature pages (not needed on initial load)
+const EasyUpload = lazy(() => import("./pages/features/EasyUpload"));
+const InteractiveMaps = lazy(() => import("./pages/features/InteractiveMaps"));
+const FlightPathTracking = lazy(() => import("./pages/features/FlightPathTracking"));
+const GpsDataExport = lazy(() => import("./pages/features/GpsDataExport"));
+const PdfMapOverlay = lazy(() => import("./pages/features/PdfMapOverlay"));
+const InstallAsApp = lazy(() => import("./pages/features/InstallAsApp"));
+const ProjectTemplates = lazy(() => import("./pages/features/ProjectTemplates"));
 
 /**
  * Admin-only routes that client users must not access
@@ -122,10 +124,23 @@ function ScrollToTop() {
   return null;
 }
 
+/** Suspense fallback for lazy-loaded pages */
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <>
       <ScrollToTop />
+      <Suspense fallback={<PageLoadingFallback />}>
       <Switch>
       <Route path="/" component={Home} />
       <Route path="/welcome" component={Welcome} />
@@ -243,6 +258,7 @@ function Router() {
       {/* Final fallback route */}
       <Route component={NotFound} />
       </Switch>
+      </Suspense>
     </>
   );
 }

@@ -10,6 +10,7 @@ import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { MapboxProjectMap, type MapboxProjectMapHandle } from "@/components/MapboxProjectMap";
+import { LazyMapWrapper } from "@/components/LazyMapWrapper";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -507,20 +508,22 @@ export default function ProjectDetail() {
             </motion.div>
             {/* Project Map Section — Unified Mapbox Engine */}
             <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
-              <MapboxProjectMap
-                ref={mapRef}
-                projectId={project.id}
-                projectName={project.name}
-                isDemoProject={isDemoProject}
-                overlays={overlays}
-                onOverlayUpdated={() => {
-                  if (isDemoProject) {
-                    demoProjectQuery.refetch();
-                  } else {
-                    normalProjectQuery.refetch();
-                  }
-                }}
-              />
+              <LazyMapWrapper height="500px" rootMargin="300px">
+                <MapboxProjectMap
+                  ref={mapRef}
+                  projectId={project.id}
+                  projectName={project.name}
+                  isDemoProject={isDemoProject}
+                  overlays={overlays}
+                  onOverlayUpdated={() => {
+                    if (isDemoProject) {
+                      demoProjectQuery.refetch();
+                    } else {
+                      normalProjectQuery.refetch();
+                    }
+                  }}
+                />
+              </LazyMapWrapper>
             </motion.div>
 
             {/* Flights Section */}

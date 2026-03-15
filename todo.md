@@ -2037,7 +2037,7 @@
 
 ## Client Visibility & Mapbox Performance
 - [x] Assign City of Forney and Campo Del Sol clients to webmaster user (Clay, id 1560095)
-- [ ] Optimize Mapbox loading speed when opening a project
+- [x] Optimize Mapbox loading speed when opening a project (lazy-load + IntersectionObserver + code splitting)
 
 ## Admin-Only Destructive Action Restrictions
 - [x] Restrict project deletion to admin/webmaster only (backend + hide UI)
@@ -2060,3 +2060,12 @@
 - [x] Build Trash page UI showing soft-deleted items with restore/permanent-delete options
 - [x] Permanent delete restricted to webmaster only
 - [x] 17 vitest tests passing for trash/audit/role features
+
+## Mapbox Loading Optimization
+- [x] Lazy-load map-heavy pages (ProjectDetail, ProjectMap, FlightDetail, CreationTutorial, DemoProject) via React.lazy
+- [x] Lazy-load feature pages via React.lazy to reduce initial bundle
+- [x] Add Suspense boundary with loading fallback in Router
+- [x] Add Vite manual chunks to isolate mapbox-gl (~1.7MB) into separate bundle
+- [x] Create LazyMapWrapper with IntersectionObserver to defer map init until visible
+- [x] Wrap MapboxProjectMap in ProjectDetail and FlightDetail with LazyMapWrapper
+- [x] Add loading skeleton/placeholder while map loads
