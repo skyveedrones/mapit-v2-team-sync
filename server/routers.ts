@@ -487,6 +487,7 @@ export const appRouter = router({
         z.object({
           priceId: z.string(),
           planId: z.string(),
+          planName: z.string().optional(),
           referralId: z.string().optional(),
           trialDays: z.number().optional(),
         })
@@ -509,7 +510,11 @@ export const appRouter = router({
             ],
             mode: "subscription",
             subscription_data: {
-              ...(input.trialDays ? { trial_period_days: input.trialDays } : {}),
+              trial_period_days: input.trialDays ?? 14,
+              metadata: {
+                plan_type: input.planName || input.planId,
+                ...(input.referralId ? { referrer: input.referralId } : { referrer: "none" }),
+              },
             },
             allow_promotion_codes: true,
             success_url: `${ctx.req.headers.origin || "http://localhost:3000"}/dashboard?payment=success`,

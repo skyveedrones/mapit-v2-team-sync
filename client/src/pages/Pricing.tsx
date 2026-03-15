@@ -43,9 +43,9 @@ export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  // Get referral ID from URL if present
+  // Get referral ID from URL param first, then localStorage as fallback
   const referralId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("ref") ?? undefined
+    ? (new URLSearchParams(window.location.search).get("ref") ?? localStorage.getItem("mapit_ref_code") ?? undefined)
     : undefined;
 
   const createCheckout = trpc.payment.createCheckoutSession.useMutation({
@@ -162,6 +162,7 @@ export default function Pricing() {
     createCheckout.mutate({
       priceId,
       planId: plan.tierId,
+      planName: plan.name,
       referralId,
       trialDays: 14,
     });
