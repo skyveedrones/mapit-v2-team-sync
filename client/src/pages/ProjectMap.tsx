@@ -8,7 +8,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { FlybyController } from "@/components/FlybyController";
+import { FlybyController, FlybyControllerHandle } from "@/components/FlybyController";
+import { CityParkTour } from "@/components/CityParkTour";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
@@ -54,6 +55,7 @@ export default function ProjectMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const flybyRef = useRef<FlybyControllerHandle | null>(null);
 
   const [showFlightPath, setShowFlightPath] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<GeotaggedMedia | null>(null);
@@ -61,6 +63,8 @@ export default function ProjectMap() {
   const [mapReady, setMapReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<GeotaggedMedia | null>(null);
+  // Demo tour state — only shown for the City Park demo project
+  const [showTour, setShowTour] = useState(isDemoProject);
 
   const { data: project, isLoading: projectLoading } = isDemoProject
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
@@ -400,7 +404,18 @@ export default function ProjectMap() {
 
         {/* Cinematic Flyby Controller - Bottom Right */}
         {geotaggedMedia.length > 0 && (
-          <FlybyController mapRef={mapRef} mapLoaded={mapReady} />
+          <FlybyController ref={flybyRef} mapRef={mapRef} mapLoaded={mapReady} />
+        )}
+
+        {/* City Park Guided Tour Overlay */}
+        {isDemoProject && showTour && (
+          <CityParkTour
+            onLaunchFlyby={() => {
+              // Give the tour exit animation 350 ms head-start, then fire flyby
+              setTimeout(() => flybyRef.current?.startFlyby(), 400);
+            }}
+            onClose={() => setShowTour(false)}
+          />
         )}
 
         {/* Legend - Bottom Left */}

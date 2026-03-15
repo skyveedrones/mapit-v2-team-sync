@@ -9,7 +9,7 @@
 
 import mapboxgl from "mapbox-gl";
 import { Pause, Play, Video } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { toast } from "sonner";
 
 // ── Easing ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,11 @@ const FULL_ROTATION_MS = 60_000; // 60 s per orbit
 const TARGET_PITCH = 45;         // degrees
 const RAMP_MS = 3_000;           // ease-in / ease-out window
 
+export interface FlybyControllerHandle {
+  /** Imperatively start the flyby from outside the component */
+  startFlyby: () => void;
+}
+
 interface FlybyControllerProps {
   /** Live reference to the Mapbox GL map instance */
   mapRef: React.MutableRefObject<mapboxgl.Map | null>;
@@ -29,7 +34,8 @@ interface FlybyControllerProps {
   mapLoaded: boolean;
 }
 
-export function FlybyController({ mapRef, mapLoaded }: FlybyControllerProps) {
+export const FlybyController = forwardRef<FlybyControllerHandle, FlybyControllerProps>(
+  function FlybyController({ mapRef, mapLoaded }, ref) {
   const [isFlying, setIsFlying] = useState(false);
 
   // Internal flyby state kept in refs so RAF callbacks are always fresh
@@ -132,6 +138,9 @@ export function FlybyController({ mapRef, mapLoaded }: FlybyControllerProps) {
     }
   }, [isFlying, mapLoaded, startFlyby, stopFlyby]);
 
+  // ── Expose startFlyby imperatively ──────────────────────────────────────────
+  useImperativeHandle(ref, () => ({ startFlyby }), [startFlyby]);
+
   // ── Cleanup on unmount ───────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
@@ -148,7 +157,7 @@ export function FlybyController({ mapRef, mapLoaded }: FlybyControllerProps) {
   }, []);
 
   return (
-    <div className="absolute bottom-10 right-10 flex flex-col gap-3 z-50 pointer-events-auto">
+    <div className="absolute bottom-10 right-10 flex flex-col gap-3 z-50 pointer-events-auto" data-flyby-controller>
       {/* Cinematic Flyby Button */}
       <button
         onClick={handleToggle}
@@ -180,4 +189,5 @@ export function FlybyController({ mapRef, mapLoaded }: FlybyControllerProps) {
       </button>
     </div>
   );
-}
+  }
+);

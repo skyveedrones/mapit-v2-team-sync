@@ -1933,3 +1933,11 @@
 - [x] Switch video upload path from TUS to chunked S3 so GPS lands in DB immediately
 - [x] Build dedicated ChunkedVideoUploader component with Evidence-Grade UI messaging
 - [x] Resume capability: interrupted uploads persist in localStorage, resumable on re-select
+
+## City Park Guided Demo Tour
+
+- [x] Update demo project (ID=1) metadata to City Park Redevelopment (40-acre park, Garland TX)
+- [x] Build CityParkTour component with 4-step overlay matching user spec
+- [x] Add forwardRef + useImperativeHandle to FlybyController to expose startFlyby()
+- [x] Wire CityParkTour into ProjectMap — auto-shows for demo project (projectId === 1)
+- [x] Step 4 "Exit Tour" triggers FlybyController.startFlyby() via ref after tour exit animation
