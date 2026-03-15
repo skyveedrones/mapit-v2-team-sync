@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, User, LayoutDashboard, Settings, LogOut, Menu, X, Sun, Moon } from "lucide-react";
+import { ChevronDown, User, UserCircle, LayoutDashboard, Settings, LogOut, Menu, X, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl, getPortalLoginUrl } from "@/const";
@@ -237,6 +237,13 @@ export const EnterpriseHeader = ({ onContactClick }: EnterpriseHeaderProps) => {
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       Dashboard
+                    </button>
+                    <button
+                      onClick={() => { navTo("/account"); setUserMenuOpen(false); }}
+                      className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      My Account
                     </button>
                     <button
                       onClick={() => { navTo("/dashboard/settings"); setUserMenuOpen(false); }}

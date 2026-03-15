@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Users as UsersIcon } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, UserCircle, Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -120,6 +120,13 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => setLocation("/account")}
+                  className="cursor-pointer"
+                >
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>My Account</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"

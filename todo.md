@@ -1963,3 +1963,22 @@
 - [x] Verify footer logo remains h-16
 - [x] Verify status dots remain intact
 - [x] Zero TS errors after changes
+
+## Creation Simulator (/demo/create-tutorial)
+
+- [ ] Build CreationTutorial page with 5-step state controller
+- [ ] Step 1: Data Drop — simulate 142 JPG upload with progress bar
+- [ ] Step 2: AI Sync — reveal orthomosaic 2D map over Garland TX
+- [ ] Step 3: Design Layering — fade in PDF/CAD overlay
+- [ ] Step 4: Precision Measurement — animate 4,500 sq ft polygon
+- [ ] Step 5: Victory Lap — trigger center-orbit flyby
+- [ ] Register /demo/create-tutorial route in App.tsx
+- [ ] Use w-96 card at fixed bottom-12 z-[9999], plain MAPIT text
+
+## User Subscriber / Account Page
+
+- [x] Audit schema for user + subscription data
+- [x] Create tRPC procedure to fetch account + plan details (auth.me already returns all fields)
+- [x] Build Account page UI (plan, activation date, account info)
+- [x] Add clickable user name/avatar in header linking to /account (DashboardLayout, GlobalHamburgerHeader, EnterpriseHeader)
+- [x] Register /account route in App.tsx (protected)

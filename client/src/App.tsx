@@ -30,6 +30,7 @@ import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
 import Billing from "./pages/Billing";
+import Account from "./pages/Account";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -40,6 +41,7 @@ import PdfMapOverlay from "./pages/features/PdfMapOverlay";
 import InstallAsApp from "./pages/features/InstallAsApp";
 import ProjectTemplates from "./pages/features/ProjectTemplates";
 import DemoProject from "./pages/DemoProject";
+import CreationTutorial from "./pages/CreationTutorial";
 import Welcome from "./pages/Welcome";
 import Municipal from "./pages/Municipal";
 
@@ -128,6 +130,9 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
+      <Route path="/account">
+        {() => <ProtectedRoute component={Account} />}
+      </Route>
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
@@ -173,6 +178,7 @@ function Router() {
       
       {/* Demo Project */}
       <Route path="/demo" component={DemoProject} />
+      <Route path="/demo/create-tutorial" component={CreationTutorial} />
       <Route path="/demo/project">
         {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
