@@ -36,6 +36,8 @@ export default function Pricing() {
       { 
         text: limits.maxStorageTotalGB === -1 
           ? "Unlimited total storage" 
+          : limits.maxStorageTotalGB >= 1024
+          ? `${(limits.maxStorageTotalGB / 1024).toFixed(1).replace(/\.0$/, '')} TB total storage`
           : `${limits.maxStorageTotalGB} GB total storage`,
         included: true 
       },
@@ -164,7 +166,9 @@ export default function Pricing() {
 
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                  <p className="text-sm text-slate-400 mb-4">{plan.description}</p>
+                  {plan.id === "free" && (
+                    <p className="text-base text-emerald-400 mb-3 text-center">Full access. No credit card required.</p>
+                  )}
 
                   {plan.id === "enterprise" ? (
                     <div className="mb-4">
@@ -174,7 +178,6 @@ export default function Pricing() {
                     <div className="mb-4">
                       <span className="text-4xl font-bold text-white">$0</span>
                       <span className="text-slate-400 ml-2">/14 days</span>
-                      <p className="text-base text-emerald-400 mt-1 text-center">Full access. No credit card required.</p>
                     </div>
                   ) : (
                     <div className="mb-4">

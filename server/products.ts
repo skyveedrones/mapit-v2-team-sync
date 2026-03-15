@@ -115,7 +115,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxMediaPerProject: 10000,
     maxTotalMedia: 100000,
     maxStoragePerProjectGB: 100,
-    maxStorageTotalGB: 100,
+    maxStorageTotalGB: 500,
     maxTeamMembers: 5,
     dataRequestsPerHour: 2000,
     fileUploadsPerDay: 500,
@@ -145,7 +145,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
     maxMediaPerProject: 50000,
     maxTotalMedia: 500000,
     maxStoragePerProjectGB: 500,
-    maxStorageTotalGB: 500,
+    maxStorageTotalGB: 1536, // ~1.5 TB
     maxTeamMembers: -1, // unlimited
     dataRequestsPerHour: 10000,
     fileUploadsPerDay: 5000,
