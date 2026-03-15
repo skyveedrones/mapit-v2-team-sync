@@ -1955,3 +1955,11 @@
 - [x] Verify CityParkTour renders on /project/1/map with force-visible pattern
 - [x] Verify FlybyController fires on Step 4 via forwardRef handle
 - [x] End-to-end test: walkthrough steps 1-4 all functional
+
+## Branding Standardization (MAPIT)
+
+- [x] Find all stylized green I span patterns in codebase
+- [x] Replace inline text instances with plain MAPIT (preserve logo components)
+- [x] Verify footer logo remains h-16
+- [x] Verify status dots remain intact
+- [x] Zero TS errors after changes

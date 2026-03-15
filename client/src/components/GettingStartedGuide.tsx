@@ -119,11 +119,7 @@ export function GettingStartedGuide() {
       <div className="mt-16 flex items-center gap-3 mb-2">
         <span className="text-[#10b981] text-xl leading-none">●</span>
         <h2 className="text-2xl font-bold text-white tracking-tight">
-          Master the{" "}
-          <span className="text-white">MAP</span>
-          <span className="text-[#10b981]">I</span>
-          <span className="text-white">T</span>{" "}
-          Workflow
+          Master the MAPIT Workflow
         </h2>
       </div>
       <p className="text-slate-500 text-sm mb-10 ml-7">

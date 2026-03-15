@@ -170,7 +170,7 @@ export function FlightReportDialog({
       </head>
       <body>
         <div class="header">
-          <div class="logo">MAP<span class="logo-text">IT</span></div>
+          <div class="logo">MAPIT</div>
           <div class="title">${flightName}</div>
           <div class="subtitle">Flight Report • Generated ${new Date().toLocaleDateString()}</div>
         </div>
