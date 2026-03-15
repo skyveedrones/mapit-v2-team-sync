@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { ReferralWidget } from "@/components/ReferralWidget";
+import { GettingStartedGuide } from "@/components/GettingStartedGuide";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -383,30 +384,9 @@ export default function Dashboard() {
           <ReferralWidget />
         </motion.div>
 
-        {/* Help Section */}
+        {/* Getting Started Guide */}
         <motion.div variants={fadeInUp}>
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="py-6">
-              <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1">
-                    Need help getting started?
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Check out our quick start guide to learn how to upload your first drone footage and create interactive maps.
-                  </p>
-                </div>
-                {/* Replace with actual guide trigger or remove if not implemented */}
-                {/* <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap"
-                  onClick={handleGuideOpen}
-                >
-                  View Guide
-                </Button> */}
-              </div>
-            </CardContent>
-          </Card>
+          <GettingStartedGuide />
         </motion.div>
       </motion.div>
 
