@@ -1,106 +1,110 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
-import { SUBSCRIPTION_PLANS, PLAN_LIMITS } from "../../../server/products";
+
+interface Plan {
+  name: string;
+  price: string;
+  period: string;
+  desc: string;
+  buttonText: string;
+  features: string[];
+  isFeatured: boolean;
+  isCustom?: boolean;
+  isFree?: boolean;
+}
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("annual");
+  const [isAnnual, setIsAnnual] = useState(true);
 
-  const handleGetStarted = (planName: string) => {
-    if (planName === "Enterprise") {
+  const plans: Plan[] = [
+    {
+      name: "14-Day Trial",
+      price: "0",
+      period: "/14 days",
+      desc: "Full access. No credit card required.",
+      buttonText: "Start 14-Day Trial",
+      features: [
+        "Standard 2D Mapping",
+        "1 GB Storage",
+        "Single Project",
+        "Basic PDF Reports",
+      ],
+      isFeatured: false,
+      isFree: true,
+    },
+    {
+      name: "PILOT",
+      price: isAnnual ? "41.65" : "49",
+      period: "/month",
+      desc: "Perfect for individual drone operators.",
+      buttonText: "Get Started",
+      features: [
+        "100 GB Storage",
+        "10 Projects",
+        "CAD Overlay Basics",
+        "Email Support",
+      ],
+      isFeatured: false,
+    },
+    {
+      name: "MUNICIPAL",
+      price: isAnnual ? "126.65" : "149",
+      period: "/month",
+      desc: "Precision mapping for town & city departments.",
+      buttonText: "Start Free Trial",
+      features: [
+        "500 GB Storage",
+        "Unlimited Projects",
+        "Up to 5 Stakeholder Seats",
+        "Sub-Surface Verification Docs",
+      ],
+      isFeatured: true,
+    },
+    {
+      name: "AGENCY",
+      price: isAnnual ? "296.65" : "349",
+      period: "/month",
+      desc: "Engineered for high-volume engineering firms.",
+      buttonText: "Start Free Trial",
+      features: [
+        "1.5 TB Storage",
+        "Unlimited Stakeholder Viewing",
+        "API Access",
+        "Priority Processing",
+      ],
+      isFeatured: false,
+    },
+    {
+      name: "METROPOLITAN",
+      price: "Custom",
+      period: "",
+      desc: "Solutions for large-scale urban infrastructure.",
+      buttonText: "Contact Sales",
+      features: [
+        "White-label City Portals",
+        "On-site Training",
+        "SLA Guarantee",
+        "Dedicated Success Manager",
+      ],
+      isFeatured: false,
+      isCustom: true,
+    },
+  ];
+
+  const handleGetStarted = (plan: Plan) => {
+    if (plan.isCustom) {
       alert("Contact sales functionality coming soon!");
-    } else if (planName === "14-Day Free Trial") {
+    } else if (plan.isFree) {
       window.location.href = getLoginUrl();
     } else {
-      setLocation(`/payment?plan=${planName.toLowerCase()}&billing=${billingPeriod}`);
+      setLocation(`/payment?plan=${plan.name.toLowerCase()}&billing=${isAnnual ? "annual" : "monthly"}`);
     }
-  };
-
-  // Build feature list for each tier
-  const buildFeatures = (tier: string) => {
-    const limits = PLAN_LIMITS[tier as keyof typeof PLAN_LIMITS];
-    
-    return [
-      // Storage features
-      { 
-        text: limits.maxStoragePerProjectGB === -1 
-          ? "Unlimited storage per project" 
-          : `${limits.maxStoragePerProjectGB} GB storage per project`,
-        included: true 
-      },
-      { 
-        text: limits.maxStorageTotalGB === -1 
-          ? "Unlimited total storage" 
-          : limits.maxStorageTotalGB >= 1024
-          ? `${(limits.maxStorageTotalGB / 1024).toFixed(1).replace(/\.0$/, '')} TB total storage`
-          : `${limits.maxStorageTotalGB} GB total storage`,
-        included: true 
-      },
-      
-      // Project features
-      { 
-        text: limits.maxProjects === -1 
-          ? "Unlimited projects" 
-          : `Up to ${limits.maxProjects} projects`,
-        included: true 
-      },
-      
-      // Team features
-      { 
-        text: limits.maxTeamMembers === -1 
-          ? "Unlimited team members" 
-          : limits.maxTeamMembers === 1 
-          ? "Solo use only" 
-          : `Up to ${limits.maxTeamMembers} team members`,
-        included: true 
-      },
-      
-      // Data Request features
-      { 
-        text: limits.dataRequestsPerHour === -1 
-          ? "Unlimited data requests" 
-          : `${limits.dataRequestsPerHour} data requests/hour`,
-        included: true 
-      },
-      
-      // Upload features
-      { 
-        text: limits.fileUploadsPerDay === -1 
-          ? "Unlimited daily uploads" 
-          : `${limits.fileUploadsPerDay} uploads/day`,
-        included: true 
-      },
-      
-      // Export features
-      { 
-        text: limits.pdfExportsPerDay === -1 
-          ? "Unlimited PDF exports" 
-          : `${limits.pdfExportsPerDay} PDF exports/day`,
-        included: true 
-      },
-      
-      // Feature toggles
-      { text: "GPS tagging and flight paths", included: limits.features.gpsTagging },
-      { text: "Basic PDF reports", included: limits.features.basicReports },
-      { text: "Advanced map controls", included: limits.features.advancedMapControls },
-      { text: "Marker clustering", included: limits.features.markerClustering },
-      { text: "All export formats (KML, CSV, GeoJSON, GPX)", included: limits.features.allExportFormats },
-      { text: "White-labeling & custom branding", included: limits.features.whiteLabeling },
-      { text: "Client sharing links", included: limits.features.clientSharing },
-      { text: "Priority support", included: limits.features.prioritySupport },
-      { text: "API access", included: limits.features.apiAccess },
-      { text: "Custom report templates", included: limits.features.customReports },
-      { text: "Role-based access control", included: limits.features.roleBasedAccess },
-      { text: "Dedicated support", included: limits.features.dedicatedSupport },
-      { text: "Custom integrations", included: limits.features.customIntegrations },
-      { text: "SSO & advanced security", included: limits.features.sso },
-      { text: "On-premise deployment", included: limits.features.onPremise },
-    ];
   };
 
   return (
@@ -110,31 +114,28 @@ export default function Pricing() {
       {/* Hero Section */}
       <section className="container pt-36 pb-16 md:pt-40 md:pb-24">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-emerald-100 to-white bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-emerald-100 to-white bg-clip-text text-transparent"
+            style={{ fontFamily: "var(--font-display)" }}>
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-slate-400 mb-8">
-            Choose the perfect plan for your drone mapping needs. All plans include a 14-day free trial.
+            Choose the plan that fits your operation. All paid plans include a 14-day free trial.
           </p>
 
           {/* Billing Toggle */}
           <div className="inline-flex items-center gap-4 p-1 bg-slate-800/50 rounded-lg border border-slate-700">
             <button
-              onClick={() => setBillingPeriod("monthly")}
+              onClick={() => setIsAnnual(false)}
               className={`px-6 py-2 rounded-md font-medium transition-all ${
-                billingPeriod === "monthly"
-                  ? "bg-emerald-500 text-white"
-                  : "text-slate-400 hover:text-white"
+                !isAnnual ? "bg-emerald-500 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
               Monthly
             </button>
             <button
-              onClick={() => setBillingPeriod("annual")}
+              onClick={() => setIsAnnual(true)}
               className={`px-6 py-2 rounded-md font-medium transition-all ${
-                billingPeriod === "annual"
-                  ? "bg-emerald-500 text-white"
-                  : "text-slate-400 hover:text-white"
+                isAnnual ? "bg-emerald-500 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
               Annual
@@ -146,98 +147,90 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
-          {SUBSCRIPTION_PLANS.map((plan) => {
-            const features = buildFeatures(plan.id);
-            const isPopular = plan.id === "professional";
-            
-            return (
-              <Card
-                key={plan.name}
-                className={`relative p-6 bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all ${
-                  isPopular ? "ring-2 ring-emerald-500/50 scale-105" : ""
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start">
+          {plans.map((plan) => (
+            <Card
+              key={plan.name}
+              className={`relative p-6 border transition-all flex flex-col ${
+                plan.isFeatured
+                  ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/40 scale-105 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+                  : "bg-slate-900/50 border-slate-800 hover:border-emerald-500/40"
+              }`}
+            >
+              {plan.isFeatured && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 text-sm font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                  Most Popular
+                </div>
+              )}
+
+              {/* Plan Name */}
+              <h3
+                className={`text-xl font-bold mb-1 tracking-wide ${
+                  plan.isFeatured ? "text-emerald-400" : "text-white"
+                }`}
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {plan.name}
+              </h3>
+
+              {/* Description */}
+              <p className="text-slate-400 text-sm mb-4 leading-snug">{plan.desc}</p>
+
+              {/* Price */}
+              <div className="mb-5">
+                {plan.isCustom ? (
+                  <span className="text-3xl font-bold text-white">Custom</span>
+                ) : plan.isFree ? (
+                  <>
+                    <span className="text-4xl font-bold text-white">$0</span>
+                    <span className="text-slate-400 ml-1 text-sm">/14 days</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold text-white">${plan.price}</span>
+                    <span className="text-slate-400 ml-1 text-sm">{plan.period}</span>
+                    {isAnnual && (
+                      <p className="text-xs text-emerald-400 mt-1">
+                        Billed ${(parseFloat(plan.price) * 12).toFixed(2)}/yr · 15% off
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* CTA Button */}
+              <Button
+                onClick={() => handleGetStarted(plan)}
+                className={`w-full mb-6 rounded-full font-semibold transition-all ${
+                  plan.isFeatured
+                    ? "bg-[#10b981] hover:bg-[#0da673] text-slate-950 hover:drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                    : plan.isFree
+                    ? "bg-slate-700 hover:bg-slate-600 text-white"
+                    : "bg-slate-800 hover:bg-slate-700 text-white hover:border-emerald-500/40"
                 }`}
               >
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-sm font-semibold px-4 py-1 rounded-full">
-                    Most Popular
-                  </div>
-                )}
+                {plan.buttonText}
+              </Button>
 
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                  {plan.id === "free" && (
-                    <p className="text-base text-emerald-400 mb-3 text-center">Full access. No credit card required.</p>
-                  )}
-
-                  {plan.id === "enterprise" ? (
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-white">Custom</span>
-                    </div>
-                  ) : plan.id === "free" ? (
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold text-white">$0</span>
-                      <span className="text-slate-400 ml-2">/14 days</span>
-                    </div>
-                  ) : (
-                    <div className="mb-4">
-                      {billingPeriod === "annual" ? (
-                        <>
-                          <span className="text-4xl font-bold text-white">
-                            ${(plan.annualPrice / 12).toFixed(2)}
-                          </span>
-                          <span className="text-slate-400 ml-2">/month</span>
-                          <p className="text-base text-emerald-400 mt-1 text-center">Billed ${plan.annualPrice.toFixed(2)}/yr · 15% off</p>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-4xl font-bold text-white">${plan.monthlyPrice}</span>
-                          <span className="text-slate-400 ml-2">/month</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  onClick={() => handleGetStarted(plan.name)}
-                  className={`w-full mb-6 ${
-                    isPopular
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                      : "bg-slate-800 hover:bg-slate-700 text-white"
-                  }`}
-                >
-                  {plan.id === "enterprise" ? "Contact Sales" : plan.id === "free" ? "Start 14-Day Trial" : "Start Free Trial"}
-                </Button>
-
-                <ul className="space-y-3 max-h-96 overflow-y-auto">
-                  {features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      {feature.included ? (
-                        <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span
-                        className={`text-sm ${
-                          feature.included ? "text-slate-300" : "text-slate-600"
-                        }`}
-                      >
-                        {feature.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            );
-          })}
+              {/* Features */}
+              <ul className="space-y-3 flex-1">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-300">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
         </div>
       </section>
 
       {/* FAQ Section */}
       <section className="container py-16 border-t border-slate-800">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
+          <h2 className="text-3xl font-bold text-white text-center mb-12"
+            style={{ fontFamily: "var(--font-display)" }}>
             Frequently Asked Questions
           </h2>
 
@@ -247,7 +240,7 @@ export default function Pricing() {
                 Can I try MAPIT before subscribing?
               </h3>
               <p className="text-slate-400">
-                Yes! All plans include a 14-day free trial with full access to features. No credit card required to start.
+                Yes — start with the 14-Day Trial for full access to all features. No credit card required.
               </p>
             </div>
 
@@ -256,7 +249,7 @@ export default function Pricing() {
                 Can I change or cancel my subscription?
               </h3>
               <p className="text-slate-400">
-                You can upgrade, downgrade, or cancel your subscription at any time from your account settings. Changes take effect at the end of your current billing cycle.
+                You can upgrade, downgrade, or cancel at any time from your account settings. Changes take effect at the end of your current billing cycle.
               </p>
             </div>
 
@@ -265,7 +258,7 @@ export default function Pricing() {
                 What payment methods do you accept?
               </h3>
               <p className="text-slate-400">
-                We accept all major credit cards (Visa, MasterCard, American Express) and wire transfers for annual Enterprise plans.
+                We accept all major credit cards (Visa, MasterCard, American Express) and wire transfers for annual METROPOLITAN plans.
               </p>
             </div>
 
@@ -274,16 +267,7 @@ export default function Pricing() {
                 What happens to my data if I cancel?
               </h3>
               <p className="text-slate-400">
-                You can export all your project data (photos, videos, GPS data, reports) before canceling. We retain your data for 30 days after cancellation in case you want to reactivate.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
-                What are the data request limits?
-              </h3>
-              <p className="text-slate-400">
-                Data request limits vary by plan. Free tier: 100 requests/hour, Starter: 500 requests/hour, Professional: 2,000 requests/hour, Business: 10,000 requests/hour, Enterprise: Unlimited.
+                You can export all project data (photos, videos, GPS data, reports) before canceling. We retain your data for 30 days after cancellation.
               </p>
             </div>
 
@@ -292,7 +276,7 @@ export default function Pricing() {
                 How much storage do I get?
               </h3>
               <p className="text-slate-400">
-                Storage varies by plan. Free: 1 GB total, Starter: 10 GB total, Professional: 100 GB total, Business: 500 GB total, Enterprise: Unlimited storage.
+                Storage scales with your plan: Trial 1 GB, PILOT 100 GB, MUNICIPAL 500 GB, AGENCY 1.5 TB, METROPOLITAN unlimited.
               </p>
             </div>
           </div>
@@ -302,7 +286,8 @@ export default function Pricing() {
       {/* CTA Section */}
       <section className="container py-16 border-t border-slate-800">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6"
+            style={{ fontFamily: "var(--font-display)" }}>
             Ready to elevate your drone mapping?
           </h2>
           <p className="text-xl text-slate-400 mb-8">
@@ -310,30 +295,23 @@ export default function Pricing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={() => handleGetStarted("Professional")}
+              onClick={() => window.location.href = getLoginUrl()}
               size="lg"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white text-lg px-8"
+              className="bg-[#10b981] hover:bg-[#0da673] text-slate-950 font-bold text-lg px-8 rounded-full hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
             >
-              Start Free Trial
+              Start 14-Day Trial
             </Button>
             <Button
-              onClick={() => handleGetStarted("Enterprise")}
+              onClick={() => alert("Contact sales functionality coming soon!")}
               size="lg"
               variant="outline"
-              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-lg px-8"
+              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-lg px-8 rounded-full"
             >
               Contact Sales
             </Button>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-8">
-        <div className="container text-center text-slate-500 text-sm">
-          <p>&copy; 2026 MAPIT. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }
