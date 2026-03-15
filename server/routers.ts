@@ -4371,6 +4371,155 @@ export const appRouter = router({
         return project;
       }),
   }),
+
+  // ─── Municipal Lead Capture ───
+  municipal: router({
+    submitBriefingRequest: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          email: z.string().email(),
+          title: z.string().min(1),
+          city: z.string().min(1),
+          department: z.string().min(1),
+          primaryInterest: z.string().min(1),
+          timeline: z.string().optional(),
+          message: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { notifyOwner } = await import('./_core/notification');
+        const { sendEmail } = await import('./_core/email');
+
+        // 1. Notify Clay (admin) via in-app notification
+        const adminTitle = `[MUNICIPAL LEAD] New Request from ${input.city}`;
+        const adminContent = [
+          `Name: ${input.name}`,
+          `Title: ${input.title}`,
+          `City/Municipality: ${input.city}`,
+          `Department: ${input.department}`,
+          `Primary Interest: ${input.primaryInterest}`,
+          input.timeline ? `Timeline: ${input.timeline}` : null,
+          input.message ? `Message: ${input.message}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        // Send in-app notification
+        try {
+          await notifyOwner({ title: adminTitle, content: adminContent });
+        } catch (e) {
+          console.warn('[Municipal] notifyOwner failed:', e);
+        }
+
+        // 2. Send admin email notification to Clay
+        const adminEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#0b1120;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#111b2e;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e40af 0%,#0891b2 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:24px;">New Municipal Lead</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:14px;">from ${input.city}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px;color:#e2e8f0;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#94a3b8;width:140px;">Name</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.name}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Title</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.title}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">City</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.city}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Department</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.department}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Interest</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.primaryInterest}</td></tr>
+                ${input.timeline ? `<tr><td style="padding:8px 0;color:#94a3b8;">Timeline</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.timeline}</td></tr>` : ''}
+                ${input.message ? `<tr><td style="padding:8px 0;color:#94a3b8;vertical-align:top;">Message</td><td style="padding:8px 0;color:#f1f5f9;">${input.message}</td></tr>` : ''}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#0b1120;text-align:center;border-top:1px solid #1e3a5f;">
+              <p style="margin:0;font-size:12px;color:#64748b;">MAPit Municipal Lead Capture</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        // Send admin email (Clay gets notified)
+        try {
+          await sendEmail({
+            to: 'clay@skyveedrones.com',
+            subject: adminTitle,
+            html: adminEmailHtml,
+          });
+        } catch (e) {
+          console.warn('[Municipal] Admin email failed:', e);
+        }
+
+        // 3. Auto-responder to the lead
+        const autoResponderHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#f8fafc;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e40af 0%,#0891b2 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:28px;font-weight:700;letter-spacing:2px;">MAP<span style="color:#22d3ee;">i</span>T</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Municipal Solutions</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:35px 30px;color:#334155;">
+              <h2 style="margin:0 0 16px;color:#1e40af;font-size:22px;">Thank You, ${input.name}</h2>
+              <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">Thank you for requesting a Municipal Briefing for <strong style="color:#1e293b;">${input.city}</strong>. Our team is reviewing your project details and will reach out within 24 hours to schedule a demonstration.</p>
+              <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">In the meantime, here's what you can expect:</p>
+              <ul style="margin:0 0 24px;padding-left:20px;line-height:2;font-size:14px;color:#475569;">
+                <li>A personalized walkthrough of MAPit's municipal capabilities</li>
+                <li>A discussion of your specific infrastructure challenges</li>
+                <li>Information about our Municipal Pilot Program</li>
+              </ul>
+              <p style="margin:0;line-height:1.7;font-size:14px;color:#64748b;">If you have immediate questions, reply directly to this email.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#f1f5f9;text-align:center;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">MAPit by SkyVee Drones &mdash; Infrastructure Intelligence</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        try {
+          await sendEmail({
+            to: input.email,
+            subject: `Municipal Briefing Request Received — ${input.city}`,
+            html: autoResponderHtml,
+          });
+        } catch (e) {
+          console.warn('[Municipal] Auto-responder email failed:', e);
+        }
+
+        console.log(`[Municipal] Lead captured: ${input.name} from ${input.city}`);
+
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

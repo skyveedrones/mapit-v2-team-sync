@@ -5,7 +5,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { ContactModal } from "@/components/ContactModal";
+import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import {
@@ -403,7 +403,7 @@ export default function Municipal() {
       <Footer onContactClick={() => setContactOpen(true)} />
 
       {/* ─── Contact Modal ─── */}
-      <ContactModal open={contactOpen} onOpenChange={setContactOpen} />
+      <MunicipalBriefingForm open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 }

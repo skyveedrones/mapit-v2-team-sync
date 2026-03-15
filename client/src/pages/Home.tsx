@@ -36,6 +36,8 @@ import {
   Zap,
   Cpu,
   LayoutDashboard,
+  Building2,
+  Users,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -580,6 +582,71 @@ export default function Home() {
                 onClick={() => window.open('https://www.skyveedrones.com', '_blank')}
               >
                 Visit SkyVee Drones
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECTION 6: BUILT FOR MUNICIPAL PROGRESS */}
+      <section className="relative bg-gradient-to-b from-slate-50 to-white dark:from-[#0b1120] dark:to-black py-20 md:py-28 px-6 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={staggerContainer}
+          >
+            {/* Header */}
+            <motion.div variants={fadeInUp} className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-blue-600/10 dark:bg-blue-600/20 border border-blue-500/20 dark:border-blue-500/30 rounded-full px-4 py-1.5 mb-6">
+                <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300 tracking-wide">Government Solutions</span>
+              </div>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-5 text-slate-900 dark:text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Built for{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+                  Municipal Progress
+                </span>
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                From Public Works to City Hall, MAPit provides the "Digital Twin" infrastructure needed for total project transparency, utility verification, and proactive risk management.
+              </p>
+            </motion.div>
+
+            {/* Pillar Cards */}
+            <motion.div variants={fadeInUp} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {[
+                { icon: Eye, title: "Sub-Surface Verification", desc: "Document utility installations before burial. Create a permanent X-ray of city assets." },
+                { icon: Users, title: "Inter-Departmental Sync", desc: "One unified map for Public Works, Engineering, Fire, and Planning departments." },
+                { icon: Layers, title: "Engineering-Grade Overlays", desc: "Verify construction alignment with cm-level precision via our 2-point calibration engine." },
+                { icon: FileText, title: "Citizen Accountability", desc: "Visual progress reports that prove projects are on-time and on-budget." },
+              ].map((pillar) => (
+                <div
+                  key={pillar.title}
+                  className="bg-white dark:bg-[#111b2e] border border-slate-200 dark:border-slate-700/50 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5"
+                >
+                  <div className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 mb-4">
+                    <pillar.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">{pillar.title}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{pillar.desc}</p>
+                </div>
+              ))}
+            </motion.div>
+
+            {/* CTA */}
+            <motion.div variants={fadeInUp} className="text-center">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold shadow-lg shadow-blue-600/20"
+                onClick={() => setLocation("/municipal")}
+              >
+                Explore Municipal Solutions
+                <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </motion.div>
           </motion.div>

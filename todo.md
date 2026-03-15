@@ -1864,3 +1864,11 @@
 - [x] Add "Municipal Solutions" link to main navigation header
 - [x] "Request a Briefing" button links to contact form
 - [x] "View Service Capabilities" links to features/services section
+
+## Municipal Branding Overhaul & Lead Capture
+- [x] Add "Built for Municipal Progress" section to Home.tsx with CTA routing to /municipal
+- [x] Create Municipal Briefing Request form (Name, Email, Title, City/Municipality, Department, Primary Interest dropdown, Project Timeline)
+- [x] Build backend tRPC procedure for municipal lead submission
+- [x] Wire admin notification email to Clay: Subject "[MUNICIPAL LEAD] New Request from {{City}}"
+- [x] Wire auto-responder email to lead: "Thank you for requesting a Municipal Briefing for {{City}}..."
+- [x] Integrate form with backend and test end-to-end (10 tests passing)
