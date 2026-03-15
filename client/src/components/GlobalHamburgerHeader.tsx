@@ -73,22 +73,17 @@ export const GlobalHamburgerHeader = () => {
       >
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
-          {/* LOGO — 25% larger: was h-12, now h-[60px] */}
+          {/* LOGO — branded image with green pin */}
           <div
             className="flex items-center cursor-pointer group"
             onClick={() => navTo("/")}
           >
-            <div className="relative flex items-center">
-              <div className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span
-                className="relative z-10 text-2xl font-black tracking-[0.15em] select-none transition-transform group-hover:scale-105"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                <span className="text-white">MAP</span>
-                <span className="text-[#10b981]">I</span>
-                <span className="text-white">T</span>
-              </span>
-            </div>
+            <img
+              src="/images/mapit-logo-branded.png"
+              alt="MAPIT"
+              className="h-[52px] w-auto object-contain transition-transform group-hover:scale-105 select-none"
+              draggable={false}
+            />
           </div>
 
           {/* RIGHT: USER AVATAR + HAMBURGER */}
@@ -272,14 +267,12 @@ export const GlobalHamburgerHeader = () => {
 
             {/* Footer */}
             <div className="mt-auto border-t border-white/10 pt-8">
-              <span
-                className="block text-lg font-black tracking-[0.15em] opacity-40 mb-4 select-none"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                <span className="text-white">MAP</span>
-                <span className="text-[#10b981]">I</span>
-                <span className="text-white">T</span>
-              </span>
+              <img
+                src="/images/mapit-logo-branded.png"
+                alt="MAPIT"
+                className="h-8 w-auto object-contain opacity-40 mb-4 select-none"
+                draggable={false}
+              />
               <p className="text-xs text-slate-600">
                 © 2026 MAPIT Geospatial.
                 <br />

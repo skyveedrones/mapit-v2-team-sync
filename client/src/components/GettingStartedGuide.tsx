@@ -94,22 +94,7 @@ const cardVariants = {
 export function GettingStartedGuide() {
   return (
     <section className="mt-20 border-t border-white/5 pt-12 pb-20">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-[#10b981] text-xl leading-none">●</span>
-        <h2 className="text-2xl font-bold text-white tracking-tight">
-          Master the{" "}
-          <span className="text-white">MAP</span>
-          <span className="text-[#10b981]">I</span>
-          <span className="text-white">T</span>{" "}
-          Workflow
-        </h2>
-      </div>
-      <p className="text-slate-500 text-sm mb-10 ml-7">
-        Four steps from raw drone footage to a stakeholder-ready digital twin.
-      </p>
-
-      {/* Demo Project Banner */}
+      {/* Demo Project Banner — always first */}
       <div className="mb-12 p-8 bg-gradient-to-br from-[#10b981]/20 to-slate-900 border border-[#10b981]/30 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="text-left">
           <div className="flex items-center gap-2 mb-2">
@@ -129,6 +114,21 @@ export function GettingStartedGuide() {
           Launch Demo Project
         </a>
       </div>
+
+      {/* Header — below Demo box */}
+      <div className="mt-16 flex items-center gap-3 mb-2">
+        <span className="text-[#10b981] text-xl leading-none">●</span>
+        <h2 className="text-2xl font-bold text-white tracking-tight">
+          Master the{" "}
+          <span className="text-white">MAP</span>
+          <span className="text-[#10b981]">I</span>
+          <span className="text-white">T</span>{" "}
+          Workflow
+        </h2>
+      </div>
+      <p className="text-slate-500 text-sm mb-10 ml-7">
+        Four steps from raw drone footage to a stakeholder-ready digital twin.
+      </p>
 
       {/* Step Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
