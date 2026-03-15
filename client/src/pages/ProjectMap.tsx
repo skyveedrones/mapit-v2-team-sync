@@ -17,6 +17,7 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  FileText,
   FolderOpen,
   Layers,
   MapPin,
@@ -58,6 +59,7 @@ export default function ProjectMap() {
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
 
   const [showFlightPath, setShowFlightPath] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<GeotaggedMedia | null>(null);
   const [mapStyle, setMapStyle] = useState<"satellite-streets" | "streets" | "outdoors" | "light">("satellite-streets");
   const [mapReady, setMapReady] = useState(false);
@@ -253,6 +255,67 @@ export default function ProjectMap() {
     addFlightPathAndMarkers(map);
   }, [mapReady, sortedGeotaggedMedia, addFlightPathAndMarkers]);
 
+  // ── Overlay rendering ─────────────────────────────────────────────────
+  const overlays = useMemo(() => {
+    const p = project as any;
+    return (p?.overlays || []).filter((o: any) => o.isActive);
+  }, [project]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || overlays.length === 0) return;
+
+    const addOverlays = () => {
+      for (const ov of overlays) {
+        const srcId = `overlay-src-${ov.id}`;
+        const layerId = `overlay-layer-${ov.id}`;
+
+        // Remove if already exists
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(srcId)) map.removeSource(srcId);
+
+        const coords = ov.coordinates;
+        if (!coords || coords.length < 4) continue;
+
+        map.addSource(srcId, {
+          type: "image",
+          url: ov.fileUrl,
+          coordinates: coords,
+        });
+
+        map.addLayer({
+          id: layerId,
+          type: "raster",
+          source: srcId,
+          paint: {
+            "raster-opacity": showOverlay ? parseFloat(ov.opacity ?? "0.6") : 0,
+            "raster-fade-duration": 0,
+          },
+        });
+      }
+    };
+
+    // If style is loaded, add immediately; otherwise wait
+    if (map.isStyleLoaded()) {
+      addOverlays();
+    } else {
+      map.once("style.load", addOverlays);
+    }
+  }, [mapReady, overlays, showOverlay]);
+
+  const toggleOverlay = () => {
+    const next = !showOverlay;
+    setShowOverlay(next);
+    const map = mapRef.current;
+    if (!map) return;
+    for (const ov of overlays) {
+      const layerId = `overlay-layer-${ov.id}`;
+      if (map.getLayer(layerId)) {
+        map.setPaintProperty(layerId, "raster-opacity", next ? parseFloat(ov.opacity ?? "0.6") : 0);
+      }
+    }
+  };
+
   // Toggle flight path visibility
   const toggleFlightPath = () => {
     const newValue = !showFlightPath;
@@ -399,6 +462,18 @@ export default function ProjectMap() {
               <Route className="h-3 w-3 mr-1.5" />
               Flight Path
             </Button>
+
+            {overlays.length > 0 && (
+              <Button
+                variant={showOverlay ? "default" : "outline"}
+                size="sm"
+                className="shadow-lg bg-card/95 backdrop-blur-sm h-8 text-xs"
+                onClick={toggleOverlay}
+              >
+                <FileText className="h-3 w-3 mr-1.5" />
+                Utility PDF
+              </Button>
+            )}
           </div>
         )}
 

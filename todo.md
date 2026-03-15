@@ -1947,3 +1947,11 @@
 - [x] Rewrite CityParkTour to DemoOnboarding spec (w-96, WALKTHROUGH label, full-width button, exact copy)
 - [x] Rewrite FlybyController orbit engine: center-orbit math (cos/sin angle, ORBIT_RADIUS=0.005, ANGLE_STEP=0.002), ease-in/out ramps on start and stop
 - [x] FlybyController still exposes startFlyby() via forwardRef handle for CityParkTour Step 4
+
+## Transform Project 1 into Interactive Demo
+
+- [x] Audit DB: verify project 1 media items, overlays, and GPS data
+- [x] Ensure PDF overlay is uploaded and togglable on the map for Step 2
+- [x] Verify CityParkTour renders on /project/1/map with force-visible pattern
+- [x] Verify FlybyController fires on Step 4 via forwardRef handle
+- [x] End-to-end test: walkthrough steps 1-4 all functional
