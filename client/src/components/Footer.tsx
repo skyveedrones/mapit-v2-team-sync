@@ -15,7 +15,8 @@ const Footer = ({ onContactClick }: FooterProps) => {
             <img 
               src="/images/mapit-logo-new.png" 
               alt="MAPIT Logo" 
-              className="h-14 w-auto object-contain" 
+              className="h-14 w-auto object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
             />
             <p className="text-gray-400 text-sm leading-relaxed">
               Precision drone mapping and geospatial intelligence. Elevating project visualization for professionals worldwide.

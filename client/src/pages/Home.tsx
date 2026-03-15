@@ -159,8 +159,13 @@ export default function Home() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4 drop-shadow-lg"
-              style={{ textShadow: '0 4px 12px rgba(0, 0, 0, 0.8)' }}
+              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4"
+              style={{
+                textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6)',
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+              }}
             >
               ELEVATE YOUR <span className="text-primary">VISION</span>
             </motion.h1>
@@ -178,7 +183,7 @@ export default function Home() {
         </section>
 
         {/* --- BUTTON BRIDGE --- */}
-        <div className="bg-white dark:bg-black pt-20 pb-10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-50 transition-colors duration-300">
+        <div className="bg-white dark:bg-black pt-8 pb-8 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10 transition-colors duration-300">
           {/* The Get Started Button navigates to Welcome page */}
           <Link href="/welcome">
             <button

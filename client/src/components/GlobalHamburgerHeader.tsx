@@ -65,7 +65,7 @@ export const GlobalHamburgerHeader = () => {
     <>
       {/* ── FIXED HEADER BAR ── */}
       <header
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 w-full z-[100] transition-all duration-300 ${
           scrolled
             ? "bg-slate-950/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20"
             : "bg-slate-950/60 backdrop-blur-xl border-b border-white/10"
@@ -84,6 +84,7 @@ export const GlobalHamburgerHeader = () => {
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
                 className="h-[60px] w-auto relative z-10 transition-transform group-hover:scale-105"
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </div>
           </div>
@@ -273,6 +274,7 @@ export const GlobalHamburgerHeader = () => {
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
                 className="h-6 opacity-40 mb-4"
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
               <p className="text-xs text-slate-600">
                 © 2026 MAPIT Geospatial.
