@@ -1226,57 +1226,7 @@ export function MediaUploadDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-2 border-b">
-          <button
-            onClick={() => {
-              setUploadMode('standard');
-              setFiles([]);
-              setSelectedMediaForHighRes(null);
-            }}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${uploadMode === 'standard' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            Standard Upload
-          </button>
-          <button
-            onClick={() => {
-              setUploadMode('highres');
-              setFiles([]);
-            }}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${uploadMode === 'highres' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            High-Resolution Upload
-          </button>
-        </div>
 
-        {/* High-Resolution Media Selector */}
-        {uploadMode === 'highres' && (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">Select Media for High-Resolution Upload</h4>
-            <p className="text-xs text-muted-foreground mb-3">Choose which media item to upload the high-resolution version for</p>
-            {mediaWithoutHighRes.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">All media items already have high-resolution versions</p>
-            ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {mediaWithoutHighRes.map((media) => (
-                  <label key={media.id} className="flex items-center gap-3 p-2 rounded hover:bg-blue-500/5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="media-selection"
-                      value={media.id}
-                      checked={selectedMediaForHighRes === media.id}
-                      onChange={(e) => setSelectedMediaForHighRes(parseInt(e.target.value))}
-                      className="w-4 h-4"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{media.filename}</p>
-                      <p className="text-xs text-muted-foreground">{media.mediaType === 'video' ? '🎬 Video' : '📷 Photo'}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="flex-1 overflow-auto space-y-4">
           {/* Pending Resumable Uploads */}
@@ -1343,7 +1293,7 @@ export function MediaUploadDialog({
             </p>
             <p className="text-xs text-muted-foreground mb-4">
               Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos<br />
-              <span className="text-primary">Images are automatically compressed if needed. Videos support chunked upload (no size limit).</span>
+              <span className="text-primary">Videos support chunked upload (no size limit)</span>
             </p>
             <input
               type="file"

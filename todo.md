@@ -1999,3 +1999,7 @@
 
 ## Bug Fix: Dashboard "Too many d..." Error
 - [x] Diagnose and fix the JSON parse error on /dashboard ("Too many d..." is not valid JSON)
+
+## Upload Dialog Cleanup
+- [x] Remove "High-Resolution Upload" tab from MediaUploadDialog
+- [x] Remove "Images are automatically compressed if needed" text
