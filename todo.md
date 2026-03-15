@@ -1982,3 +1982,13 @@
 - [x] Build Account page UI (plan, activation date, account info)
 - [x] Add clickable user name/avatar in header linking to /account (DashboardLayout, GlobalHamburgerHeader, EnterpriseHeader)
 - [x] Register /account route in App.tsx (protected)
+
+## Account Page Enhancements
+
+- [x] Add tRPC procedure for usage stats (project count, media count, storage used)
+- [x] Add Stripe Customer Portal session mutation
+- [x] Add profile update mutation (name, organization)
+- [x] Add profile photo upload mutation (reuses existing logo.upload)
+- [x] Add usage metrics section to Account page with progress bars
+- [x] Add Manage Subscription button linking to Stripe Customer Portal
+- [x] Add profile editing form (name, org, photo) to Account page

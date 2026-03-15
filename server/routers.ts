@@ -1,12 +1,12 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, projectOverlays } from "../drizzle/schema";
+import { media, clientUsers, projectOverlays, users, projectCollaborators, projects } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -542,6 +542,73 @@ export const appRouter = router({
           console.error("Stripe checkout error:", error);
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create checkout session" });
         }
+      }),
+    createPortalSession: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
+        const stripeCustomerId = (ctx.user as any).stripeCustomerId;
+        if (!stripeCustomerId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No active subscription found. Please subscribe to a plan first." });
+        }
+        try {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: stripeCustomerId,
+            return_url: `${ctx.req.headers.origin || "http://localhost:3000"}/account`,
+          });
+          return { portalUrl: session.url };
+        } catch (error) {
+          console.error("Stripe portal error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create billing portal session" });
+        }
+      }),
+  }),
+
+  account: router({
+    getUsageStats: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      // Count owned projects
+      const ownedProjects = await db.select().from(projects).where(eq(projects.userId, ctx.user.id));
+      const projectCount = ownedProjects.length;
+      // Count total media across owned projects
+      const allMedia = await db.select().from(media).where(inArray(media.projectId, ownedProjects.length > 0 ? ownedProjects.map(p => p.id) : [-1]));
+      const totalMedia = allMedia.length;
+      // Count team members (collaborators across all projects)
+      const allCollabs = await db.select().from(projectCollaborators).where(inArray(projectCollaborators.projectId, ownedProjects.length > 0 ? ownedProjects.map(p => p.id) : [-1]));
+      const uniqueCollaborators = new Set(allCollabs.map(c => c.userId));
+      const teamMemberCount = uniqueCollaborators.size;
+      // Estimate storage used (sum of media file sizes if available, otherwise estimate from count)
+      // Since we don't store file sizes, estimate: photos ~5MB, videos ~50MB
+      let estimatedStorageGB = 0;
+      for (const m of allMedia) {
+        if ((m as any).mediaType === 'video') {
+          estimatedStorageGB += 0.05; // ~50MB per video
+        } else {
+          estimatedStorageGB += 0.005; // ~5MB per photo
+        }
+      }
+      estimatedStorageGB = Math.round(estimatedStorageGB * 100) / 100;
+      return {
+        projectCount,
+        totalMedia,
+        teamMemberCount,
+        estimatedStorageGB,
+      };
+    }),
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(255).optional(),
+        organization: z.string().max(255).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const updateData: Record<string, unknown> = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.organization !== undefined) updateData.organization = input.organization;
+        if (Object.keys(updateData).length === 0) return { success: true };
+        await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
+        return { success: true };
       }),
   }),
 
