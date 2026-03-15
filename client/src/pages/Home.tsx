@@ -271,9 +271,8 @@ export default function Home() {
       <CyberDivider />
       <MunicipalGateway />
 
-      <CyberDivider />
-      {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 z-20 transition-colors duration-300">
+      {/* SECTION 3: UNIVERSAL COMPATIBILITY — flows directly from Municipal, no divider */}
+      <section className="relative bg-slate-950 pt-12 pb-12 md:pb-16 z-20">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -282,49 +281,49 @@ export default function Home() {
             <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
               Universal Integration
             </h2>
-            <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white transition-colors duration-300">
-              Compatible with <span className="text-slate-900 dark:text-white">All Major Drone Manufacturers</span>
+            <h3 className="text-3xl md:text-5xl font-bold text-white">
+              Compatible with <span className="text-white">All Major Drone Manufacturers</span>
             </h3>
-            <p className="text-slate-600 dark:text-gray-400 mt-6 max-w-2xl mx-auto text-lg transition-colors duration-300">
+            <p className="text-slate-400 mt-6 max-w-2xl mx-auto text-lg">
               If your aircraft records GPS metadata, our system can process it.
               Zero proprietary hardware locks.
             </p>
           </div>
 
           {/* Brand Grid: Clean, minimalist logos */}
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-12 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-60 dark:opacity-60">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-12 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-70">
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">DJI</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Enterprise</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">DJI</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Enterprise</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">AUTEL</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Robotics</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">AUTEL</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Robotics</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">PARROT</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Anafi Series</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">PARROT</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Anafi Series</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">SKYDIO</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Autonomous</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">SKYDIO</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Autonomous</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">MAVLINK</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">Open Source</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">MAVLINK</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Open Source</span>
             </div>
             <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">FIXED WING</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-gray-500 mt-1">VTOL / Professional</span>
+              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">FIXED WING</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">VTOL / Professional</span>
             </div>
             </div>
           </div>
 
           <div className="mt-8 flex justify-center">
-            <div className="px-6 py-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full flex items-center gap-3 transition-colors duration-300">
+            <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-slate-600 dark:text-gray-400 text-sm font-medium transition-colors duration-300">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
+              <span className="text-slate-400 text-sm font-medium">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
             </div>
           </div>
         </div>
