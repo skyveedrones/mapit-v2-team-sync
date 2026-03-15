@@ -19,6 +19,7 @@ import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import { CyberDivider } from "@/components/CyberDivider";
 import { MunicipalGateway } from "@/components/MunicipalGateway";
 import {
   Upload,
@@ -197,8 +198,10 @@ export default function Home() {
         </div>
 
         {/* SECTION 2: MUNICIPAL GATEWAY */}
+        <CyberDivider />
         <MunicipalGateway />
 
+        <CyberDivider />
         {/* SECTION 3: STEPPER CARDS */}
         <section className="relative bg-white dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
           {/* Branded Background "Wing" Glow */}
@@ -262,8 +265,10 @@ export default function Home() {
           </div>
         </section>
 
+        <CyberDivider />
       </section>
 
+      <CyberDivider />
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
       <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-100 dark:border-white/5 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
@@ -322,11 +327,13 @@ export default function Home() {
         </div>
       </section>
 
+      <CyberDivider />
       {/* SECTION 4: FEATURES */}
       <section id="features" className="relative bg-white dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 border-t border-slate-100 dark:border-white/5 transition-colors duration-300">
         <Features />
       </section>
 
+      <CyberDivider />
       {/* SECTION 5: HIRE A PILOT SERVICE */}
       <section
         className="relative py-20 md:py-28 px-6 overflow-hidden"
@@ -465,6 +472,7 @@ export default function Home() {
         </div>
       </section>
 
+      <CyberDivider />
       {/* CTA Section */}
       <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-white dark:bg-black transition-colors duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 dark:from-primary/10 dark:via-transparent dark:to-primary/10" />

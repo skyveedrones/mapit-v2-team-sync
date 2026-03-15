@@ -69,9 +69,9 @@ const pillars = [
   },
   {
     icon: FileCheck,
-    title: "Citizen Accountability",
+    title: "Stakeholder Accountability",
     value:
-      "Generate visual progress reports for City Council and public meetings, proving that projects are on-time and on-budget.",
+      "Generate visual progress reports for City Council, public meetings, and project stakeholders — proving that infrastructure investments are on-time and on-budget.",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp",
   },
 ];

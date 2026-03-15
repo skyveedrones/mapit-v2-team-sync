@@ -15,8 +15,9 @@ export const MunicipalGateway = () => {
       {/* 2. THE RADIAL GLOW */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="relative max-w-4xl mx-auto px-6 text-center">
+      <div className="relative w-full px-6 text-center">
         
+        <div className="max-w-4xl mx-auto">
         {/* PILL BADGE */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8">
           <span className="text-blue-400 text-xs font-bold uppercase tracking-widest">Government Solutions</span>
@@ -31,6 +32,7 @@ export const MunicipalGateway = () => {
         <p className="text-lg md:text-xl text-slate-400 leading-relaxed mb-12 max-w-2xl mx-auto">
           Bridge the gap between City Hall and the Job Site. MAPIT provides the Digital Twin infrastructure needed to manage assets, mitigate risk, and protect taxpayer investment.
         </p>
+        </div>
 
         {/* THE CTA BUTTON */}
         <div className="flex justify-center">
