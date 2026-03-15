@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "41f4dbd9-0085-4f10-958a-85f263c1fa3d",
-  "prevId": "1f293c1a-e9a7-4457-b1f4-f9757add2281",
+  "id": "f5b806b5-666d-4633-a7af-910a8e4b7551",
+  "prevId": "41f4dbd9-0085-4f10-958a-85f263c1fa3d",
   "tables": {
     "client_invitations": {
       "name": "client_invitations",
@@ -145,6 +145,15 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
+          "default": "(now())"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
           "default": "(now())"
         }
       },
@@ -676,6 +685,42 @@
           "notNull": false,
           "autoincrement": false
         },
+        "transcodedUrl": {
+          "name": "transcodedUrl",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transcodedKey": {
+          "name": "transcodedKey",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transcodeStatus": {
+          "name": "transcodeStatus",
+          "type": "enum('none','pending','processing','completed','failed')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'none'"
+        },
+        "transcodeError": {
+          "name": "transcodeError",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "videoCodec": {
+          "name": "videoCodec",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -937,6 +982,107 @@
       "compositePrimaryKeys": {
         "project_members_id": {
           "name": "project_members_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "project_overlays": {
+      "name": "project_overlays",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "projectId": {
+          "name": "projectId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fileUrl": {
+          "name": "fileUrl",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "opacity": {
+          "name": "opacity",
+          "type": "decimal(4,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.5'"
+        },
+        "coordinates": {
+          "name": "coordinates",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "('[ [0,0],[0,0],[0,0],[0,0] ]')"
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'Initial Plan'"
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
+        },
+        "rotation": {
+          "name": "rotation",
+          "type": "decimal(7,4)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0'"
+        },
+        "original_coordinates": {
+          "name": "original_coordinates",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "project_overlays_id": {
+          "name": "project_overlays_id",
           "columns": [
             "id"
           ]
@@ -1246,7 +1392,7 @@
         },
         "role": {
           "name": "role",
-          "type": "enum('user','admin','webmaster')",
+          "type": "enum('user','admin','webmaster','client')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,

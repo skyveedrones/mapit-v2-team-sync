@@ -177,6 +177,16 @@ export const media = mysqlTable("media", {
   processingStatus: mysqlEnum("processingStatus", ["pending", "processing", "completed", "failed"]).default("pending"),
   /** Error message if telemetry extraction failed */
   processingError: text("processingError"),
+  /** H.264 transcoded video URL for browser playback (original H.265 stays in url/fileKey) */
+  transcodedUrl: varchar("transcodedUrl", { length: 500 }),
+  /** S3 key for the transcoded H.264 video */
+  transcodedKey: varchar("transcodedKey", { length: 500 }),
+  /** Transcode processing status */
+  transcodeStatus: mysqlEnum("transcodeStatus", ["none", "pending", "processing", "completed", "failed"]).default("none"),
+  /** Error message if transcode failed */
+  transcodeError: text("transcodeError"),
+  /** Detected video codec (e.g., hevc, h264) */
+  videoCodec: varchar("videoCodec", { length: 50 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

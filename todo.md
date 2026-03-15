@@ -2003,3 +2003,16 @@
 ## Upload Dialog Cleanup
 - [x] Remove "High-Resolution Upload" tab from MediaUploadDialog
 - [x] Remove "Images are automatically compressed if needed" text
+
+## H.265 to H.264 Server-Side Transcode
+- [ ] Check FFmpeg availability and install if needed
+- [ ] Add schema fields: transcodedUrl, transcodedKey, processingStatus, thumbnailUrl
+- [ ] Build FFmpeg transcode service (H.265→H.264 + thumbnail extraction)
+- [ ] Wire transcode into finalizeChunkedUpload flow
+- [ ] Remove H.265 conversion warning from frontend
+- [ ] Update video player to use transcoded URL with processing indicator
+
+## H.265 Warning & HandBrake Notice
+- [x] Restore/improve H.265 detection warning in upload dialog
+- [x] Add persistent HandBrake notice with download link in upload popup
+- [ ] Add server-side FFmpeg thumbnail extraction for videos after upload

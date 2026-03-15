@@ -1295,6 +1295,10 @@ export function MediaUploadDialog({
               Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos<br />
               <span className="text-primary">Videos support chunked upload (no size limit)</span>
             </p>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-2 text-left">
+              <p className="text-xs text-amber-400 font-medium">H.265/HEVC videos are not supported for browser playback.</p>
+              <p className="text-xs text-muted-foreground">Convert to H.264 using <a href="https://handbrake.fr" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium">HandBrake</a> (free) before uploading.</p>
+            </div>
             <input
               type="file"
               multiple
@@ -1478,7 +1482,7 @@ export function MediaUploadDialog({
               H.265/HEVC Video Detected
             </DialogTitle>
             <DialogDescription>
-              The following video(s) appear to be encoded in H.265/HEVC format, which may not play correctly in web browsers:
+              The following video(s) are encoded in H.265/HEVC format and cannot be uploaded. Please convert them to H.264 first:
             </DialogDescription>
           </DialogHeader>
           
@@ -1515,20 +1519,13 @@ export function MediaUploadDialog({
           
           <div className="flex gap-2 justify-end pt-4 border-t">
             <Button
-              variant="outline"
               onClick={() => {
                 // Remove H.265 files from the upload list
                 setFiles(prev => prev.filter(f => !f.isH265));
                 setH265WarningOpen(false);
               }}
             >
-              Remove & Convert First
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setH265WarningOpen(false)}
-            >
-              Upload Anyway
+              OK, Remove H.265 Files
             </Button>
           </div>
         </DialogContent>
