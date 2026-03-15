@@ -41,6 +41,7 @@ import InstallAsApp from "./pages/features/InstallAsApp";
 import ProjectTemplates from "./pages/features/ProjectTemplates";
 import DemoProject from "./pages/DemoProject";
 import Welcome from "./pages/Welcome";
+import Municipal from "./pages/Municipal";
 
 /**
  * Admin-only routes that client users must not access
@@ -175,6 +176,9 @@ function Router() {
       <Route path="/demo/project">
         {() => <ProtectedRoute component={ProjectDetail} />}
       </Route>
+      
+      {/* Municipal Solutions */}
+      <Route path="/municipal" component={Municipal} />
       
       {/* Feature pages */}
       <Route path="/features/easy-upload" component={EasyUpload} />

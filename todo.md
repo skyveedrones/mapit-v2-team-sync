@@ -1855,3 +1855,12 @@
 - [x] Verify 2-point snap and corner drag both update same coordinates array
 - [x] Write vitest tests for unified component helpers (39 tests passing)
 - [x] Build passes cleanly with no Google Maps references (only 4 pre-existing TS errors in unrelated files)
+
+## Municipal Solutions Landing Page
+- [x] Find stock imagery: city skylines, engineers with tablets, construction site maps
+- [x] Create Municipal.tsx page with all 5 sections (Hero, Challenge, Pillars, Security, Pilot CTA)
+- [x] Use institutional blue + slate gray color palette
+- [x] Add /municipal route to App.tsx
+- [x] Add "Municipal Solutions" link to main navigation header
+- [x] "Request a Briefing" button links to contact form
+- [x] "View Service Capabilities" links to features/services section

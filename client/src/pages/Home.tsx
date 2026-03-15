@@ -174,6 +174,12 @@ export default function Home() {
               >
                 Projects
               </button>
+              <button
+                onClick={() => setLocation("/municipal")}
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              >
+                Municipal Solutions
+              </button>
             </div>
 
             {/* Theme Toggle with Tooltip */}
@@ -268,6 +274,15 @@ export default function Home() {
                 className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
               >
                 Projects
+              </button>
+              <button
+                onClick={() => {
+                  setLocation("/municipal");
+                  setMobileMenuOpen(false);
+                }}
+                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
+              >
+                Municipal Solutions
               </button>
               {isAuthenticated && user ? (
                 <>
