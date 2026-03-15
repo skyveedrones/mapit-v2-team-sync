@@ -44,6 +44,7 @@ import {
   FileJson,
 } from "lucide-react";
 import { Link } from "wouter";
+import { ReferralWidget } from "@/components/ReferralWidget";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -376,6 +377,11 @@ export default function Dashboard() {
             </div>
           </motion.div>
         )}
+
+        {/* Referral Widget */}
+        <motion.div variants={fadeInUp}>
+          <ReferralWidget />
+        </motion.div>
 
         {/* Help Section */}
         <motion.div variants={fadeInUp}>

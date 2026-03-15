@@ -14,7 +14,7 @@ export default function Pricing() {
   const handleGetStarted = (planName: string) => {
     if (planName === "Enterprise") {
       alert("Contact sales functionality coming soon!");
-    } else if (planName === "Free") {
+    } else if (planName === "14-Day Free Trial") {
       window.location.href = getLoginUrl();
     } else {
       setLocation(`/payment?plan=${planName.toLowerCase()}&billing=${billingPeriod}`);
@@ -170,14 +170,28 @@ export default function Pricing() {
                     <div className="mb-4">
                       <span className="text-3xl font-bold text-white">Custom</span>
                     </div>
+                  ) : plan.id === "free" ? (
+                    <div className="mb-4">
+                      <span className="text-4xl font-bold text-white">$0</span>
+                      <span className="text-slate-400 ml-2">/14 days</span>
+                      <p className="text-xs text-emerald-400 mt-1">Full access. No credit card required.</p>
+                    </div>
                   ) : (
                     <div className="mb-4">
-                      <span className="text-4xl font-bold text-white">
-                        ${billingPeriod === "monthly" ? plan.monthlyPrice : plan.annualPrice}
-                      </span>
-                      <span className="text-slate-400 ml-2">
-                        {billingPeriod === "monthly" ? "/month" : "/year"}
-                      </span>
+                      {billingPeriod === "annual" ? (
+                        <>
+                          <span className="text-4xl font-bold text-white">
+                            ${(plan.annualPrice / 12).toFixed(2)}
+                          </span>
+                          <span className="text-slate-400 ml-2">/month</span>
+                          <p className="text-xs text-emerald-400 mt-1">Billed ${plan.annualPrice.toFixed(2)}/yr · 15% off</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-4xl font-bold text-white">${plan.monthlyPrice}</span>
+                          <span className="text-slate-400 ml-2">/month</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -190,7 +204,7 @@ export default function Pricing() {
                       : "bg-slate-800 hover:bg-slate-700 text-white"
                   }`}
                 >
-                  {plan.id === "enterprise" ? "Contact Sales" : "Start Free Trial"}
+                  {plan.id === "enterprise" ? "Contact Sales" : plan.id === "free" ? "Start 14-Day Trial" : "Start Free Trial"}
                 </Button>
 
                 <ul className="space-y-3 max-h-96 overflow-y-auto">

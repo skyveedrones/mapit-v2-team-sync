@@ -205,8 +205,8 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "free",
-    name: "Free",
-    description: "Try out Mapit with basic features",
+    name: "14-Day Free Trial",
+    description: "Full access. No credit card required.",
     monthlyPriceId: null,
     annualPriceId: null,
     monthlyPrice: 0,
@@ -220,7 +220,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPriceId: "price_1T6Xu3GEMT6mikKwPibBZGCg",
     annualPriceId: "price_1T6Xu4GEMT6mikKwqmc0MCVL",
     monthlyPrice: 49,
-    annualPrice: 490,
+    annualPrice: 499.80, // 15% off: $41.65/mo
     limits: PLAN_LIMITS.starter,
   },
   {
@@ -230,7 +230,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPriceId: "price_1T6Xu4GEMT6mikKwINYKHcuI",
     annualPriceId: "price_1T6Xu4GEMT6mikKwqgE63wB7",
     monthlyPrice: 149,
-    annualPrice: 1490,
+    annualPrice: 1519.80, // 15% off: $126.65/mo
     limits: PLAN_LIMITS.professional,
   },
   {
@@ -240,7 +240,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPriceId: "price_1T6Xu5GEMT6mikKwaxgTw2dy",
     annualPriceId: "price_1T6Xu5GEMT6mikKwCUBCrmlB",
     monthlyPrice: 349,
-    annualPrice: 3490,
+    annualPrice: 3559.80, // 15% off: $296.65/mo
     limits: PLAN_LIMITS.business,
   },
   {
