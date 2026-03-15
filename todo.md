@@ -1941,3 +1941,9 @@
 - [x] Add forwardRef + useImperativeHandle to FlybyController to expose startFlyby()
 - [x] Wire CityParkTour into ProjectMap — auto-shows for demo project (projectId === 1)
 - [x] Step 4 "Exit Tour" triggers FlybyController.startFlyby() via ref after tour exit animation
+
+## Guided Simulation & Flyby Engine Upgrade
+
+- [x] Rewrite CityParkTour to DemoOnboarding spec (w-96, WALKTHROUGH label, full-width button, exact copy)
+- [x] Rewrite FlybyController orbit engine: center-orbit math (cos/sin angle, ORBIT_RADIUS=0.005, ANGLE_STEP=0.002), ease-in/out ramps on start and stop
+- [x] FlybyController still exposes startFlyby() via forwardRef handle for CityParkTour Step 4
