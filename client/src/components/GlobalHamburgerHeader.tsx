@@ -78,13 +78,16 @@ export const GlobalHamburgerHeader = () => {
             className="flex items-center cursor-pointer group"
             onClick={() => navTo("/")}
           >
-            <div className="relative">
-              <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-[60px] w-auto relative z-10 transition-transform group-hover:scale-105"
-              />
+            <div className="relative flex items-center">
+              <div className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span
+                className="relative z-10 text-2xl font-black tracking-[0.15em] select-none transition-transform group-hover:scale-105"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                <span className="text-white">MAP</span>
+                <span className="text-[#10b981]">I</span>
+                <span className="text-white">T</span>
+              </span>
             </div>
           </div>
 
@@ -269,11 +272,14 @@ export const GlobalHamburgerHeader = () => {
 
             {/* Footer */}
             <div className="mt-auto border-t border-white/10 pt-8">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-6 opacity-40 mb-4"
-              />
+              <span
+                className="block text-lg font-black tracking-[0.15em] opacity-40 mb-4 select-none"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                <span className="text-white">MAP</span>
+                <span className="text-[#10b981]">I</span>
+                <span className="text-white">T</span>
+              </span>
               <p className="text-xs text-slate-600">
                 © 2026 MAPIT Geospatial.
                 <br />

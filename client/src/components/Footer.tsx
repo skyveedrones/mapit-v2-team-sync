@@ -12,11 +12,14 @@ const Footer = ({ onContactClick }: FooterProps) => {
           
           {/* Brand Column */}
           <div className="space-y-6">
-            <img 
-              src="/images/mapit-logo-new.png" 
-              alt="MAPIT Logo" 
-              className="h-16 w-auto object-contain"
-            />
+            <span
+              className="block text-4xl font-black tracking-[0.15em] select-none"
+              style={{ fontFamily: "var(--font-display)", lineHeight: "64px", height: "64px" }}
+            >
+              <span className="text-white">MAP</span>
+              <span className="text-[#10b981]">I</span>
+              <span className="text-white">T</span>
+            </span>
             <p className="text-gray-400 text-sm leading-relaxed">
               Precision drone mapping and geospatial intelligence. Elevating project visualization for professionals worldwide.
             </p>

@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 interface Plan {
   name: string;
@@ -16,11 +18,52 @@ interface Plan {
   isFeatured: boolean;
   isCustom?: boolean;
   isFree?: boolean;
+  // Maps to the Stripe tier ID in products.ts
+  tierId?: "starter" | "professional" | "business";
 }
+
+// Stripe price IDs from products.ts
+const PRICE_IDS: Record<string, { monthly: string; annual: string }> = {
+  starter: {
+    monthly: "price_1T6Xu3GEMT6mikKwPibBZGCg",
+    annual: "price_1T6Xu4GEMT6mikKwqmc0MCVL",
+  },
+  professional: {
+    monthly: "price_1T6Xu4GEMT6mikKwINYKHcuI",
+    annual: "price_1T6Xu4GEMT6mikKwqgE63wB7",
+  },
+  business: {
+    monthly: "price_1T6Xu5GEMT6mikKwaxgTw2dy",
+    annual: "price_1T6Xu5GEMT6mikKwCUBCrmlB",
+  },
+};
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
   const [isAnnual, setIsAnnual] = useState(true);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  // Get referral ID from URL if present
+  const referralId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("ref") ?? undefined
+    : undefined;
+
+  const createCheckout = trpc.payment.createCheckoutSession.useMutation({
+    onSuccess: (data) => {
+      setLoadingPlan(null);
+      toast.info("Redirecting to checkout...");
+      window.open(data.checkoutUrl, "_blank");
+    },
+    onError: (err) => {
+      setLoadingPlan(null);
+      // If not authenticated, redirect to login
+      if (err.message.includes("login") || err.data?.code === "UNAUTHORIZED") {
+        window.location.href = getLoginUrl();
+      } else {
+        toast.error("Failed to start checkout. Please try again.");
+      }
+    },
+  });
 
   const plans: Plan[] = [
     {
@@ -51,6 +94,7 @@ export default function Pricing() {
         "Email Support",
       ],
       isFeatured: false,
+      tierId: "starter",
     },
     {
       name: "MUNICIPAL",
@@ -65,6 +109,7 @@ export default function Pricing() {
         "Sub-Surface Verification Docs",
       ],
       isFeatured: true,
+      tierId: "professional",
     },
     {
       name: "AGENCY",
@@ -79,6 +124,7 @@ export default function Pricing() {
         "Priority Processing",
       ],
       isFeatured: false,
+      tierId: "business",
     },
     {
       name: "METROPOLITAN",
@@ -100,11 +146,25 @@ export default function Pricing() {
   const handleGetStarted = (plan: Plan) => {
     if (plan.isCustom) {
       alert("Contact sales functionality coming soon!");
-    } else if (plan.isFree) {
-      window.location.href = getLoginUrl();
-    } else {
-      setLocation(`/payment?plan=${plan.name.toLowerCase()}&billing=${isAnnual ? "annual" : "monthly"}`);
+      return;
     }
+    if (plan.isFree) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    if (!plan.tierId) return;
+
+    const priceId = isAnnual
+      ? PRICE_IDS[plan.tierId].annual
+      : PRICE_IDS[plan.tierId].monthly;
+
+    setLoadingPlan(plan.name);
+    createCheckout.mutate({
+      priceId,
+      planId: plan.tierId,
+      referralId,
+      trialDays: 14,
+    });
   };
 
   return (
@@ -201,6 +261,7 @@ export default function Pricing() {
               {/* CTA Button */}
               <Button
                 onClick={() => handleGetStarted(plan)}
+                disabled={loadingPlan === plan.name}
                 className={`w-full mb-6 rounded-full font-semibold transition-all ${
                   plan.isFeatured
                     ? "bg-[#10b981] hover:bg-[#0da673] text-slate-950 hover:drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]"
@@ -209,7 +270,11 @@ export default function Pricing() {
                     : "bg-slate-800 hover:bg-slate-700 text-white hover:border-emerald-500/40"
                 }`}
               >
-                {plan.buttonText}
+                {loadingPlan === plan.name ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin inline" />Processing...</>
+                ) : (
+                  plan.buttonText
+                )}
               </Button>
 
               {/* Features */}

@@ -487,6 +487,8 @@ export const appRouter = router({
         z.object({
           priceId: z.string(),
           planId: z.string(),
+          referralId: z.string().optional(),
+          trialDays: z.number().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -506,13 +508,20 @@ export const appRouter = router({
               },
             ],
             mode: "subscription",
+            subscription_data: {
+              ...(input.trialDays ? { trial_period_days: input.trialDays } : {}),
+            },
+            allow_promotion_codes: true,
             success_url: `${ctx.req.headers.origin || "http://localhost:3000"}/dashboard?payment=success`,
             cancel_url: `${ctx.req.headers.origin || "http://localhost:3000"}/pricing?payment=cancelled`,
             customer_email: ctx.user.email,
             client_reference_id: ctx.user.id.toString(),
             metadata: {
               user_id: ctx.user.id.toString(),
+              customer_email: ctx.user.email,
+              customer_name: ctx.user.name || "",
               plan_id: input.planId,
+              ...(input.referralId ? { referral_id: input.referralId } : {}),
             },
           });
 
