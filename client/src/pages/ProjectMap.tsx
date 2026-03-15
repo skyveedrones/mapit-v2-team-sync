@@ -407,16 +407,7 @@ export default function ProjectMap() {
           <FlybyController ref={flybyRef} mapRef={mapRef} mapLoaded={mapReady} />
         )}
 
-        {/* City Park Guided Tour Overlay */}
-        {isDemoProject && showTour && (
-          <CityParkTour
-            onLaunchFlyby={() => {
-              // Give the tour exit animation 350 ms head-start, then fire flyby
-              setTimeout(() => flybyRef.current?.startFlyby(), 400);
-            }}
-            onClose={() => setShowTour(false)}
-          />
-        )}
+        {/* City Park Guided Tour — rendered outside map container below */}
 
         {/* Legend - Bottom Left */}
         {geotaggedMedia.length > 0 && (
@@ -507,6 +498,23 @@ export default function ProjectMap() {
           </div>
         )}
       </div>
+
+      {/* City Park Guided Tour — Force-Visible Pattern
+           Placed OUTSIDE the map container so no parent stacking context can clip it.
+           Uses fixed inset-0 pointer-events-none wrapper at z-[9999] to guarantee
+           it always renders above the Mapbox canvas and all its controls. */}
+      {isDemoProject && showTour && (
+        <div className="fixed inset-0 pointer-events-none z-[9999]">
+          <div className="pointer-events-auto">
+            <CityParkTour
+              onLaunchFlyby={() => {
+                setTimeout(() => flybyRef.current?.startFlyby(), 400);
+              }}
+              onClose={() => setShowTour(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Selected Media Preview */}
       {selectedMedia && (
