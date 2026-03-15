@@ -1843,3 +1843,15 @@
 - [x] Remove any remaining Google Maps overlay references (GroundOverlay, comparison slider)
 - [x] Confirm MapboxOverlayView is sole overlay source of truth
 - [x] Run vitest tests and confirm all pass (18/18)
+
+## Full Migration to Unified Mapbox Engine
+- [x] Audit all Google Maps usage (EmbeddedProjectMap, Map.tsx, google maps proxy, package.json)
+- [x] Build unified MapboxProjectMap: GPS pins via mapboxgl.Marker with popups, flight path as GeoJSON line layer, overlay image source with edit/snap tools
+- [x] Refactor ProjectDetail to use single MapboxProjectMap instead of EmbeddedProjectMap + MapboxOverlayView
+- [x] Remove EmbeddedProjectMap.tsx and all Google Maps component files
+- [x] Remove Google Maps dependencies from package.json (@googlemaps/*, Map.tsx proxy component)
+- [x] Remove Google Maps proxy/API routes from server if any (server-side map.ts kept for potential geocoding, no Google Maps frontend code remains)
+- [x] Verify overlay persistence: Save button sends 4-corner array, awaits 200 OK
+- [x] Verify 2-point snap and corner drag both update same coordinates array
+- [x] Write vitest tests for unified component helpers (39 tests passing)
+- [x] Build passes cleanly with no Google Maps references (only 4 pre-existing TS errors in unrelated files)

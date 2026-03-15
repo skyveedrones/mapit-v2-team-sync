@@ -29,7 +29,7 @@ const features = [
   {
     icon: Map,
     title: "Interactive Maps",
-    description: "Visualize flights on Google Maps with markers and flight paths",
+    description: "Visualize flights on Mapbox with markers and flight paths",
   },
   {
     icon: FileText,

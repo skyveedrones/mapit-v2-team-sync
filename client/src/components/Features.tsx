@@ -12,7 +12,7 @@ const Features = () => {
     },
     {
       title: "Interactive Maps",
-      desc: "Visualize your flights on Google Maps with markers, popups, and key data.",
+      desc: "Visualize your flights on Mapbox with markers, popups, and key data.",
       icon: <MapIcon className="w-6 h-6 text-primary" />,
       image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/feature-interactive-maps-UuiFZZApp49SBLYqnunszM.webp",
       link: "/features/interactive-maps"

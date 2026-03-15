@@ -33,7 +33,7 @@ const features = [
   {
     icon: MapPin,
     title: "Interactive Map",
-    description: "View GPS-marked drone flight paths and locations on an interactive Google Map",
+    description: "View GPS-marked drone flight paths and locations on an interactive Mapbox",
   },
   {
     icon: Eye,

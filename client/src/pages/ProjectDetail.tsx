@@ -9,7 +9,7 @@ import { useClientAccess } from "@/hooks/useClientAccess";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
-import { EmbeddedProjectMap, type EmbeddedProjectMapHandle } from "@/components/EmbeddedProjectMap";
+import { MapboxProjectMap, type MapboxProjectMapHandle } from "@/components/MapboxProjectMap";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
@@ -57,7 +57,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -76,7 +76,7 @@ const staggerContainer = {
   },
 };
 
-const MapboxOverlayView = lazy(() => import("@/components/MapboxOverlayView").then(m => ({ default: m.MapboxOverlayView })));
+
 
 const statusColors = {
   active: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
@@ -95,7 +95,7 @@ export default function ProjectDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
-  const mapRef = useRef<EmbeddedProjectMapHandle>(null);
+  const mapRef = useRef<MapboxProjectMapHandle>(null);
   
   // Check if this is the demo project (read-only mode)
   const isDemoProject = projectId === 1;
@@ -503,55 +503,22 @@ export default function ProjectDetail() {
                 </CardContent>
               </Card>
             </motion.div>
-            {/* Project Map Section */}
+            {/* Project Map Section — Unified Mapbox Engine */}
             <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
-              {/* Google Maps — GPS markers only (no overlays) */}
-              <EmbeddedProjectMap
+              <MapboxProjectMap
                 ref={mapRef}
                 projectId={project.id}
                 projectName={project.name}
                 isDemoProject={isDemoProject}
+                overlays={overlays}
+                onOverlayUpdated={() => {
+                  if (isDemoProject) {
+                    demoProjectQuery.refetch();
+                  } else {
+                    normalProjectQuery.refetch();
+                  }
+                }}
               />
-
-              {/* Mapbox Overlay Editor — sole overlay source of truth */}
-              {overlays.length > 0 && (
-                <div className="mt-6">
-                  <Card className="bg-card">
-                    <CardContent className="pt-4">
-                      <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-display)" }}>
-                        <Layers className="h-5 w-5 inline mr-2 text-blue-400" />
-                        Overlay Editor
-                      </h2>
-                      <Suspense fallback={<div className="w-full h-[600px] rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">Loading overlay editor...</div>}>
-                      <MapboxOverlayView
-                        projectId={project.id}
-                        overlays={overlays}
-                        center={(() => {
-                          const coords = overlays[0]?.coordinates;
-                          try {
-                            const parsed = typeof coords === 'string' ? JSON.parse(coords) : coords;
-                            if (Array.isArray(parsed) && parsed.length >= 4) {
-                              const avgLat = parsed.reduce((s: number, c: [number, number]) => s + c[1], 0) / parsed.length;
-                              const avgLng = parsed.reduce((s: number, c: [number, number]) => s + c[0], 0) / parsed.length;
-                              return { lat: avgLat, lng: avgLng };
-                            }
-                          } catch {}
-                          return { lat: 32.7767, lng: -96.797 };
-                        })()}
-                        isDemoProject={isDemoProject}
-                        onOverlayUpdated={() => {
-                          if (isDemoProject) {
-                            demoProjectQuery.refetch();
-                          } else {
-                            normalProjectQuery.refetch();
-                          }
-                        }}
-                      />
-                      </Suspense>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
             </motion.div>
 
             {/* Flights Section */}

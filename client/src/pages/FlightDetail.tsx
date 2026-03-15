@@ -5,7 +5,7 @@
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { BackToDashboard } from "@/components/BackToDashboard";
-import { EmbeddedProjectMap } from "@/components/EmbeddedProjectMap";
+import { MapboxProjectMap } from "@/components/MapboxProjectMap";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { FlightReportDialog } from "@/components/FlightReportDialog";
@@ -490,7 +490,7 @@ export default function FlightDetail() {
 
             {/* Flight Map Section */}
             <motion.div variants={fadeInUp} className="mb-8">
-              <EmbeddedProjectMap
+              <MapboxProjectMap
                 projectId={projectId}
                 projectName={flight.name}
                 flightId={flightId}

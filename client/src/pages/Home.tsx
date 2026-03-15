@@ -54,7 +54,7 @@ const features = [
     icon: Map,
     title: "Interactive Maps",
     description:
-      "Visualize your flights on Google Maps with markers, popups, and key data",
+      "Visualize your flights on Mapbox with markers, popups, and key data",
     image: "/images/feature-maps-new.jpg",
     link: "/features/interactive-maps",
   },

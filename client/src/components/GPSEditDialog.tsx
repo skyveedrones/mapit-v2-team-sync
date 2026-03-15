@@ -1,7 +1,7 @@
 /**
  * GPS Edit Dialog Component
  * Allows users to manually add or edit GPS coordinates for media files
- * Features a map picker centered on existing project GPS points
+ * Features a Mapbox map picker centered on existing project GPS points
  */
 
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
 import { Media } from "../../../drizzle/schema";
-import { MapPin, Navigation, Search } from "lucide-react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { MapPin, Navigation } from "lucide-react";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -45,46 +46,35 @@ export function GPSEditDialog({
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [altitude, setAltitude] = useState("");
-  const [mapReady, setMapReady] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ lat: number; lng: number } | null>(null);
-  
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
-  const existingMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
-  // Fetch all media for this project to get existing GPS points
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const selectedMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const existingMarkersRef = useRef<mapboxgl.Marker[]>([]);
+
   const { data: mediaList } = trpc.media.list.useQuery({ projectId });
-  
-  // Update GPS mutation
   const updateGPSMutation = trpc.media.updateGPS.useMutation();
   const utils = trpc.useUtils();
 
-  // Get existing GPS points from project media
   const existingGPSPoints: ProjectMediaPoint[] = (mediaList || [])
-    .filter(m => m.latitude !== null && m.longitude !== null && m.id !== media?.id)
-    .map(m => ({
+    .filter((m) => m.latitude !== null && m.longitude !== null && m.id !== media?.id)
+    .map((m) => ({
       lat: parseFloat(String(m.latitude)),
       lng: parseFloat(String(m.longitude)),
     }));
 
-  // Calculate center from existing points or default
-  const getMapCenter = useCallback(() => {
-    if (selectedPosition) {
-      return selectedPosition;
-    }
+  const getMapCenter = useCallback((): [number, number] => {
+    if (selectedPosition) return [selectedPosition.lng, selectedPosition.lat];
     if (media?.latitude && media?.longitude) {
-      return {
-        lat: parseFloat(String(media.latitude)),
-        lng: parseFloat(String(media.longitude)),
-      };
+      return [parseFloat(String(media.longitude)), parseFloat(String(media.latitude))];
     }
     if (existingGPSPoints.length > 0) {
       const avgLat = existingGPSPoints.reduce((sum, p) => sum + p.lat, 0) / existingGPSPoints.length;
       const avgLng = existingGPSPoints.reduce((sum, p) => sum + p.lng, 0) / existingGPSPoints.length;
-      return { lat: avgLat, lng: avgLng };
+      return [avgLng, avgLat];
     }
-    // Default to Forney, TX
-    return { lat: 32.7479, lng: -96.4719 };
+    return [-96.4719, 32.7479];
   }, [existingGPSPoints, media, selectedPosition]);
 
   // Initialize form values when media changes
@@ -104,84 +94,111 @@ export function GPSEditDialog({
     }
   }, [media]);
 
-  // Create marker element for selected position
-  const createSelectedMarkerElement = () => {
-    const div = document.createElement("div");
-    div.className = "relative";
-    div.innerHTML = `
-      <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg border-2 border-white animate-pulse">
-        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </div>
-    `;
-    return div;
-  };
+  // Initialize Mapbox when dialog opens
+  useEffect(() => {
+    if (!open || !mapContainerRef.current) return;
 
-  // Create marker element for existing points
-  const createExistingMarkerElement = () => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <div class="w-4 h-4 rounded-full bg-muted-foreground/50 border border-white/50"></div>
-    `;
-    return div;
-  };
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (!token) return;
+    mapboxgl.accessToken = token;
 
-  // Handle map ready
-  const handleMapReady = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    setMapReady(true);
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (!mapContainerRef.current) return;
 
-    // Add click listener to map for selecting position
-    map.addListener("click", (e: google.maps.MapMouseEvent) => {
-      if (e.latLng) {
-        const lat = e.latLng.lat();
-        const lng = e.latLng.lng();
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/satellite-streets-v12",
+        center: getMapCenter(),
+        zoom: existingGPSPoints.length > 0 ? 14 : 12,
+        pitchWithRotate: false,
+      });
+
+      map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+      map.on("click", (e) => {
+        const lat = e.lngLat.lat;
+        const lng = e.lngLat.lng;
         setSelectedPosition({ lat, lng });
         setLatitude(lat.toFixed(6));
         setLongitude(lng.toFixed(6));
-      }
-    });
-  }, []);
-
-  // Update markers when map is ready and data changes
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-
-    const map = mapRef.current;
-
-    // Clear existing markers
-    existingMarkersRef.current.forEach(marker => marker.map = null);
-    existingMarkersRef.current = [];
-
-    // Add markers for existing GPS points (other media in project)
-    existingGPSPoints.forEach(point => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: point,
-        content: createExistingMarkerElement(),
       });
-      existingMarkersRef.current.push(marker);
-    });
 
-    // Update or create selected position marker
-    if (selectedPosition) {
-      if (markerRef.current) {
-        markerRef.current.position = selectedPosition;
-      } else {
-        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
-          map,
-          position: selectedPosition,
-          content: createSelectedMarkerElement(),
+      map.on("load", () => {
+        mapRef.current = map;
+
+        // Add existing GPS point markers (gray dots)
+        existingGPSPoints.forEach((point) => {
+          const el = document.createElement("div");
+          el.style.cssText =
+            "width:10px;height:10px;border-radius:50%;background:rgba(148,163,184,0.6);border:1px solid rgba(255,255,255,0.5);";
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([point.lng, point.lat])
+            .addTo(map);
+          existingMarkersRef.current.push(marker);
         });
-      }
-    } else if (markerRef.current) {
-      markerRef.current.map = null;
-      markerRef.current = null;
-    }
-  }, [mapReady, existingGPSPoints, selectedPosition]);
 
-  // Handle coordinate input changes
+        // Add selected position marker if exists
+        if (selectedPosition) {
+          addSelectedMarker(map, selectedPosition);
+        }
+      });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      selectedMarkerRef.current?.remove();
+      selectedMarkerRef.current = null;
+      existingMarkersRef.current.forEach((m) => m.remove());
+      existingMarkersRef.current = [];
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const addSelectedMarker = (map: mapboxgl.Map, pos: { lat: number; lng: number }) => {
+    selectedMarkerRef.current?.remove();
+    const el = document.createElement("div");
+    el.style.cssText = `
+      width:32px;height:32px;border-radius:50%;
+      background:hsl(var(--primary));
+      display:flex;align-items:center;justify-content:center;
+      border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      animation:pulse 2s infinite;
+    `;
+    el.innerHTML =
+      '<svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>';
+
+    selectedMarkerRef.current = new mapboxgl.Marker({ element: el, draggable: true })
+      .setLngLat([pos.lng, pos.lat])
+      .addTo(map);
+
+    selectedMarkerRef.current.on("dragend", () => {
+      const lngLat = selectedMarkerRef.current!.getLngLat();
+      setSelectedPosition({ lat: lngLat.lat, lng: lngLat.lng });
+      setLatitude(lngLat.lat.toFixed(6));
+      setLongitude(lngLat.lng.toFixed(6));
+    });
+  };
+
+  // Update selected marker when position changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (selectedPosition) {
+      if (selectedMarkerRef.current) {
+        selectedMarkerRef.current.setLngLat([selectedPosition.lng, selectedPosition.lat]);
+      } else {
+        addSelectedMarker(map, selectedPosition);
+      }
+    } else {
+      selectedMarkerRef.current?.remove();
+      selectedMarkerRef.current = null;
+    }
+  }, [selectedPosition]);
+
   const handleLatitudeChange = (value: string) => {
     setLatitude(value);
     const lat = parseFloat(value);
@@ -189,7 +206,7 @@ export function GPSEditDialog({
       const lng = parseFloat(longitude);
       if (!isNaN(lng)) {
         setSelectedPosition({ lat, lng });
-        mapRef.current?.panTo({ lat, lng });
+        mapRef.current?.flyTo({ center: [lng, lat], duration: 400 });
       }
     }
   };
@@ -201,21 +218,19 @@ export function GPSEditDialog({
       const lat = parseFloat(latitude);
       if (!isNaN(lat)) {
         setSelectedPosition({ lat, lng });
-        mapRef.current?.panTo({ lat, lng });
+        mapRef.current?.flyTo({ center: [lng, lat], duration: 400 });
       }
     }
   };
 
-  // Center map on existing points
   const centerOnExistingPoints = () => {
     if (existingGPSPoints.length > 0 && mapRef.current) {
-      const bounds = new google.maps.LatLngBounds();
-      existingGPSPoints.forEach(point => bounds.extend(point));
-      mapRef.current.fitBounds(bounds, 50);
+      const bounds = new mapboxgl.LngLatBounds();
+      existingGPSPoints.forEach((point) => bounds.extend([point.lng, point.lat]));
+      mapRef.current.fitBounds(bounds, { padding: 50, maxZoom: 17 });
     }
   };
 
-  // Handle save
   const handleSave = async () => {
     if (!media) return;
 
@@ -223,7 +238,6 @@ export function GPSEditDialog({
     const lng = parseFloat(longitude);
     const alt = altitude ? parseFloat(altitude) : null;
 
-    // Validate coordinates
     if (latitude && (isNaN(lat) || lat < -90 || lat > 90)) {
       toast.error("Invalid latitude. Must be between -90 and 90.");
       return;
@@ -250,7 +264,6 @@ export function GPSEditDialog({
     }
   };
 
-  // Clear coordinates
   const handleClear = () => {
     setLatitude("");
     setLongitude("");
@@ -268,7 +281,10 @@ export function GPSEditDialog({
           </DialogTitle>
           <DialogDescription>
             {media?.filename ? (
-              <>Set GPS coordinates for <strong>{media.filename}</strong>. Click on the map or enter coordinates manually.</>
+              <>
+                Set GPS coordinates for <strong>{media.filename}</strong>. Click on the map or enter coordinates
+                manually.
+              </>
             ) : (
               "Set GPS coordinates for this media file."
             )}
@@ -276,15 +292,10 @@ export function GPSEditDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Map */}
+          {/* Mapbox Map */}
           <div className="relative h-64 rounded-lg overflow-hidden border border-border">
-            <MapView
-              className="w-full h-full"
-              initialCenter={getMapCenter()}
-              initialZoom={existingGPSPoints.length > 0 ? 14 : 12}
-              onMapReady={handleMapReady}
-            />
-            
+            <div ref={mapContainerRef} className="w-full h-full" />
+
             {/* Map controls overlay */}
             <div className="absolute top-2 right-2 flex flex-col gap-1">
               {existingGPSPoints.length > 0 && (
@@ -354,8 +365,9 @@ export function GPSEditDialog({
 
           {/* Help text */}
           <p className="text-xs text-muted-foreground">
-            <strong>Tip:</strong> Click anywhere on the map to set the location. 
-            {existingGPSPoints.length > 0 && ` Gray dots show ${existingGPSPoints.length} other media locations in this project.`}
+            <strong>Tip:</strong> Click anywhere on the map to set the location. Drag the pin to adjust.
+            {existingGPSPoints.length > 0 &&
+              ` Gray dots show ${existingGPSPoints.length} other media locations in this project.`}
           </p>
         </div>
 
@@ -367,10 +379,7 @@ export function GPSEditDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={updateGPSMutation.isPending}
-            >
+            <Button onClick={handleSave} disabled={updateGPSMutation.isPending}>
               {updateGPSMutation.isPending ? "Saving..." : "Save Location"}
             </Button>
           </div>

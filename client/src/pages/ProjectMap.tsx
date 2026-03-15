@@ -1,14 +1,15 @@
 /**
- * Project Map Page
- * Displays media locations on an interactive Google Map with flight path visualization
- * Redesigned with full-screen map and collapsible consolidated info panel
+ * Project Map Page — Full-screen Mapbox GL JS
+ * Displays media locations with flight path visualization
+ * Collapsible sidebar for media list, map style controls, legend
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
-import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import {
   ArrowLeft,
   Camera,
@@ -29,9 +30,7 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { Link, useParams } from "wouter";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
-// Geotagged media item with required GPS coordinates
 interface GeotaggedMedia {
   id: number;
   filename: string;
@@ -50,48 +49,29 @@ export default function ProjectMap() {
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const isDemoProject = projectId === 1;
   const { user } = useAuth();
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const polylineRef = useRef<google.maps.Polyline | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const markerClustererRef = useRef<MarkerClusterer | null>(null);
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [showFlightPath, setShowFlightPath] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<GeotaggedMedia | null>(null);
-  const [mapType, setMapType] = useState<"roadmap" | "satellite" | "terrain" | "hybrid">("satellite");
+  const [mapStyle, setMapStyle] = useState<"satellite-streets" | "streets" | "outdoors" | "light">("satellite-streets");
   const [mapReady, setMapReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<GeotaggedMedia | null>(null);
 
-  // Fetch project details - use demo procedure for unauthenticated demo access
   const { data: project, isLoading: projectLoading } = isDemoProject
-    ? trpc.project.getDemo.useQuery(
-        { id: projectId },
-        { enabled: projectId > 0 }
-      )
-    : trpc.project.get.useQuery(
-        { id: projectId },
-        { enabled: projectId > 0 }
-      );
+    ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
+    : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
 
-  // Fetch media for this project (or specific flight if flightId provided)
-  // When viewing project map (no flightId), only show project-level media (not flight media)
-  // When viewing flight map (with flightId), show only that flight's media
-  // Use demo procedure for unauthenticated demo access
   const { data: mediaItems, isLoading: mediaLoading } = isDemoProject
-    ? trpc.media.listDemo.useQuery(
-        { projectId, flightId, includeFlightMedia: false },
-        { enabled: projectId > 0 }
-      )
-    : trpc.media.list.useQuery(
-        { projectId, flightId, includeFlightMedia: false },
-        { enabled: projectId > 0 }
-      );
+    ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
+    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 });
 
-  // Filter media with GPS coordinates and convert decimal strings to numbers
   const geotaggedMedia: GeotaggedMedia[] = (mediaItems || [])
-    .filter(m => m.latitude !== null && m.longitude !== null)
-    .map(m => ({
+    .filter((m) => m.latitude !== null && m.longitude !== null)
+    .map((m) => ({
       id: m.id,
       filename: m.filename,
       url: m.url,
@@ -103,303 +83,194 @@ export default function ProjectMap() {
       capturedAt: m.capturedAt,
     }));
 
-  // Sort media by capture time (Flight Path order) for sidebar list
-  // Must match EmbeddedProjectMap sorting logic exactly for consistent marker numbering
   const sortedGeotaggedMedia = useMemo(() => {
     return [...geotaggedMedia].sort((a, b) => {
-      if (a.capturedAt && b.capturedAt) {
-        return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
-      }
+      if (a.capturedAt && b.capturedAt) return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
       if (a.capturedAt && !b.capturedAt) return -1;
       if (!a.capturedAt && b.capturedAt) return 1;
       return a.filename.localeCompare(b.filename);
     });
   }, [geotaggedMedia]);
 
-  // Calculate center from media locations
-  const getMapCenter = useCallback(() => {
-    if (geotaggedMedia.length === 0) {
-      // Default to Forney, TX if no geotagged media
-      return { lat: 32.7479, lng: -96.4719 };
-    }
+  const getMapCenter = useCallback((): [number, number] => {
+    if (geotaggedMedia.length === 0) return [-96.4719, 32.7479];
     const avgLat = geotaggedMedia.reduce((sum, m) => sum + m.latitude, 0) / geotaggedMedia.length;
     const avgLng = geotaggedMedia.reduce((sum, m) => sum + m.longitude, 0) / geotaggedMedia.length;
-    return { lat: avgLat, lng: avgLng };
+    return [avgLng, avgLat];
   }, [geotaggedMedia]);
 
-  // Create custom marker element
-  const createMarkerElement = (media: GeotaggedMedia, index: number) => {
-    const div = document.createElement("div");
-    div.className = "relative cursor-pointer transform hover:scale-110 transition-transform";
-    
-    // Create marker pin
-    const pin = document.createElement("div");
-    pin.className = `w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white ${
-      media.mediaType === "video" ? "bg-red-500" : "bg-emerald-500"
-    }`;
-    pin.innerHTML = media.mediaType === "video" 
-      ? '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
-      : '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>';
-    
-    // Add number badge
-    const badge = document.createElement("div");
-    badge.className = "absolute -top-1 -right-1 w-4 h-4 bg-background text-foreground text-xs rounded-full flex items-center justify-center font-bold border border-border";
-    badge.textContent = String(index + 1);
-    
-    div.appendChild(pin);
-    div.appendChild(badge);
-    
-    return div;
+  const styleMap: Record<string, string> = {
+    "satellite-streets": "mapbox://styles/mapbox/satellite-streets-v12",
+    streets: "mapbox://styles/mapbox/streets-v12",
+    outdoors: "mapbox://styles/mapbox/outdoors-v12",
+    light: "mapbox://styles/mapbox/light-v11",
   };
 
-  // Add markers and flight path when map is ready and data is loaded
+  // Initialize Mapbox
   useEffect(() => {
-    if (!mapReady || !mapRef.current || geotaggedMedia.length === 0) return;
+    if (!mapContainerRef.current) return;
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (!token) return;
+    mapboxgl.accessToken = token;
 
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: styleMap[mapStyle],
+      center: getMapCenter(),
+      zoom: geotaggedMedia.length > 0 ? 15 : 12,
+      pitchWithRotate: false,
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+    map.addControl(new mapboxgl.FullscreenControl(), "top-right");
+
+    map.on("load", () => {
+      mapRef.current = map;
+      setMapReady(true);
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      setMapReady(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Change map style
+  useEffect(() => {
     const map = mapRef.current;
+    if (!map || !mapReady) return;
+    map.setStyle(styleMap[mapStyle]);
+    // Re-add sources/layers after style change
+    map.once("style.load", () => {
+      addFlightPathAndMarkers(map);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapStyle]);
 
-    // Clear existing marker clusterer
-    if (markerClustererRef.current) {
-      markerClustererRef.current.clearMarkers();
-      markerClustererRef.current = null;
-    }
+  const addFlightPathAndMarkers = useCallback(
+    (map: mapboxgl.Map) => {
+      if (sortedGeotaggedMedia.length === 0) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.map = null);
-    markersRef.current = [];
+      // Clear old markers
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
 
-    // Clear existing polyline
-    if (polylineRef.current) {
-      polylineRef.current.setMap(null);
-      polylineRef.current = null;
-    }
+      // Remove old flight path
+      if (map.getLayer("flight-path")) map.removeLayer("flight-path");
+      if (map.getSource("flight-path-src")) map.removeSource("flight-path-src");
 
-    // Create info window if not exists
-    if (!infoWindowRef.current) {
-      infoWindowRef.current = new google.maps.InfoWindow();
-    }
+      // Flight path
+      const flightPathCoords = sortedGeotaggedMedia.map((m) => [m.longitude, m.latitude]);
 
-    // Add markers for each geotagged media (using sorted order for consistent numbering)
-    sortedGeotaggedMedia.forEach((media, index) => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: { lat: media.latitude, lng: media.longitude },
-        content: createMarkerElement(media, index),
-        title: media.filename,
+      map.addSource("flight-path-src", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: flightPathCoords },
+        },
       });
 
-      // Add click listener
-      marker.addListener("click", () => {
-        setSelectedMedia(media);
-        
-        // Create info window content
-        const content = document.createElement("div");
-        content.className = "p-4 max-w-lg";
-        content.style.width = '400px';
-        content.style.zIndex = '1000';
-        const isVideo = media.mediaType === 'video';
-        const imageUrl = media.thumbnailUrl || (isVideo ? '' : media.url);
-        
-        // Debug logging for video thumbnails
-        if (isVideo) {
-          console.log('Video marker clicked:', {
-            id: media.id,
-            filename: media.filename,
-            thumbnailUrl: media.thumbnailUrl,
-            url: media.url,
-            hasThumbnail: !!media.thumbnailUrl
-          });
-        }
-        
-        // For videos, show video player; for photos, show image
-        let mediaContent = '';
-        if (isVideo) {
-          // Use video player for videos
-          mediaContent = `
-            <video 
-              id="video-${media.id}"
-              style="width: 100%; height: 300px; background: #111827; border-radius: 4px; margin-bottom: 10px; object-fit: contain;" 
-              controls
-              controlsList="nodownload"
-            >
-              <source src="${media.url}" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>`;
-        } else {
-          if (imageUrl) {
-            mediaContent = `<img src="${imageUrl}" alt="${media.filename}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" onerror="this.src='${media.url}'" />`;
-          } else {
-            mediaContent = `<div style="width: 100%; height: 300px; background: #e5e7eb; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;"><span style="color: #6b7280;">No Image</span></div>`;
-          }
-        }
-        
-        // Different icon for video (play) vs photo (expand)
-        const buttonIcon = isVideo 
-          ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`
-          : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
-        
-        content.innerHTML = `
-          <div class="font-semibold text-base mb-2" style="font-size: 16px; font-weight: 700; color: #1a1a1a;">${media.filename}</div>
-          <div class="relative">
-            ${mediaContent}
-            <button id="enlarge-btn-${media.id}" class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-colors" title="${isVideo ? 'Play video' : 'Enlarge image'}">
-              ${buttonIcon}
-            </button>
-          </div>
-          <div class="text-xs text-gray-600" style="margin: 8px 0;">
-            <div>📍 ${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
-            ${media.altitude ? `<div>🏔️ Altitude: ${media.altitude.toFixed(1)}m</div>` : ''}
-            ${media.capturedAt ? `<div>📅 ${new Date(media.capturedAt).toLocaleString()}</div>` : ''}
-          </div>
-          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-            <button id="select-btn-${media.id}" style="width: 100%; padding: 10px; background: #10b981; color: white; border: none; border-radius: 5px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-              ✓ Select to View
-            </button>
+      map.addLayer({
+        id: "flight-path",
+        type: "line",
+        source: "flight-path-src",
+        paint: {
+          "line-color": "#10b981",
+          "line-width": 3,
+          "line-opacity": showFlightPath ? 0.8 : 0,
+        },
+        layout: { "line-join": "round", "line-cap": "round" },
+      });
+
+      // GPS markers
+      sortedGeotaggedMedia.forEach((media, index) => {
+        const isVideo = media.mediaType === "video";
+        const color = isVideo ? "#ef4444" : "#10B981";
+
+        const el = document.createElement("div");
+        el.setAttribute("data-media-id", String(media.id));
+        el.style.cssText = `
+          background: ${color}; color: white; border-radius: 50%;
+          width: 30px; height: 30px; display: flex; align-items: center;
+          justify-content: center; font-size: 12px; font-weight: bold;
+          border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          cursor: pointer; transition: transform 0.15s;
+        `;
+        el.textContent = String(index + 1);
+        el.addEventListener("mouseenter", () => (el.style.transform = "scale(1.15)"));
+        el.addEventListener("mouseleave", () => (el.style.transform = "scale(1)"));
+
+        const thumbnailUrl = media.thumbnailUrl || media.url;
+        const popupHtml = `
+          <div style="max-width:240px;font-family:system-ui,sans-serif">
+            <img src="${thumbnailUrl}" style="width:100%;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" />
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff">${media.filename}</div>
+            <div style="font-size:11px;color:#94a3b8">${media.latitude.toFixed(6)}, ${media.longitude.toFixed(6)}</div>
+            ${media.altitude ? `<div style="font-size:11px;color:#94a3b8">Alt: ${media.altitude.toFixed(1)}m</div>` : ""}
+            ${media.capturedAt ? `<div style="font-size:11px;color:#94a3b8">${new Date(media.capturedAt).toLocaleString()}</div>` : ""}
           </div>
         `;
 
-        // Add click handlers for enlarge button and select button after content is added to DOM
-        setTimeout(() => {
-          const enlargeBtn = document.getElementById(`enlarge-btn-${media.id}`);
-          const selectBtn = document.getElementById(`select-btn-${media.id}`);
-          if (enlargeBtn) {
-            enlargeBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              setEnlargedImage(media);
-            });
-          }
-          if (selectBtn) {
-            selectBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              setEnlargedImage(media);
-            });
-          }
-        }, 100);
+        const popup = new mapboxgl.Popup({
+          offset: 20,
+          closeButton: true,
+          maxWidth: "280px",
+          className: "mapbox-media-popup",
+        }).setHTML(popupHtml);
 
-        infoWindowRef.current?.setContent(content);
-        infoWindowRef.current?.open(map, marker);
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat([media.longitude, media.latitude])
+          .setPopup(popup)
+          .addTo(map);
+
+        popup.on("open", () => setSelectedMedia(media));
+
+        markersRef.current.push(marker);
       });
 
-      markersRef.current.push(marker);
-    });
-
-    // Initialize marker clusterer with custom styling
-    if (markersRef.current.length > 0) {
-      markerClustererRef.current = new MarkerClusterer({
-        map,
-        markers: markersRef.current,
-        renderer: {
-          render: ({ count, position }) => {
-            // Create custom cluster marker with green styling
-            const svg = `
-              <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="25" cy="25" r="22" fill="#10B981" opacity="0.9" stroke="white" stroke-width="3"/>
-                <text x="25" y="25" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="bold" fill="white">${count}</text>
-              </svg>
-            `;
-            const clusterIcon = document.createElement('div');
-            clusterIcon.innerHTML = svg;
-            clusterIcon.className = 'transform hover:scale-110 transition-transform cursor-pointer';
-            
-            return new google.maps.marker.AdvancedMarkerElement({
-              position,
-              content: clusterIcon,
-              zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
-            });
-          },
-        },
-      });
-    }
-
-    // Draw flight path polyline
-    if (geotaggedMedia.length > 1 && showFlightPath) {
-      // Sort by capture time if available, otherwise by ID
-      const sortedMedia = [...geotaggedMedia].sort((a, b) => {
-        if (a.capturedAt && b.capturedAt) {
-          return new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime();
-        }
-        return a.id - b.id;
-      });
-
-      const pathCoordinates = sortedMedia.map(m => ({
-        lat: m.latitude,
-        lng: m.longitude,
-      }));
-
-      polylineRef.current = new google.maps.Polyline({
-        path: pathCoordinates,
-        geodesic: true,
-        strokeColor: "#10B981",
-        strokeOpacity: 0.8,
-        strokeWeight: 3,
-        map,
-      });
-    }
-
-    // Fit bounds to show all markers
-    const bounds = new google.maps.LatLngBounds();
-    geotaggedMedia.forEach(m => {
-      bounds.extend({ lat: m.latitude, lng: m.longitude });
-    });
-    map.fitBounds(bounds, 50);
-
-    // Force map refresh after a short delay to ensure all markers are properly rendered
-    // This fixes issues where markers don't appear on first load
-    setTimeout(() => {
-      if (mapRef.current && geotaggedMedia.length > 0) {
-        const refreshBounds = new google.maps.LatLngBounds();
-        geotaggedMedia.forEach(m => {
-          refreshBounds.extend({ lat: m.latitude, lng: m.longitude });
-        });
-        mapRef.current.fitBounds(refreshBounds, 50);
+      // Fit bounds
+      if (sortedGeotaggedMedia.length > 1) {
+        const bounds = new mapboxgl.LngLatBounds();
+        sortedGeotaggedMedia.forEach((m) => bounds.extend([m.longitude, m.latitude]));
+        map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
       }
-    }, 300);
+    },
+    [sortedGeotaggedMedia, showFlightPath]
+  );
 
-  }, [mapReady, sortedGeotaggedMedia, showFlightPath]);
+  // Add markers/path on data load
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || sortedGeotaggedMedia.length === 0) return;
+    addFlightPathAndMarkers(map);
+  }, [mapReady, sortedGeotaggedMedia, addFlightPathAndMarkers]);
 
-  // Handle map ready
-  const handleMapReady = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    map.setMapTypeId(mapType);
-    setMapReady(true);
-  }, [mapType]);
-
-  // Toggle flight path
+  // Toggle flight path visibility
   const toggleFlightPath = () => {
     const newValue = !showFlightPath;
     setShowFlightPath(newValue);
-    if (polylineRef.current) {
-      polylineRef.current.setMap(newValue ? mapRef.current : null);
+    const map = mapRef.current;
+    if (map && map.getLayer("flight-path")) {
+      map.setPaintProperty("flight-path", "line-opacity", newValue ? 0.8 : 0);
     }
   };
 
-  // Change map type
-  const changeMapType = (type: "roadmap" | "satellite" | "terrain" | "hybrid") => {
-    setMapType(type);
-    if (mapRef.current) {
-      mapRef.current.setMapTypeId(type);
-    }
-  };
+  const zoomIn = () => mapRef.current?.zoomIn();
+  const zoomOut = () => mapRef.current?.zoomOut();
 
-  // Zoom controls
-  const zoomIn = () => {
-    if (mapRef.current) {
-      mapRef.current.setZoom((mapRef.current.getZoom() || 15) + 1);
-    }
-  };
-
-  const zoomOut = () => {
-    if (mapRef.current) {
-      mapRef.current.setZoom((mapRef.current.getZoom() || 15) - 1);
-    }
-  };
-
-  // Center on selected media
   const centerOnMedia = (media: GeotaggedMedia) => {
-    if (mapRef.current) {
-      mapRef.current.panTo({ lat: media.latitude, lng: media.longitude });
-      mapRef.current.setZoom(18);
-      setSelectedMedia(media);
+    mapRef.current?.flyTo({ center: [media.longitude, media.latitude], zoom: 18, duration: 600 });
+    setSelectedMedia(media);
+    // Open popup
+    const marker = markersRef.current.find((m) => {
+      return m.getElement()?.getAttribute("data-media-id") === String(media.id);
+    });
+    if (marker) {
+      const popup = marker.getPopup();
+      if (popup && !popup.isOpen()) marker.togglePopup();
     }
   };
 
@@ -427,15 +298,9 @@ export default function ProjectMap() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Full-screen Map Container */}
       <div className="flex-1 relative">
         {geotaggedMedia.length > 0 ? (
-          <MapView
-            className="w-full h-full"
-            initialCenter={getMapCenter()}
-            initialZoom={15}
-            onMapReady={handleMapReady}
-          />
+          <div ref={mapContainerRef} className="w-full h-full" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
             <div className="text-center p-8">
@@ -451,14 +316,14 @@ export default function ProjectMap() {
           </div>
         )}
 
-        {/* Consolidated Project Info Panel - Top Left */}
+        {/* Project Info Panel - Top Left */}
         <div className="absolute top-4 left-4 z-10">
           <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-4 max-w-sm">
             <div className="flex items-start gap-3">
               <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
                 <Button variant="ghost" size="sm" className="flex-shrink-0 h-8 px-2 gap-1.5">
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="text-xs">Return to {flightId ? 'Flight' : 'Project'}</span>
+                  <span className="text-xs">Return to {flightId ? "Flight" : "Project"}</span>
                 </Button>
               </Link>
               <div className="flex-1 min-w-0">
@@ -489,41 +354,29 @@ export default function ProjectMap() {
         {/* Map Controls - Top Right */}
         {geotaggedMedia.length > 0 && (
           <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-            {/* Zoom Controls */}
             <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border overflow-hidden">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-none border-b border-border h-9 w-9"
-                onClick={zoomIn}
-              >
+              <Button variant="ghost" size="icon" className="rounded-none border-b border-border h-9 w-9" onClick={zoomIn}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-none h-9 w-9"
-                onClick={zoomOut}
-              >
+              <Button variant="ghost" size="icon" className="rounded-none h-9 w-9" onClick={zoomOut}>
                 <ZoomOut className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Map Type Toggle */}
             <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-border p-1.5">
               <div className="flex flex-col gap-0.5">
                 {[
-                  { type: "satellite" as const, label: "Satellite" },
-                  { type: "hybrid" as const, label: "Hybrid" },
-                  { type: "terrain" as const, label: "Terrain" },
-                  { type: "roadmap" as const, label: "Road" },
+                  { type: "satellite-streets" as const, label: "Satellite" },
+                  { type: "streets" as const, label: "Streets" },
+                  { type: "outdoors" as const, label: "Outdoors" },
+                  { type: "light" as const, label: "Light" },
                 ].map(({ type, label }) => (
                   <Button
                     key={type}
-                    variant={mapType === type ? "default" : "ghost"}
+                    variant={mapStyle === type ? "default" : "ghost"}
                     size="sm"
                     className="justify-start h-7 text-xs"
-                    onClick={() => changeMapType(type)}
+                    onClick={() => setMapStyle(type)}
                   >
                     <Layers className="h-3 w-3 mr-1.5" />
                     {label}
@@ -532,7 +385,6 @@ export default function ProjectMap() {
               </div>
             </div>
 
-            {/* Flight Path Toggle */}
             <Button
               variant={showFlightPath ? "default" : "outline"}
               size="sm"
@@ -571,7 +423,7 @@ export default function ProjectMap() {
           </div>
         )}
 
-        {/* Media List Toggle Button - Right Edge */}
+        {/* Media List Toggle */}
         {geotaggedMedia.length > 0 && (
           <Button
             variant="outline"
@@ -585,7 +437,7 @@ export default function ProjectMap() {
           </Button>
         )}
 
-        {/* Collapsible Sidebar - Media List */}
+        {/* Collapsible Sidebar */}
         {geotaggedMedia.length > 0 && (
           <div
             className={`absolute top-0 right-0 h-full w-80 bg-card/95 backdrop-blur-sm border-l border-border overflow-hidden flex flex-col transition-transform duration-300 z-10 ${
@@ -596,9 +448,7 @@ export default function ProjectMap() {
               <h2 className="font-semibold text-sm" style={{ fontFamily: "var(--font-display)" }}>
                 Media Locations
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Click to center on map
-              </p>
+              <p className="text-xs text-muted-foreground">Click to center on map</p>
             </div>
             <div className="flex-1 overflow-y-auto">
               {sortedGeotaggedMedia.map((media, index) => (
@@ -610,9 +460,11 @@ export default function ProjectMap() {
                   onClick={() => centerOnMedia(media)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      media.mediaType === "video" ? "bg-red-500" : "bg-emerald-500"
-                    }`}>
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        media.mediaType === "video" ? "bg-red-500" : "bg-emerald-500"
+                      }`}
+                    >
                       <span className="text-white text-xs font-bold">{index + 1}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -621,17 +473,11 @@ export default function ProjectMap() {
                         {media.latitude.toFixed(6)}, {media.longitude.toFixed(6)}
                       </p>
                       {media.capturedAt && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(media.capturedAt).toLocaleString()}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(media.capturedAt).toLocaleString()}</p>
                       )}
                     </div>
                     {media.thumbnailUrl && (
-                      <img
-                        src={media.thumbnailUrl}
-                        alt={media.filename}
-                        className="w-10 h-10 object-cover rounded flex-shrink-0"
-                      />
+                      <img src={media.thumbnailUrl} alt={media.filename} className="w-10 h-10 object-cover rounded flex-shrink-0" />
                     )}
                   </div>
                 </div>
@@ -641,15 +487,10 @@ export default function ProjectMap() {
         )}
       </div>
 
-      {/* Selected Media Preview - Bottom Center */}
+      {/* Selected Media Preview */}
       {selectedMedia && (
-        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-border">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-1 right-1 h-6 w-6"
-            onClick={() => setSelectedMedia(null)}
-          >
+        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-border z-10">
+          <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => setSelectedMedia(null)}>
             <X className="h-3 w-3" />
           </Button>
           <div className="flex gap-3">
@@ -661,11 +502,8 @@ export default function ProjectMap() {
                   className="w-24 h-18 object-cover rounded cursor-pointer"
                   onClick={() => setEnlargedImage(selectedMedia)}
                   onError={(e) => {
-                    // Fallback to full URL if thumbnail fails
                     const target = e.target as HTMLImageElement;
-                    if (target.src !== selectedMedia.url) {
-                      target.src = selectedMedia.url;
-                    }
+                    if (target.src !== selectedMedia.url) target.src = selectedMedia.url;
                   }}
                 />
                 <Button
@@ -673,7 +511,6 @@ export default function ProjectMap() {
                   size="icon"
                   className="absolute bottom-1 right-1 h-5 w-5 bg-black/60 hover:bg-black/80 border-0"
                   onClick={() => setEnlargedImage(selectedMedia)}
-                  title="Enlarge image"
                 >
                   <Maximize2 className="h-3 w-3 text-white" />
                 </Button>
@@ -687,34 +524,18 @@ export default function ProjectMap() {
                       alt={selectedMedia.filename}
                       className="w-24 h-18 object-cover rounded cursor-pointer"
                       onClick={() => setEnlargedImage(selectedMedia)}
-                      onError={(e) => {
-                        // Hide image and show video icon if thumbnail fails
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
                     />
-                    <div className="w-24 h-18 bg-muted rounded items-center justify-center hidden">
-                      <Video className="h-6 w-6 text-muted-foreground" />
-                    </div>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
                         <Video className="h-4 w-4 text-white" />
                       </div>
                     </div>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute bottom-1 right-1 h-5 w-5 bg-black/60 hover:bg-black/80 border-0"
-                      onClick={() => setEnlargedImage(selectedMedia)}
-                      title="Play video"
-                    >
-                      <Maximize2 className="h-3 w-3 text-white" />
-                    </Button>
                   </>
                 ) : (
-                  <div className="w-24 h-18 bg-muted rounded flex items-center justify-center cursor-pointer" onClick={() => setEnlargedImage(selectedMedia)}>
+                  <div
+                    className="w-24 h-18 bg-muted rounded flex items-center justify-center cursor-pointer"
+                    onClick={() => setEnlargedImage(selectedMedia)}
+                  >
                     <Video className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
@@ -745,12 +566,9 @@ export default function ProjectMap() {
         </div>
       )}
 
-      {/* Fullscreen Image/Video Viewer Modal */}
+      {/* Fullscreen Viewer Modal */}
       {enlargedImage && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-          onClick={() => setEnlargedImage(null)}
-        >
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setEnlargedImage(null)}>
           <Button
             variant="ghost"
             size="icon"
@@ -782,13 +600,8 @@ export default function ProjectMap() {
               </div>
             </div>
             <div className="relative flex-1 flex items-center justify-center">
-              {enlargedImage.mediaType === 'video' ? (
-                <video
-                  src={enlargedImage.url}
-                  controls
-                  autoPlay
-                  className="max-w-full max-h-full object-contain rounded-b-lg"
-                />
+              {enlargedImage.mediaType === "video" ? (
+                <video src={enlargedImage.url} controls autoPlay className="max-w-full max-h-full object-contain rounded-b-lg" />
               ) : (
                 <img
                   src={enlargedImage.url}

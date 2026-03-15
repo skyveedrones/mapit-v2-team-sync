@@ -1,6 +1,6 @@
 /**
  * Interactive Maps Feature Page
- * Highlights the Google Maps visualization features
+ * Highlights the Mapbox visualization features
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -166,7 +166,7 @@ export default function InteractiveMaps() {
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground mb-8 max-w-xl"
               >
-                See all your drone photos on an interactive Google Map with markers, popups, 
+                See all your drone photos on an interactive Mapbox with markers, popups, 
                 and detailed metadata. Explore your project area with satellite imagery and 
                 terrain views.
               </motion.p>
