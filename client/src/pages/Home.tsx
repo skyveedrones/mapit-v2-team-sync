@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
-import { EnterpriseHeader } from "@/components/EnterpriseHeader";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { MunicipalGateway } from "@/components/MunicipalGateway";
 import {
   Upload,
@@ -114,7 +114,7 @@ export default function Home() {
   return (
     <div className="min-h-screen text-foreground">
       {/* Enterprise Navigation */}
-      <EnterpriseHeader onContactClick={() => setShowContactModal(true)} />
+      <GlobalHamburgerHeader />
 
 
 
@@ -328,8 +328,22 @@ export default function Home() {
       </section>
 
       {/* SECTION 5: HIRE A PILOT SERVICE */}
-      <section className="relative bg-white dark:bg-slate-900 py-16 md:py-24 px-6 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none transition-colors duration-300 rounded-lg mx-6 my-8">
-        <div className="container max-w-4xl mx-auto text-center relative z-10">
+      <section
+        className="relative py-20 md:py-28 px-6 overflow-hidden"
+        style={{
+          background: "#0a0f1a",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zM0 80c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm80 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm0-80c0 5.523 4.477 10 10 10s10-4.477 10-10-4.477-10-10-10-10 4.477-10 10z' fill='%2310b981' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C%2Fsvg%3E")`,
+        }}
+      >
+        {/* Radial glow behind content */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 70%)",
+          }}
+        />
+
+        <div className="container max-w-3xl mx-auto text-center relative z-10">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -338,24 +352,27 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 transition-colors duration-300"
+              className="text-3xl md:text-5xl font-bold text-white mb-5"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Need a Professional Pilot?
+              Need a{" "}
+              <span className="text-[#10b981]">Pilot</span>?
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-slate-700 dark:text-gray-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed transition-colors duration-300"
+              className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
             >
-              Don't have a drone or a Part 107 pilot? SkyVee Drones provides full-service aerial data collection and infrastructure inspections nationwide.
+              Don&apos;t have a drone or a Part 107 pilot? SkyVee Drones — the team behind{" "}
+              <span className="font-semibold text-white">MAPIT</span> — provides
+              full-service aerial data collection and infrastructure inspections nationwide.
             </motion.p>
             <motion.div variants={fadeInUp}>
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-black font-bold"
+                className="rounded-full bg-[#10b981] hover:bg-[#0ea271] text-white font-bold px-10 py-6 text-base transition-all duration-300 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 onClick={() => window.open('https://www.skyveedrones.com', '_blank')}
               >
-                Visit SkyVee Drones
+                Hire a Pilot
               </Button>
             </motion.div>
           </motion.div>

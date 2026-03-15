@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { SUBSCRIPTION_PLANS, PLAN_LIMITS } from "../../../server/products";
 
 export default function Pricing() {
@@ -102,31 +103,10 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm">
-        <div className="container flex items-center justify-between h-16">
-          <button
-            onClick={() => setLocation("/")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <img
-              src="/images/mapit-logo-new.png"
-              alt="Mapit"
-              className="h-8"
-            />
-          </button>
-          <Button
-            onClick={() => setLocation("/dashboard")}
-            variant="outline"
-            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-          >
-            Go to Dashboard
-          </Button>
-        </div>
-      </header>
+      <GlobalHamburgerHeader />
 
       {/* Hero Section */}
-      <section className="container py-16 md:py-24">
+      <section className="container pt-36 pb-16 md:pt-40 md:pb-24">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-emerald-100 to-white bg-clip-text text-transparent">
             Simple, Transparent Pricing

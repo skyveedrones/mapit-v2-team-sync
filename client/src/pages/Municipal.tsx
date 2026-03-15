@@ -7,6 +7,7 @@
 import { Button } from "@/components/ui/button";
 import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
 import Footer from "@/components/Footer";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -16,11 +17,9 @@ import {
   Globe,
   Layers,
   Lock,
-  Menu,
   Plane,
   Shield,
   Users,
-  X,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -98,56 +97,11 @@ const compliancePoints = [
 export default function Municipal() {
   const [, setLocation] = useLocation();
   const [contactOpen, setContactOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0b1120] text-white overflow-y-auto">
       {/* ─── Navigation ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1120]/80 backdrop-blur-md border-b border-slate-700/40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity">
-            <img
-              src="/images/mapit-logo-new.png"
-              alt="MAPIT"
-              className="h-12 md:h-14 w-auto transition-transform group-hover:scale-105"
-            />
-          </a>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:flex items-center gap-6">
-              <button onClick={() => setLocation("/")} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-                Home
-              </button>
-              <button onClick={() => document.getElementById("pillars")?.scrollIntoView({ behavior: "smooth" })} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-                Capabilities
-              </button>
-              <button onClick={() => document.getElementById("compliance")?.scrollIntoView({ behavior: "smooth" })} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-                Compliance
-              </button>
-            </div>
-            <Button
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => setContactOpen(true)}
-            >
-              Request a Briefing
-            </Button>
-            <button className="sm:hidden text-slate-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="sm:hidden border-t border-slate-700/40 bg-[#0b1120]/95 backdrop-blur-md">
-            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3">
-              <button onClick={() => { setLocation("/"); setMobileMenuOpen(false); }} className="text-left text-sm text-slate-300 hover:text-white py-2">Home</button>
-              <button onClick={() => { document.getElementById("pillars")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); }} className="text-left text-sm text-slate-300 hover:text-white py-2">Capabilities</button>
-              <button onClick={() => { document.getElementById("compliance")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); }} className="text-left text-sm text-slate-300 hover:text-white py-2">Compliance</button>
-            </div>
-          </motion.div>
-        )}
-      </nav>
+      <GlobalHamburgerHeader />
 
       {/* ─── Section 1: Hero ─── */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
