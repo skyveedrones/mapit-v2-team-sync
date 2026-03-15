@@ -1,9 +1,11 @@
 /**
  * Users Management Page
- * Allows the project owner to:
- * - View all users who have access to their projects
+ * Restricted to admin and webmaster roles.
+ * Allows:
+ * - View all users with contact info (company, department, phone)
  * - Manage user roles and permissions
  * - Assign/unassign projects to users
+ * - Set/update user passwords
  * - Remove users from projects
  */
 
@@ -13,9 +15,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import {
@@ -39,6 +39,10 @@ import {
   Users,
   AlertCircle,
   FolderOpen,
+  Building2,
+  Phone,
+  Briefcase,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -53,9 +57,11 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
 
+  const isAllowed = user?.role === "admin" || user?.role === "webmaster";
+
   // Fetch all users who have access to owner's projects
   const { data: users, isLoading, refetch } = trpc.users.getOwnerUsers.useQuery(undefined, {
-    enabled: !!user,
+    enabled: !!user && isAllowed,
   });
 
   const utils = trpc.useUtils();
@@ -113,6 +119,30 @@ export default function UsersPage() {
     setManageDialogOpen(true);
   };
 
+  // Role badge color mapping
+  const roleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "admin": return "default";
+      case "webmaster": return "default";
+      case "client": return "secondary";
+      default: return "outline";
+    }
+  };
+
+  if (!isAllowed) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-20">
+          <ShieldCheck className="h-16 w-16 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            Only admin and webmaster roles can access user management. Contact your administrator for access.
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -126,7 +156,7 @@ export default function UsersPage() {
           </div>
           <div className="grid gap-4">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24" />
+              <Skeleton key={i} className="h-32" />
             ))}
           </div>
         </div>
@@ -152,7 +182,7 @@ export default function UsersPage() {
         </div>
 
         {/* Help Section */}
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/50 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex gap-3">
               <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
@@ -160,7 +190,7 @@ export default function UsersPage() {
                 <p className="font-medium mb-1">How to manage users:</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
                   <li>Click "Invite User" to send an invitation to a new user</li>
-                  <li>Use "Manage Projects" to assign or unassign projects to users</li>
+                  <li>Click "Manage" to edit contact info, assign/remove projects, or set a password</li>
                   <li>Users will only see projects that are assigned to them</li>
                   <li>Remove users to revoke all their project access</li>
                 </ul>
@@ -181,13 +211,44 @@ export default function UsersPage() {
                         <User className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg">
-                          {userItem.name || "Unnamed User"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <Mail className="h-3 w-3" />
-                          {userItem.email || "No email"}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-lg">
+                            {userItem.name || "Unnamed User"}
+                          </h3>
+                          <Badge variant={roleBadgeVariant(userItem.role)} className="text-xs">
+                            {userItem.role}
+                          </Badge>
+                        </div>
+
+                        {/* Contact Info Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate">{userItem.email || "No email"}</span>
+                          </div>
+
+                          {userItem.phone && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{userItem.phone}</span>
+                            </div>
+                          )}
+
+                          {userItem.companyName && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{userItem.companyName}</span>
+                            </div>
+                          )}
+
+                          {userItem.department && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{userItem.department}</span>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="flex items-center gap-2 mt-3">
                           <FolderOpen className="h-4 w-4 text-muted-foreground" />
                           <p className="text-sm text-muted-foreground">
@@ -295,8 +356,6 @@ export default function UsersPage() {
           userEmail={selectedUser.email}
         />
       )}
-
-
     </DashboardLayout>
   );
 }

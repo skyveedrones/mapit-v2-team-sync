@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "f5b806b5-666d-4633-a7af-910a8e4b7551",
-  "prevId": "3708ddbd-2367-4b5e-8f78-302543183358",
+  "id": "a98b3c66-3492-42ce-8012-c099410135f7",
+  "prevId": "f5b806b5-666d-4633-a7af-910a8e4b7551",
   "tables": {
     "client_invitations": {
       "name": "client_invitations",
@@ -1449,6 +1449,34 @@
         },
         "organization": {
           "name": "organization",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "companyName": {
+          "name": "companyName",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "department": {
+          "name": "department",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "passwordHash": {
+          "name": "passwordHash",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,

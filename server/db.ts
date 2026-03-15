@@ -2576,6 +2576,9 @@ export async function getOwnerUsers(ownerId: number) {
       name: users.name,
       email: users.email,
       role: users.role,
+      companyName: users.companyName,
+      department: users.department,
+      phone: users.phone,
       projectId: projectCollaborators.projectId,
     })
     .from(projectCollaborators)
@@ -2591,6 +2594,9 @@ export async function getOwnerUsers(ownerId: number) {
         name: collab.name,
         email: collab.email,
         role: collab.role,
+        companyName: collab.companyName,
+        department: collab.department,
+        phone: collab.phone,
         projectCount: 0,
       });
     }
@@ -2602,7 +2608,7 @@ export async function getOwnerUsers(ownerId: number) {
 }
 
 /**
- * Get a specific user's details
+ * Get a specific user's details including contact info and assigned projects
  */
 export async function getUserDetailsById(userId: number) {
   const db = await getDb();
@@ -2617,18 +2623,40 @@ export async function getUserDetailsById(userId: number) {
       email: users.email,
       role: users.role,
       openId: users.openId,
+      companyName: users.companyName,
+      department: users.department,
+      phone: users.phone,
     })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  return user[0] || null;
+  if (!user[0]) return null;
+
+  // Get assigned projects for this user
+  const assignedProjects = await db
+    .select({
+      projectId: projectCollaborators.projectId,
+      projectName: projects.name,
+      role: projectCollaborators.role,
+    })
+    .from(projectCollaborators)
+    .innerJoin(projects, eq(projectCollaborators.projectId, projects.id))
+    .where(eq(projectCollaborators.userId, userId));
+
+  return { ...user[0], assignedProjects };
 }
 
 /**
- * Update a user's details
+ * Update a user's details including contact info
  */
-export async function updateUserDetails(userId: number, data: { name?: string; role?: 'user' | 'admin' }) {
+export async function updateUserDetails(userId: number, data: {
+  name?: string;
+  role?: 'user' | 'admin' | 'webmaster' | 'client';
+  companyName?: string | null;
+  department?: string | null;
+  phone?: string | null;
+}) {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
@@ -2637,6 +2665,9 @@ export async function updateUserDetails(userId: number, data: { name?: string; r
   const updateData: Record<string, unknown> = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.role !== undefined) updateData.role = data.role;
+  if (data.companyName !== undefined) updateData.companyName = data.companyName;
+  if (data.department !== undefined) updateData.department = data.department;
+  if (data.phone !== undefined) updateData.phone = data.phone;
 
   if (Object.keys(updateData).length === 0) {
     return { success: true };
@@ -2646,6 +2677,68 @@ export async function updateUserDetails(userId: number, data: { name?: string; r
     .update(users)
     .set(updateData)
     .where(eq(users.id, userId));
+
+  return { success: true };
+}
+
+/**
+ * Set or update a user's password (bcrypt hashed)
+ */
+export async function setUserPassword(userId: number, passwordHash: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({ passwordHash })
+    .where(eq(users.id, userId));
+
+  return { success: true };
+}
+
+/**
+ * Assign a user to a project as a collaborator
+ */
+export async function assignUserToProject(userId: number, projectId: number, role: 'viewer' | 'editor' | 'vendor' = 'viewer') {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if already assigned
+  const existing = await db
+    .select()
+    .from(projectCollaborators)
+    .where(and(eq(projectCollaborators.userId, userId), eq(projectCollaborators.projectId, projectId)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return { success: true, alreadyAssigned: true };
+  }
+
+  await db.insert(projectCollaborators).values({
+    userId,
+    projectId,
+    role,
+  });
+
+  return { success: true, alreadyAssigned: false };
+}
+
+/**
+ * Remove a user from a project
+ */
+export async function removeUserFromProject(userId: number, projectId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .delete(projectCollaborators)
+    .where(and(eq(projectCollaborators.userId, userId), eq(projectCollaborators.projectId, projectId)));
 
   return { success: true };
 }

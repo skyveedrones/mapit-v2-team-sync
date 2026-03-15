@@ -2021,10 +2021,12 @@
 - [x] Fix "p cannot contain nested div" error in DeleteProjectDialog (AlertDialogDescription renders as <p>, used asChild + div wrapper)
 
 ## Users Page Enhancements
-- [ ] Add company name, department, phone number columns to client_users table
-- [ ] Add backend procedures to update user contact info (company, department, phone)
-- [ ] Add password field and reset/update password backend procedure
-- [ ] Build enhanced user detail/edit dialog with contact fields
-- [ ] Add project assign/remove UI in user management (inline project chips + add/remove)
-- [ ] Update user cards to show company, department, phone info
-- [ ] Write vitest tests for new user management procedures
+- [x] Add company name, department, phone number columns to users table
+- [x] Add backend procedures to update user contact info (company, department, phone)
+- [x] Add password field and reset/update password backend procedure
+- [x] Build enhanced user detail/edit dialog with contact fields (3-tab dialog: Details, Projects, Password)
+- [x] Add project assign/remove UI in user management (inline project chips + add/remove)
+- [x] Update user cards to show company, department, phone info
+- [x] Write vitest tests for new user management procedures (14 tests passing)
+- [x] Restrict Users page access to admin and webmaster roles only
+- [x] Hide Users/Clients nav items from non-admin/non-webmaster roles in sidebar

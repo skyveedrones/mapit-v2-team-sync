@@ -15,11 +15,11 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
+const allMenuItems = [
   { icon: Plane, label: "Hire a Pilot", path: "https://www.skyveedrones.com", external: true },
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: UsersIcon, label: "Users", path: "/users" },
-  { icon: Building2, label: "Clients", path: "/clients" },
+  { icon: UsersIcon, label: "Users", path: "/users", roles: ["admin", "webmaster"] },
+  { icon: Building2, label: "Clients", path: "/clients", roles: ["admin", "webmaster"] },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
@@ -77,8 +77,16 @@ function DashboardLayoutContent({
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
-  const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => {
+    if ((item as any).roles) {
+      return (item as any).roles.includes(user?.role);
+    }
+    return true;
+  });
+  const activeMenuItem = menuItems.find(item => item.path === location);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

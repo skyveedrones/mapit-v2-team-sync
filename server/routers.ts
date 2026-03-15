@@ -436,6 +436,9 @@ export const appRouter = router({
   users: router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can manage users' });
+      }
       const { getOwnerUsers } = await import('./db');
       return getOwnerUsers(ctx.user.id);
     }),
@@ -443,6 +446,9 @@ export const appRouter = router({
       .input(z.object({ userId: z.number() }))
       .query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can view user details' });
+        }
         const { getUserDetailsById } = await import('./db');
         return getUserDetailsById(input.userId);
       }),
@@ -451,20 +457,91 @@ export const appRouter = router({
         userId: z.number(),
         name: z.string().min(1),
         role: z.enum(['user', 'admin', 'webmaster', 'client']),
+        companyName: z.string().nullable().optional(),
+        department: z.string().nullable().optional(),
+        phone: z.string().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can update users' });
+        }
         const { updateUserDetails } = await import('./db');
-        return updateUserDetails(input.userId, { name: input.name, role: input.role as 'user' | 'admin' });
+        return updateUserDetails(input.userId, {
+          name: input.name,
+          role: input.role,
+          companyName: input.companyName,
+          department: input.department,
+          phone: input.phone,
+        });
+      }),
+    setPassword: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        password: z.string().min(6, 'Password must be at least 6 characters'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can set passwords' });
+        }
+        const bcrypt = await import('bcryptjs');
+        const hash = await bcrypt.hash(input.password, 10);
+        const { setUserPassword } = await import('./db');
+        return setUserPassword(input.userId, hash);
+      }),
+    assignProject: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        projectId: z.number(),
+        role: z.enum(['viewer', 'editor', 'vendor']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can assign projects' });
+        }
+        const { assignUserToProject } = await import('./db');
+        return assignUserToProject(input.userId, input.projectId, input.role || 'viewer');
+      }),
+    unassignProject: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        projectId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can unassign projects' });
+        }
+        const { removeUserFromProject } = await import('./db');
+        return removeUserFromProject(input.userId, input.projectId);
+      }),
+    getAvailableProjects: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can view projects' });
+        }
+        const { getUserProjects } = await import('./db');
+        return getUserProjects(ctx.user.id);
       }),
     inviteUserToProjects: protectedProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
+        }
         return { success: true };
       }),
     removeUserFromProjects: protectedProcedure
       .input(z.object({ userId: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can remove users' });
+        }
         return { success: true };
       }),
   }),

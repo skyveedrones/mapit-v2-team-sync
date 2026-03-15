@@ -32,6 +32,14 @@ export const users = mysqlTable("users", {
   defaultLaancAuthNumber: varchar("defaultLaancAuthNumber", { length: 100 }),
   /** User's organization name */
   organization: varchar("organization", { length: 255 }),
+  /** Company name (for managed users) */
+  companyName: varchar("companyName", { length: 255 }),
+  /** Department within the company */
+  department: varchar("department", { length: 255 }),
+  /** Phone number */
+  phone: varchar("phone", { length: 50 }),
+  /** Hashed password for local auth (bcrypt) */
+  passwordHash: varchar("passwordHash", { length: 255 }),
   /** Stripe customer ID for billing */
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   /** Stripe subscription ID for active subscription */
