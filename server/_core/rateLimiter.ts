@@ -48,7 +48,7 @@ function createTierLimiter(tier: string, limits: any) {
     return rateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       max: limits.dataRequestsPerHour === -1 ? 1000000 : limits.dataRequestsPerHour,
-       message: `Too many data requests for ${tier} tier, please try again later`,
+       message: { error: { message: `Too many data requests for ${tier} tier, please try again later`, code: 'RATE_LIMITED' } },
       standardHeaders: true,
       legacyHeaders: false,
     });
@@ -61,7 +61,7 @@ function createTierLimiter(tier: string, limits: any) {
     } as any),
     windowMs: 60 * 60 * 1000, // 1 hour
     max: limits.dataRequestsPerHour === -1 ? 1000000 : limits.dataRequestsPerHour,
-    message: `Too many data requests for ${tier} tier, please try again later`,
+    message: { error: { message: `Too many data requests for ${tier} tier, please try again later`, code: 'RATE_LIMITED' } },
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req: any) => {

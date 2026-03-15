@@ -12,6 +12,7 @@ import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
 import { initializeVersion, getVersionJson } from "../version";
 import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
+import { sdk } from "./sdk";
 import emailRouter from "../routes/email";
 import overlayUploadRouter from "../routes/overlay-upload";
 
@@ -70,6 +71,17 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
+  // Extract user from session cookie before rate limiting so tier is correct
+  app.use('/api/trpc', async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      (req as any).user = user;
+    } catch {
+      // Not authenticated — will fall back to free tier limits
+    }
+    next();
+  });
+
   // Apply rate limiting middleware to tRPC routes
   app.use('/api/trpc', createPerUserRateLimiter());
   app.use('/api/trpc', createConcurrentRequestsLimiter());

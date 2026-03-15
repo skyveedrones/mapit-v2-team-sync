@@ -1996,3 +1996,6 @@
 ## Remove Video Size Limit
 - [x] Remove 10 MB video size check from MediaUploadDialog (chunked uploads handle large files)
 - [x] Update UI text to remove "10MB upload limit" mention
+
+## Bug Fix: Dashboard "Too many d..." Error
+- [x] Diagnose and fix the JSON parse error on /dashboard ("Too many d..." is not valid JSON)
