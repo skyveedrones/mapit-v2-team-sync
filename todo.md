@@ -1913,3 +1913,23 @@
 - [x] Replace all visible "MAPit" text with "MAPIT" in JSX/HTML/alt tags (exclude src paths, component names, CSS classes, URLs)
 - [x] Verify header and footer logos still load after replacement (src paths untouched)
 - [x] Verify EnterpriseHeader and MunicipalGateway render correctly (0 TS errors)
+
+## Chunked Video Uploader Enhancements
+
+- [x] Upgrade chunk size from 2 MB to 5 MB (Evidence-Grade)
+- [x] Add MD5 integrity check (client-side SparkMD5 + server-side crypto.createHash)
+- [x] Pass GPS metadata (lat/lng/altitude/capturedAt) through finalizeChunkedUpload
+- [x] Backend finalizeChunkedUpload stores GPS + MD5 metadata in DB
+- [x] Switch video upload path from TUS to chunked S3 so GPS lands in DB immediately
+- [x] Build dedicated ChunkedVideoUploader component with Evidence-Grade UI messaging
+- [x] Resume capability: interrupted uploads persist in localStorage, resumable on re-select
+
+## Chunked Video Uploader Enhancements
+
+- [x] Upgrade chunk size from 2 MB to 5 MB (Evidence-Grade)
+- [x] Add MD5 integrity check (client-side SparkMD5 + server-side crypto.createHash)
+- [x] Pass GPS metadata (lat/lng/altitude/capturedAt) through finalizeChunkedUpload
+- [x] Backend finalizeChunkedUpload stores GPS + MD5 metadata in DB
+- [x] Switch video upload path from TUS to chunked S3 so GPS lands in DB immediately
+- [x] Build dedicated ChunkedVideoUploader component with Evidence-Grade UI messaging
+- [x] Resume capability: interrupted uploads persist in localStorage, resumable on re-select

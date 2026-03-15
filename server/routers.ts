@@ -952,6 +952,15 @@ export const appRouter = router({
         mimeType: z.string(),
         fileSize: z.number(),
         thumbnailData: z.string().optional(),
+        // GPS metadata extracted client-side before upload
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        altitude: z.number().optional(),
+        capturedAt: z.string().optional(), // ISO date string
+        cameraMake: z.string().optional(),
+        cameraModel: z.string().optional(),
+        // MD5 hash of the full file computed client-side for integrity check
+        clientMd5: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
       // Check if user is a client user with viewer role - viewers cannot upload
@@ -978,7 +987,7 @@ export const appRouter = router({
         const folder = `mapit/projects/${input.projectId}/media`;
 
         // Fetch and combine all chunks from S3 temp storage
-        const totalChunks = Math.ceil(input.fileSize / (2 * 1024 * 1024)); // 2MB chunks (must match client)
+        const totalChunks = Math.ceil(input.fileSize / (5 * 1024 * 1024)); // 5MB chunks (must match client)
         const chunks: Buffer[] = [];
         
         for (let i = 0; i < totalChunks; i++) {
@@ -1026,7 +1035,20 @@ export const appRouter = router({
           thumbnailUrl = thumbResult.url;
         }
 
-        // Create media record in database
+        // MD5 integrity check — verify no bytes were dropped during chunked transfer
+        if (input.clientMd5) {
+          const crypto = await import('crypto');
+          const serverMd5 = crypto.createHash('md5').update(combinedBuffer).digest('hex');
+          if (serverMd5 !== input.clientMd5) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: `Integrity check failed: file hash mismatch. Upload may be corrupted. Please retry.`,
+            });
+          }
+          console.log(`[Upload] MD5 integrity verified: ${serverMd5}`);
+        }
+
+        // Create media record in database (with GPS metadata from client)
         const mediaItem = await createMedia({
           projectId: input.projectId,
           userId: ctx.user.id,
@@ -1036,12 +1058,12 @@ export const appRouter = router({
           mimeType: input.mimeType,
           fileSize: input.fileSize,
           mediaType: getMediaType(input.mimeType),
-          latitude: null,
-          longitude: null,
-          altitude: null,
-          capturedAt: null,
-          cameraMake: null,
-          cameraModel: null,
+          latitude: input.latitude != null ? String(input.latitude) : null,
+          longitude: input.longitude != null ? String(input.longitude) : null,
+          altitude: input.altitude != null ? String(input.altitude) : null,
+          capturedAt: input.capturedAt ? new Date(input.capturedAt) : null,
+          cameraMake: input.cameraMake ?? null,
+          cameraModel: input.cameraModel ?? null,
           thumbnailUrl,
         });
 

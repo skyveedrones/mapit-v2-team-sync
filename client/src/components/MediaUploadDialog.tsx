@@ -89,7 +89,7 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3GB
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks for large file uploads
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for high-fidelity video uploads (Evidence-Grade)
 const STORAGE_KEY = "mapit_pending_uploads";
 const UPLOAD_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -627,6 +627,19 @@ export function MediaUploadDialog({
       prev.map((f, idx) => (idx === index ? { ...f, progress: 95 } : f))
     );
     
+    // Compute MD5 hash for Evidence-Grade integrity verification
+    let clientMd5: string | undefined;
+    try {
+      const SparkMD5 = (await import('spark-md5')).default;
+      const spark = new SparkMD5.ArrayBuffer();
+      const fullBuffer = await file.arrayBuffer();
+      spark.append(fullBuffer);
+      clientMd5 = spark.end();
+      console.log(`[Upload] Client MD5 (integrity): ${clientMd5}`);
+    } catch (e) {
+      console.warn('[Upload] MD5 computation skipped:', e);
+    }
+
     await finalizeChunkedUploadMutation.mutateAsync({
       uploadId,
       projectId,
@@ -635,6 +648,14 @@ export function MediaUploadDialog({
       mimeType: file.type,
       fileSize: file.size,
       thumbnailData: fileItem.thumbnail?.split(",")[1],
+      // GPS metadata extracted client-side — lands in DB immediately for instant map pin
+      latitude: (fileItem.telemetry?.latitude != null && !isNaN(fileItem.telemetry.latitude)) ? fileItem.telemetry.latitude : undefined,
+      longitude: (fileItem.telemetry?.longitude != null && !isNaN(fileItem.telemetry.longitude)) ? fileItem.telemetry.longitude : undefined,
+      altitude: (fileItem.telemetry?.absoluteAltitude != null && !isNaN(fileItem.telemetry.absoluteAltitude)) ? fileItem.telemetry.absoluteAltitude : undefined,
+      capturedAt: fileItem.telemetry?.capturedAt ? new Date(fileItem.telemetry.capturedAt).toISOString() : undefined,
+      cameraMake: fileItem.telemetry?.cameraMake ?? undefined,
+      cameraModel: fileItem.telemetry?.cameraModel ?? undefined,
+      clientMd5,
     });
     
     // Remove from persisted uploads on success
@@ -1074,8 +1095,8 @@ export function MediaUploadDialog({
             const isPhoto = fileItem.file.type.startsWith("image/");
             
             if (isVideo) {
-              // Video: use TUS protocol for better reliability and resumability
-              await uploadVideoWithTus(fileItem, fileIndex, startTime);
+              // Video: use chunked S3 upload (Evidence-Grade — no transcoding, GPS metadata preserved)
+              await uploadInChunks(fileItem, fileIndex, startTime);
             } else if (isPhoto) {
               // Photo: use direct-to-S3 chunked upload to preserve metadata
               await uploadPhotoDirectToS3(fileItem, fileIndex, startTime);
