@@ -2069,3 +2069,6 @@
 - [x] Create LazyMapWrapper with IntersectionObserver to defer map init until visible
 - [x] Wrap MapboxProjectMap in ProjectDetail and FlightDetail with LazyMapWrapper
 - [x] Add loading skeleton/placeholder while map loads
+
+## Bug: Webmaster role reverts to admin on login
+- [x] Fix upsertUser overwriting owner role to admin on every login (now only sets admin on first signup)
