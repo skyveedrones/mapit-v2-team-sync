@@ -1828,3 +1828,18 @@
 - [x] Verify source.setCoordinates(newCoords) in corner marker on('drag') handler
 - [x] Wipe all records from project_overlays database table
 - [x] Test: empty map on load, upload PDF appears in Mapbox, green handles stretch image live
+
+## Overlay Alignment Engine — Auto-Placement, Persistence Fix, 2-Point Snap
+- [x] Add alignment engine helpers: getInitialCoordinates + calculateTwoPointTransform
+- [x] Fix auto-placement: use project center GPS for initial 4-corner coordinates on upload
+- [x] Fix persistence snap-back: Save/Finish button awaits PUT 200 OK before exiting edit mode
+- [x] Implement 2-point snap tool: anchor pins on overlay + target pins on map, similarity transform
+- [x] Write vitest tests for alignment helpers
+
+## Finalize Overlay Pipeline — Blocking PUT, 2-Point Snap, Static API Compat, Google Cleanup
+- [x] Verify blocking PUT: handleFinishEdit awaits 200 OK before exiting edit mode
+- [x] Verify 2-point snap: similarity transform with anchor/target pins
+- [x] Ensure coordinates stored as [[lng,lat],...] compatible with Mapbox Static Images API
+- [x] Remove any remaining Google Maps overlay references (GroundOverlay, comparison slider)
+- [x] Confirm MapboxOverlayView is sole overlay source of truth
+- [x] Run vitest tests and confirm all pass (18/18)

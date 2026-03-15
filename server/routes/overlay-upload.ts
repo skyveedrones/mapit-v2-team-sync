@@ -412,7 +412,9 @@ router.post("/projects/:projectId/overlays/:overlayId/reset", express.json(), as
 });
 
 // ── PUT /api/projects/:projectId/overlays/:overlayId ─────────────────────
-// Accepts { north, south, east, west, rotation? } and persists to DB
+// Accepts EITHER:
+//   { coordinates: [[lng,lat],[lng,lat],[lng,lat],[lng,lat]], rotation? }  ← preferred (raw 4-corner array)
+//   { north, south, east, west, rotation? }  ← legacy cardinal bounds
 // express.json() is applied inline because the router is registered before the global body parser
 router.put("/projects/:projectId/overlays/:overlayId", express.json(), async (req: Request, res: Response) => {
   const user = await getSessionUser(req);
@@ -424,21 +426,27 @@ router.put("/projects/:projectId/overlays/:overlayId", express.json(), async (re
     return res.status(400).json({ error: "Invalid projectId or overlayId" });
   }
 
-  const { north, south, east, west, rotation } = req.body as {
+  const { coordinates: rawCoords, north, south, east, west, rotation } = req.body as {
+    coordinates?: [number, number][];
     north?: number; south?: number; east?: number; west?: number; rotation?: number;
   };
 
-  if (north == null || south == null || east == null || west == null) {
-    return res.status(400).json({ error: "Missing required bounds: north, south, east, west" });
-  }
+  let coordinates: [number, number][];
 
-  // Convert cardinal bounds to 4-corner coordinate array: [TL, TR, BR, BL] as [lng, lat]
-  const coordinates: [number, number][] = [
-    [west, north],  // TL (NW)
-    [east, north],  // TR (NE)
-    [east, south],  // BR (SE)
-    [west, south],  // BL (SW)
-  ];
+  if (Array.isArray(rawCoords) && rawCoords.length === 4) {
+    // Preferred: raw 4-corner array [[lng,lat], ...]
+    coordinates = rawCoords;
+  } else if (north != null && south != null && east != null && west != null) {
+    // Legacy: cardinal bounds → convert to 4-corner array [TL, TR, BR, BL]
+    coordinates = [
+      [west, north],  // TL (NW)
+      [east, north],  // TR (NE)
+      [east, south],  // BR (SE)
+      [west, south],  // BL (SW)
+    ];
+  } else {
+    return res.status(400).json({ error: "Missing required: either 'coordinates' (4-corner array) or 'north, south, east, west'" });
+  }
 
   try {
     const db = await getDb();
@@ -454,7 +462,7 @@ router.put("/projects/:projectId/overlays/:overlayId", express.json(), async (re
         eq(projectOverlays.id, overlayId)
       );
 
-    console.log(`[Overlay PUT] Saved bounds for overlay ${overlayId}: N=${north} S=${south} E=${east} W=${west}`);
+    console.log(`[Overlay PUT] Saved coordinates for overlay ${overlayId}: ${JSON.stringify(coordinates)}`);
     return res.json({ success: true, coordinates, rotation });
   } catch (err: any) {
     console.error("[Overlay PUT] Error:", err?.message || err);
