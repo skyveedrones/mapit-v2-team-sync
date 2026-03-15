@@ -137,7 +137,7 @@ export default function Pricing() {
             >
               Annual
               <span className="ml-2 text-xs bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">
-                Save 17%
+                Save 15%
               </span>
             </button>
           </div>
@@ -174,7 +174,7 @@ export default function Pricing() {
                     <div className="mb-4">
                       <span className="text-4xl font-bold text-white">$0</span>
                       <span className="text-slate-400 ml-2">/14 days</span>
-                      <p className="text-xs text-emerald-400 mt-1">Full access. No credit card required.</p>
+                      <p className="text-base text-emerald-400 mt-1 text-center">Full access. No credit card required.</p>
                     </div>
                   ) : (
                     <div className="mb-4">
@@ -184,7 +184,7 @@ export default function Pricing() {
                             ${(plan.annualPrice / 12).toFixed(2)}
                           </span>
                           <span className="text-slate-400 ml-2">/month</span>
-                          <p className="text-xs text-emerald-400 mt-1">Billed ${plan.annualPrice.toFixed(2)}/yr · 15% off</p>
+                          <p className="text-base text-emerald-400 mt-1 text-center">Billed ${plan.annualPrice.toFixed(2)}/yr · 15% off</p>
                         </>
                       ) : (
                         <>
