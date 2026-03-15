@@ -66,18 +66,20 @@ export function DeleteProjectDialog({
           >
             Delete Project
           </AlertDialogTitle>
-          <AlertDialogDescription className="space-y-2">
-            <div>
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">
-                "{project.name}"
-              </span>
-              ?
-            </div>
-            <div>
-              This action cannot be undone. All project data, including any
-              uploaded media and map configurations, will be permanently
-              removed.
+          <AlertDialogDescription asChild>
+            <div className="text-muted-foreground text-sm space-y-2">
+              <p>
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground">
+                  "{project.name}"
+                </span>
+                ?
+              </p>
+              <p>
+                This action cannot be undone. All project data, including any
+                uploaded media and map configurations, will be permanently
+                removed.
+              </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -2016,3 +2016,15 @@
 - [x] Restore/improve H.265 detection warning in upload dialog
 - [x] Add persistent HandBrake notice with download link in upload popup
 - [ ] Add server-side FFmpeg thumbnail extraction for videos after upload
+
+## DOM Nesting Fix
+- [x] Fix "p cannot contain nested div" error in DeleteProjectDialog (AlertDialogDescription renders as <p>, used asChild + div wrapper)
+
+## Users Page Enhancements
+- [ ] Add company name, department, phone number columns to client_users table
+- [ ] Add backend procedures to update user contact info (company, department, phone)
+- [ ] Add password field and reset/update password backend procedure
+- [ ] Build enhanced user detail/edit dialog with contact fields
+- [ ] Add project assign/remove UI in user management (inline project chips + add/remove)
+- [ ] Update user cards to show company, department, phone info
+- [ ] Write vitest tests for new user management procedures
