@@ -295,8 +295,9 @@ async function extractVideoThumbnail(file: File): Promise<string | null> {
       }
     };
     
-    video.onerror = (e) => {
-      console.error(`[Thumbnail] Video error:`, e);
+    video.onerror = () => {
+      // Expected for H.265/HEVC videos that the browser can't decode — not a real error
+      console.warn(`[Thumbnail] Browser cannot decode video for thumbnail (likely H.265/HEVC). Upload will proceed without preview.`);
       cleanup();
       resolve(null);
     };
