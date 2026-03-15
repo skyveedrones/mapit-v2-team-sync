@@ -88,7 +88,7 @@ const ACCEPTED_TYPES = [
   "video/webm",
 ];
 
-const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3GB
+const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10GB — chunked upload handles large drone videos
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for high-fidelity video uploads (Evidence-Grade)
 const STORAGE_KEY = "mapit_pending_uploads";
 const UPLOAD_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -358,7 +358,7 @@ export function MediaUploadDialog({
       return `Invalid file type: ${file.type}`;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `File too large: ${formatBytes(file.size)} (max 1GB)`;
+      return `File too large: ${formatBytes(file.size)} (max 10GB)`;
     }
     return null;
   };
@@ -387,12 +387,9 @@ export function MediaUploadDialog({
       // Check file size limits
       let finalError = error;
       // Images: allow up to 1GB (direct S3 upload, no Cloudinary limits)
-      // Videos: enforce Cloudinary limits
-      if (!error && file.type.startsWith("video/") && exceedsLimit(file)) {
-        finalError = `Video too large: ${formatBytes(file.size)}. Max ${formatBytes(CLOUDINARY_MAX_SIZE)}. Please compress externally.`;
-      }
+      // Videos: no size limit — chunked upload handles large files
       if (!error && file.size > MAX_FILE_SIZE) {
-        finalError = `File too large: ${formatBytes(file.size)} (max 1GB)`;
+        finalError = `File too large: ${formatBytes(file.size)} (max 10GB)`;
       }
       
       const fileItem: FileToUpload = {
@@ -1345,7 +1342,7 @@ export function MediaUploadDialog({
             </p>
             <p className="text-xs text-muted-foreground mb-4">
               Supports JPEG, PNG, WebP, HEIC images and MP4, MOV, AVI, WebM videos<br />
-              <span className="text-primary">Images are automatically compressed if needed (10MB upload limit)</span>
+              <span className="text-primary">Images are automatically compressed if needed. Videos support chunked upload (no size limit).</span>
             </p>
             <input
               type="file"

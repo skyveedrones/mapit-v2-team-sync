@@ -1992,3 +1992,7 @@
 - [x] Add usage metrics section to Account page with progress bars
 - [x] Add Manage Subscription button linking to Stripe Customer Portal
 - [x] Add profile editing form (name, org, photo) to Account page
+
+## Remove Video Size Limit
+- [x] Remove 10 MB video size check from MediaUploadDialog (chunked uploads handle large files)
+- [x] Update UI text to remove "10MB upload limit" mention
