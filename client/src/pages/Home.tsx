@@ -1,5 +1,5 @@
 /**
- * Mapit - Home Page
+ * MAPIT - Home Page
  * Design: Aurora Borealis Theme
  * - Dark forest green interface with lime/neon green accents
  * - Colors: Spearmint #117660, Forest Green #09323B, Lime Green #04B16F, Neon Green #14E114
@@ -244,7 +244,7 @@ export default function Home() {
                     className="group p-8 rounded-2xl bg-slate-100/50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 hover:border-[#22c55e] dark:hover:border-[#22c55e] hover:-translate-y-1 shadow-sm dark:shadow-none hover:shadow-lg transition-all duration-300"
                   >
                     <div className="flex items-start gap-5">
-                      {/* Icon with Mapit Glow */}
+                      {/* Icon with MAPIT Glow */}
                       <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(20,225,20,0.1)] group-hover:shadow-[0_0_25px_rgba(20,225,20,0.3)] transition-all">
                         <IconComponent className="w-6 h-6 text-primary" />
                       </div>
@@ -270,7 +270,7 @@ export default function Home() {
 
       <CyberDivider />
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
-      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 border-y border-slate-100 dark:border-white/5 z-20 transition-colors duration-300">
+      <section className="relative bg-slate-50 dark:bg-black pt-12 pb-12 md:pb-16 z-20 transition-colors duration-300">
         {/* Radial Glow for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -329,7 +329,7 @@ export default function Home() {
 
       <CyberDivider />
       {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-white dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 border-t border-slate-100 dark:border-white/5 transition-colors duration-300">
+      <section id="features" className="relative bg-white dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 transition-colors duration-300">
         <Features />
       </section>
 

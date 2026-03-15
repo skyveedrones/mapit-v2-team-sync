@@ -208,7 +208,7 @@ export function FlightReportDialog({
         <div class="section">
           <div class="section-title">DESCRIPTION</div>
           <div class="description">
-            High-resolution aerial survey of Manhattan with 5 GPS waypoints. This sample report demonstrates the professional format and layout of Mapit flight reports.
+            High-resolution aerial survey of Manhattan with 5 GPS waypoints. This sample report demonstrates the professional format and layout of MAPIT flight reports.
           </div>
         </div>
 

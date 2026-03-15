@@ -20,8 +20,8 @@ export function DemoTour({ onComplete }: DemoTourProps) {
           {
             element: '#demo-welcome',
             popover: {
-              title: 'Welcome to Mapit Demo!',
-              description: 'Take a quick tour to see how Mapit helps you organize and analyze drone footage with GPS mapping.',
+              title: 'Welcome to MAPIT Demo!',
+              description: 'Take a quick tour to see how MAPIT helps you organize and analyze drone footage with GPS mapping.',
               side: 'bottom',
               align: 'start'
             }

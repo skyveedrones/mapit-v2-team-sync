@@ -90,7 +90,7 @@ export function useVersionCheck() {
 
           // Show toast notification with auto-reload
           toast.info('New version available!', {
-            description: 'Mapit is updating. Reloading in 5 seconds...',
+            description: 'MAPIT is updating. Reloading in 5 seconds...',
             action: {
               label: 'Reload Now',
               onClick: () => performHardRefresh(),

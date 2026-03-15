@@ -52,7 +52,7 @@ Time remaining: {{timeRemaining}}
 Please contact us if you have any questions or would like to schedule a follow-up inspection.
 
 Best regards,
-Mapit`,
+MAPIT`,
   },
   inspection: {
     name: "Inspection Offer",
@@ -66,7 +66,7 @@ We recommend scheduling a follow-up drone inspection before your warranty expire
 Would you like to schedule an inspection? Reply to this email or call us to set up an appointment.
 
 Best regards,
-Mapit`,
+MAPIT`,
   },
 };
 

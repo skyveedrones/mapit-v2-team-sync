@@ -227,7 +227,7 @@ export default function Pricing() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                Can I try Mapit before subscribing?
+                Can I try MAPIT before subscribing?
               </h3>
               <p className="text-slate-400">
                 Yes! All plans include a 14-day free trial with full access to features. No credit card required to start.
@@ -314,7 +314,7 @@ export default function Pricing() {
       {/* Footer */}
       <footer className="border-t border-slate-800 py-8">
         <div className="container text-center text-slate-500 text-sm">
-          <p>&copy; 2026 Mapit. All rights reserved.</p>
+          <p>&copy; 2026 MAPIT. All rights reserved.</p>
         </div>
       </footer>
     </div>

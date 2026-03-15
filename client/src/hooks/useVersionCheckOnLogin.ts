@@ -61,7 +61,7 @@ export function useVersionCheckOnLogin() {
 
           // Show toast notification
           toast.info('New version available!', {
-            description: 'A new version of Mapit is ready. Refresh to update.',
+            description: 'A new version of MAPIT is ready. Refresh to update.',
             action: {
               label: 'Refresh',
               onClick: () => {

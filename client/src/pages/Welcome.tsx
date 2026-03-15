@@ -241,12 +241,12 @@ export default function Welcome() {
             <div className="flex items-center gap-2">
               <img
                 src="/images/mapit-logo-new.png"
-                alt="Mapit"
+                alt="MAPIT"
                 className="h-12 w-auto opacity-60"
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 Mapit. All rights reserved.
+              © 2026 MAPIT. All rights reserved.
             </p>
           </div>
         </div>

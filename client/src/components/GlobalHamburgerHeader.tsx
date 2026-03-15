@@ -101,20 +101,12 @@ export const GlobalHamburgerHeader = () => {
                     style={{ background: "#10b981" }}
                     aria-label="User menu"
                   >
-                    {user.logoUrl ? (
-                      <img
-                        src={user.logoUrl}
-                        alt={user.name ?? "User"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span
-                        className="text-xs font-bold tracking-wide"
-                        style={{ color: "#0f172a" }}
-                      >
-                        {userInitials}
-                      </span>
-                    )}
+                    <span
+                      className="text-xs font-bold tracking-wide"
+                      style={{ color: "#0f172a" }}
+                    >
+                      {userInitials}
+                    </span>
                   </button>
 
                   {userMenuOpen && (

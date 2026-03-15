@@ -1,5 +1,5 @@
 /**
- * Mapit Dashboard - Protected page for authenticated users
+ * MAPIT Dashboard - Protected page for authenticated users
  * Shows user projects with simplified action menu
  */
 
@@ -158,7 +158,7 @@ export default function Dashboard() {
           <html>
           <head>
             <meta charset="UTF-8">
-            <title>Mapit Projects Export</title>
+            <title>MAPIT Projects Export</title>
             <style>
               body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 20px; color: #333; }
               h1 { color: #10b981; border-bottom: 3px solid #10b981; padding-bottom: 10px; }
@@ -170,7 +170,7 @@ export default function Dashboard() {
             </style>
           </head>
           <body>
-            <h1>Mapit Projects Export</h1>
+            <h1>MAPIT Projects Export</h1>
             <p>Generated on ${new Date().toLocaleString()}</p>
             <table>
               <thead>
@@ -184,7 +184,7 @@ export default function Dashboard() {
             </table>
             <div class="footer">
               <p>Total Projects: ${projectsData.length}</p>
-              <p>Exported from Mapit - Drone Mapping Project Manager</p>
+              <p>Exported from MAPIT - Drone Mapping Project Manager</p>
             </div>
           </body>
           </html>

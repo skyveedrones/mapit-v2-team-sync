@@ -1,6 +1,6 @@
 /**
  * Demo Project Page
- * Showcases Mapit features with a read-only demonstration project
+ * Showcases MAPIT features with a read-only demonstration project
  * Accessible without authentication
  */
 
@@ -119,7 +119,7 @@ export default function DemoProject() {
         <div className="container flex items-center gap-3">
           <Eye className="h-5 w-5 text-primary" />
           <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">Demo Project:</span> This is a read-only demonstration of Mapit's capabilities. 
+            <span className="font-semibold text-foreground">Demo Project:</span> This is a read-only demonstration of MAPIT's capabilities. 
             {!isAuthenticated && (
               <>
                 {" "}
@@ -160,7 +160,7 @@ export default function DemoProject() {
               variants={fadeInUp}
               className="text-lg text-muted-foreground mb-8"
             >
-              Take a guided tour of our demonstration project to see how Mapit helps you organize, 
+              Take a guided tour of our demonstration project to see how MAPIT helps you organize, 
               visualize, and analyze your drone mapping data. No sign-up required.
             </motion.p>
 

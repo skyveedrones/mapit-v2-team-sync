@@ -62,7 +62,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
       
       if (outcome === 'accepted') {
         toast.success('App installed successfully!', {
-          description: 'You can now access Mapit from your desktop.',
+          description: 'You can now access MAPIT from your desktop.',
         });
         setDeferredPrompt(null);
         onOpenChange(false);
@@ -74,7 +74,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
       
       if (isChrome || isEdge) {
         toast.info('Install from browser menu', {
-          description: `Click the install icon (⊕) in the address bar, or go to Menu → Install Mapit.`,
+          description: `Click the install icon (⊕) in the address bar, or go to Menu → Install MAPIT.`,
           duration: 8000,
         });
       } else {
@@ -94,12 +94,12 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
             <div className="p-2 rounded-lg bg-primary/10">
               <Download className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-xl">Install Mapit App</DialogTitle>
+            <DialogTitle className="text-xl">Install MAPIT App</DialogTitle>
           </div>
           <DialogDescription className="text-base">
             {isStandalone
               ? "App is already installed! You can access it from your home screen."
-              : "Install Mapit for quick access, offline support, and a native app experience."}
+              : "Install MAPIT for quick access, offline support, and a native app experience."}
           </DialogDescription>
         </DialogHeader>
 
@@ -160,7 +160,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                         <p className="font-medium">Tap "Add"</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Home className="h-4 w-4" />
-                          The Mapit icon will appear on your home screen
+                          The MAPIT icon will appear on your home screen
                         </p>
                       </div>
                     </div>
@@ -225,7 +225,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                         <p className="font-medium">Tap "Install" to confirm</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Home className="h-4 w-4" />
-                          The Mapit icon will appear on your home screen
+                          The MAPIT icon will appear on your home screen
                         </p>
                       </div>
                     </div>
@@ -253,7 +253,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                   {deferredPrompt ? (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        Click the button below to install Mapit as a desktop app. You'll get:
+                        Click the button below to install MAPIT as a desktop app. You'll get:
                       </p>
                       <ul className="text-sm text-muted-foreground space-y-1 pl-4">
                         <li>• Quick access from your desktop or taskbar</li>
@@ -266,13 +266,13 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                         size="lg"
                       >
                         <Download className="mr-2 h-5 w-5" />
-                        Install Mapit Now
+                        Install MAPIT Now
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        To install Mapit on your computer:
+                        To install MAPIT on your computer:
                       </p>
                       <div className="space-y-2 pl-2 border-l-2 border-primary/30">
                         <div className="flex gap-2">
@@ -280,7 +280,7 @@ export function AppDownloadDialog({ open, onOpenChange }: AppDownloadDialogProps
                           <div>
                             <p className="font-medium text-sm">Chrome/Edge</p>
                             <p className="text-sm text-muted-foreground">
-                              Click the install icon (⊕) in the address bar, or Menu → Install Mapit
+                              Click the install icon (⊕) in the address bar, or Menu → Install MAPIT
                             </p>
                           </div>
                         </div>

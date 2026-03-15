@@ -59,7 +59,7 @@ export function DesktopAppDownloadDialog() {
             <div className="p-2 rounded-lg bg-primary/10">
               <Monitor className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-xl">Download Mapit Desktop App</DialogTitle>
+            <DialogTitle className="text-xl">Download MAPIT Desktop App</DialogTitle>
           </div>
           <DialogDescription className="text-base">
             Get the best experience with our native desktop application. Faster performance, offline access, and seamless integration with your system.

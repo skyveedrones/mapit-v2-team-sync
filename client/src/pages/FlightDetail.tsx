@@ -209,7 +209,7 @@ export default function FlightDetail() {
             <Link href="/" className="flex items-center gap-2">
               <img
                 src="/images/mapit-logo-new.png"
-                alt="Mapit"
+                alt="MAPIT"
                 className="h-8 w-auto"
               />
             </Link>
@@ -233,7 +233,7 @@ export default function FlightDetail() {
             <Link href="/" className="flex items-center gap-2">
               <img
                 src="/images/mapit-logo-new.png"
-                alt="Mapit"
+                alt="MAPIT"
                 className="h-8 w-auto"
               />
             </Link>
@@ -279,7 +279,7 @@ export default function FlightDetail() {
           <Link href="/" className="flex items-center gap-2">
             <img
               src="/images/mapit-logo-new.png"
-              alt="Mapit"
+              alt="MAPIT"
               className="h-8 w-auto"
             />
           </Link>

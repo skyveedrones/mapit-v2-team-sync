@@ -33,7 +33,7 @@ export function DemoBanner() {
         
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
-            Welcome to the Mapit Demo!
+            Welcome to the MAPIT Demo!
           </h3>
           <p className="text-sm text-muted-foreground mb-3">
             You're viewing a read-only demonstration project. Explore the media gallery, interactive GPS maps, 

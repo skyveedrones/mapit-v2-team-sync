@@ -68,7 +68,7 @@ const Footer = ({ onContactClick }: FooterProps) => {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-xs">
-            © 2026 Mapit by SkyVee Drones. All rights reserved.
+            © 2026 MAPIT by SkyVee Drones. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-gray-500">
             <a href="#" className="hover:text-white transition-colors">Security</a>
