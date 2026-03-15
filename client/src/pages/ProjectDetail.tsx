@@ -440,6 +440,7 @@ export default function ProjectDetail() {
                             <Pencil className="h-4 w-4 mr-2" />
                             Edit Project
                           </DropdownMenuItem>
+                          {(user?.role === 'admin' || user?.role === 'webmaster') && (
                           <DropdownMenuItem
                             onClick={() => setDeleteDialogOpen(true)}
                             className="text-destructive focus:text-destructive"
@@ -447,6 +448,7 @@ export default function ProjectDetail() {
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete Project
                           </DropdownMenuItem>
+                          )}
                         </>
                       )}
                     </DropdownMenuContent>

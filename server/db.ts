@@ -1,8 +1,8 @@
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, isNotNull, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import type { Pool } from "mysql2/promise";
 import mysql from "mysql2/promise";
-import { clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
+import { auditLog, clients, clientInvitations, clientProjectAssignments, clientUsers, flights, InsertFlight, InsertMedia, InsertProject, InsertProjectCollaborator, InsertProjectInvitation, InsertUser, InsertWarrantyReminder, media, projectCollaborators, projectInvitations, projects, users, warrantyReminders, type InsertClient, type InsertClientUser, type InsertClientInvitation, type InsertClientProjectAssignment } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
 import { notifyOwner } from './_core/notification';
@@ -196,7 +196,7 @@ export async function getUserProjects(userId: number) {
   return db
     .select()
     .from(projects)
-    .where(eq(projects.userId, userId))
+    .where(and(eq(projects.userId, userId), isNull(projects.deletedAt)))
     .orderBy(desc(projects.updatedAt));
 }
 
@@ -212,7 +212,7 @@ export async function getProjectById(projectId: number) {
   const result = await db
     .select()
     .from(projects)
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), isNull(projects.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -230,7 +230,7 @@ export async function getUserProject(projectId: number, userId: number) {
   const result = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId), isNull(projects.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -304,7 +304,7 @@ export async function getUserProjectCount(userId: number) {
   const ownedProjects = await db
     .select()
     .from(projects)
-    .where(eq(projects.userId, userId));
+    .where(and(eq(projects.userId, userId), isNull(projects.deletedAt)));
 
   // Get shared projects count (where user is a collaborator)
   const sharedProjects = await db
@@ -391,10 +391,9 @@ export async function getProjectMedia(projectId: number, userId: number) {
   return db
     .select()
     .from(media)
-    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)))
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId), isNull(media.deletedAt)))
     .orderBy(desc(media.createdAt));
 }
-
 /**
  * Get a single media item by ID
  */
@@ -403,11 +402,10 @@ export async function getMediaById(mediaId: number, userId: number) {
   if (!db) {
     throw new Error("Database not available");
   }
-
   const result = await db
     .select()
     .from(media)
-    .where(eq(media.id, mediaId))
+    .where(and(eq(media.id, mediaId), isNull(media.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -541,13 +539,11 @@ export async function getProjectMediaCount(projectId: number, userId: number) {
   const result = await db
     .select()
     .from(media)
-    .where(and(eq(media.projectId, projectId), eq(media.userId, userId)));
-
+    .where(and(eq(media.projectId, projectId), eq(media.userId, userId), isNull(media.deletedAt)));
   return result.length;
 }
-
 // ============================================
-// Project Collaborators & Invitations
+// Project Collaborators & Invitationsns
 // ============================================
 
 /**
@@ -559,18 +555,16 @@ export async function userHasProjectAccess(projectId: number, userId: number): P
     throw new Error("Database not available");
   }
 
-  // Check if user is the owner
+   // Check if user is the owner
   const project = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId), isNull(projects.deletedAt)))
     .limit(1);
-
   if (project.length > 0) {
     return true;
   }
-
-  // Check if user is a collaborator
+  // Check if user is a collaboratorr
   const collaborator = await db
     .select()
     .from(projectCollaborators)
@@ -589,17 +583,15 @@ export async function getProjectWithAccess(projectId: number, userId: number) {
     throw new Error("Database not available");
   }
 
-  const project = await db
+   const project = await db
     .select()
     .from(projects)
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), isNull(projects.deletedAt)))
     .limit(1);
-
   if (project.length === 0) {
     return null;
   }
-
-  // Check if user is owner
+  // Check if user is ownerr
   if (project[0].userId === userId) {
     return { ...project[0], accessRole: 'owner' as const };
   }
@@ -634,7 +626,7 @@ export async function getUserAccessibleProjects(userId: number): Promise<{
   const ownedProjects = await db
     .select()
     .from(projects)
-    .where(eq(projects.userId, userId))
+    .where(and(eq(projects.userId, userId), isNull(projects.deletedAt)))
     .orderBy(desc(projects.updatedAt));
 
   // Get shared projects
@@ -648,7 +640,7 @@ export async function getUserAccessibleProjects(userId: number): Promise<{
     const project = await db
       .select()
       .from(projects)
-      .where(eq(projects.id, collab.projectId))
+      .where(and(eq(projects.id, collab.projectId), isNull(projects.deletedAt)))
       .limit(1);
     if (project.length > 0) {
       sharedProjects.push({ ...project[0], sharedRole: collab.role });
@@ -981,13 +973,12 @@ export async function getProjectMediaWithAccess(projectId: number, userId: numbe
     return null;
   }
 
-  return db
+   return db
     .select()
     .from(media)
-    .where(eq(media.projectId, projectId))
+    .where(and(eq(media.projectId, projectId), isNull(media.deletedAt)))
     .orderBy(desc(media.createdAt));
 }
-
 // ============================================
 // Flights
 // ============================================
@@ -1025,7 +1016,7 @@ export async function getProjectFlights(projectId: number) {
   return db
     .select()
     .from(flights)
-    .where(eq(flights.projectId, projectId))
+    .where(and(eq(flights.projectId, projectId), isNull(flights.deletedAt)))
     .orderBy(desc(flights.flightDate), desc(flights.createdAt));
 }
 
@@ -1041,7 +1032,7 @@ export async function getFlightById(flightId: number) {
   const result = await db
     .select()
     .from(flights)
-    .where(eq(flights.id, flightId))
+    .where(and(eq(flights.id, flightId), isNull(flights.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -1059,7 +1050,7 @@ export async function getUserFlight(flightId: number, userId: number) {
   const result = await db
     .select()
     .from(flights)
-    .where(and(eq(flights.id, flightId), eq(flights.userId, userId)))
+    .where(and(eq(flights.id, flightId), eq(flights.userId, userId), isNull(flights.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -1132,10 +1123,9 @@ export async function getFlightMedia(flightId: number) {
   return db
     .select()
     .from(media)
-    .where(eq(media.flightId, flightId))
+      .where(and(eq(media.flightId, flightId), isNull(media.deletedAt)))
     .orderBy(desc(media.capturedAt), desc(media.createdAt));
 }
-
 /**
  * Get media count for a flight
  */
@@ -1144,11 +1134,10 @@ export async function getFlightMediaCount(flightId: number) {
   if (!db) {
     throw new Error("Database not available");
   }
-
   const result = await db
     .select()
     .from(media)
-    .where(eq(media.flightId, flightId));
+    .where(and(eq(media.flightId, flightId), isNull(media.deletedAt)));
 
   return result.length;
 }
@@ -1210,7 +1199,8 @@ export async function getProjectUnassignedMedia(projectId: number) {
     .from(media)
     .where(and(
       eq(media.projectId, projectId),
-      sql`${media.flightId} IS NULL`
+      sql`${media.flightId} IS NULL`,
+      isNull(media.deletedAt)
     ))
     .orderBy(desc(media.capturedAt), desc(media.createdAt));
 }
@@ -1585,7 +1575,7 @@ export async function getOwnerClients(ownerId: number) {
   return db
     .select()
     .from(clients)
-    .where(eq(clients.ownerId, ownerId))
+    .where(and(eq(clients.ownerId, ownerId), isNull(clients.deletedAt)))
     .orderBy(desc(clients.updatedAt));
 }
 
@@ -1601,7 +1591,7 @@ export async function getClientById(clientId: number) {
   const result = await db
     .select()
     .from(clients)
-    .where(eq(clients.id, clientId))
+    .where(and(eq(clients.id, clientId), isNull(clients.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -1619,7 +1609,7 @@ export async function getOwnerClient(clientId: number, ownerId: number) {
   const result = await db
     .select()
     .from(clients)
-    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId)))
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId), isNull(clients.deletedAt)))
     .limit(1);
 
   return result.length > 0 ? result[0] : null;
@@ -1695,10 +1685,9 @@ export async function getClientProjects(clientId: number) {
   return db
     .select()
     .from(projects)
-    .where(eq(projects.clientId, clientId))
+    .where(and(eq(projects.clientId, clientId), isNull(projects.deletedAt)))
     .orderBy(desc(projects.updatedAt));
 }
-
 /**
  * Get all projects accessible to a user through their client memberships
  */
@@ -1724,7 +1713,7 @@ export async function getUserClientProjects(userId: number) {
   return db
     .select()
     .from(projects)
-    .where(inArray(projects.clientId, clientIds))
+    .where(and(inArray(projects.clientId, clientIds), isNull(projects.deletedAt)))
     .orderBy(desc(projects.updatedAt));
 }
 
@@ -1791,18 +1780,16 @@ export async function userHasClientAccess(clientId: number, userId: number): Pro
     throw new Error("Database not available");
   }
 
-  // Check if user is the owner
+   // Check if user is the owner
   const client = await db
     .select()
     .from(clients)
-    .where(and(eq(clients.id, clientId), eq(clients.ownerId, userId)))
+    .where(and(eq(clients.id, clientId), eq(clients.ownerId, userId), isNull(clients.deletedAt)))
     .limit(1);
-
   if (client.length > 0) {
     return true;
   }
-
-  // Check if user is a client user
+  // Check if user is a client userr
   const clientUser = await db
     .select()
     .from(clientUsers)
@@ -2039,7 +2026,7 @@ export async function userHasClientProjectAccess(userId: number, projectId: numb
   const project = await db
     .select({ clientId: projects.clientId })
     .from(projects)
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), isNull(projects.deletedAt)))
     .limit(1);
 
   if (project.length === 0 || !project[0].clientId) {
@@ -2283,10 +2270,9 @@ export async function getMediaByFlight(flightId: number, userId: number) {
   return db
     .select()
     .from(media)
-    .where(and(eq(media.flightId, flightId), eq(media.userId, userId)))
+    .where(and(eq(media.flightId, flightId), eq(media.userId, userId), isNull(media.deletedAt)))
     .orderBy(desc(media.createdAt));
 }
-
 /**
  * Get all projects assigned to a specific client user
  */
@@ -2328,7 +2314,7 @@ export async function getClientProjectsForAssignment(clientId: number) {
   return db
     .select()
     .from(projects)
-    .where(eq(projects.clientId, clientId))
+    .where(and(eq(projects.clientId, clientId), isNull(projects.deletedAt)))
     .orderBy(desc(projects.createdAt));
 }
 
@@ -2561,7 +2547,7 @@ export async function getOwnerUsers(ownerId: number) {
   const ownerProjects = await db
     .select({ id: projects.id })
     .from(projects)
-    .where(eq(projects.userId, ownerId));
+    .where(and(eq(projects.userId, ownerId), isNull(projects.deletedAt)));
 
   if (ownerProjects.length === 0) {
     return [];
@@ -2758,7 +2744,7 @@ export async function getUserRoleForProject(projectId: number, userId: number): 
   const ownerProject = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId), isNull(projects.deletedAt)))
     .limit(1);
 
   if (ownerProject.length > 0) {
@@ -2897,4 +2883,424 @@ export async function downgradeToFreeTier(userId: number) {
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Insert an audit log entry
+ */
+export async function createAuditLogEntry(entry: {
+  action: string;
+  entityType: string;
+  entityId: number;
+  entityName?: string;
+  userId: number;
+  userName?: string;
+  details?: string;
+  ipAddress?: string;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(auditLog).values({
+      action: entry.action,
+      entityType: entry.entityType,
+      entityId: entry.entityId,
+      entityName: entry.entityName ?? null,
+      userId: entry.userId,
+      userName: entry.userName ?? null,
+      details: entry.details ?? null,
+      ipAddress: entry.ipAddress ?? null,
+    });
+  } catch (err) {
+    console.error("[AuditLog] Failed to write audit log:", err);
+  }
+}
+
+/**
+ * List audit log entries with optional filters
+ */
+export async function listAuditLog(opts: {
+  entityType?: string;
+  entityId?: number;
+  userId?: number;
+  action?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions = [];
+  if (opts.entityType) conditions.push(eq(auditLog.entityType, opts.entityType));
+  if (opts.entityId) conditions.push(eq(auditLog.entityId, opts.entityId));
+  if (opts.userId) conditions.push(eq(auditLog.userId, opts.userId));
+  if (opts.action) conditions.push(eq(auditLog.action, opts.action));
+
+  const rows = await db
+    .select()
+    .from(auditLog)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(auditLog.createdAt))
+    .limit(opts.limit ?? 100)
+    .offset(opts.offset ?? 0);
+
+  return rows;
+}
+
+/**
+ * Count audit log entries with optional filters
+ */
+export async function countAuditLog(opts: {
+  entityType?: string;
+  action?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions = [];
+  if (opts.entityType) conditions.push(eq(auditLog.entityType, opts.entityType));
+  if (opts.action) conditions.push(eq(auditLog.action, opts.action));
+
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(auditLog)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return result[0]?.count ?? 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOFT DELETE HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Soft-delete a project (set deletedAt instead of hard delete)
+ */
+export async function softDeleteProject(projectId: number, userId: number, deletedByUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getUserProject(projectId, userId);
+  if (!existing) return false;
+
+  const now = new Date();
+
+  // Soft-delete all media in this project
+  await db
+    .update(media)
+    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .where(and(eq(media.projectId, projectId), isNull(media.deletedAt)));
+
+  // Soft-delete all flights in this project
+  await db
+    .update(flights)
+    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .where(and(eq(flights.projectId, projectId), isNull(flights.deletedAt)));
+
+  // Soft-delete the project
+  await db
+    .update(projects)
+    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .where(eq(projects.id, projectId));
+
+  return true;
+}
+
+/**
+ * Soft-delete a media item
+ */
+export async function softDeleteMedia(mediaId: number, userId: number, deletedByUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getMediaById(mediaId, userId);
+  if (!existing) return null;
+
+  await db
+    .update(media)
+    .set({ deletedAt: new Date(), deletedBy: deletedByUserId })
+    .where(eq(media.id, mediaId));
+
+  // Decrement the project's media count
+  await decrementProjectMediaCount(existing.projectId);
+
+  return existing;
+}
+
+/**
+ * Soft-delete a flight
+ */
+export async function softDeleteFlight(flightId: number, userId: number, deletedByUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getUserFlight(flightId, userId);
+  if (!existing) return null;
+
+  const now = new Date();
+
+  // Soft-delete all media in this flight
+  await db
+    .update(media)
+    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .where(and(eq(media.flightId, flightId), isNull(media.deletedAt)));
+
+  // Soft-delete the flight
+  await db
+    .update(flights)
+    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .where(eq(flights.id, flightId));
+
+  return existing;
+}
+
+/**
+ * Soft-delete a client
+ */
+export async function softDeleteClient(clientId: number, ownerId: number, deletedByUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getOwnerClient(clientId, ownerId);
+  if (!existing) return false;
+
+  await db
+    .update(clients)
+    .set({ deletedAt: new Date(), deletedBy: deletedByUserId })
+    .where(eq(clients.id, clientId));
+
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESTORE (UNDELETE) HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Restore a soft-deleted project and its media/flights
+ */
+export async function restoreProject(projectId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Restore the project
+  await db
+    .update(projects)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(eq(projects.id, projectId));
+
+  // Restore media that was deleted at the same time
+  await db
+    .update(media)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(and(eq(media.projectId, projectId), isNotNull(media.deletedAt)));
+
+  // Restore flights
+  await db
+    .update(flights)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(and(eq(flights.projectId, projectId), isNotNull(flights.deletedAt)));
+
+  return true;
+}
+
+/**
+ * Restore a soft-deleted media item
+ */
+export async function restoreMedia(mediaId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [item] = await db.select().from(media).where(eq(media.id, mediaId)).limit(1);
+  if (!item) return null;
+
+  await db
+    .update(media)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(eq(media.id, mediaId));
+
+  // Re-increment project media count
+  if (item.projectId) {
+    await db
+      .update(projects)
+      .set({ mediaCount: sql`${projects.mediaCount} + 1` })
+      .where(eq(projects.id, item.projectId));
+  }
+
+  return item;
+}
+
+/**
+ * Restore a soft-deleted flight and its media
+ */
+export async function restoreFlight(flightId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(flights)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(eq(flights.id, flightId));
+
+  // Restore media in this flight
+  await db
+    .update(media)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(and(eq(media.flightId, flightId), isNotNull(media.deletedAt)));
+
+  return true;
+}
+
+/**
+ * Restore a soft-deleted client
+ */
+export async function restoreClient(clientId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(clients)
+    .set({ deletedAt: null, deletedBy: null })
+    .where(eq(clients.id, clientId));
+
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRASH LISTING (soft-deleted items)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * List all soft-deleted items across all entity types for the trash view
+ */
+export async function listTrashItems(ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const deletedProjects = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      deletedAt: projects.deletedAt,
+      deletedBy: projects.deletedBy,
+      createdAt: projects.createdAt,
+    })
+    .from(projects)
+    .where(and(eq(projects.userId, ownerId), isNotNull(projects.deletedAt)));
+
+  const deletedMedia = await db
+    .select({
+      id: media.id,
+      name: media.filename,
+      projectId: media.projectId,
+      mediaType: media.mediaType,
+      thumbnailUrl: media.thumbnailUrl,
+      url: media.url,
+      deletedAt: media.deletedAt,
+      deletedBy: media.deletedBy,
+      createdAt: media.createdAt,
+    })
+    .from(media)
+    .where(and(eq(media.userId, ownerId), isNotNull(media.deletedAt)));
+
+  const deletedFlights = await db
+    .select({
+      id: flights.id,
+      name: flights.name,
+      projectId: flights.projectId,
+      deletedAt: flights.deletedAt,
+      deletedBy: flights.deletedBy,
+      createdAt: flights.createdAt,
+    })
+    .from(flights)
+    .where(and(eq(flights.userId, ownerId), isNotNull(flights.deletedAt)));
+
+  const deletedClients = await db
+    .select({
+      id: clients.id,
+      name: clients.name,
+      deletedAt: clients.deletedAt,
+      deletedBy: clients.deletedBy,
+      createdAt: clients.createdAt,
+    })
+    .from(clients)
+    .where(and(eq(clients.ownerId, ownerId), isNotNull(clients.deletedAt)));
+
+  return {
+    projects: deletedProjects,
+    media: deletedMedia,
+    flights: deletedFlights,
+    clients: deletedClients,
+  };
+}
+
+/**
+ * Permanently delete items that have been in trash for more than 30 days
+ */
+export async function purgeExpiredTrashItems() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  // Permanently delete old media
+  await db
+    .delete(media)
+    .where(and(isNotNull(media.deletedAt), gte(sql`TIMESTAMPDIFF(SECOND, ${media.deletedAt}, NOW())`, 30 * 24 * 60 * 60)));
+
+  // Permanently delete old flights
+  await db
+    .delete(flights)
+    .where(and(isNotNull(flights.deletedAt), gte(sql`TIMESTAMPDIFF(SECOND, ${flights.deletedAt}, NOW())`, 30 * 24 * 60 * 60)));
+
+  // Permanently delete old projects
+  await db
+    .delete(projects)
+    .where(and(isNotNull(projects.deletedAt), gte(sql`TIMESTAMPDIFF(SECOND, ${projects.deletedAt}, NOW())`, 30 * 24 * 60 * 60)));
+
+  // Permanently delete old clients
+  await db
+    .delete(clients)
+    .where(and(isNotNull(clients.deletedAt), gte(sql`TIMESTAMPDIFF(SECOND, ${clients.deletedAt}, NOW())`, 30 * 24 * 60 * 60)));
+
+  return true;
+}
+
+/**
+ * Permanently delete a single item from trash
+ */
+export async function permanentlyDeleteTrashItem(entityType: string, entityId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  switch (entityType) {
+    case "project":
+      // Delete associated media and flights first
+      await db.delete(media).where(eq(media.projectId, entityId));
+      await db.delete(flights).where(eq(flights.projectId, entityId));
+      await db.delete(projects).where(eq(projects.id, entityId));
+      break;
+    case "media":
+      await db.delete(media).where(eq(media.id, entityId));
+      break;
+    case "flight":
+      await db.delete(media).where(eq(media.flightId, entityId));
+      await db.delete(flights).where(eq(flights.id, entityId));
+      break;
+    case "client":
+      // Remove client associations but don't delete projects
+      await db.update(projects).set({ clientId: null }).where(eq(projects.clientId, entityId));
+      await db.delete(clientUsers).where(eq(clientUsers.clientId, entityId));
+      await db.delete(clientInvitations).where(eq(clientInvitations.clientId, entityId));
+      await db.delete(clientProjectAssignments).where(eq(clientProjectAssignments.clientId, entityId));
+      await db.delete(clients).where(eq(clients.id, entityId));
+      break;
+  }
+
+  return true;
 }

@@ -382,6 +382,7 @@ export default function FlightDetail() {
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit Flight
                         </DropdownMenuItem>
+                        {(user?.role === 'admin' || user?.role === 'webmaster') && (
                         <DropdownMenuItem
                           onClick={() => setDeleteDialogOpen(true)}
                           className="text-destructive focus:text-destructive"
@@ -389,6 +390,7 @@ export default function FlightDetail() {
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete Flight
                         </DropdownMenuItem>
+                        )}
                       </>
                     )}
                   </DropdownMenuContent>

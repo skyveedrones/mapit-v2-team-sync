@@ -104,6 +104,10 @@ export const projects = mysqlTable("projects", {
   faaLicenseNumber: varchar("faaLicenseNumber", { length: 100 }),
   /** LAANC Authorization number */
   laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
+  /** Soft delete timestamp — null means active */
+  deletedAt: timestamp("deletedAt"),
+  /** User ID who deleted this project */
+  deletedBy: int("deletedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -195,6 +199,10 @@ export const media = mysqlTable("media", {
   transcodeError: text("transcodeError"),
   /** Detected video codec (e.g., hevc, h264) */
   videoCodec: varchar("videoCodec", { length: 50 }),
+  /** Soft delete timestamp — null means active */
+  deletedAt: timestamp("deletedAt"),
+  /** User ID who deleted this media */
+  deletedBy: int("deletedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -273,6 +281,10 @@ export const flights = mysqlTable("flights", {
   laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
   /** Number of media items in the flight */
   mediaCount: int("mediaCount").default(0).notNull(),
+  /** Soft delete timestamp — null means active */
+  deletedAt: timestamp("deletedAt"),
+  /** User ID who deleted this flight */
+  deletedBy: int("deletedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -335,6 +347,10 @@ export const clients = mysqlTable("clients", {
   logoKey: varchar("logoKey", { length: 500 }),
   /** Number of projects assigned to this client */
   projectCount: int("projectCount").default(0).notNull(),
+  /** Soft delete timestamp — null means active */
+  deletedAt: timestamp("deletedAt"),
+  /** User ID who deleted this client */
+  deletedBy: int("deletedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -492,3 +508,32 @@ export const projectOverlays = mysqlTable("project_overlays", {
 
 export type ProjectOverlay = typeof projectOverlays.$inferSelect;
 export type InsertProjectOverlay = typeof projectOverlays.$inferInsert;
+
+
+/**
+ * Audit log table for tracking significant actions across the system.
+ * Records who did what, when, and to which entity.
+ */
+export const auditLog = mysqlTable("audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The action performed (e.g., "delete", "restore", "create", "update", "role_change") */
+  action: varchar("action", { length: 50 }).notNull(),
+  /** Type of entity affected (e.g., "project", "client", "media", "flight", "user") */
+  entityType: varchar("entityType", { length: 50 }).notNull(),
+  /** ID of the affected entity */
+  entityId: int("entityId").notNull(),
+  /** Human-readable name/label of the affected entity at time of action */
+  entityName: varchar("entityName", { length: 255 }),
+  /** User ID who performed the action */
+  userId: int("userId").notNull(),
+  /** User name at time of action (denormalized for history) */
+  userName: varchar("userName", { length: 255 }),
+  /** Additional details as JSON (e.g., old/new values, reason) */
+  details: text("details"),
+  /** IP address of the request (optional) */
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;

@@ -730,6 +730,7 @@ export default function ClientManage() {
                           <FolderOpen className="h-4 w-4 mr-1" />
                           Manage Projects
                         </Button>
+                        {(user?.role === 'admin' || user?.role === 'webmaster') && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -744,6 +745,7 @@ export default function ClientManage() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                        )}
                       </div>
                     </div>
                   ))}

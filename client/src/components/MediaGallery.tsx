@@ -4,6 +4,7 @@
  * Includes Action dropdown with Upload, Download, Watermark, Delete, and Sort options
  */
 
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useClientRole, canEdit, canDownload } from "@/_core/hooks/useClientRole";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -73,9 +74,11 @@ interface MediaGalleryProps {
 type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
 
 export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick, isDemoProject = false }: MediaGalleryProps) {
+  const { user: authUser } = useAuth();
   const userClientRole = useClientRole();
   const isViewer = userClientRole === 'viewer';
   const canEditMedia = canEdit && !isViewer;
+  const canDeleteMedia = canEditMedia && (authUser?.role === 'admin' || authUser?.role === 'webmaster');
   const canDownloadMedia = canDownload(userClientRole);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -554,6 +557,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                         <ImagePlus className="h-4 w-4 mr-2" />
                         Watermark Media ({watermarkableCount})
                       </DropdownMenuItem>
+                      {canDeleteMedia && (
+                      <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => setBulkDeleteDialogOpen(true)}
@@ -563,6 +568,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Selected ({selectedIds.size})
                       </DropdownMenuItem>
+                      </>
+                      )}
                     </>
                   )}
                 </>
@@ -1111,7 +1118,7 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
           {/* Actions - Hidden in fullscreen */}
           {!isFullscreen && (
           <div className="flex justify-between items-center pt-4 border-t border-border flex-shrink-0">
-            {canEditMedia ? (
+            {canDeleteMedia ? (
               <Button
                 variant="outline"
                 className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"

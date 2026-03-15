@@ -31,6 +31,8 @@ import Login from "./pages/Login";
 import Payment from "./pages/Payment";
 import Billing from "./pages/Billing";
 import Account from "./pages/Account";
+import Trash from "./pages/Trash";
+import AuditLog from "./pages/AuditLog";
 
 // Feature pages
 import EasyUpload from "./pages/features/EasyUpload";
@@ -201,6 +203,14 @@ function Router() {
       </Route>
       <Route path="/billing">
         {() => <ProtectedRoute component={Billing} />}
+      </Route>
+      
+      {/* Trash & Audit Log */}
+      <Route path="/trash">
+        {() => <ProtectedRoute component={Trash} />}
+      </Route>
+      <Route path="/audit-log">
+        {() => <ProtectedRoute component={AuditLog} />}
       </Route>
       
       {/* Client management */}

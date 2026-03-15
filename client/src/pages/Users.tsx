@@ -268,6 +268,7 @@ export default function UsersPage() {
                         <Edit2 className="h-4 w-4 mr-2" />
                         Manage
                       </Button>
+                      {(user?.role === 'admin' || user?.role === 'webmaster') && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -280,6 +281,7 @@ export default function UsersPage() {
                           <Trash2 className="h-4 w-4" />
                         )}
                       </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

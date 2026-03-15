@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, UserCircle, Users as UsersIcon } from "lucide-react";
+import { Building2, ClipboardList, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -20,6 +20,8 @@ const allMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: UsersIcon, label: "Users", path: "/users", roles: ["admin", "webmaster"] },
   { icon: Building2, label: "Clients", path: "/clients", roles: ["admin", "webmaster"] },
+  { icon: Trash2, label: "Trash", path: "/trash", roles: ["admin", "webmaster"] },
+  { icon: ClipboardList, label: "Audit Log", path: "/audit-log", roles: ["admin", "webmaster"] },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

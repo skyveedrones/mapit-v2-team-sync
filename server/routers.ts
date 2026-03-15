@@ -95,6 +95,20 @@ import {
   updateUserPilotSettings,
   getUserPilotSettings,
   getUserRoleForProject,
+  // Soft-delete & audit
+  softDeleteProject,
+  softDeleteMedia,
+  softDeleteFlight,
+  softDeleteClient,
+  restoreProject,
+  restoreMedia,
+  restoreFlight,
+  restoreClient,
+  listTrashItems,
+  permanentlyDeleteTrashItem,
+  createAuditLogEntry,
+  listAuditLog,
+  countAuditLog,
 } from "./db";
 import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
 import { storagePut, storageGet } from "./storage";
@@ -857,17 +871,29 @@ export const appRouter = router({
         return project;
       }),
 
-    // Delete a project
+    // Delete a project (soft-delete, admin/webmaster only)
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const success = await deleteProject(input.id, ctx.user.id);
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can delete projects' });
+        }
+        const project = await getUserProject(input.id, ctx.user.id);
+        const success = await softDeleteProject(input.id, ctx.user.id, ctx.user.id);
         if (!success) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found or you don't have permission to delete it",
           });
         }
+        await createAuditLogEntry({
+          action: 'delete',
+          entityType: 'project',
+          entityId: input.id,
+          entityName: project?.name ?? 'Unknown',
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
         return { success: true };
       }),
 
@@ -1366,14 +1392,21 @@ export const appRouter = router({
           });
         }
         
-        const deleted = await deleteMedia(input.id, ctx.user.id);
+        const deleted = await softDeleteMedia(input.id, ctx.user.id, ctx.user.id);
         if (!deleted) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Media not found or you don't have permission to delete it",
           });
         }
-        // Note: We're not deleting from S3 here - could add cleanup job later
+        await createAuditLogEntry({
+          action: 'delete',
+          entityType: 'media',
+          entityId: input.id,
+          entityName: mediaItem.filename ?? 'Unknown',
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
         return { success: true, deleted };
       }),
 
@@ -2377,17 +2410,29 @@ export const appRouter = router({
         return updated;
       }),
 
-    // Delete a flight
+    // Delete a flight (soft-delete, admin/webmaster only)
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const deleted = await deleteFlight(input.id, ctx.user.id);
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can delete flights' });
+        }
+        const flight = await getFlightById(input.id);
+        const deleted = await softDeleteFlight(input.id, ctx.user.id, ctx.user.id);
         if (!deleted) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Flight not found or you don't have permission to delete it",
           });
         }
+        await createAuditLogEntry({
+          action: 'delete',
+          entityType: 'flight',
+          entityId: input.id,
+          entityName: flight?.name ?? 'Unknown',
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
         return { success: true, deleted };
       }),
 
@@ -3757,20 +3802,29 @@ export const appRouter = router({
         return client;
       }),
 
-    // Delete a client (webmaster only)
+    // Delete a client (webmaster only, soft-delete)
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== 'webmaster') {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only webmaster can delete clients' });
         }
-        const success = await deleteClient(input.id, ctx.user.id);
+        const client = await getOwnerClient(input.id, ctx.user.id);
+        const success = await softDeleteClient(input.id, ctx.user.id, ctx.user.id);
         if (!success) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Client not found",
           });
         }
+        await createAuditLogEntry({
+          action: 'delete',
+          entityType: 'client',
+          entityId: input.id,
+          entityName: client?.name ?? 'Unknown',
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
         return { success: true };
       }),
 
@@ -4701,6 +4755,87 @@ export const appRouter = router({
         console.log(`[Municipal] Lead captured: ${input.name} from ${input.city}`);
 
         return { success: true };
+      }),
+  }),
+
+  // ==================== Trash (Soft-deleted items) ====================
+  trash: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can view trash' });
+      }
+      return listTrashItems(ctx.user.id);
+    }),
+    restore: protectedProcedure
+      .input(z.object({ entityType: z.enum(['project', 'media', 'flight', 'client']), entityId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can restore items' });
+        }
+        let success = false;
+        switch (input.entityType) {
+          case 'project': success = await restoreProject(input.entityId); break;
+          case 'media': success = !!(await restoreMedia(input.entityId)); break;
+          case 'flight': success = await restoreFlight(input.entityId); break;
+          case 'client': success = await restoreClient(input.entityId); break;
+        }
+        if (!success) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Item not found in trash' });
+        }
+        await createAuditLogEntry({
+          action: 'restore',
+          entityType: input.entityType,
+          entityId: input.entityId,
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
+        return { success: true };
+      }),
+    permanentDelete: protectedProcedure
+      .input(z.object({ entityType: z.enum(['project', 'media', 'flight', 'client']), entityId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only webmaster can permanently delete items' });
+        }
+        await permanentlyDeleteTrashItem(input.entityType, input.entityId);
+        await createAuditLogEntry({
+          action: 'permanent_delete',
+          entityType: input.entityType,
+          entityId: input.entityId,
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ==================== Audit Log ====================
+  auditLog: router({
+    list: protectedProcedure
+      .input(z.object({
+        entityType: z.string().optional(),
+        entityId: z.number().optional(),
+        userId: z.number().optional(),
+        action: z.string().optional(),
+        limit: z.number().min(1).max(200).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can view audit log' });
+        }
+        return listAuditLog(input ?? {});
+      }),
+    count: protectedProcedure
+      .input(z.object({
+        entityType: z.string().optional(),
+        action: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin or webmaster can view audit log' });
+        }
+        return countAuditLog(input ?? {});
       }),
   }),
 });

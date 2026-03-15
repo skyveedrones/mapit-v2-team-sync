@@ -2034,3 +2034,29 @@
 ## Client Deletion Role Restriction
 - [x] Hide Danger Zone / Delete Client button for non-webmaster roles on ClientManage page
 - [x] Enforce webmaster-only restriction on backend deleteClient procedure
+
+## Client Visibility & Mapbox Performance
+- [x] Assign City of Forney and Campo Del Sol clients to webmaster user (Clay, id 1560095)
+- [ ] Optimize Mapbox loading speed when opening a project
+
+## Admin-Only Destructive Action Restrictions
+- [x] Restrict project deletion to admin/webmaster only (backend + hide UI)
+- [x] Restrict user removal from client portal to admin/webmaster only
+- [x] Restrict media deletion to admin/webmaster only
+- [x] Restrict flight deletion to admin/webmaster only
+- [x] Restrict client deletion to webmaster only (backend + hide UI)
+
+## Activity Audit Log
+- [x] Create audit_log table (action, entityType, entityId, entityName, userId, userName, details, timestamp)
+- [x] Log all destructive actions (delete client, project, media, flight)
+- [x] Build audit log tRPC procedures (list with filters, count)
+- [x] Build Audit Log UI page accessible to admin/webmaster with filters and pagination
+
+## Soft Delete & Undelete (30-day Trash)
+- [x] Add deletedAt, deletedBy columns to clients, projects, media, flights tables
+- [x] Convert hard deletes to soft deletes (set deletedAt instead of DELETE)
+- [x] Filter out soft-deleted items from all list/detail queries
+- [x] Build undelete/restore endpoints for clients, projects, media, flights
+- [x] Build Trash page UI showing soft-deleted items with restore/permanent-delete options
+- [x] Permanent delete restricted to webmaster only
+- [x] 17 vitest tests passing for trash/audit/role features
