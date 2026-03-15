@@ -9,7 +9,7 @@ async function testNotification() {
 
   const testNotification = {
     title: '🎉 New User Signup',
-    content: `A new user has signed up to MAPit!
+    content: `A new user has signed up to MAPIT!
 
 Name: Test New User
 Email: test-newuser@example.com

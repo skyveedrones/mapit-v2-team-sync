@@ -36,7 +36,7 @@ export const FAQModal = () => {
             <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <div>
                 <h2 className="text-xl font-bold text-white">Knowledge Base</h2>
-                <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest">SkyVee MAPit Support</p>
+                <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest">SkyVee MAPIT Support</p>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white text-2xl transition">&times;</button>
             </div>

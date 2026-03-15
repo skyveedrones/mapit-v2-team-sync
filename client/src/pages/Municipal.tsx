@@ -180,7 +180,7 @@ export default function Municipal() {
           </motion.h1>
 
           <motion.p variants={fadeInUp} className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Bridge the gap between City Hall and the Job Site. MAPit provides municipal leaders with the visual
+            Bridge the gap between City Hall and the Job Site. MAPIT provides municipal leaders with the visual
             transparency needed to manage infrastructure, mitigate risk, and protect taxpayer investment.
           </motion.p>
 
@@ -232,7 +232,7 @@ export default function Municipal() {
               <div className="bg-blue-600/10 border border-blue-500/20 rounded-xl p-6">
                 <h3 className="text-blue-300 font-semibold text-lg mb-3 flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  The MAPit Answer
+                  The MAPIT Answer
                 </h3>
                 <p className="text-slate-300 leading-relaxed">
                   We provide a <strong className="text-white">Single Source of Truth</strong>. By combining
@@ -272,7 +272,7 @@ export default function Municipal() {
                 </span>
               </h2>
               <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                From underground utilities to City Council presentations, MAPit covers every stage of infrastructure
+                From underground utilities to City Council presentations, MAPIT covers every stage of infrastructure
                 oversight.
               </p>
             </motion.div>
@@ -403,7 +403,7 @@ export default function Municipal() {
 
           <motion.p variants={fadeInUp} className="text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
             Interested in modernizing your project oversight? We offer a{" "}
-            <strong className="text-white">Municipal Pilot Program</strong> designed to demonstrate the MAPit impact on
+            <strong className="text-white">Municipal Pilot Program</strong> designed to demonstrate the MAPIT impact on
             your most complex active job site.
           </motion.p>
 

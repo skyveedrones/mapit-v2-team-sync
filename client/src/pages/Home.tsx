@@ -18,6 +18,8 @@ import { motion } from "framer-motion";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
+import { EnterpriseHeader } from "@/components/EnterpriseHeader";
+import { MunicipalGateway } from "@/components/MunicipalGateway";
 import {
   Upload,
   Map,
@@ -26,12 +28,6 @@ import {
   Layers,
   FileText,
   ChevronRight,
-  Menu,
-  X,
-  LogOut,
-  User,
-  Moon,
-  Sun,
   Eye,
   Zap,
   Cpu,
@@ -111,241 +107,16 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 100);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleLogin = () => {
-    setLocation("/login");
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    toast.success("Logged out successfully");
-  };
 
   return (
     <div className="min-h-screen text-foreground">
-      {/* Minimalist Navigation - Scroll-triggered transition */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-        scrolled
-          ? 'bg-black/60 backdrop-blur-md border-b border-white/10'
-          : 'bg-black/20 backdrop-blur-md border-b border-white/10'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Minimalist Logo Group with Hover Glow */}
-          <div className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity">
-            <div className="relative">
-              {/* Subtle glow behind logo on hover */}
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-12 md:h-14 w-auto relative z-10 transition-transform group-hover:scale-105"
-              />
-            </div>
-          </div>
+      {/* Enterprise Navigation */}
+      <EnterpriseHeader onContactClick={() => setShowContactModal(true)} />
 
-          {/* Navigation - Clean and Minimal */}
-          <div className="flex items-center gap-6">
-            {/* Desktop Navigation Links */}
-            <div className="hidden sm:flex items-center gap-6">
-              <button
-                onClick={() => {
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-              >
-                Services
-              </button>
-              <button
-                onClick={() => setLocation("/pricing")}
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => setLocation("/municipal")}
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-              >
-                Municipal Solutions
-              </button>
-            </div>
 
-            {/* Theme Toggle with Tooltip */}
-            <div className="group relative">
-              <button 
-                onClick={toggleTheme} 
-                className="p-2 text-gray-300 hover:text-white transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              <div className="absolute top-full right-0 mt-2 scale-0 group-hover:scale-100 transition-all origin-top-right bg-black border border-white/10 px-2 py-1 rounded text-[10px] text-primary font-bold tracking-widest uppercase z-[200] whitespace-nowrap">
-                Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
-              </div>
-            </div>
-
-            {/* CTA Button or Auth Buttons */}
-            {isAuthenticated && user ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-300 hover:text-white"
-                  onClick={() => setLocation("/dashboard")}
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  className="px-5 py-2 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-all font-bold"
-                  onClick={handleLogin}
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : "Sign In"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="px-4 py-2 text-gray-300 hover:text-white transition-all font-medium text-xs"
-                  onClick={() => { window.location.href = getPortalLoginUrl(); }}
-                >
-                  Client Portal
-                </Button>
-              </>
-            )}
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="sm:hidden text-gray-300 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="sm:hidden border-t border-white/10 bg-black/40 backdrop-blur-md"
-          >
-            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
-              >
-                Services
-              </button>
-              <button
-                onClick={() => {
-                  setLocation("/pricing");
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => {
-                  setLocation("/municipal");
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left text-sm font-medium text-gray-300 hover:text-white transition-colors py-2"
-              >
-                Municipal Solutions
-              </button>
-              {isAuthenticated && user ? (
-                <>
-                  <div className="flex items-center gap-2 text-sm text-gray-300 py-2">
-                    <User className="h-4 w-4" />
-                    <span>{user.name || user.email || "User"}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-primary/50 text-primary"
-                    onClick={() => {
-                      setLocation("/dashboard");
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    Dashboard
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-gray-300"
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="sm"
-                    className="w-full border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white rounded-full font-bold mt-2 hover:bg-slate-100 dark:hover:bg-white/5"
-                    onClick={() => {
-                      handleLogin();
-                      setMobileMenuOpen(false);
-                    }}
-                    disabled={loading}
-                  >
-                    {loading ? "Loading..." : "Sign In"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full text-gray-300 hover:text-white font-medium text-xs mt-1"
-                    onClick={() => {
-                      window.location.href = getPortalLoginUrl();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    Client Portal
-                  </Button>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </nav>
 
       {/* Top Gradient Overlay for Readability */}
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
@@ -426,84 +197,7 @@ export default function Home() {
         </div>
 
         {/* SECTION 2: MUNICIPAL GATEWAY */}
-        <section
-          className="relative py-20 md:py-28 px-6 transition-colors duration-300 overflow-hidden"
-          style={{
-            background: "linear-gradient(to bottom, #f8fafc, #ffffff)",
-          }}
-        >
-          {/* Dark mode bg */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0b1120] to-black dark:block hidden" />
-          {/* Topographic SVG pattern at 5% opacity */}
-          <div
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%231d4ed8' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-              backgroundSize: "100px 100px",
-            }}
-          />
-          <div className="max-w-6xl mx-auto relative z-10">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-80px" }}
-              variants={staggerContainer}
-            >
-              {/* Header */}
-              <motion.div variants={fadeInUp} className="text-center mb-14">
-                <div className="inline-flex items-center gap-2 bg-blue-600/10 dark:bg-blue-600/20 border border-blue-500/20 dark:border-blue-500/30 rounded-full px-4 py-1.5 mb-6">
-                  <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300 tracking-wide">Government Solutions</span>
-                </div>
-                <h2
-                  className="text-3xl sm:text-4xl md:text-5xl font-bold mb-5 text-slate-900 dark:text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Built for{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
-                    Municipal Progress
-                  </span>
-                </h2>
-                <p className="text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
-                  From Public Works to City Hall, MAPit provides the "Digital Twin" infrastructure needed for total project transparency, utility verification, and proactive risk management.
-                </p>
-              </motion.div>
-
-              {/* Pillar Cards */}
-              <motion.div variants={fadeInUp} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                {[
-                  { icon: Eye, title: "Sub-Surface Verification", desc: "Document utility installations before burial. Create a permanent X-ray of city assets." },
-                  { icon: Users, title: "Inter-Departmental Sync", desc: "One unified map for Public Works, Engineering, Fire, and Planning departments." },
-                  { icon: Layers, title: "Engineering-Grade Overlays", desc: "Verify construction alignment with cm-level precision via our 2-point calibration engine." },
-                  { icon: FileText, title: "Citizen Accountability", desc: "Visual progress reports that prove projects are on-time and on-budget." },
-                ].map((pillar) => (
-                  <div
-                    key={pillar.title}
-                    className="bg-white dark:bg-[#111b2e] border border-slate-200 dark:border-slate-700/50 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5"
-                  >
-                    <div className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 mb-4">
-                      <pillar.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">{pillar.title}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{pillar.desc}</p>
-                  </div>
-                ))}
-              </motion.div>
-
-              {/* CTA */}
-              <motion.div variants={fadeInUp} className="text-center">
-                <Button
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold shadow-lg shadow-blue-600/20"
-                  onClick={() => setLocation("/municipal")}
-                >
-                  Explore Municipal Solutions
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
+        <MunicipalGateway />
 
         {/* SECTION 3: STEPPER CARDS */}
         <section className="relative bg-white dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">

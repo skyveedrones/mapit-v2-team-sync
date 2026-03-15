@@ -88,7 +88,7 @@ export default function Payment() {
           <div className="flex items-center gap-2">
             <img
               src="/images/mapit-logo.webp"
-              alt="MAPit"
+              alt="MAPIT"
               className="h-8 w-auto"
             />
           </div>
@@ -225,7 +225,7 @@ export default function Payment() {
                 </div>
                 <div>
                   <p className="font-medium mb-1">Is there a free trial?</p>
-                  <p className="text-muted-foreground">Start with our Free plan to explore MAPit, then upgrade whenever you're ready.</p>
+                  <p className="text-muted-foreground">Start with our Free plan to explore MAPIT, then upgrade whenever you're ready.</p>
                 </div>
               </div>
             </Card>

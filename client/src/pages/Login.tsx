@@ -1,6 +1,6 @@
 /**
  * Login/Signup Landing Page
- * Professional authentication page matching MAPit branding
+ * Professional authentication page matching MAPIT branding
  * Dark theme with emerald accents
  */
 
@@ -67,7 +67,7 @@ export default function Login() {
           <div className="flex items-center gap-3">
             <img
               src="/images/mapit-logo.webp"
-              alt="MAPit"
+              alt="MAPIT"
               className="h-8 w-auto"
             />
           </div>
@@ -94,7 +94,7 @@ export default function Login() {
             >
               <motion.div variants={fadeInUp} className="space-y-4">
                 <h1 className="text-5xl md:text-6xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-                  Welcome to <span className="text-primary">MAPit</span>
+                  Welcome to <span className="text-primary">MAPIT</span>
                 </h1>
                 <p className="text-xl text-muted-foreground leading-relaxed">
                   Professional drone mapping solutions that empower smarter project planning, monitoring, and decision-making.
@@ -127,7 +127,7 @@ export default function Login() {
 
               {/* Benefits */}
               <motion.div variants={fadeInUp} className="space-y-3">
-                <h3 className="font-semibold text-foreground">Why Choose MAPit?</h3>
+                <h3 className="font-semibold text-foreground">Why Choose MAPIT?</h3>
                 <div className="space-y-2">
                   {benefits.map((benefit, index) => (
                     <motion.div
@@ -246,7 +246,7 @@ export default function Login() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-center md:text-left">
               <p className="text-sm text-muted-foreground">
-                © 2026 MAPit by SkyVee Drones. All rights reserved.
+                © 2026 MAPIT by SkyVee Drones. All rights reserved.
               </p>
             </div>
             <div className="flex items-center gap-6">

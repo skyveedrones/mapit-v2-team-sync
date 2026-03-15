@@ -49,7 +49,7 @@ export default function ClientPortal() {
           <CardHeader>
             <CardTitle>No Client Access</CardTitle>
             <CardDescription>
-              You don't have access to any client portals yet. Please contact SkyVee MAPit administrator to request access.
+              You don't have access to any client portals yet. Please contact SkyVee MAPIT administrator to request access.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -124,7 +124,7 @@ export default function ClientPortal() {
               <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No Projects Yet</h3>
               <p className="text-muted-foreground text-center max-w-md">
-                No projects have been assigned to your account yet. Please contact SkyVee MAPit for more information.
+                No projects have been assigned to your account yet. Please contact SkyVee MAPIT for more information.
               </p>
             </CardContent>
           </Card>

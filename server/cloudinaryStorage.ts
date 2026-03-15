@@ -65,7 +65,7 @@ export async function cloudinaryUpload(
       // WEBMASTER FIX: Use upload_stream for chunked uploading (bypasses 100MB limit)
       // This ensures large drone videos preserve GPS and telemetry metadata.
       const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.v2.uploader.upload_stream(
+        const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: "video",      // Essential for drone footage
             chunk_size: 20000000,        // 20MB chunks to prevent the 50% stall
@@ -74,7 +74,7 @@ export async function cloudinaryUpload(
             image_metadata: true,        // Extracts GPS/EXIF data for Mapit
             raw_convert: "aspose",       // Indexes telemetry data
           },
-          (error, result) => {
+          (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
             if (error) reject(error);
             else resolve(result);
           }

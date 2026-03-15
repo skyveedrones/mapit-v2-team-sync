@@ -498,7 +498,7 @@ function saveLog(result: MigrationResult) {
 
   console.log(`
 ╔══════════════════════════════════════════════════════════════════╗
-║          migrate-legacy-clients.ts — SkyVee MAPit               ║
+║          migrate-legacy-clients.ts — SkyVee MAPIT               ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Migrates legacy projects.clientName → clients table             ║
 ║  Owner ID : ${String(opts.ownerId).padEnd(52)}║

@@ -8,7 +8,7 @@ export const faqItems = [
     answer: "Yes. Use the Opacity Slider in the overlay menu. Setting it to 50% allows you to compare the 'Planned' engineering lines with the 'Actual' drone imagery simultaneously."
   },
   {
-    question: "How do I share a map with someone without a MAPit account?",
+    question: "How do I share a map with someone without a MAPIT account?",
     answer: "Click the Share icon, toggle 'Enable Public Link' to ON, and copy the URL. Recipients can view the map and overlay but cannot change any project settings."
   },
   {

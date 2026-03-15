@@ -14,7 +14,7 @@ const Footer = ({ onContactClick }: FooterProps) => {
           <div className="space-y-6">
             <img 
               src="/images/mapit-logo-new.png" 
-              alt="MAPit Logo" 
+              alt="MAPIT Logo" 
               className="h-14 w-auto object-contain" 
             />
             <p className="text-gray-400 text-sm leading-relaxed">

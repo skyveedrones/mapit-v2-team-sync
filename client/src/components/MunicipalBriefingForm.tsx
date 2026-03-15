@@ -140,7 +140,7 @@ export function MunicipalBriefingForm({
             </div>
             <h3 className="text-xl font-bold mb-3">Briefing Request Received</h3>
             <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto mb-6">
-              Thank you for your interest in MAPit for{" "}
+              Thank you for your interest in MAPIT for{" "}
               <strong className="text-foreground">{formData.city}</strong>. Our
               team will reach out within 24 hours to schedule a demonstration.
             </p>

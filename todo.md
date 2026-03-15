@@ -1895,3 +1895,21 @@
 - [x] Generate 4 dark-mode municipal card images (Sub-Surface, Inter-Dept, Engineering, Citizen)
 - [x] Add hover blueprint-swipe effect (slides in from left with blueprint SVG + CTA badge)
 - [x] Optimize footer logo: h-14 w-auto object-contain
+
+## EnterpriseHeader Navigation Overhaul
+- [ ] Build EnterpriseHeader component with Solutions dropdown, Municipal link, user avatar menu
+- [ ] Wire useAuth() for user state, login URL, and logout
+- [ ] Replace current nav in Home.tsx with EnterpriseHeader
+- [ ] Also use EnterpriseHeader on /municipal and /pricing pages
+
+## MunicipalGateway + EnterpriseHeader Integration
+- [x] Create MunicipalGateway.tsx component (exact code from user)
+- [x] Replace existing Municipal section in Home.tsx with MunicipalGateway (directly under Hero)
+- [x] Replace existing nav block in Home.tsx with EnterpriseHeader component
+- [x] Verify no duplicate nav/municipal sections remain
+
+## Surgical Branding Update: MAPit → MAPIT
+- [x] Fix Home.tsx duplicate useAuth import and compile errors (resolved by server restart)
+- [x] Replace all visible "MAPit" text with "MAPIT" in JSX/HTML/alt tags (exclude src paths, component names, CSS classes, URLs)
+- [x] Verify header and footer logos still load after replacement (src paths untouched)
+- [x] Verify EnterpriseHeader and MunicipalGateway render correctly (0 TS errors)

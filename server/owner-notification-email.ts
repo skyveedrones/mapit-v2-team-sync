@@ -30,10 +30,10 @@ export async function sendOwnerNotificationEmail(
     console.log(`[Owner Notification] Sending new user signup notification to ${OWNER_EMAIL}`);
 
     const emailHtml = generateEmailTemplate({
-      preheader: `New user ${userName} has signed up to MAPit`,
+      preheader: `New user ${userName} has signed up to MAPIT`,
       title: '🎉 New User Signup',
       body: `
-        <p><strong>A new user has signed up to MAPit!</strong></p>
+        <p><strong>A new user has signed up to MAPIT!</strong></p>
         <p>Here are the details:</p>
         <p>
           <strong>Name:</strong> ${userName}<br>
@@ -43,7 +43,7 @@ export async function sendOwnerNotificationEmail(
         </p>
         <p>This user can now create projects, upload media, and generate reports.</p>
       `,
-      footer: 'You are receiving this email because you are the owner of MAPit',
+      footer: 'You are receiving this email because you are the owner of MAPIT',
     });
 
     const { error } = await resend.emails.send({

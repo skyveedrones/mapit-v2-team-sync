@@ -450,12 +450,12 @@ export const appRouter = router({
       .input(z.object({
         userId: z.number(),
         name: z.string().min(1),
-        role: z.enum(['user', 'admin']),
+        role: z.enum(['user', 'admin', 'webmaster', 'client']),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const { updateUserDetails } = await import('./db');
-        return updateUserDetails(input.userId, { name: input.name, role: input.role });
+        return updateUserDetails(input.userId, { name: input.name, role: input.role as 'user' | 'admin' });
       }),
     inviteUserToProjects: protectedProcedure
       .input(z.object({ email: z.string().email() }))
@@ -4443,7 +4443,7 @@ export const appRouter = router({
           </tr>
           <tr>
             <td style="padding:20px 30px;background-color:#0b1120;text-align:center;border-top:1px solid #1e3a5f;">
-              <p style="margin:0;font-size:12px;color:#64748b;">MAPit Municipal Lead Capture</p>
+              <p style="margin:0;font-size:12px;color:#64748b;">MAPIT Municipal Lead Capture</p>
             </td>
           </tr>
         </table>
@@ -4486,7 +4486,7 @@ export const appRouter = router({
               <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">Thank you for requesting a Municipal Briefing for <strong style="color:#1e293b;">${input.city}</strong>. Our team is reviewing your project details and will reach out within 24 hours to schedule a demonstration.</p>
               <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">In the meantime, here's what you can expect:</p>
               <ul style="margin:0 0 24px;padding-left:20px;line-height:2;font-size:14px;color:#475569;">
-                <li>A personalized walkthrough of MAPit's municipal capabilities</li>
+                <li>A personalized walkthrough of MAPIT's municipal capabilities</li>
                 <li>A discussion of your specific infrastructure challenges</li>
                 <li>Information about our Municipal Pilot Program</li>
               </ul>
@@ -4495,7 +4495,7 @@ export const appRouter = router({
           </tr>
           <tr>
             <td style="padding:20px 30px;background-color:#f1f5f9;text-align:center;border-top:1px solid #e2e8f0;">
-              <p style="margin:0;font-size:12px;color:#94a3b8;">MAPit by SkyVee Drones &mdash; Infrastructure Intelligence</p>
+              <p style="margin:0;font-size:12px;color:#94a3b8;">MAPIT by SkyVee Drones &mdash; Infrastructure Intelligence</p>
             </td>
           </tr>
         </table>

@@ -31,7 +31,7 @@ describe('User Signup Notification', () => {
     // Verify notifyOwner was called
     expect(notificationModule.notifyOwner).toHaveBeenCalledWith({
       title: '🎉 New User Signup',
-      content: expect.stringContaining('A new user has signed up to MAPit'),
+      content: expect.stringContaining('A new user has signed up to MAPIT'),
     });
 
     // Verify notification includes user details

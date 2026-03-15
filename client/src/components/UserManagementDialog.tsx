@@ -32,7 +32,7 @@ export function UserManagementDialog({
   userEmail,
 }: UserManagementDialogProps) {
   const [editName, setEditName] = useState(userName || "");
-  const [selectedRole, setSelectedRole] = useState<"user" | "admin">("user");
+  const [selectedRole, setSelectedRole] = useState<"user" | "admin" | "webmaster" | "client">("user");
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -145,7 +145,7 @@ export function UserManagementDialog({
                   <Label htmlFor="user-role">User Role</Label>
                   <Select
                     value={selectedRole}
-                    onValueChange={(value) => setSelectedRole(value as "user" | "admin")}
+                    onValueChange={(value) => setSelectedRole(value as "user" | "admin" | "webmaster" | "client")}
                     disabled={isSaving}
                   >
                     <SelectTrigger id="user-role">
