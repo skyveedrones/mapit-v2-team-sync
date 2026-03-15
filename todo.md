@@ -1886,3 +1886,12 @@
 - [x] Add Mapbox status indicator badge (bottom-left corner)
 - [x] Verify overlay source uses 'project-overlay' naming consistently (uses 'design-overlay')
 - [x] Ensure Save Alignment button blocks until API returns 200 (already implemented with isSaving state)
+
+## Homepage Municipal Pivot & UI Polish
+- [x] Move "Built for Municipal Progress" section to #2 position on Home.tsx (directly under Hero)
+- [x] Apply topographic SVG background at 5% opacity to the Municipal Gateway section
+- [x] Fix /municipal page scrolling: remove overflow:hidden, set min-h-screen + overflow-y:auto
+- [x] Fix briefing modal: max-h-[90vh] overflow-y-auto, only open via onClick, no window.open()
+- [x] Generate 4 dark-mode municipal card images (Sub-Surface, Inter-Dept, Engineering, Citizen)
+- [x] Add hover blueprint-swipe effect (slides in from left with blueprint SVG + CTA badge)
+- [x] Optimize footer logo: h-14 w-auto object-contain

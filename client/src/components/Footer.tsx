@@ -14,8 +14,8 @@ const Footer = ({ onContactClick }: FooterProps) => {
           <div className="space-y-6">
             <img 
               src="/images/mapit-logo-new.png" 
-              alt="Mapit Logo" 
-              className="h-10 w-auto" 
+              alt="MAPit Logo" 
+              className="h-14 w-auto object-contain" 
             />
             <p className="text-gray-400 text-sm leading-relaxed">
               Precision drone mapping and geospatial intelligence. Elevating project visualization for professionals worldwide.

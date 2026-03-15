@@ -30,11 +30,11 @@ const HERO_IMG =
 const ENGINEERS_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-engineers-tablet_c89926cd.jpg";
 const TRENCH_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-utility-trench_213d8340.jpg";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-subsurface-XheCyMcVLXCFkjdcG9yGnT.webp";
 const DIGITAL_TWIN_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-digital-twin_bcf63c67.jpg";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-interdept-3mR7B9wUkt5ZFwjKKdLgCB.webp";
 const GIS_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-gis-arcgis_651bf8eb.jpg";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-overlay-3nmwWrVxQ8Zqmu4hBtuZ8r.webp";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 24 },
@@ -73,7 +73,7 @@ const pillars = [
     title: "Citizen Accountability",
     value:
       "Generate visual progress reports for City Council and public meetings, proving that projects are on-time and on-budget.",
-    image: ENGINEERS_IMG,
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp",
   },
 ];
 
@@ -101,7 +101,7 @@ export default function Municipal() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-white">
+    <div className="min-h-screen bg-[#0b1120] text-white overflow-y-auto">
       {/* ─── Navigation ─── */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1120]/80 backdrop-blur-md border-b border-slate-700/40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -282,24 +282,49 @@ export default function Municipal() {
                 <motion.div
                   key={pillar.title}
                   variants={fadeInUp}
-                  className="group relative bg-[#111b2e] border border-slate-700/50 rounded-2xl overflow-hidden hover:border-blue-500/40 transition-all duration-300"
+                  className="group relative bg-[#111b2e] border border-slate-700/50 rounded-2xl overflow-hidden hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer"
+                  onClick={() => setContactOpen(true)}
                 >
-                  {/* Image strip */}
-                  <div className="h-48 overflow-hidden">
+                  {/* Image strip with blueprint-swipe reveal on hover */}
+                  <div className="h-52 overflow-hidden relative">
+                    {/* Base image */}
                     <img
                       src={pillar.image}
                       alt={pillar.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 h-48 bg-gradient-to-t from-[#111b2e] via-transparent to-transparent" />
+                    {/* Blueprint overlay that slides in from left on hover */}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/70 to-transparent
+                        translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 ease-out
+                        flex items-center justify-start pl-6"
+                    >
+                      <div className="text-blue-300 opacity-30 select-none pointer-events-none">
+                        <svg width="180" height="120" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="10" y="10" width="160" height="100" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4 2" />
+                          <line x1="10" y1="40" x2="170" y2="40" stroke="currentColor" strokeWidth="0.5" />
+                          <line x1="10" y1="70" x2="170" y2="70" stroke="currentColor" strokeWidth="0.5" />
+                          <line x1="50" y1="10" x2="50" y2="110" stroke="currentColor" strokeWidth="0.5" />
+                          <line x1="100" y1="10" x2="100" y2="110" stroke="currentColor" strokeWidth="0.5" />
+                          <line x1="140" y1="10" x2="140" y2="110" stroke="currentColor" strokeWidth="0.5" />
+                          <circle cx="50" cy="40" r="4" stroke="currentColor" strokeWidth="1" fill="none" />
+                          <circle cx="140" cy="70" r="4" stroke="currentColor" strokeWidth="1" fill="none" />
+                          <line x1="50" y1="40" x2="140" y2="70" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
+                        </svg>
+                      </div>
+                      <div className="absolute top-3 right-3 bg-blue-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
+                        Click to Request Briefing
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 h-52 bg-gradient-to-t from-[#111b2e] via-transparent to-transparent" />
                   </div>
 
                   {/* Content */}
                   <div className="p-6 -mt-8 relative z-10">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 mb-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 mb-4 group-hover:bg-blue-600/40 transition-colors duration-300">
                       <pillar.icon className="h-6 w-6 text-blue-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3">{pillar.title}</h3>
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">{pillar.title}</h3>
                     <p className="text-slate-400 leading-relaxed">{pillar.value}</p>
                   </div>
                 </motion.div>
