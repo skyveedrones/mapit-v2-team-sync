@@ -1879,3 +1879,10 @@
 - [x] Confirm mapbox-gl CSS is imported (verified: all 3 components import mapbox-gl.css)
 - [x] Verify container ID / ref matches new mapboxgl.Map({ container }) (verified: all use useRef pattern)
 - [x] Check browser console for 401 or WebGL errors (none found — map renders correctly with satellite tiles, 5 GPS markers, flight path)
+
+## Apply User Reference Mapbox Patterns
+- [x] Add map.resize() call on 'load' event to fix blank screen on resize/load
+- [x] Ensure min-h-[500px] on map container for consistent rendering
+- [x] Add Mapbox status indicator badge (bottom-left corner)
+- [x] Verify overlay source uses 'project-overlay' naming consistently (uses 'design-overlay')
+- [x] Ensure Save Alignment button blocks until API returns 200 (already implemented with isSaving state)

@@ -223,9 +223,17 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       map.on("load", () => {
         mapRef.current = map;
         setMapLoaded(true);
+        // Fix blank screen on resize/load
+        map.resize();
+        console.log("[MapboxProjectMap] Mapbox fully loaded and rendering.");
       });
 
+      // Also resize on window resize
+      const handleResize = () => map.resize();
+      window.addEventListener("resize", handleResize);
+
       return () => {
+        window.removeEventListener("resize", handleResize);
         map.remove();
         mapRef.current = null;
         setMapLoaded(false);
@@ -861,9 +869,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               <p className="text-sm">Upload media with GPS coordinates to see them on the map</p>
             </div>
           ) : (
-            <div className="relative rounded-lg overflow-hidden">
+            <div className="relative rounded-lg overflow-hidden border border-slate-800">
               {/* Mapbox container */}
-              <div ref={mapContainerRef} className={`w-full ${heightClass}`} />
+              <div ref={mapContainerRef} className={`w-full min-h-[500px] ${heightClass}`} />
+
+              {/* Map status indicator */}
+              <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
+                Mapbox GL JS &bull; Satellite-Streets-V12
+              </div>
 
               {/* Edit mode toolbar */}
               {editMode && !snapMode && (
