@@ -202,12 +202,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* SECTION 2: MUNICIPAL GATEWAY */}
-        <CyberDivider />
-        <MunicipalGateway />
-
-        <CyberDivider />
-        {/* SECTION 3: STEPPER CARDS */}
+        {/* SECTION 3: STEPPER CARDS — moved here; Municipal is now outside hero section */}
         <section className="relative bg-white dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
           {/* Branded Background "Wing" Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
@@ -270,8 +265,11 @@ export default function Home() {
           </div>
         </section>
 
-        <CyberDivider />
       </section>
+
+      {/* SECTION 2: MUNICIPAL GATEWAY — full-width, outside hero section */}
+      <CyberDivider />
+      <MunicipalGateway />
 
       <CyberDivider />
       {/* SECTION 3: UNIVERSAL COMPATIBILITY */}
@@ -367,9 +365,7 @@ export default function Home() {
               className="text-3xl md:text-5xl font-bold text-white mb-5"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Need a{" "}
-              <span className="text-[#10b981]">Pilot</span>?
-            </motion.h2>
+              Need a Pilot?            </motion.h2>
             <motion.p
               variants={fadeInUp}
               className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
@@ -507,8 +503,7 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                className="bg-[#10b981] hover:bg-[#0ea271] text-slate-950 font-bold text-lg px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 onClick={() => {
                   setShowContactModal(true);
                 }}
@@ -518,8 +513,7 @@ export default function Home() {
               </Button>
               <Button
                 size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6 rounded-lg"
+                className="bg-[#10b981] hover:bg-[#0ea271] text-slate-950 font-bold text-lg px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 onClick={() => {
                   trackEvent('demo_to_trial_click');
                   setLocation('/welcome');
@@ -532,6 +526,9 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* CyberDivider before footer */}
+      <CyberDivider />
 
       {/* Footer - Using new component */}
       <Footer onContactClick={() => setShowContactModal(true)} />

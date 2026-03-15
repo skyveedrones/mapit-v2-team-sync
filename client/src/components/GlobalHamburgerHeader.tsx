@@ -84,7 +84,6 @@ export const GlobalHamburgerHeader = () => {
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
                 className="h-[60px] w-auto relative z-10 transition-transform group-hover:scale-105"
-                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </div>
           </div>
@@ -274,7 +273,6 @@ export const GlobalHamburgerHeader = () => {
                 src="/images/mapit-logo-new.png"
                 alt="MAPIT"
                 className="h-6 opacity-40 mb-4"
-                style={{ filter: 'brightness(0) invert(1)' }}
               />
               <p className="text-xs text-slate-600">
                 © 2026 MAPIT Geospatial.
