@@ -2030,3 +2030,7 @@
 - [x] Write vitest tests for new user management procedures (14 tests passing)
 - [x] Restrict Users page access to admin and webmaster roles only
 - [x] Hide Users/Clients nav items from non-admin/non-webmaster roles in sidebar
+
+## Client Deletion Role Restriction
+- [x] Hide Danger Zone / Delete Client button for non-webmaster roles on ClientManage page
+- [x] Enforce webmaster-only restriction on backend deleteClient procedure

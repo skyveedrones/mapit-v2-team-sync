@@ -3757,10 +3757,13 @@ export const appRouter = router({
         return client;
       }),
 
-    // Delete a client
+    // Delete a client (webmaster only)
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only webmaster can delete clients' });
+        }
         const success = await deleteClient(input.id, ctx.user.id);
         if (!success) {
           throw new TRPCError({
