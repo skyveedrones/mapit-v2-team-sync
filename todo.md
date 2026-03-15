@@ -1872,3 +1872,10 @@
 - [x] Wire admin notification email to Clay: Subject "[MUNICIPAL LEAD] New Request from {{City}}"
 - [x] Wire auto-responder email to lead: "Thank you for requesting a Municipal Briefing for {{City}}..."
 - [x] Integrate form with backend and test end-to-end (10 tests passing)
+
+## Fix Blank Mapbox Map
+- [x] Check mapboxgl.accessToken is set correctly from VITE_MAPBOX_TOKEN (verified: token working, 200 responses)
+- [x] Ensure map container has explicit height/width (verified: h-[600px] default, h-full on fullscreen)
+- [x] Confirm mapbox-gl CSS is imported (verified: all 3 components import mapbox-gl.css)
+- [x] Verify container ID / ref matches new mapboxgl.Map({ container }) (verified: all use useRef pattern)
+- [x] Check browser console for 401 or WebGL errors (none found — map renders correctly with satellite tiles, 5 GPS markers, flight path)
