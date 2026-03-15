@@ -8,6 +8,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { FlybyController } from "@/components/FlybyController";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
@@ -395,6 +396,11 @@ export default function ProjectMap() {
               Flight Path
             </Button>
           </div>
+        )}
+
+        {/* Cinematic Flyby Controller - Bottom Right */}
+        {geotaggedMedia.length > 0 && (
+          <FlybyController mapRef={mapRef} mapLoaded={mapReady} />
         )}
 
         {/* Legend - Bottom Left */}

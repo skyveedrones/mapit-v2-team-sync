@@ -58,6 +58,10 @@ import {
 
 export interface MapboxProjectMapHandle {
   panToMedia: (latitude: number, longitude: number, mediaId?: string) => void;
+  /** Returns the live Mapbox GL map instance (for flyby, etc.) */
+  getMap: () => mapboxgl.Map | null;
+  /** Returns whether the map has finished loading */
+  isMapLoaded: () => boolean;
 }
 
 interface MapboxProjectMapProps {
@@ -197,7 +201,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           }, 900);
         }
       },
-    }), []);
+      getMap: () => mapRef.current,
+      isMapLoaded: () => mapLoaded,
+    }), [mapLoaded]);
 
     // ── Initialize Mapbox map ───────────────────────────────────────────────
     useEffect(() => {
