@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { VERSION } from '@shared/version';
+import { APP_VERSION } from '@shared/version';
 import { X } from 'lucide-react';
 
 /**
@@ -19,13 +19,13 @@ export const WhatsNewBanner = () => {
     const lastSeenVersion = localStorage.getItem('mapit_last_version');
 
     // Show banner only if version has changed
-    if (lastSeenVersion !== VERSION) {
+    if (lastSeenVersion !== APP_VERSION.version) {
       setIsVisible(true);
     }
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem('mapit_last_version', VERSION);
+    localStorage.setItem('mapit_last_version', APP_VERSION.version);
     setIsVisible(false);
   };
 
@@ -37,7 +37,7 @@ export const WhatsNewBanner = () => {
         <div className="text-2xl">🚀</div>
         <div className="flex flex-col">
           <span className="font-semibold">New Update Installed</span>
-          <span className="text-sm text-emerald-100">Version {VERSION}</span>
+          <span className="text-sm text-emerald-100">Version {APP_VERSION.version}</span>
         </div>
       </div>
       <button

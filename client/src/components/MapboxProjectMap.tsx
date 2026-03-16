@@ -290,7 +290,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         });
       });
 
-      const handleResize = () => map.resize();
+      const handleResize = () => {
+        if (mapRef.current) {
+          mapRef.current.resize();
+        }
+      };
       window.addEventListener("resize", handleResize);
 
       // ResizeObserver: catches the container becoming visible (e.g. tab switch,
@@ -299,7 +303,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       if (typeof ResizeObserver !== "undefined" && mapContainerRef.current) {
         resizeObserver = new ResizeObserver(() => {
           const m = mapRef.current;
-          if (m) m.resize();
+          if (m) {
+            m.resize();
+            // Force a tile render after resize
+            requestAnimationFrame(() => {
+              m.triggerRepaint();
+            });
+          }
         });
         resizeObserver.observe(mapContainerRef.current);
       }
@@ -319,21 +329,59 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const map = mapRef.current;
       if (!map || !mapLoaded || mediaWithGPS.length === 0) return;
 
-      if (mediaWithGPS.length === 1) {
-        map.flyTo({
-          center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
-          zoom: 17,
-          duration: 600,
-        });
-        return;
-      }
+      // Wait for tiles to be loaded before flying to bounds
+      // This prevents blank map when tiles haven't rendered yet
+      const waitForTiles = () => {
+        if (!map.areTilesLoaded?.()) {
+          // Tiles not ready yet, try again soon
+          requestAnimationFrame(waitForTiles);
+          return;
+        }
 
-      // Fit map to the bounding box of all GPS points
-      const bounds = new mapboxgl.LngLatBounds();
-      mediaWithGPS.forEach((m) => {
-        bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
-      });
-      map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+        // Tiles are loaded, now fly to bounds
+        if (mediaWithGPS.length === 1) {
+          map.flyTo({
+            center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
+            zoom: 17,
+            duration: 600,
+          });
+        } else {
+          // Fit map to the bounding box of all GPS points
+          const bounds = new mapboxgl.LngLatBounds();
+          mediaWithGPS.forEach((m) => {
+            bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
+          });
+          map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+        }
+
+        // Force a resize and repaint after the animation completes
+        setTimeout(() => {
+          map.resize();
+          map.triggerRepaint();
+        }, 700);
+      };
+
+      // Start waiting for tiles, with a timeout fallback
+      const timeoutId = setTimeout(() => {
+        // Fallback: if tiles take too long, just fly anyway
+        if (mediaWithGPS.length === 1) {
+          map.flyTo({
+            center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
+            zoom: 17,
+            duration: 600,
+          });
+        } else {
+          const bounds = new mapboxgl.LngLatBounds();
+          mediaWithGPS.forEach((m) => {
+            bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
+          });
+          map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+        }
+      }, 2000);
+
+      waitForTiles();
+
+      return () => clearTimeout(timeoutId);
     }, [mapLoaded, mediaWithGPS]);
 
     // ── Add GPS markers + flight path ───────────────────────────────────────

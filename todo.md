@@ -2138,3 +2138,9 @@
 - [x] Create CONTRIBUTING.md with deployment rules and versioning protocol
 - [x] Create WhatsNewBanner component to notify users of new versions
 - [x] Integrate WhatsNewBanner into main App.tsx layout
+
+## Bug Fix: Mapbox Blank on First Project Open (Round 3 - Comprehensive)
+- [x] Trace exact rendering flow: ProjectDetail → LazyMapWrapper → MapboxProjectMap
+- [x] Identify all timing issues: data loading, DOM visibility, map initialization
+- [x] Implement comprehensive fix: eager render + proper resize + fallback bounds
+- [x] Test on first open and verify map renders immediately with GPS points visible
