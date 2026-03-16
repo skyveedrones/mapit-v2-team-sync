@@ -269,20 +269,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
       mapboxgl.accessToken = token;
 
-      // ── VISIBILITY CHECK ──
-      // Ensure the map container CSS is not using display: none or visibility: hidden
-      // If it is, Mapbox will initialize with a 0x0 size and stay blank
-      const containerElement = mapContainerRef.current;
-      const computedStyle = window.getComputedStyle(containerElement);
-      const isHidden = computedStyle.display === 'none' || computedStyle.visibility === 'hidden';
-      
-      if (isHidden) {
-        console.warn('[MapboxProjectMap] Container is hidden (display:none or visibility:hidden). Map may not render correctly.');
-        // Force visibility if hidden
-        containerElement.style.display = 'block';
-        containerElement.style.visibility = 'visible';
-      }
-      
       // Always initialize at a neutral center — we'll fly to GPS bounds once media loads
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,
@@ -297,46 +283,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       map.on("load", () => {
         mapRef.current = map;
         setMapLoaded(true);
-        
-        // ── FORCE-REPAINT STRATEGY ──
-        // The Delayed Resize Hammer: Force map to check container size multiple times
-        // This handles cases where the container was hidden or had 0 dimensions during init
+        // Force a resize immediately after load to fix blank tile issue
+        // when the container was hidden or had 0 dimensions during init
         requestAnimationFrame(() => {
           map.resize();
         });
-        
-        // Delayed resize calls at 100ms, 500ms, and 2000ms
-        // This ensures the map re-evaluates its size after page transitions
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.resize();
-            console.log('[MapboxProjectMap] Delayed resize at 100ms');
-          }
-        }, 100);
-        
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.resize();
-            console.log('[MapboxProjectMap] Delayed resize at 500ms');
-          }
-        }, 500);
-        
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.resize();
-            console.log('[MapboxProjectMap] Delayed resize at 2000ms');
-          }
-        }, 2000);
-        
-        // The 'Force-Style' Trigger: Force a fresh style grab
-        // Sometimes the map stays blank because the style hasn't fully 'grabbed'
-        // This forces the style to re-initialize
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.setStyle('mapbox://styles/mapbox/satellite-streets-v12', { diff: false });
-            console.log('[MapboxProjectMap] Force-style trigger executed');
-          }
-        }, 300);
       });
 
       const handleResize = () => {
@@ -366,7 +317,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       return () => {
         window.removeEventListener("resize", handleResize);
         resizeObserver?.disconnect();
-        // Clear any pending resize timeouts
         map.remove();
         mapRef.current = null;
         setMapLoaded(false);
