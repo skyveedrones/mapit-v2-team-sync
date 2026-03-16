@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, projectOverlays, users, projectCollaborators, projects, referrals } from "../drizzle/schema";
+import { media, clientUsers, projectOverlays, users, projectCollaborators, projects, referrals, organizations } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -4950,6 +4950,80 @@ export const appRouter = router({
 
       return { totalSent, signedUp, converted, monthsEarned: converted };
     }),
+  }),
+
+  organization: router({
+    /** Get the current user's organization (null if not onboarded) */
+    getMyOrg: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.organizationId) return null;
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const rows = await db.select().from(organizations).where(eq(organizations.id, ctx.user.organizationId)).limit(1);
+      return rows[0] ?? null;
+    }),
+
+    /** Create a new organization and link it to the current user */
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(255),
+        logoUrl: z.string().url().optional(),
+        brandColor: z.string().max(20).optional(),
+        type: z.enum(['drone_service_provider', 'municipality', 'engineering_firm', 'other']).default('drone_service_provider'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const [result] = await db.insert(organizations).values({
+          name: input.name,
+          logoUrl: input.logoUrl,
+          brandColor: input.brandColor,
+          type: input.type,
+        });
+        const orgId = (result as { insertId: number }).insertId;
+        await db.update(users)
+          .set({ organizationId: orgId, orgRole: 'PROVIDER' })
+          .where(eq(users.id, ctx.user.id));
+        const rows = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1);
+        return rows[0];
+      }),
+
+    /** Update an existing organization */
+    update: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(255).optional(),
+        logoUrl: z.string().url().optional().nullable(),
+        brandColor: z.string().max(20).optional().nullable(),
+        type: z.enum(['drone_service_provider', 'municipality', 'engineering_firm', 'other']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user.organizationId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization linked' });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const updateData: Record<string, unknown> = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.logoUrl !== undefined) updateData.logoUrl = input.logoUrl;
+        if (input.brandColor !== undefined) updateData.brandColor = input.brandColor;
+        if (input.type !== undefined) updateData.type = input.type;
+        await db.update(organizations).set(updateData).where(eq(organizations.id, ctx.user.organizationId));
+        const rows = await db.select().from(organizations).where(eq(organizations.id, ctx.user.organizationId)).limit(1);
+        return rows[0];
+      }),
+
+    /** Upload logo to S3 and return URL */
+    uploadLogo: protectedProcedure
+      .input(z.object({
+        base64: z.string(),
+        mimeType: z.string(),
+        fileName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        const buffer = Buffer.from(input.base64, 'base64');
+        const ext = input.fileName.split('.').pop() || 'png';
+        const key = `org-logos/${ctx.user.id}-${Date.now()}.${ext}`;
+        const { url } = await storagePut(key, buffer, input.mimeType);
+        return { url, key };
+      }),
   }),
 });
 

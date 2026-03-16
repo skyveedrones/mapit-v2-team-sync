@@ -2117,3 +2117,15 @@
 - [x] Diagnose "Failed to update project assignments" error for eluna@forneytx.gov
 - [x] Fix the root cause in backend/frontend
 - [x] Manually assign eluna to the 5 Forney TX projects after fix
+
+## Multi-Tenant Onboarding & Org Branding (v1.3.0)
+- [x] Organization tRPC procedures: getMyOrg, create, update, uploadLogo (in routers.ts)
+- [x] OnboardingPilot.tsx: 3-step wizard (org info → brand identity → success)
+- [x] Register /onboarding/pilot route in App.tsx
+- [x] Onboarding guard in ProtectedRoute: redirect non-client users without organizationId to /onboarding/pilot
+- [x] Guard is "sticky" - prevents bypassing onboarding by navigating directly to /dashboard
+- [x] Client-role users (portal users) are exempt from onboarding guard
+- [x] OrgOrDefaultLogo component in DashboardLayout: shows org logo if available, falls back to MAPIT logo
+- [x] Logo upload to S3 via base64 in onboarding wizard
+- [x] Brand color picker in onboarding wizard
+- [x] Skip branding option (creates org with just name, no logo/color)

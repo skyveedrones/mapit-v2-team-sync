@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -24,6 +25,29 @@ const allMenuItems = [
   { icon: ClipboardList, label: "Audit Log", path: "/audit-log", roles: ["admin", "webmaster"] },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
+
+/** Shows org logo if the user has an organization with a logo, otherwise shows MAPIT default */
+function OrgOrDefaultLogo() {
+  const { user } = useAuth();
+  const { data: org } = trpc.organization.getMyOrg.useQuery(undefined, {
+    enabled: !!user?.organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (org?.logoUrl) {
+    return (
+      <img
+        src={org.logoUrl}
+        alt={org.name}
+        className="h-10 md:h-12 w-auto object-contain max-w-[160px]"
+      />
+    );
+  }
+
+  return (
+    <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-12 md:h-14 w-auto object-contain" />
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -95,9 +119,9 @@ function DashboardLayoutContent({
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
         <div className="flex items-center justify-between h-16 px-4 md:px-6">
-          {/* Left: Logo */}
+          {/* Left: Logo — shows org logo for pilots, MAPIT logo for others */}
           <div className="flex items-center">
-            <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-12 md:h-14 w-auto object-contain" />
+            <OrgOrDefaultLogo />
           </div>
 
           {/* Right: Action Center (Theme Toggle, User Menu, Hamburger) */}

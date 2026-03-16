@@ -31,6 +31,7 @@ import Account from "./pages/Account";
 import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
+import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 
@@ -76,6 +77,16 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
     }
   }, [loading, isAuthenticated, setLocation]);
 
+  // Onboarding guard: redirect pilots (non-client users) without an org to /onboarding/pilot
+  useEffect(() => {
+    if (!loading && isAuthenticated && user && !user.organizationId && user.role !== 'client') {
+      // Only redirect if not already on onboarding page
+      if (location !== '/onboarding/pilot') {
+        setLocation('/onboarding/pilot');
+      }
+    }
+  }, [loading, isAuthenticated, user, location, setLocation]);
+
   // PHASE 2: Redirect client users away from admin-only routes
   useEffect(() => {
     if (!loading && isAuthenticated && user?.role === 'client') {
@@ -105,6 +116,11 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
 
   // While client redirect is pending, render nothing to avoid flash
   if (user?.role === 'client' && ADMIN_ONLY_PATHS.some((p) => location === p || location.startsWith(p + '/'))) {
+    return null;
+  }
+
+  // While onboarding redirect is pending, render nothing to avoid flash
+  if (user && !user.organizationId && user.role !== 'client' && location !== '/onboarding/pilot') {
     return null;
   }
 
@@ -254,6 +270,9 @@ function Router() {
         {() => <ProtectedRoute component={ManageUser} />}
       </Route>
       
+      {/* Onboarding */}
+      <Route path="/onboarding/pilot" component={OnboardingPilot} />
+
       {/* Invitation acceptance pages */}
       <Route path="/invite/:token" component={InviteAccept} />
       <Route path="/client-invite/:token" component={ClientInviteAccept} />

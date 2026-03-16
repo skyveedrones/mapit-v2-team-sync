@@ -1,4 +1,27 @@
 import { boolean, decimal, json, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+
+/**
+ * Organizations table for multi-tenant support.
+ * Each organization represents a drone service provider, municipality, or firm.
+ */
+export const organizations = mysqlTable("organizations", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Organization display name */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Logo URL (stored in S3) */
+  logoUrl: varchar("logoUrl", { length: 500 }),
+  /** Primary brand color (hex, e.g. #10b981) */
+  brandColor: varchar("brandColor", { length: 20 }),
+  /** Organization type */
+  type: mysqlEnum("type", ["drone_service_provider", "municipality", "engineering_firm", "other"]).default("drone_service_provider").notNull(),
+  /** Subscription tier for the organization */
+  subscriptionTier: mysqlEnum("subscriptionTier", ["starter", "professional", "pilot"]).default("starter").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = typeof organizations.$inferInsert;
 /**
  * Core user table backing auth flow.
  * Extend this file with additional tables as your product grows.
@@ -56,6 +79,10 @@ export const users = mysqlTable("users", {
   currentPeriodEnd: timestamp("currentPeriodEnd"),
   /** Whether subscription will cancel at period end */
   cancelAtPeriodEnd: mysqlEnum("cancelAtPeriodEnd", ["yes", "no"]).default("no"),
+  /** Foreign key to organizations table (null = not onboarded) */
+  organizationId: int("organizationId"),
+  /** Role within the organization */
+  orgRole: mysqlEnum("orgRole", ["PROVIDER", "ORG_ADMIN", "ORG_USER"]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
