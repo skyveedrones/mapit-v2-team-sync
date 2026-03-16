@@ -2106,3 +2106,6 @@
 - [x] Add name/email inputs with "Generate Email" button
 - [x] Show generated email preview with copy button and mailto link
 - [x] Still store referral in DB when user generates the email
+
+## Navigation Update
+- [x] Add Referral Program link to hamburger navigation after Pricing

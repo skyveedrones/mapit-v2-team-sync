@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Menu, X, User, UserCircle, ChevronRight, LayoutDashboard, Settings, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, User, UserCircle, ChevronRight, LayoutDashboard, Settings, LogOut, Sun, Moon, Share2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl } from "@/const";
@@ -232,6 +232,12 @@ export const GlobalHamburgerHeader = () => {
                       className="text-lg text-slate-300 hover:text-white flex items-center gap-2 transition-colors text-left font-semibold"
                     >
                       Pricing <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => navTo("/referral")}
+                      className="text-lg text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition-colors text-left w-full font-semibold"
+                    >
+                      <Share2 className="w-4 h-4" /> Referral Program <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

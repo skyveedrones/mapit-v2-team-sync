@@ -32,6 +32,7 @@ import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
 import Municipal from "./pages/Municipal";
+import Referral from "./pages/Referral";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -202,6 +203,9 @@ function Router() {
       
       {/* Municipal Solutions */}
       <Route path="/municipal" component={Municipal} />
+      
+      {/* Referral Program */}
+      <Route path="/referral" component={Referral} />
       
       {/* Feature pages */}
       <Route path="/features/easy-upload" component={EasyUpload} />
