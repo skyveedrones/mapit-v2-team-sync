@@ -2117,3 +2117,6 @@
 - [x] Diagnose "Failed to update project assignments" error for eluna@forneytx.gov
 - [x] Fix the root cause in backend/frontend
 - [x] Manually assign eluna to the 5 Forney TX projects after fix
+
+## Bug Fix: Mapbox Blank on First Load
+- [x] Fix Mapbox map rendering blank on first project open (requires exit/re-enter to render)

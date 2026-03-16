@@ -269,11 +269,12 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
       mapboxgl.accessToken = token;
 
+      // Always initialize at a neutral center — we'll fly to GPS bounds once media loads
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,
         style: "mapbox://styles/mapbox/satellite-streets-v12",
-        center: getCenter(),
-        zoom: mediaWithGPS.length > 0 ? 15 : 12,
+        center: [-96.797, 32.7767],
+        zoom: 4,
         pitchWithRotate: false,
       });
 
@@ -282,20 +283,58 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       map.on("load", () => {
         mapRef.current = map;
         setMapLoaded(true);
-        map.resize();
+        // Force a resize immediately after load to fix blank tile issue
+        // when the container was hidden or had 0 dimensions during init
+        requestAnimationFrame(() => {
+          map.resize();
+        });
       });
 
       const handleResize = () => map.resize();
       window.addEventListener("resize", handleResize);
 
+      // ResizeObserver: catches the container becoming visible (e.g. tab switch,
+      // scroll-into-view, or SPA navigation where the div starts at 0×0)
+      let resizeObserver: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== "undefined" && mapContainerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          const m = mapRef.current;
+          if (m) m.resize();
+        });
+        resizeObserver.observe(mapContainerRef.current);
+      }
+
       return () => {
         window.removeEventListener("resize", handleResize);
+        resizeObserver?.disconnect();
         map.remove();
         mapRef.current = null;
         setMapLoaded(false);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // ── Fly to GPS bounds once media data arrives ───────────────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded || mediaWithGPS.length === 0) return;
+
+      if (mediaWithGPS.length === 1) {
+        map.flyTo({
+          center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
+          zoom: 17,
+          duration: 600,
+        });
+        return;
+      }
+
+      // Fit map to the bounding box of all GPS points
+      const bounds = new mapboxgl.LngLatBounds();
+      mediaWithGPS.forEach((m) => {
+        bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
+      });
+      map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+    }, [mapLoaded, mediaWithGPS]);
 
     // ── Add GPS markers + flight path ───────────────────────────────────────
     useEffect(() => {
