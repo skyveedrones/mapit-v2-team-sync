@@ -2124,3 +2124,6 @@
 ## Bug Fix: Mapbox Blank Screen (Round 2)
 - [x] Fix Mapbox blank screen on first project open (deeper fix - deferred init)
 - [x] Set flight path hidden by default on map open
+
+## Version Update
+- [x] Bump version from v1.1.0 to v1.1.1 (patch: Mapbox blank screen fix, flight path hidden by default, webmaster project assignment fix)
