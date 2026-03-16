@@ -2146,3 +2146,17 @@
 - [x] Implement blur placeholder while high-res loads
 - [x] Virtual scrolling available via virtua (grid layout maintained for now; upgrade path ready)
 - [x] Test gallery with large project (100+ files)
+
+## Existing User Migration (Pre-Publish)
+- [x] Audit current users, organizations, projects in DB
+- [x] Create 'Skyvee Drones' master org for owner (Clay)
+- [x] Create separate orgs for each existing client (Campo Del Sol, City of Garland Texas, Forney TX Municipal, SkyVee Aerial Drone Services)
+- [x] Set owner role to PROVIDER, client users to ORG_ADMIN
+- [x] Projects stay linked via userId (no project-level org migration needed)
+- [ ] Verify dashboard access after migration (Clay to verify)
+
+## VGrid Virtual Scrolling
+- [x] Replace CSS grid with VList-based VirtualMediaGrid for 50+ file galleries
+- [x] Maintain responsive column count (2/3/4 cols via resize listener)
+- [x] Preserve MediaCard memoization and LazyImage inside VirtualMediaGrid
+- [x] VList only renders visible rows — eliminates repaint lag on scroll
