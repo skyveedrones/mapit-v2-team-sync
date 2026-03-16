@@ -175,7 +175,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [targetB, setTargetB] = useState<{ lng: number; lat: number } | null>(null);
 
     // ── NEW: Enhanced overlay controls state ──
-    const [flightPathVisible, setFlightPathVisible] = useState(false);
+    const [flightPathVisible, setFlightPathVisible] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [overlayLocked, setOverlayLocked] = useState<Record<number, boolean>>({});
     const [renamingOverlayId, setRenamingOverlayId] = useState<number | null>(null);
@@ -261,149 +261,70 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Initialize Mapbox map ───────────────────────────────────────────────
     useEffect(() => {
-      if (!mapContainerRef.current) return;
-
-      // GUARD: Prevent React Strict Mode from mounting two maps in one div
-      if (mapContainerRef.current.childNodes.length > 0) {
-        console.log("[MapboxProjectMap] Container already has map, skipping initialization");
-        return;
-      }
-
-      // GUARD: Ensure container is visible and has a size
-      if (mapContainerRef.current.clientHeight === 0) {
-        console.log("[MapboxProjectMap] Container has 0 height, retrying in 100ms");
-        const retry = setTimeout(() => {
-          // Trigger a state update to re-run this effect
-          setMapLoaded(false);
-        }, 100);
-        return () => clearTimeout(retry);
-      }
+      // Skip if already initialized
+      if (mapRef.current) return;
 
       const token = import.meta.env.VITE_MAPBOX_TOKEN;
       if (!token) {
         console.error("[MapboxProjectMap] VITE_MAPBOX_TOKEN is not set");
         return;
       }
-
-      // Set token globally to ensure it's ready BEFORE map initialization
       mapboxgl.accessToken = token;
 
-      // Always initialize at a neutral center — we'll fly to GPS bounds once media loads
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: "mapbox://styles/mapbox/satellite-streets-v12",
-        center: [-96.797, 32.7767],
-        zoom: 4,
-        pitchWithRotate: false,
-        trackResize: true,
-      });
+      let animationFrameId: number;
 
-      map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
-
-      // THE HAMMER: Use 'idle' event instead of 'load' to ensure tiles are rendered
-      // The 'idle' event fires when the map has finished rendering and all tiles are loaded
-      map.once("idle", () => {
-        console.log("[MapboxProjectMap] Map idle event fired - tiles are ready");
-        mapRef.current = map;
-        setMapLoaded(true);
-        // Force resize on first idle to fix the 'Blank Box' issue
-        map.resize();
-        console.log("[MapboxProjectMap] Mapbox fully idle and resized");
-      });
-
-      const handleResize = () => {
-        if (mapRef.current) {
-          mapRef.current.resize();
-        }
-      };
-      window.addEventListener("resize", handleResize);
-
-      // ResizeObserver: catches the container becoming visible (e.g. tab switch,
-      // scroll-into-view, or SPA navigation where the div starts at 0×0)
-      let resizeObserver: ResizeObserver | null = null;
-      if (typeof ResizeObserver !== "undefined" && mapContainerRef.current) {
-        resizeObserver = new ResizeObserver(() => {
-          const m = mapRef.current;
-          if (m) {
-            m.resize();
-            // Force a tile render after resize
-            requestAnimationFrame(() => {
-              m.triggerRepaint();
-            });
-          }
-        });
-        resizeObserver.observe(mapContainerRef.current);
-      }
-
-      return () => {
-        window.removeEventListener("resize", handleResize);
-        resizeObserver?.disconnect();
-        map.remove();
-        mapRef.current = null;
-        setMapLoaded(false);
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // ── Fly to GPS bounds once media data arrives ───────────────────────────
-    useEffect(() => {
-      const map = mapRef.current;
-      if (!map || !mapLoaded || mediaWithGPS.length === 0) return;
-
-      // Wait for tiles to be loaded before flying to bounds
-      // This prevents blank map when tiles haven't rendered yet
-      const waitForTiles = () => {
-        if (!map.areTilesLoaded?.()) {
-          // Tiles not ready yet, try again soon
-          requestAnimationFrame(waitForTiles);
+      const initializeMap = () => {
+        const container = mapContainerRef.current;
+        if (!container) {
+          animationFrameId = requestAnimationFrame(initializeMap);
           return;
         }
 
-        // Tiles are loaded, now fly to bounds
-        if (mediaWithGPS.length === 1) {
-          map.flyTo({
-            center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
-            zoom: 17,
-            duration: 600,
-          });
-        } else {
-          // Fit map to the bounding box of all GPS points
-          const bounds = new mapboxgl.LngLatBounds();
-          mediaWithGPS.forEach((m) => {
-            bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
-          });
-          map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+        // POLLING CHECK: Ensure container has physical pixels before creating WebGL context
+        if (container.clientHeight === 0) {
+          console.log("[Mapbox] Container height is 0, polling next frame...");
+          animationFrameId = requestAnimationFrame(initializeMap);
+          return;
         }
 
-        // Force a resize and repaint after the animation completes
-        setTimeout(() => {
-          map.resize();
-          map.triggerRepaint();
-        }, 700);
+        console.log(`[Mapbox] Container size confirmed (${container.clientWidth}x${container.clientHeight}). Initializing WebGL...`);
+
+        const map = new mapboxgl.Map({
+          container,
+          style: "mapbox://styles/mapbox/satellite-streets-v12",
+          center: getCenter(),
+          zoom: mediaWithGPS.length > 0 ? 15 : 12,
+          pitchWithRotate: false,
+          trackResize: true,
+        });
+
+        map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+        // Force one final resize after the first frame to ensure canvas fills container
+        map.on("load", () => {
+          mapRef.current = map;
+          setMapLoaded(true);
+          requestAnimationFrame(() => map.resize());
+        });
+
+        const handleResize = () => map.resize();
+        window.addEventListener("resize", handleResize);
+        map.on("remove", () => window.removeEventListener("resize", handleResize));
       };
 
-      // Start waiting for tiles, with a timeout fallback
-      const timeoutId = setTimeout(() => {
-        // Fallback: if tiles take too long, just fly anyway
-        if (mediaWithGPS.length === 1) {
-          map.flyTo({
-            center: [parseFloat(mediaWithGPS[0].longitude!), parseFloat(mediaWithGPS[0].latitude!)],
-            zoom: 17,
-            duration: 600,
-          });
-        } else {
-          const bounds = new mapboxgl.LngLatBounds();
-          mediaWithGPS.forEach((m) => {
-            bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
-          });
-          map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 600 });
+      initializeMap();
+
+      return () => {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        if (mapRef.current) {
+          mapRef.current.remove();
+          mapRef.current = null;
         }
-      }, 2000);
-
-      waitForTiles();
-
-      return () => clearTimeout(timeoutId);
-    }, [mapLoaded, mediaWithGPS]);
+        setMapLoaded(false);
+      };
+      // Re-run once loading finishes so the container is guaranteed to be in the DOM
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading]);
 
     // ── Add GPS markers + flight path ───────────────────────────────────────
     useEffect(() => {
@@ -1222,16 +1143,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       ready: "Ready to snap!",
     };
 
-    // ── Loading state ───────────────────────────────────────────────────────
-    if (isLoading) {
-      return (
-        <Card className="bg-card">
-          <CardContent className="pt-4">
-            <Skeleton className={`w-full ${heightClass} rounded-lg`} />
-          </CardContent>
-        </Card>
-      );
-    }
+       // ── Loading state ───────────────────────────────────────────────
+    // NOTE: We do NOT early-return on isLoading here.
+    // The map container must always be in the DOM so the useEffect can attach Mapbox to it.
+    // We show a skeleton overlay on top of the map container while loading.    }
 
     // ── Render ──────────────────────────────────────────────────────────────
     return (
@@ -1255,25 +1170,35 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             </h2>
           </div>
 
-          {mediaWithGPS.length === 0 && activeOverlays.length === 0 ? (
-            <div className={`w-full ${heightClass} rounded-lg bg-muted/50 border border-border flex flex-col items-center justify-center text-muted-foreground`}>
-              <Navigation className="h-12 w-12 mb-3 opacity-50" />
-              <p className="font-medium">No GPS Data Available</p>
-              <p className="text-sm">Upload media with GPS coordinates to see them on the map</p>
-            </div>
-          ) : (
-            <div
-              ref={mapWrapperRef}
-              className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!rounded-none !border-0" : ""}`}
-              style={isFullscreen ? { background: "#000" } : undefined}
-            >
-              {/* Mapbox container */}
-              <div ref={mapContainerRef} className={`w-full min-h-[500px] ${isFullscreen ? "!h-screen" : heightClass}`} />
+          {/* Map wrapper — always rendered so mapContainerRef is never null */}
+          <div
+            ref={mapWrapperRef}
+            className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!rounded-none !border-0" : ""}`}
+            style={isFullscreen ? { background: "#000" } : undefined}
+          >
+            {/* Mapbox container — always in DOM, polling init waits for non-zero dimensions */}
+            <div ref={mapContainerRef} className={`w-full min-h-[500px] ${isFullscreen ? "!h-screen" : heightClass}`} />
 
-              {/* Map status indicator */}
-              <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
-                Mapbox GL JS &bull; Satellite-Streets-V12
+            {/* Loading skeleton overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 z-[10] flex items-center justify-center bg-muted/80 rounded-lg">
+                <div className="w-full h-full animate-pulse bg-muted rounded-lg" />
               </div>
+            )}
+
+            {/* No GPS overlay — shown only when truly empty and not loading */}
+            {!isLoading && mediaWithGPS.length === 0 && activeOverlays.length === 0 && (
+              <div className="absolute inset-0 z-[10] flex flex-col items-center justify-center text-muted-foreground bg-muted/50 rounded-lg">
+                <Navigation className="h-12 w-12 mb-3 opacity-50" />
+                <p className="font-medium">No GPS Data Available</p>
+                <p className="text-sm">Upload media with GPS coordinates to see them on the map</p>
+              </div>
+            )}
+
+            {/* Map status indicator */}
+            <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
+              {mediaWithGPS.length > 0 ? `${mediaWithGPS.length} GPS points` : ""} Satellite-Streets-V12
+            </div>
 
               {/* Fullscreen toggle button (top-right) */}
               <button
@@ -1738,7 +1663,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 </>
               )}
             </div>
-          )}
 
           {/* Fullscreen Media Viewer Modal */}
           {enlargedMedia && (

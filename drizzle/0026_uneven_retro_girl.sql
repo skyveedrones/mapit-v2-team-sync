@@ -3,7 +3,7 @@ CREATE TABLE `project_overlays` (
 	`projectId` int NOT NULL,
 	`fileUrl` varchar(512) NOT NULL,
 	`opacity` decimal(4,2) DEFAULT '0.5',
-	`coordinates` json,
+	`coordinates` json DEFAULT ('[ [0,0],[0,0],[0,0],[0,0] ]'),
 	`isActive` int DEFAULT 1,
 	`label` varchar(100) DEFAULT 'Initial Plan',
 	`version_number` int DEFAULT 1,

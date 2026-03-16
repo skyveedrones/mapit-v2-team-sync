@@ -1,22 +1,4 @@
 import { boolean, decimal, json, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
-
-/**
- * Organizations table for multi-tenant support.
- */
-export const organizations = mysqlTable("organizations", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  logoUrl: varchar("logoUrl", { length: 500 }),
-  logoKey: varchar("logoKey", { length: 500 }),
-  subscriptionTier: mysqlEnum("subscriptionTier", ["starter", "professional", "pilot"]).default("starter").notNull(),
-  type: mysqlEnum("type", ["provider", "municipality", "other"]).default("provider").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Organization = typeof organizations.$inferSelect;
-export type InsertOrganization = typeof organizations.$inferInsert;
-
 /**
  * Core user table backing auth flow.
  * Extend this file with additional tables as your product grows.
@@ -48,11 +30,7 @@ export const users = mysqlTable("users", {
   defaultFaaLicenseNumber: varchar("defaultFaaLicenseNumber", { length: 100 }),
   /** Default LAANC authorization number for new projects */
   defaultLaancAuthNumber: varchar("defaultLaancAuthNumber", { length: 100 }),
-  /** Foreign key to organizations table */
-  organizationId: int("organizationId"),
-  /** Role within the organization */
-  orgRole: mysqlEnum("orgRole", ["PROVIDER", "ORG_ADMIN", "ORG_USER"]).default("ORG_USER"),
-  /** User's organization name (legacy) */
+  /** User's organization name */
   organization: varchar("organization", { length: 255 }),
   /** Company name (for managed users) */
   companyName: varchar("companyName", { length: 255 }),
@@ -514,7 +492,7 @@ export const projectOverlays = mysqlTable("project_overlays", {
   /** Overlay opacity for display */
   opacity: decimal("opacity", { precision: 4, scale: 2 }).default("0.5"),
   /** 4 corner GPS coordinates for Mapbox (JSON array) */
-  coordinates: json("coordinates").default(JSON.stringify([[0,0],[0,0],[0,0],[0,0]])),
+  coordinates: json("coordinates").default('[ [0,0],[0,0],[0,0],[0,0] ]'),
   /** Whether overlay is active */
   isActive: int("isActive").default(1),
   /** Overlay label for version history */

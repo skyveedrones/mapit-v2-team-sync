@@ -12,7 +12,6 @@ import { GlobalBackground } from "./components/GlobalBackground";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 import { OfflineIndicator } from "./components/OfflineIndicator";
-import { WhatsNewBanner } from "./components/WhatsNewBanner";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import InviteAccept from "./pages/InviteAccept";
@@ -34,7 +33,6 @@ import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
-import OnboardingPilot from "./pages/OnboardingPilot";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -209,11 +207,6 @@ function Router() {
       {/* Referral Program */}
       <Route path="/referral" component={Referral} />
       
-      {/* Onboarding */}
-      <Route path="/onboarding/pilot">
-        {() => <ProtectedRoute component={OnboardingPilot} />}
-      </Route>
-      
       {/* Feature pages */}
       <Route path="/features/easy-upload" component={EasyUpload} />
       <Route path="/features/interactive-maps" component={InteractiveMaps} />
@@ -306,7 +299,6 @@ function App() {
           <OfflineIndicator />
           <VersionCheckOnLoginWrapper />
           <ContinuousVersionCheckWrapper />
-          <WhatsNewBanner />
 
           <Router />
         </TooltipProvider>
