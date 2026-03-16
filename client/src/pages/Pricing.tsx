@@ -67,21 +67,6 @@ export default function Pricing() {
 
   const plans: Plan[] = [
     {
-      name: "14-Day Trial",
-      price: "0",
-      period: "/14 days",
-      desc: "Full access. No credit card required.",
-      buttonText: "Start 14-Day Trial",
-      features: [
-        "Standard 2D Mapping",
-        "1 GB Storage",
-        "Single Project",
-        "Basic PDF Reports",
-      ],
-      isFeatured: false,
-      isFree: true,
-    },
-    {
       name: "PILOT",
       price: isAnnual ? "41.65" : "49",
       period: "/month",
@@ -180,7 +165,7 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-slate-400 mb-8">
-            Choose the plan that fits your operation. All paid plans include a 14-day free trial.
+            Choose the plan that fits your operation. Scale from solo pilot to full agency.
           </p>
 
           {/* Billing Toggle */}
@@ -208,7 +193,7 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto items-start">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -306,7 +291,7 @@ export default function Pricing() {
                 Can I try MAPIT before subscribing?
               </h3>
               <p className="text-slate-400">
-                Yes — start with the 14-Day Trial for full access to all features. No credit card required.
+                Yes — contact us to arrange a guided demo or evaluation period. Use the Contact Sales option on the METROPOLITAN plan.
               </p>
             </div>
 
@@ -342,7 +327,7 @@ export default function Pricing() {
                 How much storage do I get?
               </h3>
               <p className="text-slate-400">
-                Storage scales with your plan: Trial 1 GB, PILOT 100 GB, MUNICIPAL 500 GB, AGENCY 1.5 TB, METROPOLITAN unlimited.
+                Storage scales with your plan: PILOT 100 GB, MUNICIPAL 500 GB, AGENCY 1.5 TB, METROPOLITAN unlimited.
               </p>
             </div>
           </div>
@@ -357,7 +342,7 @@ export default function Pricing() {
             Ready to elevate your drone mapping?
           </h2>
           <p className="text-xl text-slate-400 mb-8">
-            Start your 14-day free trial today. No credit card required.
+            Get started with MAPIT today and take your drone operations to the next level.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
@@ -365,7 +350,7 @@ export default function Pricing() {
               size="lg"
               className="bg-[#10b981] hover:bg-[#0da673] text-slate-950 font-bold text-lg px-8 rounded-full hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
             >
-              Start 14-Day Trial
+              Get Started
             </Button>
             <Button
               onClick={() => alert("Contact sales functionality coming soon!")}
