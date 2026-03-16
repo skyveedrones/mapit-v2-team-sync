@@ -2099,3 +2099,10 @@
 - [x] Update Refer a Pilot page with email/name input form
 - [x] Display sent referrals list on the page
 - [x] Store referral data in database on send
+
+## Referral Program Redesign
+- [x] Rename "Refer a Pilot" to "Referral Program"
+- [x] Replace server-sent email with user-generated email (copy/paste into own email client)
+- [x] Add name/email inputs with "Generate Email" button
+- [x] Show generated email preview with copy button and mailto link
+- [x] Still store referral in DB when user generates the email

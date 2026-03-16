@@ -95,31 +95,55 @@ describe("referral.send input validation", () => {
   });
 });
 
-describe("referral email template", () => {
-  it("should include the referrer name in the email subject", () => {
-    // The email subject pattern is: `${ctx.user.name} invited you to try Mapit`
-    const referrerName = "Clay Bechtol";
-    const subject = `${referrerName} invited you to try Mapit`;
-    expect(subject).toContain("Clay Bechtol");
-    expect(subject).toContain("Mapit");
-  });
+describe("referral email generation (copy-paste approach)", () => {
+  function buildReferralSlug(name: string, id: number): string {
+    const first = name.split(" ")[0].toLowerCase().replace(/[^a-z]/g, "");
+    return `${first}${id}`;
+  }
+
+  function buildEmailSubject(referrerName: string): string {
+    return `${referrerName} invited you to try Mapit - Drone Mapping Platform`;
+  }
+
+  function buildEmailBody(referrerName: string, refereeName: string, referralLink: string): string {
+    return `Hi ${refereeName},\n\nI've been using Mapit for my drone mapping projects and thought you'd find it really useful.\n\nGet started here: ${referralLink}\n\n${referrerName}`;
+  }
 
   it("should build correct referral slug from user name and id", () => {
-    function buildReferralSlug(name: string, id: number): string {
-      const first = name.split(" ")[0].toLowerCase().replace(/[^a-z]/g, "");
-      return `${first}${id}`;
-    }
-
     expect(buildReferralSlug("Clay Bechtol", 1)).toBe("clay1");
     expect(buildReferralSlug("John Smith", 42)).toBe("john42");
     expect(buildReferralSlug("A", 100)).toBe("a100");
     expect(buildReferralSlug("", 5)).toBe("5");
   });
 
+  it("should include the referrer name in the email subject", () => {
+    const subject = buildEmailSubject("Clay Bechtol");
+    expect(subject).toContain("Clay Bechtol");
+    expect(subject).toContain("Mapit");
+  });
+
+  it("should include referee name and referral link in email body", () => {
+    const body = buildEmailBody("Clay", "John", "https://mapit.skyveedrones.com/signup?ref=clay1");
+    expect(body).toContain("Hi John");
+    expect(body).toContain("https://mapit.skyveedrones.com/signup?ref=clay1");
+    expect(body).toContain("Clay");
+  });
+
   it("should generate correct referral link", () => {
     const slug = "clay1";
     const referralLink = `https://mapit.skyveedrones.com/signup?ref=${slug}`;
     expect(referralLink).toBe("https://mapit.skyveedrones.com/signup?ref=clay1");
+  });
+
+  it("should produce valid mailto URL components", () => {
+    const subject = buildEmailSubject("Clay Bechtol");
+    const body = buildEmailBody("Clay", "John", "https://mapit.skyveedrones.com/signup?ref=clay1");
+    const to = "john@example.com";
+    const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    expect(mailto).toContain("mailto:");
+    expect(mailto).toContain("john%40example.com");
+    expect(mailto).toContain("subject=");
+    expect(mailto).toContain("body=");
   });
 });
 

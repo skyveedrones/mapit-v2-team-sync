@@ -4,13 +4,15 @@ import {
   Copy,
   CheckCircle,
   Users,
-  Send,
   Mail,
   User,
   Clock,
   CheckCheck,
   AlertCircle,
   Loader2,
+  ExternalLink,
+  FileText,
+  Gift,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -35,6 +37,31 @@ function timeAgo(date: Date | string): string {
   return d.toLocaleDateString();
 }
 
+function buildEmailBody(referrerName: string, refereeName: string, referralLink: string): string {
+  return `Hi ${refereeName},
+
+I've been using Mapit for my drone mapping projects and thought you'd find it really useful. It turns aerial footage into interactive maps with GPS tagging, flight path tracking, PDF overlays, and more.
+
+Here's the deal: sign up using my referral link and when you upgrade to a Pro plan, we both get 1 month free.
+
+Get started here: ${referralLink}
+
+What you get with Mapit:
+- Upload drone photos & videos with automatic GPS extraction
+- Interactive maps with markers, popups, and flight paths
+- Export GPS data in KML, CSV, GeoJSON, and GPX
+- Overlay construction plans on satellite maps
+- Generate professional PDF reports
+
+Let me know if you have any questions!
+
+${referrerName}`;
+}
+
+function buildEmailSubject(referrerName: string): string {
+  return `${referrerName} invited you to try Mapit - Drone Mapping Platform`;
+}
+
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
   pending: { label: "Pending", color: "text-yellow-400", icon: Clock },
   signed_up: { label: "Signed Up", color: "text-blue-400", icon: CheckCheck },
@@ -43,13 +70,15 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 
 export const ReferralWidget = () => {
   const { user } = useAuth();
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
   const [refereeName, setRefereeName] = useState("");
   const [refereeEmail, setRefereeEmail] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [generatedEmail, setGeneratedEmail] = useState<{ subject: string; body: string; to: string } | null>(null);
 
   const slug = user ? buildReferralSlug(user.name ?? "pilot", user.id) : "pilot";
   const referralLink = `https://mapit.skyveedrones.com/signup?ref=${slug}`;
+  const referrerName = user?.name ?? "A Mapit user";
 
   const userInitials = user
     ? (user.name ?? "")
@@ -64,37 +93,60 @@ export const ReferralWidget = () => {
   const referralList = trpc.referral.list.useQuery(undefined, { enabled: !!user });
   const referralStats = trpc.referral.stats.useQuery(undefined, { enabled: !!user });
 
-  const sendReferral = trpc.referral.send.useMutation({
-    onSuccess: (data) => {
-      toast.success(data.message);
-      setRefereeName("");
-      setRefereeEmail("");
-      setShowForm(false);
+  const recordReferral = trpc.referral.send.useMutation({
+    onSuccess: () => {
       utils.referral.list.invalidate();
       utils.referral.stats.invalidate();
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send referral");
-    },
   });
 
-  const handleCopy = () => {
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
-    setCopied(true);
+    setCopiedLink(true);
     toast.success("Referral link copied!");
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const handleSendReferral = (e: React.FormEvent) => {
+  const handleGenerateEmail = (e: React.FormEvent) => {
     e.preventDefault();
     if (!refereeName.trim() || !refereeEmail.trim()) {
       toast.error("Please enter both name and email");
       return;
     }
-    sendReferral.mutate({
+
+    const subject = buildEmailSubject(referrerName);
+    const body = buildEmailBody(referrerName, refereeName.trim(), referralLink);
+
+    setGeneratedEmail({ subject, body, to: refereeEmail.trim() });
+
+    // Record the referral in the database
+    recordReferral.mutate({
       refereeName: refereeName.trim(),
       refereeEmail: refereeEmail.trim(),
     });
+
+    toast.success("Email generated! Copy it or open in your email app.");
+  };
+
+  const handleCopyEmail = () => {
+    if (!generatedEmail) return;
+    const fullText = `To: ${generatedEmail.to}\nSubject: ${generatedEmail.subject}\n\n${generatedEmail.body}`;
+    navigator.clipboard.writeText(fullText);
+    setCopiedEmail(true);
+    toast.success("Email copied to clipboard!");
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleOpenMailto = () => {
+    if (!generatedEmail) return;
+    const mailto = `mailto:${encodeURIComponent(generatedEmail.to)}?subject=${encodeURIComponent(generatedEmail.subject)}&body=${encodeURIComponent(generatedEmail.body)}`;
+    window.open(mailto, "_blank");
+  };
+
+  const handleReset = () => {
+    setGeneratedEmail(null);
+    setRefereeName("");
+    setRefereeEmail("");
   };
 
   const stats = referralStats.data;
@@ -121,8 +173,8 @@ export const ReferralWidget = () => {
           </div>
           <div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-[#10b981]" />
-              Refer a Pilot
+              <Gift className="w-5 h-5 text-[#10b981]" />
+              Referral Program
             </h3>
             <p className="text-slate-400 text-sm">
               Grow the MAPIT network and earn rewards.
@@ -145,50 +197,37 @@ export const ReferralWidget = () => {
             {referralLink}
           </div>
           <button
-            onClick={handleCopy}
+            onClick={handleCopyLink}
             className="px-5 py-3 bg-[#10b981] hover:bg-[#0da673] text-slate-950 font-bold rounded-xl transition-all flex items-center gap-2 text-sm whitespace-nowrap"
           >
-            {copied ? (
+            {copiedLink ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
               <Copy className="w-4 h-4" />
             )}
-            {copied ? "Copied!" : "Copy Link"}
+            {copiedLink ? "Copied!" : "Copy Link"}
           </button>
         </div>
 
-        {/* Send Referral Email Section */}
+        {/* Generate Referral Email Section */}
         <div className="mb-6">
-          {!showForm ? (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800/80 hover:bg-slate-800 border border-white/10 hover:border-[#10b981]/30 rounded-xl text-slate-300 hover:text-white text-sm font-medium transition-all"
-            >
-              <Mail className="w-4 h-4 text-[#10b981]" />
-              Send Referral Email
-            </button>
-          ) : (
-            <AnimatePresence>
+          <AnimatePresence mode="wait">
+            {!generatedEmail ? (
               <motion.form
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                onSubmit={handleSendReferral}
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onSubmit={handleGenerateEmail}
                 className="bg-slate-950/50 border border-white/10 rounded-2xl p-5 space-y-4"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-white font-semibold text-sm flex items-center gap-2">
-                    <Send className="w-4 h-4 text-[#10b981]" />
-                    Send Referral Invitation
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="text-slate-500 hover:text-slate-300 text-xs"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-[#10b981]" />
+                  Send a Referral Email
+                </h4>
+                <p className="text-slate-500 text-xs">
+                  Enter their info and we'll generate a ready-to-send email for you.
+                </p>
 
                 <div>
                   <label className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider">
@@ -226,24 +265,91 @@ export const ReferralWidget = () => {
 
                 <button
                   type="submit"
-                  disabled={sendReferral.isPending}
+                  disabled={recordReferral.isPending}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#10b981] hover:bg-[#0da673] disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all text-sm"
                 >
-                  {sendReferral.isPending ? (
+                  {recordReferral.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Sending...
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4" />
-                      Send Invitation Email
+                      <FileText className="w-4 h-4" />
+                      Generate Email
                     </>
                   )}
                 </button>
               </motion.form>
-            </AnimatePresence>
-          )}
+            ) : (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="bg-slate-950/50 border border-white/10 rounded-2xl p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[#10b981]" />
+                    Email Ready
+                  </h4>
+                  <button
+                    onClick={handleReset}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    New Referral
+                  </button>
+                </div>
+
+                {/* Email Preview */}
+                <div className="bg-slate-900 border border-white/5 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-white/5 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-slate-500 w-10">To:</span>
+                      <span className="text-white">{generatedEmail.to}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-slate-500 w-10">Subj:</span>
+                      <span className="text-white">{generatedEmail.subject}</span>
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 max-h-48 overflow-y-auto custom-scrollbar">
+                    <pre className="text-xs text-slate-400 whitespace-pre-wrap font-sans leading-relaxed">
+                      {generatedEmail.body}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCopyEmail}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-semibold rounded-xl transition-all text-sm"
+                  >
+                    {copiedEmail ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-[#10b981]" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy Email
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleOpenMailto}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#10b981] hover:bg-[#0da673] text-slate-950 font-bold rounded-xl transition-all text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Open in Email App
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Stats */}
@@ -304,11 +410,6 @@ export const ReferralWidget = () => {
                         {timeAgo(ref.createdAt)}
                       </div>
                     </div>
-                    {!ref.emailSent && (
-                      <div title="Email not delivered">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-400/60" />
-                      </div>
-                    )}
                   </div>
                 );
               })}
