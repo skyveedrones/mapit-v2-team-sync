@@ -218,6 +218,27 @@
       "when": 1773624226516,
       "tag": "0030_ordinary_flatman",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1773671305736,
+      "tag": "0031_big_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1773671709038,
+      "tag": "0032_rare_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1773672121487,
+      "tag": "0033_worried_ironclad",
+      "breakpoints": true
     }
   ]
 }

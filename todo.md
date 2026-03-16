@@ -2144,3 +2144,30 @@
 - [x] Identify all timing issues: data loading, DOM visibility, map initialization
 - [x] Implement comprehensive fix: eager render + proper resize + fallback bounds
 - [x] Test on first open and verify map renders immediately with GPS points visible
+
+
+## Feature: Bulletproof Mapbox Fix (Lifecycle Race Condition)
+- [ ] Set Mapbox token globally before component mount
+- [ ] Add React Strict Mode double-mounting guard (check childNodes.length)
+- [ ] Add 0px container size guard with retry logic
+- [ ] Replace load event with idle event and force resize
+- [ ] Test on untouched project - verify satellite tiles render on first load
+
+## Feature: Organization Multi-Tenant Layer
+- [ ] Add organizations table to database schema (id, name, logoUrl, subscriptionTier)
+- [ ] Update users table with organizationId and role (PROVIDER, ORG_ADMIN, ORG_USER)
+- [ ] Create database migration and push schema
+- [ ] Implement conditional branding in Header component
+- [ ] Test organization logo display with different org logos
+
+## Feature: Multi-Tenant Organizations (v1.2.0)
+- [x] Fix project_overlays JSON default syntax error for TiDB compatibility
+- [x] Add organizations table to schema (name, logoUrl, logoKey, subscriptionTier, type)
+- [x] Add organizationId and orgRole fields to users table
+- [x] Sync migration journal to unblock db:push
+- [x] Create organizations table and add user columns directly via SQL
+- [x] Add organization tRPC procedures (create, get, update, uploadLogo)
+- [x] Build /onboarding/pilot page with 3-step wizard (org info, logo upload, success)
+- [x] Register /onboarding/pilot route in App.tsx
+- [ ] Implement conditional branding in Header (show org logo if set)
+- [ ] Add "Set up your organization" prompt in Settings for new users

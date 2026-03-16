@@ -262,11 +262,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // ── Initialize Mapbox map ───────────────────────────────────────────────
     useEffect(() => {
       if (!mapContainerRef.current) return;
+
+      // GUARD: Prevent React Strict Mode from mounting two maps in one div
+      if (mapContainerRef.current.childNodes.length > 0) {
+        console.log("[MapboxProjectMap] Container already has map, skipping initialization");
+        return;
+      }
+
+      // GUARD: Ensure container is visible and has a size
+      if (mapContainerRef.current.clientHeight === 0) {
+        console.log("[MapboxProjectMap] Container has 0 height, retrying in 100ms");
+        const retry = setTimeout(() => {
+          // Trigger a state update to re-run this effect
+          setMapLoaded(false);
+        }, 100);
+        return () => clearTimeout(retry);
+      }
+
       const token = import.meta.env.VITE_MAPBOX_TOKEN;
       if (!token) {
         console.error("[MapboxProjectMap] VITE_MAPBOX_TOKEN is not set");
         return;
       }
+
+      // Set token globally to ensure it's ready BEFORE map initialization
       mapboxgl.accessToken = token;
 
       // Always initialize at a neutral center — we'll fly to GPS bounds once media loads
@@ -276,18 +295,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         center: [-96.797, 32.7767],
         zoom: 4,
         pitchWithRotate: false,
+        trackResize: true,
       });
 
       map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
 
-      map.on("load", () => {
+      // THE HAMMER: Use 'idle' event instead of 'load' to ensure tiles are rendered
+      // The 'idle' event fires when the map has finished rendering and all tiles are loaded
+      map.once("idle", () => {
+        console.log("[MapboxProjectMap] Map idle event fired - tiles are ready");
         mapRef.current = map;
         setMapLoaded(true);
-        // Force a resize immediately after load to fix blank tile issue
-        // when the container was hidden or had 0 dimensions during init
-        requestAnimationFrame(() => {
-          map.resize();
-        });
+        // Force resize on first idle to fix the 'Blank Box' issue
+        map.resize();
+        console.log("[MapboxProjectMap] Mapbox fully idle and resized");
       });
 
       const handleResize = () => {
