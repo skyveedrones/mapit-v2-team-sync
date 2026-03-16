@@ -192,6 +192,7 @@ export default function Clients() {
                         </CardDescription>
                       </div>
                     </div>
+                    {user?.role === 'webmaster' && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -203,6 +204,7 @@ export default function Clients() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -2072,3 +2072,6 @@
 
 ## Bug: Webmaster role reverts to admin on login
 - [x] Fix upsertUser overwriting owner role to admin on every login (now only sets admin on first signup)
+
+## Bug: Clients page delete button not gated by role
+- [x] Gate delete button on Clients list page to webmaster only
