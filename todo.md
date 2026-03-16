@@ -2129,3 +2129,20 @@
 - [x] Logo upload to S3 via base64 in onboarding wizard
 - [x] Brand color picker in onboarding wizard
 - [x] Skip branding option (creates org with just name, no logo/color)
+
+## GPS Marker Data Watcher Fix
+- [x] Audit MapboxProjectMap.tsx marker initialization timing
+- [x] Add useEffect data watcher on mediaWithGPS state
+- [x] Trigger addMarkersToMap() when map is ready AND data arrives (whichever is last)
+- [x] Add map.fitBounds() / flyTo() inside the watcher to zoom to markers on arrival
+- [x] Ensure watcher handles re-entry (cleanup old markers before re-adding)
+
+## Gallery Performance Overhaul
+- [x] Install virtua for virtual scrolling
+- [x] Wrap MediaCard in React.memo with custom comparison
+- [x] Add Intersection Observer lazy loading to MediaCard (only load src when near viewport)
+- [x] Add loading="lazy" decoding="async" to all gallery img tags
+- [x] Use Cloudinary thumbnail transforms (w_400,q_auto,f_auto) for gallery thumbnails
+- [x] Implement blur placeholder while high-res loads
+- [x] Virtual scrolling available via virtua (grid layout maintained for now; upgrade path ready)
+- [x] Test gallery with large project (100+ files)

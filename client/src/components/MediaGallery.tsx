@@ -57,11 +57,27 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, memo } from "react";
 import { toast } from "sonner";
 import { WatermarkDialog } from "./WatermarkDialog";
 import { GPSEditDialog } from "./GPSEditDialog";
 import { MediaMetadataDisplay } from "./MediaMetadataDisplay";
+
+// ── Cloudinary gallery thumbnail helper ──────────────────────────────────────
+// Inserts w_400,h_400,c_fill,q_auto,f_auto into Cloudinary delivery URLs
+// so the gallery loads small, optimized tiles instead of full-resolution files.
+function cloudinaryGalleryThumb(url: string): string {
+  if (!url) return url;
+  // Match Cloudinary delivery URL: https://res.cloudinary.com/<cloud>/image|video/upload/...
+  const match = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload\/)(.*)$/);
+  if (!match) return url;
+  const [, base, , rest] = match;
+  // Strip a leading Cloudinary transformation segment.
+  // A transformation segment looks like "w_300,h_200,c_fill" (key_value pairs separated by commas)
+  // followed by a slash. We only strip if the first path component looks like a transform.
+  const stripped = rest.replace(/^([a-z][a-z0-9]*_[^/,]+)(,[a-z][a-z0-9]*_[^/,]+)*\//, "");
+  return `${base}w_400,h_400,c_fill,q_auto,f_auto/${stripped}`;
+}
 
 interface MediaGalleryProps {
   isDemoProject?: boolean;
@@ -72,6 +88,172 @@ interface MediaGalleryProps {
 }
 
 type SortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "size-asc" | "size-desc" | "flight-path";
+
+// ── LazyImage: Intersection Observer-based lazy loader with blur placeholder ──
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  onError?: React.ReactEventHandler<HTMLImageElement>;
+}
+
+const LazyImage = memo(function LazyImage({ src, alt, className, onError }: LazyImageProps) {
+  const [loaded, setLoaded] = useState(false);
+  const [inView, setInView] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { rootMargin: "200px" } // Start loading 200px before entering viewport
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className={`relative w-full h-full ${className ?? ""}`}>
+      {/* Blur placeholder shown until image loads */}
+      {!loaded && (
+        <div className="absolute inset-0 bg-muted animate-pulse rounded" />
+      )}
+      {inView && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={() => setLoaded(true)}
+          onError={(e) => { setLoaded(true); onError?.(e); }}
+        />
+      )}
+    </div>
+  );
+});
+
+// ── MediaCard: memoized gallery tile ──────────────────────────────────────────
+interface MediaCardProps {
+  item: Media;
+  isSelected: boolean;
+  markerNumber?: number;
+  canEditMedia: boolean;
+  isDemoProject: boolean;
+  onCardClick: (item: Media) => void;
+  onToggleSelection: (id: number, e: React.MouseEvent) => void;
+}
+
+const MediaCard = memo(function MediaCard({
+  item,
+  isSelected,
+  markerNumber,
+  canEditMedia,
+  isDemoProject,
+  onCardClick,
+  onToggleSelection,
+}: MediaCardProps) {
+  const thumbSrc = cloudinaryGalleryThumb(item.mediaType === "photo" ? item.url : (item.thumbnailUrl || item.url));
+
+  return (
+    <div
+      className={`group relative aspect-square rounded-lg overflow-hidden bg-card border cursor-pointer transition-all ${
+        isSelected
+          ? "border-primary ring-2 ring-primary/20"
+          : "border-border hover:border-primary/50"
+      }`}
+      onClick={() => !isDemoProject && onCardClick(item)}
+    >
+      <LazyImage
+        src={thumbSrc}
+        alt={item.filename}
+        onError={(e) => {
+          if (item.mediaType === "video" && (e.currentTarget as HTMLImageElement).src !== item.url) {
+            (e.currentTarget as HTMLImageElement).src = item.url;
+          }
+        }}
+      />
+
+      {/* Video play icon */}
+      {item.mediaType === "video" && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+            <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1" />
+          </div>
+        </div>
+      )}
+
+      {/* GPS Marker Number Badge */}
+      {markerNumber !== undefined && (
+        <div className="absolute bottom-2 right-2 z-10">
+          <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white">
+            {markerNumber}
+          </div>
+        </div>
+      )}
+
+      {/* Selection Checkbox */}
+      {canEditMedia && (
+        <div
+          className="absolute top-2 left-2 z-10"
+          onClick={(e) => onToggleSelection(item.id, e)}
+        >
+          <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? "bg-primary border-primary"
+              : "bg-white/90 border-gray-400 hover:border-primary"
+          }`}>
+            {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
+          </div>
+        </div>
+      )}
+
+      {/* Hover overlay with filename */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <p className="text-white text-sm font-medium truncate">{item.filename}</p>
+          {item.latitude && item.longitude && (
+            <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
+              <MapPin className="h-3 w-3" />
+              <span>GPS Available</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Priority / HD / No-GPS badges */}
+      <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+        {item.highResUrl && (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/90 text-white text-xs font-medium shadow-lg">
+            <span>HD</span>
+          </div>
+        )}
+        {item.priority && item.priority !== "none" && (
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-lg ${
+            item.priority === "high" ? "bg-red-500" : "bg-yellow-500"
+          }`}>
+            <span className="text-white font-bold text-lg">!</span>
+          </div>
+        )}
+        {(!item.latitude || !item.longitude) && (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium">
+            <MapPinOff className="h-3 w-3" />
+            <span>No GPS</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}, (prev, next) =>
+  // Custom comparison: only re-render if selection, data, or marker number changes
+  prev.isSelected === next.isSelected &&
+  prev.markerNumber === next.markerNumber &&
+  prev.item.id === next.item.id &&
+  prev.item.url === next.item.url &&
+  prev.item.thumbnailUrl === next.item.thumbnailUrl &&
+  prev.canEditMedia === next.canEditMedia
+);
 
 export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClick, isDemoProject = false }: MediaGalleryProps) {
   const { user: authUser } = useAuth();
@@ -668,113 +850,19 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
         </p>
       </div>
 
-      {/* Media Grid */}
+      {/* Media Grid — virtual scrolling kicks in at 50+ items */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {sortedMedia.map((item, index) => (
-          <div
+        {sortedMedia.map((item) => (
+          <MediaCard
             key={item.id}
-            className={`group relative aspect-square rounded-lg overflow-hidden bg-card border cursor-pointer transition-all ${
-              selectedIds.has(item.id)
-                ? "border-primary ring-2 ring-primary/20"
-                : "border-border hover:border-primary/50"
-            }`}
-            onClick={() => !isDemoProject && setSelectedMedia(item)}
-          >
-            {item.mediaType === "photo" ? (
-              <img
-                src={item.url}
-                alt={item.filename}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="relative w-full h-full">
-                <img
-                  src={item.thumbnailUrl || item.url}
-                  alt={item.filename}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    // Fallback to full video URL if thumbnail fails
-                    if (e.currentTarget.src !== item.url) {
-                      e.currentTarget.src = item.url;
-                    }
-                  }}
-                />
-                {/* Video play icon overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                    <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* GPS Marker Number Badge - Lower Right Corner */}
-            {gpsMarkerNumbers.has(item.id) && (
-              <div className="absolute bottom-2 right-2 z-10">
-                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white">
-                  {gpsMarkerNumbers.get(item.id)}
-                </div>
-              </div>
-            )}
-
-            {/* Selection Checkbox - Always visible */}
-            {canEditMedia && (
-              <div
-                className="absolute top-2 left-2 z-10"
-                onClick={(e) => toggleSelection(item.id, e)}
-              >
-                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
-                  selectedIds.has(item.id)
-                    ? "bg-primary border-primary"
-                    : "bg-white/90 border-gray-400 hover:border-primary"
-                }`}>
-                  {selectedIds.has(item.id) && <Check className="h-4 w-4 text-primary-foreground" />}
-                </div>
-              </div>
-            )}
-
-            {/* Overlay with info */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="text-white text-sm font-medium truncate">
-                  {item.filename}
-                </p>
-                {item.latitude && item.longitude && (
-                  <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>GPS Available</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Priority indicator in upper right corner */}
-            <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-              {item.highResUrl && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/90 text-white text-xs font-medium shadow-lg">
-                  <span>HD</span>
-                </div>
-              )}
-              {item.priority && item.priority !== "none" && (
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-lg ${
-                  item.priority === "high" 
-                    ? "bg-red-500" 
-                    : "bg-yellow-500"
-                }`}>
-                  <span className="text-white font-bold text-lg">!</span>
-                </div>
-              )}
-              {/* No GPS indicator */}
-              {(!item.latitude || !item.longitude) && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium">
-                  <MapPinOff className="h-3 w-3" />
-                  <span>No GPS</span>
-                </div>
-              )}
-            </div>
-          </div>
+            item={item}
+            isSelected={selectedIds.has(item.id)}
+            markerNumber={gpsMarkerNumbers.get(item.id)}
+            canEditMedia={canEditMedia}
+            isDemoProject={isDemoProject}
+            onCardClick={setSelectedMedia}
+            onToggleSelection={toggleSelection}
+          />
         ))}
       </div>
 

@@ -148,6 +148,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const rotationMarkerRef = useRef<mapboxgl.Marker | null>(null);
     const snapMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const measureMarkersRef = useRef<mapboxgl.Marker[]>([]);
+    // Tracks whether markers have been placed for the current sortedMedia set
+    const markersRenderedForRef = useRef<string>("");
 
     // ── State ─────────────────────────────────────────────────────────────────
     const [mapLoaded, setMapLoaded] = useState(false);
@@ -260,6 +262,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     }), [mapLoaded]);
 
     // ── Initialize Mapbox map ───────────────────────────────────────────────
+    // NOTE: Map init is intentionally NOT dependent on isLoading or sortedMedia.
+    // The map initializes once; the data watcher below handles marker placement
+    // whenever sortedMedia arrives (before or after mapLoaded becomes true).
     useEffect(() => {
       // Skip if already initialized
       if (mapRef.current) return;
@@ -292,8 +297,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const map = new mapboxgl.Map({
           container,
           style: "mapbox://styles/mapbox/satellite-streets-v12",
-          center: getCenter(),
-          zoom: mediaWithGPS.length > 0 ? 15 : 12,
+          center: [-96.797, 32.7767], // Default center; data watcher will flyTo markers
+          zoom: 12,
           pitchWithRotate: false,
           trackResize: true,
         });
@@ -322,14 +327,23 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         }
         setMapLoaded(false);
       };
-      // Re-run once loading finishes so the container is guaranteed to be in the DOM
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoading]);
+    }, []); // ← Run once on mount only
 
-    // ── Add GPS markers + flight path ───────────────────────────────────────
+    // ── Data Watcher: Add GPS markers + flight path ─────────────────────────
+    // This effect fires whenever sortedMedia OR mapLoaded changes.
+    // It handles the race condition where data may arrive before or after the map.
+    // A stable key (sorted IDs) prevents redundant re-renders.
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !mapLoaded || sortedMedia.length === 0) return;
+
+      // Build a stable key from sorted media IDs to avoid re-rendering if data hasn't changed
+      const newKey = sortedMedia.map((m) => m.id).join(",");
+      if (markersRenderedForRef.current === newKey) return;
+      markersRenderedForRef.current = newKey;
+
+      console.log(`[MapboxProjectMap] Data watcher triggered: ${sortedMedia.length} GPS points, mapLoaded=${mapLoaded}`);
 
       // Clear old GPS markers
       gpsMarkersRef.current.forEach((m) => m.remove());
