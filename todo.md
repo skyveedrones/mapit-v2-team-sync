@@ -2075,3 +2075,27 @@
 
 ## Bug: Clients page delete button not gated by role
 - [x] Gate delete button on Clients list page to webmaster only
+
+## UI Fixes - Title, Scrollbar, Client Assignment
+- [ ] Change "See Your City in a New Light" to "Smart Data for the Modern Municipality"
+- [ ] Add scrollbar to Manage Project Access popup dialog
+- [ ] Fix user 7920012 not showing in Forney TX Municipal client folder
+- [ ] Move Municipal Solutions up under Solutions (not nested under Services) in hamburger menu
+
+## Overlay Manager Enhancements
+- [x] Add fullscreen mode for the project map
+- [x] Add "Hide Flight Path" toggle to overlay manager panel
+- [x] Add measurement tool (distance/area) to overlay manager panel
+- [x] Add opacity slider to reveal map under overlay
+- [x] Add overlay rename functionality
+- [x] Add save/persist overlay settings (opacity, visibility, name) to database
+- [x] Add recommended tools: lock overlay, fit to overlay bounds, overlay info/metadata
+- [x] Reorganize overlay manager panel with all new controls
+
+## Referral Email System
+- [ ] Create referrals database table (referrer, referee name/email, status, timestamps)
+- [ ] Add sendReferralEmail backend endpoint with branded email template
+- [ ] Add listReferrals endpoint to show sent referrals
+- [ ] Update Refer a Pilot page with email/name input form
+- [ ] Display sent referrals list on the page
+- [ ] Store referral data in database on send

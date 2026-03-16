@@ -3,11 +3,18 @@
  *
  * Combines:
  *   1. GPS Pins (numbered markers with photo/video distinction)
- *   2. Flight Path (GeoJSON LineString layer)
+ *   2. Flight Path (GeoJSON LineString layer) with toggle
  *   3. Overlay Editor (image source with 4-corner drag, rotation, 2-point snap)
- *   4. Sidebar overlay manager (opacity, visibility, edit, snap, reset, delete)
- *
- * This is the SOLE map engine — no Google Maps dependency.
+ *   4. Enhanced Overlay Manager sidebar:
+ *      - Overlay rename (inline edit)
+ *      - Opacity slider (persisted)
+ *      - Visibility toggle
+ *      - Hide/Show Flight Path
+ *      - Measurement tool (distance + area)
+ *      - Lock overlay position
+ *      - Fit to overlay bounds
+ *      - Fullscreen map mode
+ *      - Edit Alignment / 2-Point Snap / Reset / Delete
  */
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -20,9 +27,18 @@ import {
   Eye,
   EyeOff,
   Layers,
+  Lock,
+  Maximize,
+  Minimize,
   Move,
+  Pencil,
+  Route,
   RotateCcw,
+  Ruler,
+  Save,
+  Target,
   Trash2,
+  Unlock,
   X,
   MapPin,
   Navigation,
@@ -33,6 +49,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import type { Media } from "../../../drizzle/schema";
+import turfDistance from "@turf/distance";
+import turfArea from "@turf/area";
+import { polygon as turfPolygon, point as turfPoint } from "@turf/helpers";
 
 // ── Re-export alignment helpers from MapboxOverlayView ──────────────────────
 export {
@@ -58,9 +77,7 @@ import {
 
 export interface MapboxProjectMapHandle {
   panToMedia: (latitude: number, longitude: number, mediaId?: string) => void;
-  /** Returns the live Mapbox GL map instance (for flyby, etc.) */
   getMap: () => mapboxgl.Map | null;
-  /** Returns whether the map has finished loading */
   isMapLoaded: () => boolean;
 }
 
@@ -69,19 +86,42 @@ interface MapboxProjectMapProps {
   projectName: string;
   flightId?: number;
   isDemoProject?: boolean;
-  /** Overlay data from project query */
   overlays?: OverlayData[];
-  /** Callback after overlay CRUD to refetch project data */
   onOverlayUpdated?: () => void;
-  /** Map height CSS class (default: h-[600px]) */
   heightClass?: string;
-  /** Show the "Full Screen" link button */
   showFullScreenLink?: boolean;
 }
 
 // ── Corner labels & colors ──────────────────────────────────────────────────
 const CORNER_LABELS = ["NW", "NE", "SE", "SW"];
 const CORNER_COLORS = ["#10B981", "#10B981", "#10B981", "#10B981"];
+
+// ── Measurement helpers ─────────────────────────────────────────────────────
+
+function formatDistance(meters: number): string {
+  if (meters < 1) return `${(meters * 100).toFixed(1)} cm`;
+  if (meters < 1000) return `${meters.toFixed(1)} m`;
+  return `${(meters / 1000).toFixed(2)} km`;
+}
+
+function formatDistanceFeet(meters: number): string {
+  const feet = meters * 3.28084;
+  if (feet < 5280) return `${feet.toFixed(1)} ft`;
+  return `${(feet / 5280).toFixed(2)} mi`;
+}
+
+function formatArea(sqMeters: number): string {
+  if (sqMeters < 10000) return `${sqMeters.toFixed(1)} m²`;
+  const hectares = sqMeters / 10000;
+  if (hectares < 100) return `${hectares.toFixed(2)} ha`;
+  return `${(sqMeters / 1000000).toFixed(3)} km²`;
+}
+
+function formatAreaFeet(sqMeters: number): string {
+  const sqFeet = sqMeters * 10.7639;
+  if (sqFeet < 43560) return `${sqFeet.toFixed(0)} ft²`;
+  return `${(sqFeet / 43560).toFixed(2)} acres`;
+}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -100,12 +140,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Refs ──────────────────────────────────────────────────────────────────
     const mapContainerRef = useRef<HTMLDivElement>(null);
+    const mapWrapperRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const gpsMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const popupRef = useRef<mapboxgl.Popup | null>(null);
     const cornerMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const rotationMarkerRef = useRef<mapboxgl.Marker | null>(null);
     const snapMarkersRef = useRef<mapboxgl.Marker[]>([]);
+    const measureMarkersRef = useRef<mapboxgl.Marker[]>([]);
 
     // ── State ─────────────────────────────────────────────────────────────────
     const [mapLoaded, setMapLoaded] = useState(false);
@@ -132,7 +174,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [anchorB, setAnchorB] = useState<{ lng: number; lat: number } | null>(null);
     const [targetB, setTargetB] = useState<{ lng: number; lat: number } | null>(null);
 
+    // ── NEW: Enhanced overlay controls state ──
+    const [flightPathVisible, setFlightPathVisible] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [overlayLocked, setOverlayLocked] = useState<Record<number, boolean>>({});
+    const [renamingOverlayId, setRenamingOverlayId] = useState<number | null>(null);
+    const [renameValue, setRenameValue] = useState("");
+
+    // Measurement state
+    const [measureMode, setMeasureMode] = useState(false);
+    const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
+    const [measureResult, setMeasureResult] = useState<{ distance: number; area: number } | null>(null);
+
     const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
+    const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
 
     // ── Fetch media ─────────────────────────────────────────────────────────
     const { data: mediaList, isLoading } = isDemoProject
@@ -159,7 +214,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const sumLng = mediaWithGPS.reduce((sum, m) => sum + parseFloat(m.longitude!), 0);
         return [sumLng / mediaWithGPS.length, sumLat / mediaWithGPS.length];
       }
-      return [-96.797, 32.7767]; // Default: Dallas, TX
+      return [-96.797, 32.7767];
     }, [mediaWithGPS]);
 
     // ── Active overlays ─────────────────────────────────────────────────────
@@ -187,7 +242,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const map = mapRef.current;
         if (!map) return;
         map.flyTo({ center: [longitude, latitude], zoom: 20, duration: 800 });
-        // Find and click the marker
         if (mediaId) {
           setTimeout(() => {
             const marker = gpsMarkersRef.current.find((m) => {
@@ -224,17 +278,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       });
 
       map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
-      map.addControl(new mapboxgl.FullscreenControl(), "top-right");
 
       map.on("load", () => {
         mapRef.current = map;
         setMapLoaded(true);
-        // Fix blank screen on resize/load
         map.resize();
-        console.log("[MapboxProjectMap] Mapbox fully loaded and rendering.");
       });
 
-      // Also resize on window resize
       const handleResize = () => map.resize();
       window.addEventListener("resize", handleResize);
 
@@ -285,7 +335,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         paint: {
           "line-color": "#10b981",
           "line-width": 3,
-          "line-opacity": 0.8,
+          "line-opacity": flightPathVisible ? 0.8 : 0,
         },
         layout: {
           "line-join": "round",
@@ -300,7 +350,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const isVideo = media.mediaType === "video";
         const markerColor = isVideo ? "#ef4444" : "#10B981";
 
-        // Create marker element
         const el = document.createElement("div");
         el.setAttribute("data-media-id", String(media.id));
         el.style.cssText = `
@@ -320,7 +369,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         `;
         el.textContent = String(index + 1);
 
-        // Create popup
         const thumbnailUrl = media.thumbnailUrl || media.url;
         const popupHtml = `
           <div style="max-width:220px;font-family:system-ui,sans-serif">
@@ -343,7 +391,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           .setPopup(popup)
           .addTo(map);
 
-        // On popup open, set selected media
         popup.on("open", () => setSelectedMedia(media));
 
         gpsMarkersRef.current.push(marker);
@@ -359,12 +406,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
     }, [sortedMedia, mapLoaded]);
 
+    // ── Toggle flight path visibility ───────────────────────────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+      if (map.getLayer("flight-path")) {
+        map.setPaintProperty("flight-path", "line-opacity", flightPathVisible ? 0.8 : 0);
+      }
+    }, [flightPathVisible, mapLoaded]);
+
     // ── Render overlay image sources ────────────────────────────────────────
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !mapLoaded) return;
 
-      // Remove old overlay sources/layers
       for (const ov of activeOverlays) {
         const srcId = `overlay-src-${ov.id}`;
         const layerId = `overlay-layer-${ov.id}`;
@@ -372,7 +427,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         if (map.getSource(srcId)) map.removeSource(srcId);
       }
 
-      // Add each active overlay
       for (const ov of activeOverlays) {
         const coords = parseCoords(ov.coordinates);
         if (!coords || coords.length < 4) continue;
@@ -389,7 +443,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             coordinates: coords as [[number, number], [number, number], [number, number], [number, number]],
           });
 
-          // Insert overlay BELOW the flight path and markers
           const beforeLayerId = map.getLayer("flight-path") ? "flight-path" : undefined;
 
           map.addLayer(
@@ -508,6 +561,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     }, []);
 
     const handleStartEdit = useCallback((ov: OverlayData) => {
+      if (overlayLocked[ov.id]) {
+        toast.error("Overlay is locked. Unlock it first.");
+        return;
+      }
       const coords = parseCoords(ov.coordinates);
       if (!coords) {
         toast.error("Cannot edit: invalid coordinates");
@@ -518,7 +575,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const rot = typeof ov.rotation === "string" ? parseFloat(ov.rotation) : (ov.rotation ?? 0);
       setEditRotation(typeof rot === "number" && !isNaN(rot) ? rot : 0);
       setEditMode(true);
-    }, []);
+    }, [overlayLocked]);
 
     const handleCancelEdit = useCallback(() => {
       clearEditMarkers();
@@ -526,7 +583,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setEditingOverlayId(null);
       setEditCorners(null);
       setEditRotation(0);
-      // Restore original overlay source coordinates from props
       for (const ov of activeOverlays) {
         const coords = parseCoords(ov.coordinates);
         if (coords) updateOverlaySource(ov.id, coords);
@@ -570,7 +626,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
       const currentCorners: [number, number][] = [...editCorners];
 
-      // Corner markers
       currentCorners.forEach(([lng, lat], i) => {
         const el = document.createElement("div");
         el.style.cssText = `
@@ -605,18 +660,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             }
           }
 
-          // CRITICAL: Update the Mapbox image source live
           const source = map.getSource(`overlay-src-${editingOverlayId}`) as mapboxgl.ImageSource | undefined;
           if (source) {
             source.setCoordinates(currentCorners as [[number, number], [number, number], [number, number], [number, number]]);
           }
 
-          // Update sibling marker positions
           cornerMarkersRef.current.forEach((m, j) => {
             if (j !== i) m.setLngLat(currentCorners[j] as [number, number]);
           });
 
-          // Update rotation handle
           const tc = topCenter(currentCorners);
           if (rotationMarkerRef.current) rotationMarkerRef.current.setLngLat(tc);
         });
@@ -690,6 +742,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── 2-Point Snap ────────────────────────────────────────────────────────
     const startSnapMode = useCallback((ov: OverlayData) => {
+      if (overlayLocked[ov.id]) {
+        toast.error("Overlay is locked. Unlock it first.");
+        return;
+      }
       const coords = parseCoords(ov.coordinates);
       if (!coords) return;
       setEditingOverlayId(ov.id);
@@ -702,7 +758,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setAnchorB(null);
       setTargetB(null);
       setSidebarOpen(false);
-    }, []);
+    }, [overlayLocked]);
 
     const cancelSnapMode = useCallback(() => {
       setSnapMode(false);
@@ -755,12 +811,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setEditCorners(transformed);
       updateOverlaySource(editingOverlayId, transformed);
 
-      // Update corner markers
       cornerMarkersRef.current.forEach((m, i) => m.setLngLat(transformed[i]));
       const tc = topCenter(transformed);
       if (rotationMarkerRef.current) rotationMarkerRef.current.setLngLat(tc);
 
-      // Save immediately
       setIsSaving(true);
       const success = await saveCoordinates(editingOverlayId, transformed, editRotation);
       setIsSaving(false);
@@ -779,6 +833,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Reset overlay ───────────────────────────────────────────────────────
     const handleReset = async (ov: OverlayData) => {
+      if (overlayLocked[ov.id]) {
+        toast.error("Overlay is locked. Unlock it first.");
+        return;
+      }
       if (!confirm("Reset overlay to its original GPS-derived position?")) return;
       try {
         const resp = await fetch(`/api/projects/${projectId}/overlays/${ov.id}/reset`, {
@@ -826,6 +884,227 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
     };
 
+    // ── Rename overlay ──────────────────────────────────────────────────────
+    const handleRename = useCallback((ov: OverlayData) => {
+      setRenamingOverlayId(ov.id);
+      setRenameValue(ov.label || `Plan ${ov.id}`);
+    }, []);
+
+    const handleRenameSubmit = useCallback((ovId: number) => {
+      if (!renameValue.trim()) {
+        toast.error("Name cannot be empty");
+        return;
+      }
+      renameOverlayMutation.mutate(
+        { overlayId: ovId, projectId, label: renameValue.trim() },
+        {
+          onSuccess: () => {
+            toast.success("Overlay renamed");
+            setRenamingOverlayId(null);
+            onOverlayUpdated?.();
+          },
+          onError: (err) => toast.error("Rename failed: " + err.message),
+        }
+      );
+    }, [renameValue, projectId, renameOverlayMutation, onOverlayUpdated]);
+
+    // ── Fit to overlay bounds ───────────────────────────────────────────────
+    const handleFitToOverlay = useCallback((ov: OverlayData) => {
+      const map = mapRef.current;
+      if (!map) return;
+      const coords = parseCoords(ov.coordinates);
+      if (!coords || coords.length < 4) return;
+      const bounds = new mapboxgl.LngLatBounds();
+      coords.forEach(([lng, lat]) => bounds.extend([lng, lat]));
+      map.fitBounds(bounds, { padding: 60, maxZoom: 19, duration: 800 });
+    }, []);
+
+    // ── Toggle overlay lock ─────────────────────────────────────────────────
+    const handleToggleLock = useCallback((ovId: number) => {
+      setOverlayLocked((prev) => ({ ...prev, [ovId]: !prev[ovId] }));
+      toast.info(overlayLocked[ovId] ? "Overlay unlocked" : "Overlay locked — alignment tools disabled");
+    }, [overlayLocked]);
+
+    // ── Fullscreen toggle ───────────────────────────────────────────────────
+    const toggleFullscreen = useCallback(() => {
+      const wrapper = mapWrapperRef.current;
+      if (!wrapper) return;
+
+      if (!isFullscreen) {
+        if (wrapper.requestFullscreen) {
+          wrapper.requestFullscreen();
+        } else if ((wrapper as any).webkitRequestFullscreen) {
+          (wrapper as any).webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
+      }
+    }, [isFullscreen]);
+
+    // Listen for fullscreen change events
+    useEffect(() => {
+      const handleFullscreenChange = () => {
+        const isFull = !!document.fullscreenElement;
+        setIsFullscreen(isFull);
+        // Resize map after fullscreen transition
+        setTimeout(() => {
+          mapRef.current?.resize();
+        }, 100);
+      };
+      document.addEventListener("fullscreenchange", handleFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+      return () => {
+        document.removeEventListener("fullscreenchange", handleFullscreenChange);
+        document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      };
+    }, []);
+
+    // ── Measurement tool ────────────────────────────────────────────────────
+    const clearMeasureMarkers = useCallback(() => {
+      measureMarkersRef.current.forEach((m) => m.remove());
+      measureMarkersRef.current = [];
+      const map = mapRef.current;
+      if (map) {
+        if (map.getLayer("measure-line")) map.removeLayer("measure-line");
+        if (map.getSource("measure-line-src")) map.removeSource("measure-line-src");
+        if (map.getLayer("measure-fill")) map.removeLayer("measure-fill");
+        if (map.getSource("measure-fill-src")) map.removeSource("measure-fill-src");
+      }
+    }, []);
+
+    const startMeasureMode = useCallback(() => {
+      setMeasureMode(true);
+      setMeasurePoints([]);
+      setMeasureResult(null);
+      clearMeasureMarkers();
+      setSidebarOpen(false);
+      toast.info("Click on the map to place measurement points. Double-click to finish.");
+    }, [clearMeasureMarkers]);
+
+    const stopMeasureMode = useCallback(() => {
+      setMeasureMode(false);
+      setMeasurePoints([]);
+      setMeasureResult(null);
+      clearMeasureMarkers();
+    }, [clearMeasureMarkers]);
+
+    // Measurement click handler
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded || !measureMode) return;
+
+      let points: [number, number][] = [];
+
+      const updateMeasureLine = () => {
+        if (map.getLayer("measure-line")) map.removeLayer("measure-line");
+        if (map.getSource("measure-line-src")) map.removeSource("measure-line-src");
+        if (map.getLayer("measure-fill")) map.removeLayer("measure-fill");
+        if (map.getSource("measure-fill-src")) map.removeSource("measure-fill-src");
+
+        if (points.length >= 2) {
+          map.addSource("measure-line-src", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry: { type: "LineString", coordinates: points },
+            },
+          });
+          map.addLayer({
+            id: "measure-line",
+            type: "line",
+            source: "measure-line-src",
+            paint: {
+              "line-color": "#f59e0b",
+              "line-width": 3,
+              "line-dasharray": [3, 2],
+            },
+          });
+
+          // If 3+ points, show fill
+          if (points.length >= 3) {
+            const closedRing = [...points, points[0]];
+            map.addSource("measure-fill-src", {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: {},
+                geometry: { type: "Polygon", coordinates: [closedRing] },
+              },
+            });
+            map.addLayer({
+              id: "measure-fill",
+              type: "fill",
+              source: "measure-fill-src",
+              paint: {
+                "fill-color": "#f59e0b",
+                "fill-opacity": 0.15,
+              },
+            });
+          }
+        }
+
+        // Calculate distance
+        let totalDist = 0;
+        for (let i = 1; i < points.length; i++) {
+          const from = turfPoint(points[i - 1]);
+          const to = turfPoint(points[i]);
+          totalDist += turfDistance(from, to, { units: "meters" });
+        }
+
+        // Calculate area (if 3+ points)
+        let areaVal = 0;
+        if (points.length >= 3) {
+          try {
+            const closedRing = [...points, points[0]];
+            const poly = turfPolygon([closedRing]);
+            areaVal = turfArea(poly);
+          } catch {}
+        }
+
+        setMeasureResult({ distance: totalDist, area: areaVal });
+      };
+
+      const handleClick = (e: mapboxgl.MapMouseEvent) => {
+        const pt: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+        points.push(pt);
+        setMeasurePoints([...points]);
+
+        // Add marker
+        const el = document.createElement("div");
+        el.style.cssText = `
+          width: 14px; height: 14px; border-radius: 50%;
+          background: #f59e0b; border: 2px solid white;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+          cursor: pointer;
+        `;
+        const m = new mapboxgl.Marker({ element: el }).setLngLat(pt).addTo(map);
+        measureMarkersRef.current.push(m);
+
+        updateMeasureLine();
+      };
+
+      const handleDblClick = (e: mapboxgl.MapMouseEvent) => {
+        e.preventDefault();
+        // Finish measurement — keep results visible but stop adding points
+        setMeasureMode(false);
+      };
+
+      map.on("click", handleClick);
+      map.on("dblclick", handleDblClick);
+      map.doubleClickZoom.disable();
+
+      return () => {
+        map.off("click", handleClick);
+        map.off("dblclick", handleDblClick);
+        map.doubleClickZoom.enable();
+      };
+    }, [measureMode, mapLoaded]);
+
     // ── Snap step labels ────────────────────────────────────────────────────
     const snapStepLabel: Record<string, string> = {
       anchorA: "Click blueprint: place Anchor A",
@@ -862,7 +1141,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               )}
               {activeOverlays.length > 0 && (
                 <span className="text-sm font-normal text-blue-400 ml-2">
-                  • {activeOverlays.length} overlay{activeOverlays.length !== 1 ? "s" : ""}
+                  &bull; {activeOverlays.length} overlay{activeOverlays.length !== 1 ? "s" : ""}
                 </span>
               )}
             </h2>
@@ -875,17 +1154,93 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               <p className="text-sm">Upload media with GPS coordinates to see them on the map</p>
             </div>
           ) : (
-            <div className="relative rounded-lg overflow-hidden border border-slate-800">
+            <div
+              ref={mapWrapperRef}
+              className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!rounded-none !border-0" : ""}`}
+              style={isFullscreen ? { background: "#000" } : undefined}
+            >
               {/* Mapbox container */}
-              <div ref={mapContainerRef} className={`w-full min-h-[500px] ${heightClass}`} />
+              <div ref={mapContainerRef} className={`w-full min-h-[500px] ${isFullscreen ? "!h-screen" : heightClass}`} />
 
               {/* Map status indicator */}
               <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
                 Mapbox GL JS &bull; Satellite-Streets-V12
               </div>
 
+              {/* Fullscreen toggle button (top-right) */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute top-3 right-3 z-[20] bg-white rounded shadow-md p-1.5 hover:bg-gray-100 transition-colors"
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <Minimize size={18} className="text-gray-700" /> : <Maximize size={18} className="text-gray-700" />}
+              </button>
+
+              {/* Measurement result floating badge */}
+              {measureResult && (measureResult.distance > 0 || measureResult.area > 0) && (
+                <div className="absolute top-3 left-3 z-[20] bg-black/85 backdrop-blur-md rounded-lg px-4 py-3 text-white max-w-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Ruler className="h-4 w-4 text-amber-400" />
+                      <span className="text-sm font-semibold">Measurement</span>
+                    </div>
+                    <button
+                      onClick={stopMeasureMode}
+                      className="p-1 hover:bg-white/10 rounded"
+                      title="Clear measurement"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  {measureResult.distance > 0 && (
+                    <div className="text-xs space-y-0.5">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Distance:</span>
+                        <span className="font-mono">{formatDistance(measureResult.distance)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400"></span>
+                        <span className="font-mono text-slate-400">{formatDistanceFeet(measureResult.distance)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {measureResult.area > 0 && (
+                    <div className="text-xs space-y-0.5 mt-1 pt-1 border-t border-white/10">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Area:</span>
+                        <span className="font-mono">{formatArea(measureResult.area)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400"></span>
+                        <span className="font-mono text-slate-400">{formatAreaFeet(measureResult.area)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {measureMode && (
+                    <p className="text-[10px] text-amber-400 mt-2">Click to add points. Double-click to finish.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Measure mode indicator (when no results yet) */}
+              {measureMode && !measureResult && (
+                <div className="absolute top-3 left-3 z-[20] bg-black/85 backdrop-blur-md rounded-lg px-4 py-3 text-white flex items-center gap-3">
+                  <Ruler className="h-5 w-5 text-amber-400" />
+                  <div>
+                    <p className="text-sm font-semibold">Measure Mode</p>
+                    <p className="text-[10px] text-slate-300">Click to place points. Double-click to finish.</p>
+                  </div>
+                  <button
+                    onClick={stopMeasureMode}
+                    className="p-1 hover:bg-white/10 rounded ml-2"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               {/* Edit mode toolbar */}
-              {editMode && !snapMode && (
+              {editMode && !snapMode && !measureMode && (
                 <div className="absolute top-3 left-3 z-[20] flex items-center gap-2">
                   <span className="text-xs text-amber-400 font-medium bg-black/60 backdrop-blur-sm px-2 py-1 rounded">
                     ↻ {editRotation.toFixed(1)}°
@@ -962,30 +1317,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               )}
 
               {/* Bottom-left badge */}
-              <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white">
+              <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white z-[5]">
                 {mediaWithGPS.length > 0 && (
                   <>
                     <span className="text-emerald-400 font-medium">{mediaWithGPS.length}</span> GPS points
-                    <span className="text-emerald-400 ml-2">—</span> Flight path
+                    {flightPathVisible && <span className="text-emerald-400 ml-2">— Flight path</span>}
                   </>
                 )}
                 {activeOverlays.length > 0 && (
                   <>
-                    {mediaWithGPS.length > 0 && <span className="mx-2">•</span>}
+                    {mediaWithGPS.length > 0 && <span className="mx-2">&bull;</span>}
                     <span className="text-blue-400 font-medium">{activeOverlays.length}</span> overlay{activeOverlays.length !== 1 ? "s" : ""}
-                    {editMode && !snapMode && <span className="text-amber-400 ml-1">• editing</span>}
-                    {snapMode && <span className="text-blue-400 ml-1">• snap mode</span>}
+                    {editMode && !snapMode && <span className="text-amber-400 ml-1">&bull; editing</span>}
+                    {snapMode && <span className="text-blue-400 ml-1">&bull; snap mode</span>}
                   </>
                 )}
               </div>
 
               {/* ── Overlay Manager Sidebar ── */}
-              {activeOverlays.length > 0 && (
+              {(activeOverlays.length > 0 || mediaWithGPS.length > 0) && (
                 <>
-                  {!sidebarOpen && !snapMode && (
+                  {!sidebarOpen && !snapMode && !measureMode && (
                     <button
                       onClick={() => setSidebarOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 z-[100] bg-slate-900/90 backdrop-blur-md text-white p-2 rounded-l-md border-l border-t border-b border-slate-700 hover:bg-slate-800 transition-colors"
+                      className="absolute right-0 top-14 z-[100] bg-slate-900/90 backdrop-blur-md text-white p-2 rounded-l-md border-l border-t border-b border-slate-700 hover:bg-slate-800 transition-colors"
                       title="Open Overlay Manager"
                     >
                       <Layers size={18} />
@@ -993,7 +1348,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                   )}
 
                   <div
-                    className={`absolute right-0 top-0 h-full w-72 bg-slate-900/95 backdrop-blur-md text-white shadow-2xl transition-transform duration-300 z-[100] ${
+                    className={`absolute right-0 top-0 h-full w-80 bg-slate-900/95 backdrop-blur-md text-white shadow-2xl transition-transform duration-300 z-[100] ${
                       sidebarOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                   >
@@ -1004,7 +1359,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                       <ChevronRight size={20} />
                     </button>
 
-                    <div className="p-5 h-full overflow-y-auto flex flex-col gap-5">
+                    <div className="p-5 h-full overflow-y-auto flex flex-col gap-4">
+                      {/* Header */}
                       <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                         <div className="flex items-center gap-2">
                           <Layers className="text-blue-400" size={20} />
@@ -1015,25 +1371,123 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                         </button>
                       </div>
 
+                      {/* ── MAP CONTROLS section ── */}
+                      <div className="space-y-3">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Map Controls</p>
+
+                        {/* Fullscreen */}
+                        <button
+                          onClick={toggleFullscreen}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all"
+                        >
+                          {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                          <span className="text-sm font-medium">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+                        </button>
+
+                        {/* Hide/Show Flight Path */}
+                        {mediaWithGPS.length > 0 && (
+                          <button
+                            onClick={() => setFlightPathVisible((v) => !v)}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                              flightPathVisible ? "bg-emerald-600/20 border border-emerald-500/30" : "bg-slate-800 hover:bg-slate-700"
+                            }`}
+                          >
+                            <Route size={16} className={flightPathVisible ? "text-emerald-400" : "text-slate-400"} />
+                            <span className="text-sm font-medium">{flightPathVisible ? "Hide Flight Path" : "Show Flight Path"}</span>
+                          </button>
+                        )}
+
+                        {/* Measure */}
+                        <button
+                          onClick={() => {
+                            if (measureMode || measureResult) {
+                              stopMeasureMode();
+                            } else {
+                              startMeasureMode();
+                            }
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                            measureMode || measureResult ? "bg-amber-600/20 border border-amber-500/30" : "bg-slate-800 hover:bg-slate-700"
+                          }`}
+                        >
+                          <Ruler size={16} className={measureMode || measureResult ? "text-amber-400" : "text-slate-400"} />
+                          <div className="text-left">
+                            <span className="text-sm font-medium block">{measureMode || measureResult ? "Clear Measurement" : "Measure"}</span>
+                            <span className="text-[10px] text-slate-400">Distance & area on map</span>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* ── PER-OVERLAY CONTROLS ── */}
                       {activeOverlays.map((ov) => {
                         const opacity = opacityMap[ov.id] ?? 0.7;
                         const visible = visibilityMap[ov.id] ?? true;
+                        const locked = overlayLocked[ov.id] ?? false;
                         const label = ov.label || `Plan ${ov.id}`;
+                        const isRenaming = renamingOverlayId === ov.id;
+
                         return (
-                          <div key={ov.id} className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-slate-200 truncate max-w-[160px]" title={label}>
-                                {label}
-                              </span>
+                          <div key={ov.id} className="space-y-3 border-t border-slate-700 pt-4">
+                            {/* Overlay name + visibility + lock */}
+                            <div className="flex items-center gap-2">
+                              {isRenaming ? (
+                                <div className="flex-1 flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    value={renameValue}
+                                    onChange={(e) => setRenameValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") handleRenameSubmit(ov.id);
+                                      if (e.key === "Escape") setRenamingOverlayId(null);
+                                    }}
+                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleRenameSubmit(ov.id)}
+                                    className="p-1 hover:bg-slate-700 rounded text-emerald-400"
+                                    title="Save name"
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => setRenamingOverlayId(null)}
+                                    className="p-1 hover:bg-slate-700 rounded text-slate-400"
+                                    title="Cancel"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex-1 flex items-center gap-2 min-w-0">
+                                  <span
+                                    className="text-sm font-medium text-slate-200 truncate cursor-pointer hover:text-white"
+                                    title={`${label} — click to rename`}
+                                    onClick={() => !isDemoProject && handleRename(ov)}
+                                  >
+                                    {label}
+                                  </span>
+                                  {!isDemoProject && (
+                                    <button
+                                      onClick={() => handleRename(ov)}
+                                      className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-slate-300 shrink-0"
+                                      title="Rename overlay"
+                                    >
+                                      <Pencil size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                               <button
                                 onClick={() => handleToggleVisibility(ov.id)}
-                                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                                className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
                                 title={visible ? "Hide overlay" : "Show overlay"}
                               >
-                                {visible ? <Eye size={18} /> : <EyeOff size={18} className="text-slate-500" />}
+                                {visible ? <Eye size={16} /> : <EyeOff size={16} className="text-slate-500" />}
                               </button>
                             </div>
 
+                            {/* Opacity slider */}
                             <div className="space-y-1.5">
                               <div className="flex justify-between text-xs text-slate-400">
                                 <span>Opacity</span>
@@ -1051,71 +1505,104 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                               />
                             </div>
+
+                            {/* Quick actions row */}
+                            {!isDemoProject && (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleFitToOverlay(ov)}
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs"
+                                  title="Fit map to overlay bounds"
+                                >
+                                  <Target size={13} />
+                                  <span>Fit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleToggleLock(ov.id)}
+                                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors text-xs ${
+                                    locked ? "bg-amber-600/20 border border-amber-500/30 text-amber-400" : "bg-slate-800 hover:bg-slate-700"
+                                  }`}
+                                  title={locked ? "Unlock overlay" : "Lock overlay position"}
+                                >
+                                  {locked ? <Lock size={13} /> : <Unlock size={13} />}
+                                  <span>{locked ? "Locked" : "Lock"}</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
 
-                      {!isDemoProject && (
-                        <div className="pt-2 border-t border-slate-700 space-y-3">
-                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Tools</p>
+                      {/* ── ALIGNMENT TOOLS section ── */}
+                      {!isDemoProject && activeOverlays.length > 0 && (
+                        <div className="pt-2 border-t border-slate-700 space-y-2">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Alignment Tools</p>
 
+                          {/* Edit Alignment */}
                           <button
                             onClick={() => {
                               if (editMode) { handleCancelEdit(); }
                               else if (activeOverlays[0]) { handleStartEdit(activeOverlays[0]); setSidebarOpen(false); }
                             }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                               editMode && !snapMode ? "bg-blue-600 shadow-lg shadow-blue-900/40" : "bg-slate-800 hover:bg-slate-700"
                             }`}
                           >
-                            <Move size={18} />
+                            <Move size={16} />
                             <div className="text-left">
-                              <span className="text-sm font-semibold block">{editMode && !snapMode ? "Stop Editing" : "Edit Alignment"}</span>
+                              <span className="text-sm font-medium block">{editMode && !snapMode ? "Stop Editing" : "Edit Alignment"}</span>
                               <span className="text-[10px] text-slate-400">Drag corners to resize & rotate</span>
                             </div>
                           </button>
 
+                          {/* 2-Point Snap */}
                           {activeOverlays[0] && (
                             <button
                               onClick={() => {
                                 if (snapMode) { cancelSnapMode(); handleCancelEdit(); }
                                 else { startSnapMode(activeOverlays[0]); }
                               }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                                 snapMode ? "bg-blue-600 shadow-lg shadow-blue-900/40" : "bg-slate-800 hover:bg-slate-700"
                               }`}
                             >
-                              <Crosshair size={18} />
+                              <Crosshair size={16} />
                               <div className="text-left">
-                                <span className="text-sm font-semibold block">{snapMode ? "Cancel Snap" : "2-Point Snap"}</span>
+                                <span className="text-sm font-medium block">{snapMode ? "Cancel Snap" : "2-Point Snap"}</span>
                                 <span className="text-[10px] text-slate-400">Match 2 points for precise alignment</span>
                               </div>
                             </button>
                           )}
 
+                          {/* Reset to Default */}
                           {activeOverlays[0] && (
                             <button
                               onClick={() => handleReset(activeOverlays[0])}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-amber-900/40 hover:text-amber-400 transition-all"
+                              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-amber-900/40 hover:text-amber-400 transition-all"
                             >
-                              <RotateCcw size={18} />
-                              <span className="text-sm font-semibold">Reset to Default</span>
-                            </button>
-                          )}
-
-                          {activeOverlays[0] && (
-                            <button
-                              onClick={() => handleDelete(activeOverlays[0])}
-                              disabled={isDeleting}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Trash2 size={18} />
-                              <span className="text-sm font-semibold">{isDeleting ? "Deleting..." : "Delete Overlay"}</span>
+                              <RotateCcw size={16} />
+                              <span className="text-sm font-medium">Reset to Default</span>
                             </button>
                           )}
                         </div>
                       )}
 
+                      {/* ── DANGER ZONE ── */}
+                      {!isDemoProject && activeOverlays[0] && (
+                        <div className="pt-2 border-t border-red-900/30 space-y-2">
+                          <p className="text-[10px] uppercase tracking-widest text-red-500/60 font-bold">Danger Zone</p>
+                          <button
+                            onClick={() => handleDelete(activeOverlays[0])}
+                            disabled={isDeleting}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 size={16} />
+                            <span className="text-sm font-medium">{isDeleting ? "Deleting..." : "Delete Overlay"}</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Edit mode tip */}
                       {editMode && !snapMode && (
                         <p className="text-xs text-slate-400 mt-auto">
                           Drag <span className="text-emerald-400">green corners</span> to resize — the image stretches live.{" "}
@@ -1125,6 +1612,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                         </p>
                       )}
 
+                      {/* Snap mode tip */}
                       {snapMode && (
                         <div className="text-xs text-slate-400 mt-auto space-y-2">
                           <p className="font-semibold text-blue-400">How 2-Point Snap works:</p>

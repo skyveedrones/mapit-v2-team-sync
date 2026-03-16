@@ -142,7 +142,7 @@ export function ProjectAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle>Manage Project Access for {userName}</DialogTitle>
         </DialogHeader>
@@ -177,7 +177,7 @@ export function ProjectAssignmentDialog({
               </div>
             </div>
 
-            <ScrollArea className="flex-1 border rounded-md p-4">
+            <ScrollArea className="flex-1 border rounded-md p-4 max-h-[50vh] overflow-y-auto">
               {allProjects && allProjects.length > 0 ? (
                 <div className="space-y-3">
                   {allProjects.map((project) => {

@@ -216,3 +216,179 @@ describe("auto-save coordinate conversion", () => {
     expect(Math.min(...lngs)).toBe(-96.51);
   });
 });
+
+// ── Overlay Manager Enhancement Tests ────────────────────────────────────
+
+import { appRouter } from "./routers";
+import type { TrpcContext } from "./_core/context";
+
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+function createTestAuthContext(userId = 1, role: "user" | "admin" | "webmaster" = "user"): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: userId,
+    openId: "test-user-open-id",
+    email: "test@example.com",
+    name: "Test User",
+    loginMethod: "manus",
+    role,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  return {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: vi.fn(),
+    } as unknown as TrpcContext["res"],
+  };
+}
+
+describe("project.renameOverlay input validation", () => {
+  it("should reject empty label", async () => {
+    const ctx = createTestAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.project.renameOverlay({
+        overlayId: 1,
+        projectId: 1,
+        label: "",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("should reject label exceeding 100 characters", async () => {
+    const ctx = createTestAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const longLabel = "a".repeat(101);
+    await expect(
+      caller.project.renameOverlay({
+        overlayId: 1,
+        projectId: 1,
+        label: longLabel,
+      })
+    ).rejects.toThrow();
+  });
+
+  it("should accept valid label at boundary (100 chars)", async () => {
+    const ctx = createTestAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const validLabel = "a".repeat(100);
+    try {
+      await caller.project.renameOverlay({
+        overlayId: 1,
+        projectId: 1,
+        label: validLabel,
+      });
+    } catch (err: any) {
+      // Should fail on DB access, not on validation
+      expect(err.code).not.toBe("BAD_REQUEST");
+    }
+  });
+});
+
+describe("project.updateOverlayOpacity input validation", () => {
+  it("should reject opacity greater than 1", async () => {
+    const ctx = createTestAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.project.updateOverlayOpacity({
+        overlayId: 1,
+        projectId: 1,
+        opacity: 1.5,
+      })
+    ).rejects.toThrow();
+  });
+
+  it("should reject negative opacity", async () => {
+    const ctx = createTestAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.project.updateOverlayOpacity({
+        overlayId: 1,
+        projectId: 1,
+        opacity: -0.1,
+      })
+    ).rejects.toThrow();
+  });
+});
+
+// ── Measurement helper tests ────────────────────────────────────────────
+
+describe("measurement formatting helpers", () => {
+  // Replicate the formatting functions from MapboxProjectMap
+  function formatDistance(meters: number): string {
+    if (meters < 1) return `${(meters * 100).toFixed(1)} cm`;
+    if (meters < 1000) return `${meters.toFixed(1)} m`;
+    return `${(meters / 1000).toFixed(2)} km`;
+  }
+
+  function formatDistanceFeet(meters: number): string {
+    const feet = meters * 3.28084;
+    if (feet < 5280) return `${feet.toFixed(1)} ft`;
+    return `${(feet / 5280).toFixed(2)} mi`;
+  }
+
+  function formatArea(sqMeters: number): string {
+    if (sqMeters < 10000) return `${sqMeters.toFixed(1)} m²`;
+    const hectares = sqMeters / 10000;
+    if (hectares < 100) return `${hectares.toFixed(2)} ha`;
+    return `${(sqMeters / 1000000).toFixed(3)} km²`;
+  }
+
+  function formatAreaFeet(sqMeters: number): string {
+    const sqFeet = sqMeters * 10.7639;
+    if (sqFeet < 43560) return `${sqFeet.toFixed(0)} ft²`;
+    return `${(sqFeet / 43560).toFixed(2)} acres`;
+  }
+
+  it("formats small distances in cm", () => {
+    expect(formatDistance(0.5)).toBe("50.0 cm");
+  });
+
+  it("formats medium distances in meters", () => {
+    expect(formatDistance(150)).toBe("150.0 m");
+  });
+
+  it("formats large distances in km", () => {
+    expect(formatDistance(2500)).toBe("2.50 km");
+  });
+
+  it("formats feet for short distances", () => {
+    expect(formatDistanceFeet(100)).toBe("328.1 ft");
+  });
+
+  it("formats miles for long distances", () => {
+    expect(formatDistanceFeet(5000)).toBe("3.11 mi");
+  });
+
+  it("formats small areas in m²", () => {
+    expect(formatArea(500)).toBe("500.0 m²");
+  });
+
+  it("formats medium areas in hectares", () => {
+    expect(formatArea(50000)).toBe("5.00 ha");
+  });
+
+  it("formats large areas in km²", () => {
+    expect(formatArea(2000000)).toBe("2.000 km²");
+  });
+
+  it("formats small areas in ft²", () => {
+    expect(formatAreaFeet(100)).toBe("1076 ft²");
+  });
+
+  it("formats large areas in acres", () => {
+    expect(formatAreaFeet(10000)).toBe("2.47 acres");
+  });
+});

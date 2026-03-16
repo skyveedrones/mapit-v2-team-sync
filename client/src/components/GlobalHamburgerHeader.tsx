@@ -200,32 +200,27 @@ export const GlobalHamburgerHeader = () => {
 
               <nav className="flex flex-col gap-6" style={{ fontFamily: "var(--font-display)" }}>
 
-                {/* Solutions section — Municipal nested under Services */}
+                {/* Solutions section */}
                 <div className="space-y-4">
                   <div className="text-2xl font-bold text-slate-200">Solutions</div>
                   <div className="flex flex-col gap-4 pl-4 border-l border-white/10">
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => {
-                          setIsNavOpen(false);
-                          setTimeout(() => {
-                            document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-                          }, 300);
-                        }}
-                        className="text-lg text-slate-300 hover:text-white flex items-center gap-2 transition-colors text-left w-full font-semibold"
-                      >
-                        Services <ChevronRight className="w-4 h-4" />
-                      </button>
-                      {/* Municipal nested under Services */}
-                      <div className="pl-4 border-l border-emerald-500/20">
-                        <button
-                          onClick={() => navTo("/municipal")}
-                          className="text-base text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition-colors text-left w-full font-semibold"
-                        >
-                          Municipal Solutions <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => {
+                        setIsNavOpen(false);
+                        setTimeout(() => {
+                          document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                        }, 300);
+                      }}
+                      className="text-lg text-slate-300 hover:text-white flex items-center gap-2 transition-colors text-left w-full font-semibold"
+                    >
+                      Services <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => navTo("/municipal")}
+                      className="text-lg text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition-colors text-left w-full font-semibold"
+                    >
+                      Municipal Solutions <ChevronRight className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => navTo("/dashboard")}
                       className="text-lg text-slate-300 hover:text-white flex items-center gap-2 transition-colors text-left font-semibold"

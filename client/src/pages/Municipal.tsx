@@ -349,9 +349,9 @@ export default function Municipal() {
             className="text-3xl sm:text-4xl font-bold mb-6"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            See Your City in a{" "}
+            Smart Data for the{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-              New Light
+              Modern Municipality
             </span>
           </motion.h2>
 
