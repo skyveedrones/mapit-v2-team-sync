@@ -1,68 +1,30 @@
 /**
- * LazyMapWrapper — Defers map rendering until the container is visible in the viewport.
- * Uses IntersectionObserver to detect when the map placeholder scrolls into view,
- * then renders the actual map component. This avoids loading mapbox-gl tiles
- * and initializing WebGL context until the user actually needs the map.
+ * LazyMapWrapper — Renders the map immediately on mount.
+ *
+ * Previously used IntersectionObserver to defer rendering, but this caused
+ * a blank map on first project open because the observer fired before the
+ * project data loaded (so the container had 0 dimensions or wasn't yet in DOM).
+ *
+ * Now renders children immediately. The MapboxProjectMap component itself
+ * handles resize via ResizeObserver and requestAnimationFrame.
  */
-import { useRef, useState, useEffect, type ReactNode } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Map } from "lucide-react";
+import { type ReactNode } from "react";
 
 interface LazyMapWrapperProps {
   children: ReactNode;
-  /** Height of the placeholder before the map loads */
+  /** Height of the map container */
   height?: string;
-  /** How far before the element enters the viewport to start loading (px) */
+  /** Kept for API compatibility — no longer used */
   rootMargin?: string;
 }
 
 export function LazyMapWrapper({
   children,
   height = "500px",
-  rootMargin = "200px",
 }: LazyMapWrapperProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      {
-        rootMargin,
-        threshold: 0,
-      }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [rootMargin]);
-
   return (
-    <div ref={containerRef} style={{ minHeight: height }}>
-      {isVisible ? (
-        children
-      ) : (
-        <div
-          className="relative rounded-lg overflow-hidden border border-border"
-          style={{ height }}
-        >
-          <Skeleton className="w-full h-full" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Map className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground/70">
-              Map loading...
-            </p>
-          </div>
-        </div>
-      )}
+    <div style={{ minHeight: height }}>
+      {children}
     </div>
   );
 }

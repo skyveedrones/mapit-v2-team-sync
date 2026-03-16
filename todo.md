@@ -2120,3 +2120,7 @@
 
 ## Bug Fix: Mapbox Blank on First Load
 - [x] Fix Mapbox map rendering blank on first project open (requires exit/re-enter to render)
+
+## Bug Fix: Mapbox Blank Screen (Round 2)
+- [x] Fix Mapbox blank screen on first project open (deeper fix - deferred init)
+- [x] Set flight path hidden by default on map open
