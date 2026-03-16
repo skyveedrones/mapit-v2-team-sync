@@ -2175,3 +2175,12 @@
 - [x] Build Organization tab: org name field, logo upload, brand color picker
 - [x] Wire save to organization.update mutation with cache invalidation
 - [x] Verify logo and brand color reflect immediately in dashboard header
+
+## Login Screen Redesign (Premium Glassmorphism)
+- [x] Find current login page component
+- [x] Source high-res drone aerial bridge/highway construction image (2560x1440)
+- [x] Upload background to CDN
+- [x] Build glassmorphism card: MAPIT logo, email/password inputs, remember me, forgot password
+- [x] Style Google sign-in as premium integrated button with G logo
+- [x] Add Terms of Service / Privacy Policy footer
+- [x] Verify dark overlay keeps form readable
