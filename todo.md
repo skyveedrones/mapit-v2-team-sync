@@ -2093,9 +2093,9 @@
 - [x] Reorganize overlay manager panel with all new controls
 
 ## Referral Email System
-- [ ] Create referrals database table (referrer, referee name/email, status, timestamps)
-- [ ] Add sendReferralEmail backend endpoint with branded email template
-- [ ] Add listReferrals endpoint to show sent referrals
-- [ ] Update Refer a Pilot page with email/name input form
-- [ ] Display sent referrals list on the page
-- [ ] Store referral data in database on send
+- [x] Create referrals database table (referrer, referee name/email, status, timestamps)
+- [x] Add sendReferralEmail backend endpoint with branded email template
+- [x] Add listReferrals endpoint to show sent referrals
+- [x] Update Refer a Pilot page with email/name input form
+- [x] Display sent referrals list on the page
+- [x] Store referral data in database on send

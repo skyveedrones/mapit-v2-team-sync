@@ -1,4 +1,4 @@
-import { decimal, json, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, json, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 /**
  * Core user table backing auth flow.
  * Extend this file with additional tables as your product grows.
@@ -537,3 +537,29 @@ export const auditLog = mysqlTable("audit_log", {
 
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
+
+
+/**
+ * Referrals table - tracks referral invitations sent by users.
+ * Stores referee info, status, and links back to the referring user.
+ */
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  /** User ID of the person sending the referral */
+  referrerId: int("referrerId").notNull(),
+  /** Name of the person being referred */
+  refereeName: varchar("refereeName", { length: 255 }).notNull(),
+  /** Email of the person being referred */
+  refereeEmail: varchar("refereeEmail", { length: 255 }).notNull(),
+  /** Status of the referral: pending, signed_up, converted (upgraded to paid) */
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  /** Whether the referral email was successfully sent */
+  emailSent: boolean("emailSent").default(false).notNull(),
+  /** User ID of the referee if they signed up (nullable until they do) */
+  refereeUserId: int("refereeUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;

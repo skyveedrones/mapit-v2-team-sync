@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, projectOverlays, users, projectCollaborators, projects } from "../drizzle/schema";
+import { media, clientUsers, projectOverlays, users, projectCollaborators, projects, referrals } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -4859,6 +4859,199 @@ export const appRouter = router({
         return countAuditLog(input ?? {});
       }),
   }),
+
+  referral: router({
+    /** Send a referral email and store the referral in the database */
+    send: protectedProcedure
+      .input(z.object({
+        refereeName: z.string().min(1).max(255),
+        refereeEmail: z.string().email().max(255),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+        // Check if this email was already referred by this user
+        const existing = await db.select()
+          .from(referrals)
+          .where(and(
+            eq(referrals.referrerId, ctx.user.id),
+            eq(referrals.refereeEmail, input.refereeEmail.toLowerCase())
+          ))
+          .limit(1);
+
+        if (existing.length > 0) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'You have already sent a referral to this email address.',
+          });
+        }
+
+        // Build referral slug
+        const firstName = (ctx.user.name ?? 'pilot').split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+        const slug = `${firstName}${ctx.user.id}`;
+        const referralLink = `https://mapit.skyveedrones.com/signup?ref=${slug}`;
+
+        // Build branded email HTML
+        const emailHtml = buildReferralEmailHtml({
+          referrerName: ctx.user.name ?? 'A Mapit user',
+          refereeName: input.refereeName,
+          referralLink,
+        });
+
+        // Send the email
+        const { sendEmail } = await import('./_core/email');
+        const emailSent = await sendEmail({
+          to: input.refereeEmail.toLowerCase(),
+          subject: `${ctx.user.name ?? 'A colleague'} invited you to try Mapit`,
+          html: emailHtml,
+        });
+
+        // Store the referral
+        const [inserted] = await db.insert(referrals).values({
+          referrerId: ctx.user.id,
+          refereeName: input.refereeName,
+          refereeEmail: input.refereeEmail.toLowerCase(),
+          status: 'pending',
+          emailSent,
+        });
+
+        return {
+          id: inserted.insertId,
+          emailSent,
+          message: emailSent
+            ? `Referral email sent to ${input.refereeName}!`
+            : `Referral saved but email could not be sent. They can still use your link.`,
+        };
+      }),
+
+    /** List all referrals sent by the current user */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const rows = await db.select()
+        .from(referrals)
+        .where(eq(referrals.referrerId, ctx.user.id))
+        .orderBy(desc(referrals.createdAt));
+      return rows;
+    }),
+
+    /** Get referral stats for the current user */
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const rows = await db.select()
+        .from(referrals)
+        .where(eq(referrals.referrerId, ctx.user.id));
+
+      const totalSent = rows.length;
+      const signedUp = rows.filter(r => r.status === 'signed_up' || r.status === 'converted').length;
+      const converted = rows.filter(r => r.status === 'converted').length;
+
+      return { totalSent, signedUp, converted, monthsEarned: converted };
+    }),
+  }),
 });
+
+/** Build the branded referral email HTML */
+function buildReferralEmailHtml(params: {
+  referrerName: string;
+  refereeName: string;
+  referralLink: string;
+}): string {
+  const { referrerName, refereeName, referralLink } = params;
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited to Mapit</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #09323B;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #0a1f26; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #117660 0%, #04B16F 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 2px;">
+                MAP<span style="color: #14E114;">i</span>T
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #e0f2f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                Elevate Your Vision
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px; color: #e0e0e0;">
+              <h2 style="margin: 0 0 20px 0; color: #04B16F; font-size: 24px; font-weight: 600;">
+                Hey ${refereeName}!
+              </h2>
+              
+              <p style="margin: 0 0 20px 0; line-height: 1.6; font-size: 16px; color: #b0b0b0;">
+                <strong style="color: #ffffff;">${referrerName}</strong> thinks you'd love Mapit &mdash; the drone mapping platform that turns aerial footage into powerful, interactive maps and project data.
+              </p>
+              
+              <p style="margin: 0 0 10px 0; line-height: 1.6; font-size: 16px; color: #b0b0b0;">
+                <strong style="color: #04B16F;">Here's the deal:</strong>
+              </p>
+              
+              <div style="background-color: #051419; border: 1px solid #117660; border-radius: 8px; padding: 20px; margin: 0 0 30px 0;">
+                <p style="margin: 0; line-height: 1.6; font-size: 15px; color: #b0b0b0;">
+                  Sign up and upgrade to a Pro plan, and <strong style="color: #ffffff;">both you and ${referrerName} get 1 month free</strong>. That's GPS tagging, interactive maps, flight path tracking, PDF overlays, and more &mdash; on the house.
+                </p>
+              </div>
+              
+              <p style="margin: 0 0 8px 0; line-height: 1.6; font-size: 14px; color: #808080;">
+                What you get with Mapit:
+              </p>
+              <ul style="margin: 0 0 30px 0; padding-left: 20px; line-height: 1.8; font-size: 15px; color: #b0b0b0;">
+                <li>Upload drone photos &amp; videos with automatic GPS extraction</li>
+                <li>Interactive maps with markers, popups, and flight paths</li>
+                <li>Export GPS data in KML, CSV, GeoJSON, and GPX</li>
+                <li>Overlay construction plans on satellite maps</li>
+                <li>Generate professional PDF reports</li>
+              </ul>
+              
+              <!-- CTA Button -->
+              <table role="presentation" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 8px; background: linear-gradient(135deg, #04B16F 0%, #14E114 100%);">
+                    <a href="${referralLink}" style="display: inline-block; padding: 16px 40px; color: #09323B; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: 0.5px;">
+                      Get Started Free &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 30px 0 0 0; line-height: 1.6; font-size: 13px; color: #606060; text-align: center;">
+                Or copy this link: <a href="${referralLink}" style="color: #04B16F; text-decoration: none; word-break: break-all;">${referralLink}</a>
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; background-color: #051419; text-align: center; border-top: 1px solid #117660;">
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #808080;">
+                &copy; 2026 Mapit by SkyVee Drones. All rights reserved.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #606060;">
+                Precision drone mapping &amp; geospatial data solutions
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
 
 export type AppRouter = typeof appRouter;

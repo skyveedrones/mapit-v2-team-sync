@@ -1,22 +1,52 @@
 import { useState } from "react";
-import { Share2, Copy, CheckCircle, Users } from "lucide-react";
+import {
+  Share2,
+  Copy,
+  CheckCircle,
+  Users,
+  Send,
+  Mail,
+  User,
+  Clock,
+  CheckCheck,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { motion } from "framer-motion";
+import { trpc } from "@/lib/trpc";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
-const TOPO_SVG = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zM0 80c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm80 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm0-80c0 5.523 4.477 10 10 10s10-4.477 10-10-4.477-10-10-10-10 4.477-10 10z' fill='%2310b981' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C%2Fsvg%3E")`;
+const TOPO_SVG = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zM0 80c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm80 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm0-80c0 5.523 4.477 10 10 10s10-4.477 10-10-4.477-10-10-10-10 4.477-10 10z' fill='%2310b981' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E")`;
 
-/**
- * Generates a short referral slug from the user's name and id.
- * e.g. "clay88" from name="Clay Bechtol" id=1
- */
 function buildReferralSlug(name: string, id: number): string {
   const first = name.split(" ")[0].toLowerCase().replace(/[^a-z]/g, "");
   return `${first}${id}`;
 }
 
+function timeAgo(date: Date | string): string {
+  const now = new Date();
+  const d = typeof date === "string" ? new Date(date) : date;
+  const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+  return d.toLocaleDateString();
+}
+
+const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
+  pending: { label: "Pending", color: "text-yellow-400", icon: Clock },
+  signed_up: { label: "Signed Up", color: "text-blue-400", icon: CheckCheck },
+  converted: { label: "Converted", color: "text-[#10b981]", icon: CheckCircle },
+};
+
 export const ReferralWidget = () => {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [refereeName, setRefereeName] = useState("");
+  const [refereeEmail, setRefereeEmail] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   const slug = user ? buildReferralSlug(user.name ?? "pilot", user.id) : "pilot";
   const referralLink = `https://mapit.skyveedrones.com/signup?ref=${slug}`;
@@ -27,14 +57,48 @@ export const ReferralWidget = () => {
         .map((n) => n[0])
         .join("")
         .toUpperCase()
-        .slice(0, 2) || "CB"
-    : "CB";
+        .slice(0, 2) || "U"
+    : "U";
+
+  const utils = trpc.useUtils();
+  const referralList = trpc.referral.list.useQuery(undefined, { enabled: !!user });
+  const referralStats = trpc.referral.stats.useQuery(undefined, { enabled: !!user });
+
+  const sendReferral = trpc.referral.send.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setRefereeName("");
+      setRefereeEmail("");
+      setShowForm(false);
+      utils.referral.list.invalidate();
+      utils.referral.stats.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to send referral");
+    },
+  });
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
+    toast.success("Referral link copied!");
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleSendReferral = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refereeName.trim() || !refereeEmail.trim()) {
+      toast.error("Please enter both name and email");
+      return;
+    }
+    sendReferral.mutate({
+      refereeName: refereeName.trim(),
+      refereeEmail: refereeEmail.trim(),
+    });
+  };
+
+  const stats = referralStats.data;
+  const referrals = referralList.data ?? [];
 
   return (
     <motion.div
@@ -76,7 +140,7 @@ export const ReferralWidget = () => {
         </div>
 
         {/* Referral Link Copy */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-6">
           <div className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-400 text-sm font-mono truncate">
             {referralLink}
           </div>
@@ -93,16 +157,109 @@ export const ReferralWidget = () => {
           </button>
         </div>
 
+        {/* Send Referral Email Section */}
+        <div className="mb-6">
+          {!showForm ? (
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800/80 hover:bg-slate-800 border border-white/10 hover:border-[#10b981]/30 rounded-xl text-slate-300 hover:text-white text-sm font-medium transition-all"
+            >
+              <Mail className="w-4 h-4 text-[#10b981]" />
+              Send Referral Email
+            </button>
+          ) : (
+            <AnimatePresence>
+              <motion.form
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                onSubmit={handleSendReferral}
+                className="bg-slate-950/50 border border-white/10 rounded-2xl p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                    <Send className="w-4 h-4 text-[#10b981]" />
+                    Send Referral Invitation
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="text-slate-500 hover:text-slate-300 text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Their Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="text"
+                      value={refereeName}
+                      onChange={(e) => setRefereeName(e.target.value)}
+                      placeholder="John Smith"
+                      className="w-full bg-slate-900 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#10b981]/50 focus:ring-1 focus:ring-[#10b981]/20 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Their Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="email"
+                      value={refereeEmail}
+                      onChange={(e) => setRefereeEmail(e.target.value)}
+                      placeholder="john@company.com"
+                      className="w-full bg-slate-900 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#10b981]/50 focus:ring-1 focus:ring-[#10b981]/20 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={sendReferral.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#10b981] hover:bg-[#0da673] disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all text-sm"
+                >
+                  {sendReferral.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send Invitation Email
+                    </>
+                  )}
+                </button>
+              </motion.form>
+            </AnimatePresence>
+          )}
+        </div>
+
         {/* Stats */}
-        <div className="mt-8 flex gap-8 border-t border-white/5 pt-6">
+        <div className="flex gap-8 border-t border-white/5 pt-6 mb-6">
           <div>
-            <div className="text-2xl font-bold text-white">—</div>
+            <div className="text-2xl font-bold text-white">
+              {stats?.totalSent ?? "—"}
+            </div>
             <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">
               Invites Sent
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#10b981]">—</div>
+            <div className="text-2xl font-bold text-[#10b981]">
+              {stats?.monthsEarned ?? "—"}
+            </div>
             <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">
               Months Earned
             </div>
@@ -111,6 +268,53 @@ export const ReferralWidget = () => {
             <Users className="w-5 h-5 text-slate-600" />
           </div>
         </div>
+
+        {/* Sent Referrals List */}
+        {referrals.length > 0 && (
+          <div>
+            <h4 className="text-xs text-slate-500 uppercase tracking-widest mb-3">
+              Sent Referrals
+            </h4>
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+              {referrals.map((ref) => {
+                const sc = statusConfig[ref.status] ?? statusConfig.pending;
+                const StatusIcon = sc.icon;
+                return (
+                  <div
+                    key={ref.id}
+                    className="flex items-center gap-3 bg-slate-950/50 border border-white/5 rounded-xl px-4 py-3"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white font-medium truncate">
+                        {ref.refereeName}
+                      </div>
+                      <div className="text-xs text-slate-500 truncate">
+                        {ref.refereeEmail}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <div className={`flex items-center gap-1 text-xs ${sc.color}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {sc.label}
+                      </div>
+                      <div className="text-[10px] text-slate-600">
+                        {timeAgo(ref.createdAt)}
+                      </div>
+                    </div>
+                    {!ref.emailSent && (
+                      <div title="Email not delivered">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400/60" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
