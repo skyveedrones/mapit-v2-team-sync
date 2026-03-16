@@ -2127,3 +2127,9 @@
 
 ## Version Update
 - [x] Bump version from v1.1.0 to v1.1.1 (patch: Mapbox blank screen fix, flight path hidden by default, webmaster project assignment fix)
+
+## Version Automation Setup
+- [x] Create scripts/bump-version.mjs for automated version bumping
+- [x] Add "bump" script to package.json
+- [x] Test bump script (v1.1.1 → v1.1.2 successful)
+- [x] Define "Definition of Done": Every code change must run `npm run bump` before checkpoint
