@@ -2168,3 +2168,10 @@
 - [x] Added organizationId column to projects table via ALTER TABLE
 - [x] Stamped all 9 projects with organizationId=1 (SkyVee Drones)
 - [ ] Verify clay@skyveedrones.com sees all 9 projects in dashboard (Clay to verify)
+
+## Organization Settings Tab
+- [x] Audit Settings page tab structure
+- [x] Add organization.update tRPC procedure (name, logoUrl, brandColor) — already existed
+- [x] Build Organization tab: org name field, logo upload, brand color picker
+- [x] Wire save to organization.update mutation with cache invalidation
+- [x] Verify logo and brand color reflect immediately in dashboard header
