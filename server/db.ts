@@ -1565,7 +1565,8 @@ export async function createClient(client: InsertClient) {
 }
 
 /**
- * Get all clients for an owner
+ * Get all clients for an owner.
+ * Webmaster users can see all clients regardless of ownerId.
  */
 export async function getOwnerClients(ownerId: number) {
   const db = await getDb();
@@ -1573,10 +1574,23 @@ export async function getOwnerClients(ownerId: number) {
     throw new Error("Database not available");
   }
 
+  // Check if the requesting user is a webmaster — they can see all clients
+  const userResult = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, ownerId))
+    .limit(1);
+
+  const isWebmaster = userResult.length > 0 && userResult[0].role === 'webmaster';
+
   return db
     .select()
     .from(clients)
-    .where(and(eq(clients.ownerId, ownerId), isNull(clients.deletedAt)))
+    .where(
+      isWebmaster
+        ? isNull(clients.deletedAt)
+        : and(eq(clients.ownerId, ownerId), isNull(clients.deletedAt))
+    )
     .orderBy(desc(clients.updatedAt));
 }
 
@@ -1599,7 +1613,8 @@ export async function getClientById(clientId: number) {
 }
 
 /**
- * Get a client by ID, ensuring it belongs to the specified owner
+ * Get a client by ID, ensuring it belongs to the specified owner.
+ * Webmaster users can access any client regardless of ownerId.
  */
 export async function getOwnerClient(clientId: number, ownerId: number) {
   const db = await getDb();
@@ -1607,10 +1622,23 @@ export async function getOwnerClient(clientId: number, ownerId: number) {
     throw new Error("Database not available");
   }
 
+  // Check if the requesting user is a webmaster — they can access any client
+  const userResult = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, ownerId))
+    .limit(1);
+
+  const isWebmaster = userResult.length > 0 && userResult[0].role === 'webmaster';
+
   const result = await db
     .select()
     .from(clients)
-    .where(and(eq(clients.id, clientId), eq(clients.ownerId, ownerId), isNull(clients.deletedAt)))
+    .where(
+      isWebmaster
+        ? and(eq(clients.id, clientId), isNull(clients.deletedAt))
+        : and(eq(clients.id, clientId), eq(clients.ownerId, ownerId), isNull(clients.deletedAt))
+    )
     .limit(1);
 
   return result.length > 0 ? result[0] : null;

@@ -2112,3 +2112,8 @@
 
 ## Version Update
 - [x] Bump version from v1.0.9 to v1.1.0 (includes: overlay manager enhancements, referral program, nav updates)
+
+## Bug Fix: Project Assignment Failure
+- [x] Diagnose "Failed to update project assignments" error for eluna@forneytx.gov
+- [x] Fix the root cause in backend/frontend
+- [x] Manually assign eluna to the 5 Forney TX projects after fix
