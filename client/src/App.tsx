@@ -12,6 +12,7 @@ import { GlobalBackground } from "./components/GlobalBackground";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 import { OfflineIndicator } from "./components/OfflineIndicator";
+import { WhatsNewBanner } from "./components/WhatsNewBanner";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import InviteAccept from "./pages/InviteAccept";
@@ -299,6 +300,7 @@ function App() {
           <OfflineIndicator />
           <VersionCheckOnLoginWrapper />
           <ContinuousVersionCheckWrapper />
+          <WhatsNewBanner />
 
           <Router />
         </TooltipProvider>

@@ -2133,3 +2133,8 @@
 - [x] Add "bump" script to package.json
 - [x] Test bump script (v1.1.1 → v1.1.2 successful)
 - [x] Define "Definition of Done": Every code change must run `npm run bump` before checkpoint
+
+## Deployment & Documentation
+- [x] Create CONTRIBUTING.md with deployment rules and versioning protocol
+- [x] Create WhatsNewBanner component to notify users of new versions
+- [x] Integrate WhatsNewBanner into main App.tsx layout
