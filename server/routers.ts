@@ -765,11 +765,28 @@ export const appRouter = router({
         new Map(allProjects.map(p => [p.id, p])).values()
       );
       
-      // Sort by updatedAt descending
-      return uniqueProjects.sort((a, b) => 
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+      // Sort: pinned projects first, then by updatedAt descending
+      return uniqueProjects.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
     }),
+    // Toggle pin/favorite status for a project
+    togglePin: protectedProcedure
+      .input(z.object({ id: z.number(), isPinned: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        // Verify ownership — only the project owner can pin
+        const project = await getUserProject(input.id, ctx.user.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+        await db
+          .update(projects)
+          .set({ isPinned: input.isPinned })
+          .where(eq(projects.id, input.id));
+        return { id: input.id, isPinned: input.isPinned };
+      }),
 
     // Get project count for the current user
     count: protectedProcedure.query(async ({ ctx }) => {

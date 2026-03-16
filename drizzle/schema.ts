@@ -133,6 +133,8 @@ export const projects = mysqlTable("projects", {
   laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
   /** Foreign key to organizations table — set when project is created under an org */
   organizationId: int("organizationId"),
+  /** Whether this project is pinned/favorited to the top of the dashboard */
+  isPinned: boolean("isPinned").default(false).notNull(),
   /** Soft delete timestamp — null means active */
   deletedAt: timestamp("deletedAt"),
   /** User ID who deleted this project */

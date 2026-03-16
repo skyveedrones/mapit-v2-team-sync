@@ -232,6 +232,13 @@
       "when": 1773692466970,
       "tag": "0032_sturdy_the_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1773705173255,
+      "tag": "0033_normal_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }

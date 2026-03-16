@@ -2189,3 +2189,17 @@
 - [x] Fix 14 null-safety TS errors in server/scripts/migrate-legacy-clients.ts
 - [x] Add getProviderBranding tRPC procedure (returns provider org logo + brandColor)
 - [x] Update client portal header to show provider logo and apply brand color accent bar
+
+## Project Pin / Favorite Feature
+- [ ] Check if isPinned column already exists in projects schema
+- [ ] Add isPinned column to projects table (schema + db:push)
+- [ ] Add project.togglePin tRPC procedure with optimistic update support
+- [ ] Update getUserProjects query to sort pinned projects first
+- [ ] Add star/pin button to project cards on the dashboard
+- [ ] Show "Pinned" section header above pinned projects
+- [ ] Persist pin state with optimistic UI update (no page reload)
+
+## Remove 14-Day Trial Plan Card
+- [ ] Find the Pricing page component
+- [ ] Remove the 14-Day Trial plan card entirely
+- [ ] Update subtitle text to remove "14-day free trial" reference

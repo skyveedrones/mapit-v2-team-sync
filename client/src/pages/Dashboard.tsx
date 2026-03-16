@@ -38,8 +38,11 @@ import {
   FolderOpen,
   FolderPlus,
   LogOut,
+  Pin,
+  PinOff,
   Plus,
   Settings,
+  Star,
   Users,
   FileJson,
 } from "lucide-react";
@@ -226,6 +229,37 @@ export default function Dashboard() {
     setDeleteDialogOpen(true);
   };
 
+  // Pin / favorite toggle with optimistic update
+  const utils = trpc.useUtils();
+  const togglePin = trpc.project.togglePin.useMutation({
+    onMutate: async ({ id, isPinned }) => {
+      await utils.project.list.cancel();
+      const prev = utils.project.list.getData();
+      utils.project.list.setData(undefined, (old) =>
+        old
+          ? old
+              .map((p) => (p.id === id ? { ...p, isPinned } : p))
+              .sort((a, b) => {
+                const aPin = a.id === id ? isPinned : a.isPinned;
+                const bPin = b.id === id ? isPinned : b.isPinned;
+                if (aPin && !bPin) return -1;
+                if (!aPin && bPin) return 1;
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+              })
+          : old
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) utils.project.list.setData(undefined, ctx.prev);
+      toast.error('Failed to update pin status');
+    },
+    onSettled: () => utils.project.list.invalidate(),
+  });
+
+  const pinnedProjects = projects?.filter((p) => p.isPinned) ?? [];
+  const unpinnedProjects = projects?.filter((p) => !p.isPinned) ?? [];
+
   return (
     <DashboardLayout>
       <motion.div
@@ -291,19 +325,7 @@ export default function Dashboard() {
 
         {/* Projects Section */}
         <motion.div variants={fadeInUp}>
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-xl font-semibold"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Your Projects
-            </h2>
-            <span className="text-sm text-muted-foreground">
-              {projects?.length || 0} project{projects?.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          {/* Projects Grid */}
+          {/* Loading skeleton */}
           {projectsLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
@@ -318,15 +340,75 @@ export default function Dashboard() {
               ))}
             </div>
           ) : projects && projects.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onEdit={handleEditProject}
-                  onDelete={handleDeleteProject}
-                />
-              ))}
+            <div className="space-y-8">
+              {/* Pinned Projects Section */}
+              {pinnedProjects.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Pin className="h-4 w-4 text-amber-500" />
+                    <h2
+                      className="text-xl font-semibold"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      Pinned
+                    </h2>
+                    <span className="text-sm text-muted-foreground ml-1">
+                      {pinnedProjects.length} project{pinnedProjects.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pinnedProjects.map((project) => (
+                      <div key={project.id} className="relative group">
+                        <ProjectCard
+                          project={project}
+                          onEdit={handleEditProject}
+                          onDelete={handleDeleteProject}
+                        />
+                        <button
+                          onClick={() => togglePin.mutate({ id: project.id, isPinned: false })}
+                          title="Unpin project"
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-amber-500/90 text-white shadow opacity-0 group-hover:opacity-100 transition-opacity hover:bg-amber-600"
+                        >
+                          <PinOff className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* All / Remaining Projects */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {pinnedProjects.length > 0 ? "All Projects" : "Your Projects"}
+                  </h2>
+                  <span className="text-sm text-muted-foreground">
+                    {projects.length} project{projects.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {unpinnedProjects.map((project) => (
+                    <div key={project.id} className="relative group">
+                      <ProjectCard
+                        project={project}
+                        onEdit={handleEditProject}
+                        onDelete={handleDeleteProject}
+                      />
+                      <button
+                        onClick={() => togglePin.mutate({ id: project.id, isPinned: true })}
+                        title="Pin project to top"
+                        className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-background/80 text-muted-foreground shadow opacity-0 group-hover:opacity-100 transition-opacity hover:bg-amber-500 hover:text-white"
+                      >
+                        <Pin className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             /* Empty State */
