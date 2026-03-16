@@ -290,6 +290,8 @@ async function runMigration(opts: {
           projectCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
+          deletedAt: null,
+          deletedBy: null,
         };
       }
     }

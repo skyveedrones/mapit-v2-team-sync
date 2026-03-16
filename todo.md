@@ -2184,3 +2184,8 @@
 - [x] Style Google sign-in as premium integrated button with G logo
 - [x] Add Terms of Service / Privacy Policy footer
 - [x] Verify dark overlay keeps form readable
+
+## TS Error Fix + Client Portal Branding
+- [x] Fix 14 null-safety TS errors in server/scripts/migrate-legacy-clients.ts
+- [x] Add getProviderBranding tRPC procedure (returns provider org logo + brandColor)
+- [x] Update client portal header to show provider logo and apply brand color accent bar

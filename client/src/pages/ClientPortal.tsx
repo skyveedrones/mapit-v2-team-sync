@@ -21,6 +21,14 @@ export default function ClientPortal() {
     enabled: !!user,
   });
 
+  // Get the provider's org branding (logo + brand color) for the header
+  const { data: providerBranding } = trpc.organization.getProviderBranding.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  // Derive the accent color: use provider brand color if available, else CSS primary
+  const accentColor = providerBranding?.brandColor ?? null;
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -73,17 +81,33 @@ export default function ClientPortal() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
+      {/* Header — branded with provider org logo and color */}
+      <header
+        className="border-b bg-card"
+        style={accentColor ? { borderBottomColor: accentColor } : undefined}
+      >
+        {/* Thin brand color accent bar at the very top */}
+        {accentColor && (
+          <div className="h-1 w-full" style={{ backgroundColor: accentColor }} />
+        )}
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            {client.logoUrl ? (
+            {/* Provider logo takes priority; fall back to client logo, then icon */}
+            {providerBranding?.logoUrl ? (
+              <img
+                src={providerBranding.logoUrl}
+                alt={providerBranding.name ?? 'Provider'}
+                className="h-9 w-auto max-w-[120px] object-contain"
+              />
+            ) : client.logoUrl ? (
               <img src={client.logoUrl} alt={client.name} className="h-8 w-8 rounded object-cover" />
             ) : (
-              <Building2 className="h-8 w-8 text-primary" />
+              <Building2 className="h-8 w-8" style={accentColor ? { color: accentColor } : undefined} />
             )}
             <div>
-              <h1 className="font-semibold text-lg">{client.name}</h1>
+              <h1 className="font-semibold text-lg">
+                {providerBranding?.name ?? client.name}
+              </h1>
               <p className="text-xs text-muted-foreground">Client Portal</p>
             </div>
           </div>
@@ -93,7 +117,12 @@ export default function ClientPortal() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => logout()}
+              style={accentColor ? { color: accentColor } : undefined}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>

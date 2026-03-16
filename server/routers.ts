@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, projectOverlays, users, projectCollaborators, projects, referrals, organizations } from "../drizzle/schema";
+import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -5024,6 +5024,41 @@ export const appRouter = router({
         const { url } = await storagePut(key, buffer, input.mimeType);
         return { url, key };
       }),
+    /**
+     * Returns the provider org's branding (logo + brand color) for the client portal.
+     * The provider is the owner of the client that the current user belongs to.
+     */
+    getProviderBranding: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      // Find the client(s) this user has access to and get the owner (provider)
+      const clientUserRows = await db
+        .select({ ownerId: clients.ownerId })
+        .from(clientUsers)
+        .innerJoin(clients, eq(clientUsers.clientId, clients.id))
+        .where(eq(clientUsers.userId, ctx.user.id))
+        .limit(1);
+      if (!clientUserRows.length) return null;
+      const providerId = clientUserRows[0].ownerId;
+      // Get the provider's organizationId
+      const providerRows = await db
+        .select({ organizationId: users.organizationId })
+        .from(users)
+        .where(eq(users.id, providerId))
+        .limit(1);
+      if (!providerRows.length || !providerRows[0].organizationId) return null;
+      // Return only the branding fields needed by the client portal header
+      const orgRows = await db
+        .select({
+          name: organizations.name,
+          logoUrl: organizations.logoUrl,
+          brandColor: organizations.brandColor,
+        })
+        .from(organizations)
+        .where(eq(organizations.id, providerRows[0].organizationId))
+        .limit(1);
+      return orgRows[0] ?? null;
+    }),
   }),
 });
 
