@@ -1,0 +1,13 @@
+{
+  "query": "\n-- Create test project with userId (assuming user ID 1)\nINSERT INTO projects (userId, name, location, description, clientId, createdAt, updatedAt)\nVALUES (1, 'Force-Repaint Test', 'Forney, Texas', 'Test project for Force-Repaint Mapbox fix', 1, NOW(), NOW());\n\n-- Get the project ID that was just created\nSELECT LAST_INSERT_ID() as projectId;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute \n-- Create test project with userId (assuming user ID 1)\nINSERT INTO projects (userId, name, location, description, clientId, createdAt, updatedAt)\nVALUES (1, 'Force-Repaint Test', 'Forney, Texas', 'Test project for Force-Repaint Mapbox fix', 1, NOW(), NOW());\n\n-- Get the project ID that was just created\nSELECT LAST_INSERT_ID() as projectId;\n",
+  "rows": [
+    {
+      "projectId": "960001"
+    }
+  ],
+  "messages": [],
+  "stdout": "projectId\n960001\n",
+  "stderr": "",
+  "execution_time_ms": 954
+}

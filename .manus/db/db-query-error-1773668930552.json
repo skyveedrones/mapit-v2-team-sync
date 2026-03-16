@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Create test project\nINSERT INTO projects (name, location, description, clientId, createdAt, updatedAt)\nVALUES ('Force-Repaint Test', 'Forney, Texas', 'Test project for Force-Repaint Mapbox fix', 1, NOW(), NOW());\n\n-- Get the project ID\nSELECT LAST_INSERT_ID() as projectId;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute \n-- Create test project\nINSERT INTO projects (name, location, description, clientId, createdAt, updatedAt)\nVALUES ('Force-Repaint Test', 'Forney, Texas', 'Test project for Force-Repaint Mapbox fix', 1, NOW(), NOW());\n\n-- Get the project ID\nSELECT LAST_INSERT_ID() as projectId;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1364 (HY000) at line 3: Field 'userId' doesn't have a default value"
+  ]
+}

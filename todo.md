@@ -2144,3 +2144,11 @@
 - [x] Identify all timing issues: data loading, DOM visibility, map initialization
 - [x] Implement comprehensive fix: eager render + proper resize + fallback bounds
 - [x] Test on first open and verify map renders immediately with GPS points visible
+
+
+## Bug Fix: Mapbox Blank on First Load (Round 4 - Force-Repaint Strategy)
+- [x] Implement delayed resize hammer: setTimeout calls at 100ms, 500ms, 2000ms
+- [x] Add visibility check for map container CSS (display: none, visibility: hidden)
+- [x] Implement force-style trigger with setStyle in load event
+- [x] Verify map pixels render in preview window
+- [x] Test on first project load with GPS data
