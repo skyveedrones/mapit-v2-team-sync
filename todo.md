@@ -2109,3 +2109,6 @@
 
 ## Navigation Update
 - [x] Add Referral Program link to hamburger navigation after Pricing
+
+## Version Update
+- [x] Bump version from v1.0.9 to v1.1.0 (includes: overlay manager enhancements, referral program, nav updates)
