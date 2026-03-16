@@ -131,6 +131,8 @@ export const projects = mysqlTable("projects", {
   faaLicenseNumber: varchar("faaLicenseNumber", { length: 100 }),
   /** LAANC Authorization number */
   laancAuthNumber: varchar("laancAuthNumber", { length: 100 }),
+  /** Foreign key to organizations table — set when project is created under an org */
+  organizationId: int("organizationId"),
   /** Soft delete timestamp — null means active */
   deletedAt: timestamp("deletedAt"),
   /** User ID who deleted this project */

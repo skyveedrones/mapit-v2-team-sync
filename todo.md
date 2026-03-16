@@ -2160,3 +2160,11 @@
 - [x] Maintain responsive column count (2/3/4 cols via resize listener)
 - [x] Preserve MediaCard memoization and LazyImage inside VirtualMediaGrid
 - [x] VList only renders visible rows — eliminates repaint lag on scroll
+
+## Final Org Migration (Exact Mapping)
+- [x] Org 1 (SkyVee Drones): clay@skyveedrones.com + claybechtol@gmail.com → PROVIDER
+- [x] Org 4 (Forney TX Municipal): TBechtol@forneytx.gov → ORG_ADMIN; eluna, cmcquiston, traceybechtol → ORG_USER
+- [x] Org 3 (City of Garland Texas): mrozelle@garlandtx.gov → ORG_ADMIN
+- [x] Added organizationId column to projects table via ALTER TABLE
+- [x] Stamped all 9 projects with organizationId=1 (SkyVee Drones)
+- [ ] Verify clay@skyveedrones.com sees all 9 projects in dashboard (Clay to verify)
