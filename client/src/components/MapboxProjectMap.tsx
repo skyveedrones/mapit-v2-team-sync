@@ -175,7 +175,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [targetB, setTargetB] = useState<{ lng: number; lat: number } | null>(null);
 
     // ── NEW: Enhanced overlay controls state ──
-    const [flightPathVisible, setFlightPathVisible] = useState(true);
+    const [flightPathVisible, setFlightPathVisible] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [overlayLocked, setOverlayLocked] = useState<Record<number, boolean>>({});
     const [renamingOverlayId, setRenamingOverlayId] = useState<number | null>(null);
