@@ -108,14 +108,14 @@ const LazyImage = memo(function LazyImage({ src, alt, className, onError }: Lazy
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      { rootMargin: "200px" } // Start loading 200px before entering viewport
+      { rootMargin: "800px" } // Start loading 800px before entering viewport for smoother scrolling
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <div ref={containerRef} className={`relative w-full h-full ${className ?? ""}`}>
+    <div ref={containerRef} className={`relative w-full h-full overflow-hidden ${className ?? ""}`} style={{ minHeight: "200px" }}>
       {/* Blur placeholder shown until image loads */}
       {!loaded && (
         <div className="absolute inset-0 bg-muted animate-pulse rounded" />
@@ -308,7 +308,7 @@ const VirtualMediaGrid = memo(function VirtualMediaGrid({
       {rows.map((row, rowIdx) => (
         <div key={rowIdx} className="flex gap-4 mb-4">
           {row.map((item) => (
-            <div key={item.id} className="flex-1 min-w-0" style={{ aspectRatio: "1" }}>
+            <div key={`media-${item.id}`} className="flex-1 min-w-0" style={{ aspectRatio: "1", minHeight: "200px", height: "auto" }}>
               <MediaCard
                 item={item}
                 isSelected={selectedIds.has(item.id)}

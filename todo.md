@@ -2261,3 +2261,12 @@
 - [x] Add "No GPS Location" placeholder text for files without GPS metadata
 - [x] Keep Edit button visible and functional for manual coordinate entry
 - [x] Test GPS Location box displays for all media files
+
+## Media Gallery Thumbnail Performance Optimization (v2.1.0+)
+- [x] Wrap thumbnail component in React.memo to prevent unnecessary re-renders
+- [x] Add loading="lazy" to img tags for deferred image loading
+- [x] Set fixed aspect-ratio and height on thumbnails to prevent layout shift
+- [x] Implement react-window virtualization for large media lists (VList already in place)
+- [x] Increase LazyImage buffer from 200px to 800px for smoother preloading
+- [x] Stabilize virtualization keys with item.id prefix
+- [x] Add explicit height constraints to LazyImage and MediaCard containers
