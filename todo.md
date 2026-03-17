@@ -2203,3 +2203,9 @@
 - [ ] Find the Pricing page component
 - [ ] Remove the 14-Day Trial plan card entirely
 - [ ] Update subtitle text to remove "14-day free trial" reference
+
+## Login Page Flicker / Redirect Bug Fix
+- [ ] Audit Login.tsx for useAuth redirect logic that fires on input
+- [ ] Audit App.tsx ProtectedRoute and auth guard for /login route interference
+- [ ] Ensure /login route is fully excluded from auth guards
+- [ ] Prevent any redirect to Manus OAuth portal when form is being typed into

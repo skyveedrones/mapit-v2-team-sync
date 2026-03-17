@@ -15,8 +15,11 @@ const BG_URL =
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     window.location.href = getLoginUrl();
   };
 
@@ -105,26 +108,23 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Email field (visual — triggers OAuth on focus/click) */}
-            <div className="space-y-4">
+            {/* Email + Password form — editable fields, redirect only on submit */}
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-white/60 uppercase tracking-wider">
                   Email Address
                 </label>
-                <div
-                  className="relative group cursor-pointer"
-                  onClick={handleLogin}
-                  title="Click to sign in"
-                >
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <Mail className="w-4 h-4 text-white/30 group-hover:text-emerald-400 transition-colors" />
+                    <Mail className="w-4 h-4 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                   </div>
                   <input
                     type="email"
                     placeholder="you@example.com"
-                    readOnly
-                    onClick={handleLogin}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-white/80 placeholder-white/25 cursor-pointer outline-none transition-all"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-white/80 placeholder-white/25 outline-none transition-all"
                     style={{
                       background: "rgba(255,255,255,0.06)",
                       border: "1px solid rgba(255,255,255,0.1)",
@@ -141,24 +141,22 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Password field (visual) */}
+              {/* Password field */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-white/60 uppercase tracking-wider">
                   Password
                 </label>
-                <div
-                  className="relative group cursor-pointer"
-                  onClick={handleLogin}
-                >
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <Lock className="w-4 h-4 text-white/30 group-hover:text-emerald-400 transition-colors" />
+                    <Lock className="w-4 h-4 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    readOnly
-                    onClick={handleLogin}
-                    className="w-full pl-10 pr-10 py-3 rounded-lg text-sm text-white/80 placeholder-white/25 cursor-pointer outline-none transition-all"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="w-full pl-10 pr-10 py-3 rounded-lg text-sm text-white/80 placeholder-white/25 outline-none transition-all"
                     style={{
                       background: "rgba(255,255,255,0.06)",
                       border: "1px solid rgba(255,255,255,0.1)",
@@ -174,7 +172,7 @@ export default function Login() {
                   />
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setShowPassword(!showPassword); }}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-3 flex items-center text-white/30 hover:text-white/60 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -183,7 +181,7 @@ export default function Login() {
               </div>
 
               {/* Remember me + Forgot password */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" id="login-form">
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <div
                     className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
@@ -208,10 +206,11 @@ export default function Login() {
                   Forgot password?
                 </button>
               </div>
-            </div>
+            </form>
 
             {/* Primary Sign In button */}
             <button
+              type="button"
               onClick={handleLogin}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold text-sm text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
               style={{
