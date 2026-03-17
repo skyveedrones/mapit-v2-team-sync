@@ -2225,3 +2225,11 @@
 - [x] Update ProjectMap.tsx markers with emerald green and 0.65 scale
 - [x] Update GPSEditDialog.tsx markers (existing GPS points + selected marker) with emerald green
 - [x] Update MapboxOverlayView.tsx markers (corner, rotation, snap/measurement) with emerald green
+
+## GeoJSON Symbol Layer Conversion (v2.1.0+)
+- [x] Convert MapboxProjectMap GPS markers from individual Marker objects to GeoJSON Symbol Layer
+- [x] Load custom marker image and apply SkyVee emerald green (#50C878) icon color
+- [x] Implement click interactions for media pins with popup display
+- [x] Implement hover cursor changes (pointer on enter, default on leave)
+- [x] Remove individual marker loop and numbered labels from pins
+- [x] Fix TypeScript errors in geometry coordinate access

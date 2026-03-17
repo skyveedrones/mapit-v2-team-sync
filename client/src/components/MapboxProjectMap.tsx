@@ -142,7 +142,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapWrapperRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
-    const gpsMarkersRef = useRef<mapboxgl.Marker[]>([]);
+    const gpsMarkersRef = useRef<mapboxgl.Marker[]>([]); // Kept for compatibility, now unused with GeoJSON layer
     const popupRef = useRef<mapboxgl.Popup | null>(null);
     const cornerMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const rotationMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -340,18 +340,46 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
       // Build a stable key from sorted media IDs to avoid re-rendering if data hasn't changed
       const newKey = sortedMedia.map((m) => m.id).join(",");
-      if (markersRenderedForRef.current === newKey) return;
+      if (markersRenderedForRef.current === newKey) {
+        // Data hasn't changed, but we still need to update the GeoJSON source in case visibility changed
+        const mediaGeoJSON = {
+          type: 'FeatureCollection' as const,
+          features: sortedMedia.map((media) => ({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)],
+            },
+            properties: {
+              id: media.id,
+              filename: media.filename,
+              latitude: media.latitude,
+              longitude: media.longitude,
+              altitude: media.altitude,
+              mediaType: media.mediaType,
+              thumbnailUrl: media.thumbnailUrl || media.url,
+              url: media.url,
+            },
+          })),
+        };
+        if (map.getSource('media-source')) {
+          (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
+        }
+        return;
+      }
       markersRenderedForRef.current = newKey;
 
-      console.log(`[MapboxProjectMap] Data watcher triggered: ${sortedMedia.length} GPS points, mapLoaded=${mapLoaded}`);
+      console.log(`[MapboxProjectMap] Data watcher triggered: ${sortedMedia.length} GPS points, mapLoaded=${mapLoaded}. Using GeoJSON Symbol Layer.`);
 
-      // Clear old GPS markers
-      gpsMarkersRef.current.forEach((m) => m.remove());
-      gpsMarkersRef.current = [];
+      // Clear old GPS markers (legacy - no longer used with GeoJSON layer)
+      // gpsMarkersRef.current.forEach((m) => m.remove());
+      // gpsMarkersRef.current = [];
 
-      // Clear old flight path
+      // Clear old flight path and media pins layer
       if (map.getLayer("flight-path")) map.removeLayer("flight-path");
       if (map.getSource("flight-path-src")) map.removeSource("flight-path-src");
+      if (map.getLayer("media-pins")) map.removeLayer("media-pins");
+      if (map.getSource("media-source")) map.removeSource("media-source");
 
       // ── Flight Path (GeoJSON LineString) ──
       const flightPathCoords = sortedMedia.map((m) => [
@@ -386,62 +414,122 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         },
       });
 
-      // ── GPS Markers ──
-      sortedMedia.forEach((media, index) => {
-        const lng = parseFloat(media.longitude!);
-        const lat = parseFloat(media.latitude!);
-        const isVideo = media.mediaType === "video";
-        const markerColor = isVideo ? "#ef4444" : "#10B981";
+      // ── Load SkyVee Pin Image ──
+      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png', (error, image) => {
+        if (error) {
+          console.error('[MapboxProjectMap] Failed to load pin image:', error);
+          return;
+        }
+        if (image && !map.hasImage('skyvee-pin')) {
+          map.addImage('skyvee-pin', image, { sdf: true });
+        }
+      });
 
-        const el = document.createElement("div");
-        el.setAttribute("data-media-id", String(media.id));
-        el.style.cssText = `
-          background: ${markerColor};
-          color: white;
-          border-radius: 50%;
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          font-weight: bold;
-          border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          cursor: pointer;
-        `;
-        el.textContent = String(index + 1);
+      // ── Create GeoJSON Source for Media Points ──
+      const mediaGeoJSON = {
+        type: 'FeatureCollection' as const,
+        features: sortedMedia.map((media) => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)],
+          },
+          properties: {
+            id: media.id,
+            filename: media.filename,
+            latitude: media.latitude,
+            longitude: media.longitude,
+            altitude: media.altitude,
+            mediaType: media.mediaType,
+            thumbnailUrl: media.thumbnailUrl || media.url,
+            url: media.url,
+          },
+        })),
+      };
 
-        const thumbnailUrl = media.thumbnailUrl || media.url;
+      // ── Add or Update Media Source and Symbol Layer ──
+      if (map.getSource('media-source')) {
+        (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
+      } else {
+        map.addSource('media-source', {
+          type: 'geojson',
+          data: mediaGeoJSON,
+        });
+
+        map.addLayer({
+          id: 'media-pins',
+          type: 'symbol',
+          source: 'media-source',
+          layout: {
+            'icon-image': 'skyvee-pin',
+            'icon-size': 1.0,
+            'icon-anchor': 'bottom',
+            'icon-allow-overlap': true,
+          },
+          paint: {
+            'icon-color': '#50C878', // SkyVee Emerald Green
+          },
+        });
+      }
+
+      // ── Click Handler for Media Pins ──
+      const handleMediaPinClick = (e: mapboxgl.MapMouseEvent) => {
+        const features = map.queryRenderedFeatures({ layers: ['media-pins'] });
+        if (!features || features.length === 0) return;
+
+        const feature = features[0];
+        const props = feature.properties as any;
+
+        setSelectedMedia({
+          id: props.id,
+          filename: props.filename,
+          latitude: parseFloat(props.latitude),
+          longitude: parseFloat(props.longitude),
+          altitude: props.altitude ? parseFloat(props.altitude) : null,
+          mediaType: props.mediaType,
+          thumbnailUrl: props.thumbnailUrl,
+          url: props.url,
+        } as any);
+
+        const thumbnailUrl = props.thumbnailUrl;
         const popupHtml = `
           <div style="max-width:220px;font-family:system-ui,sans-serif">
             <img src="${thumbnailUrl}" style="width:100%;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" />
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff">${media.filename}</div>
-            <div style="font-size:11px;color:#94a3b8">${parseFloat(media.latitude!).toFixed(6)}, ${parseFloat(media.longitude!).toFixed(6)}</div>
-            ${media.altitude ? `<div style="font-size:11px;color:#94a3b8">Alt: ${parseFloat(String(media.altitude)).toFixed(1)}m</div>` : ""}
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff">${props.filename}</div>
+            <div style="font-size:11px;color:#94a3b8">${parseFloat(props.latitude).toFixed(6)}, ${parseFloat(props.longitude).toFixed(6)}</div>
+            ${props.altitude ? `<div style="font-size:11px;color:#94a3b8">Alt: ${parseFloat(props.altitude).toFixed(1)}m</div>` : ''}
           </div>
         `;
 
-        const popup = new mapboxgl.Popup({
-          offset: 20,
+        new mapboxgl.Popup({
+          offset: 25,
           closeButton: true,
-          maxWidth: "260px",
-          className: "mapbox-media-popup",
-        }).setHTML(popupHtml);
-
-        const marker = new mapboxgl.Marker({
-          element: el,
-          color: '#50C878', // SkyVee Emerald Green
-          scale: 0.65,      // Optimized small pin size
+          maxWidth: '260px',
+          className: 'mapbox-media-popup',
         })
-          .setLngLat([lng, lat])
-          .setPopup(popup)
+          .setLngLat((feature.geometry as any).coordinates as [number, number])
+          .setHTML(popupHtml)
           .addTo(map);
+      };
 
-        popup.on("open", () => setSelectedMedia(media));
+      // ── Hover Cursor Changes ──
+      const handleMediaPinMouseEnter = () => {
+        map.getCanvas().style.cursor = 'pointer';
+      };
 
-        gpsMarkersRef.current.push(marker);
-      });
+      const handleMediaPinMouseLeave = () => {
+        map.getCanvas().style.cursor = '';
+      };
+
+      // Remove old event listeners if they exist
+      map.off('click', 'media-pins', handleMediaPinClick);
+      map.off('mouseenter', 'media-pins', handleMediaPinMouseEnter);
+      map.off('mouseleave', 'media-pins', handleMediaPinMouseLeave);
+
+      // Add new event listeners
+      map.on('click', 'media-pins', handleMediaPinClick);
+      map.on('mouseenter', 'media-pins', handleMediaPinMouseEnter);
+      map.on('mouseleave', 'media-pins', handleMediaPinMouseLeave);
 
       // Fit bounds to all markers
       if (sortedMedia.length > 1) {
@@ -451,7 +539,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         });
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
       }
-    }, [sortedMedia, mapLoaded]);
+    }, [sortedMedia, mapLoaded, setSelectedMedia]);
 
     // ── Toggle flight path visibility ───────────────────────────────────────
     useEffect(() => {
