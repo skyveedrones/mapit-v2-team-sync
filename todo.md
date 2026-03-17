@@ -2247,3 +2247,11 @@
 - [x] Configure Symbol Layer with icon-size 0.45 for slim appearance
 - [x] Set icon-anchor to 'bottom' for precise coordinate positioning
 - [x] Remove all legacy circle markers and numbered labels
+
+## Branded Login with Email Pre-fill (v2.1.0+)
+- [x] Create getBrandedLoginUrl() function in const.ts with email hint support
+- [x] Add login_hint parameter to OAuth URL for email pre-fill
+- [x] Configure state with dashboard redirect destination (/dashboard)
+- [x] Update Login.tsx to use handleBrandedLogin() on form submit
+- [x] Pass email state variable as login_hint parameter
+- [x] Change Sign In button to type="submit" for form submission

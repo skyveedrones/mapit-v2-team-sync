@@ -4,7 +4,7 @@
  * MAPIT / SkyVee branding, Manus OAuth flow
  */
 
-import { getLoginUrl, getPortalLoginUrl } from "@/const";
+import { getLoginUrl, getPortalLoginUrl, getBrandedLoginUrl } from "@/const";
 import { motion } from "framer-motion";
 import { ArrowRight, Lock, Mail, Map, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
@@ -17,6 +17,12 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleBrandedLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Trigger OAuth redirect with email pre-fill and dashboard redirect
+    window.location.href = getBrandedLoginUrl(email);
+  };
 
   const handleLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -210,8 +216,8 @@ export default function Login() {
 
             {/* Primary Sign In button */}
             <button
-              type="button"
-              onClick={handleLogin}
+              type="submit"
+              onClick={handleBrandedLogin}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold text-sm text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
