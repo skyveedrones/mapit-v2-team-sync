@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, ClipboardList, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
+import { Building2, ClipboardList, Download, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { PWAInstallModal } from "./PWAInstallModal";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -104,6 +107,23 @@ function DashboardLayoutContent({
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const { canInstall, isInstalled, platform, isTablet, triggerInstall, showIOSModal, setShowIOSModal } = usePWAInstall();
+
+  const handleInstallClick = async () => {
+    if (platform === "ios") {
+      setShowIOSModal(true);
+      return;
+    }
+    const result = await triggerInstall();
+    if (result === "accepted") {
+      toast.success("MAPIT installed!", { description: "Launch it from your desktop or taskbar." });
+    } else if (result === "unavailable") {
+      toast.info("Install from browser", {
+        description: "Click the install icon (⊕) in your address bar, or go to Menu → Install MAPIT.",
+        duration: 8000,
+      });
+    }
+  };
 
   // Filter menu items based on user role
   const menuItems = allMenuItems.filter(item => {
@@ -124,7 +144,7 @@ function DashboardLayoutContent({
             <OrgOrDefaultLogo />
           </div>
 
-          {/* Right: Action Center (Theme Toggle, User Menu, Hamburger) */}
+          {/* Right: Action Center (Theme Toggle, Install Button, User Menu, Hamburger) */}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -135,6 +155,20 @@ function DashboardLayoutContent({
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+
+            {/* Desktop/Tablet Install Button — only show when installable and not yet installed */}
+            {canInstall && !isInstalled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                onClick={handleInstallClick}
+                aria-label="Install MAPIT app"
+                title="Install MAPIT as a desktop app"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -201,6 +235,19 @@ function DashboardLayoutContent({
                     </DropdownMenuItem>
                   );
                 })}
+
+                {/* Install App sidebar item — shown when installable */}
+                {!isInstalled && (
+                  <DropdownMenuItem
+                    onClick={handleInstallClick}
+                    className="cursor-pointer gap-2 mt-1 border-t border-border/50 pt-2 text-emerald-600 dark:text-emerald-400 focus:text-emerald-600 dark:focus:text-emerald-400 focus:bg-emerald-500/10"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="font-medium">
+                      {isTablet ? "Install iPad App" : "Install Desktop App"}
+                    </span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -211,6 +258,13 @@ function DashboardLayoutContent({
       <main className="flex-1 p-4 md:p-6 overflow-auto">
         {children}
       </main>
+
+      {/* iOS / iPad install instructions modal */}
+      <PWAInstallModal
+        open={showIOSModal}
+        onOpenChange={setShowIOSModal}
+        isTablet={isTablet}
+      />
     </div>
   );
 }

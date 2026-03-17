@@ -1,7 +1,10 @@
 {
-  "name": "Mapit - Drone Project Management",
-  "short_name": "Mapit",
-  "description": "Professional drone mapping and aerial photography project management platform",
+  "name": "MAPIT by SkyVee Drones",
+  "short_name": "MAPIT",
+  "description": "Professional drone mapping and aerial photography project management platform by SkyVee Drones",
+  "orientation": "any",
+  "categories": ["business", "productivity", "utilities"],
+  "prefer_related_applications": false,
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -19,5 +22,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": []
 }

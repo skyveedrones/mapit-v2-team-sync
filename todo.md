@@ -2209,3 +2209,12 @@
 - [ ] Audit App.tsx ProtectedRoute and auth guard for /login route interference
 - [ ] Ensure /login route is fully excluded from auth guards
 - [ ] Prevent any redirect to Manus OAuth portal when form is being typed into
+
+## PWA Install Feature (v2.1.0)
+- [x] Create usePWAInstall hook (beforeinstallprompt, iOS detection, tablet detection, isInstalled)
+- [x] Create PWAInstallModal component (iOS/iPad step-by-step instructions modal)
+- [x] Add Install App icon button to DashboardLayout header (desktop Chrome/Edge, emerald color)
+- [x] Add Install App menu item to hamburger/nav dropdown (with separator, emerald text)
+- [x] Update manifest.json name to "MAPIT by SkyVee Drones", short_name to "MAPIT"
+- [x] Add manifest categories, orientation fields for better PWA store metadata
+- [x] Bump version to v2.1.0
