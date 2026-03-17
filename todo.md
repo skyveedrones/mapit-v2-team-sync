@@ -2222,3 +2222,6 @@
 ## Marker Styling Update (v2.1.0+)
 - [x] Update MapboxProjectMap.tsx markers to use SkyVee emerald green (#50C878)
 - [x] Set marker scale to 0.65 for optimized small pin size
+- [x] Update ProjectMap.tsx markers with emerald green and 0.65 scale
+- [x] Update GPSEditDialog.tsx markers (existing GPS points + selected marker) with emerald green
+- [x] Update MapboxOverlayView.tsx markers (corner, rotation, snap/measurement) with emerald green

@@ -132,7 +132,11 @@ export function GPSEditDialog({
           const el = document.createElement("div");
           el.style.cssText =
             "width:10px;height:10px;border-radius:50%;background:rgba(148,163,184,0.6);border:1px solid rgba(255,255,255,0.5);";
-          const marker = new mapboxgl.Marker({ element: el })
+          const marker = new mapboxgl.Marker({
+            element: el,
+            color: '#50C878', // SkyVee Emerald Green
+            scale: 0.65,      // Optimized small pin size
+          })
             .setLngLat([point.lng, point.lat])
             .addTo(map);
           existingMarkersRef.current.push(marker);
@@ -170,7 +174,12 @@ export function GPSEditDialog({
     el.innerHTML =
       '<svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>';
 
-    selectedMarkerRef.current = new mapboxgl.Marker({ element: el, draggable: true })
+    selectedMarkerRef.current = new mapboxgl.Marker({
+      element: el,
+      draggable: true,
+      color: '#50C878', // SkyVee Emerald Green
+      scale: 0.65,      // Optimized small pin size
+    })
       .setLngLat([pos.lng, pos.lat])
       .addTo(map);
 

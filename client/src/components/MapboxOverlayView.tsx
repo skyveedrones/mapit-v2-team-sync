@@ -467,7 +467,12 @@ export function MapboxOverlayView({
       `;
       el.textContent = CORNER_LABELS[i];
 
-      const marker = new mapboxgl.Marker({ element: el, draggable: true })
+      const marker = new mapboxgl.Marker({
+        element: el,
+        draggable: true,
+        color: '#50C878', // SkyVee Emerald Green
+        scale: 0.65,      // Optimized small pin size
+      })
         .setLngLat([lng, lat])
         .addTo(map);
 
@@ -533,7 +538,12 @@ export function MapboxOverlayView({
     `;
     rotEl.textContent = "↻";
 
-    const rotMarker = new mapboxgl.Marker({ element: rotEl, draggable: true })
+    const rotMarker = new mapboxgl.Marker({
+      element: rotEl,
+      draggable: true,
+      color: '#50C878', // SkyVee Emerald Green
+      scale: 0.65,      // Optimized small pin size
+    })
       .setLngLat([tc[0], tc[1]])
       .addTo(map);
 
@@ -656,7 +666,11 @@ export function MapboxOverlayView({
           user-select: none; z-index: 20;
         `;
         el.textContent = label;
-        const m = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+        const m = new mapboxgl.Marker({
+          element: el,
+          color: '#50C878', // SkyVee Emerald Green
+          scale: 0.65,      // Optimized small pin size
+        }).setLngLat([lng, lat]).addTo(map);
         snapMarkersRef.current.push(m);
       };
 
