@@ -414,16 +414,21 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         },
       });
 
-      // ── Load SkyVee Pin Image ──
-      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png', (error, image) => {
-        if (error) {
-          console.error('[MapboxProjectMap] Failed to load pin image:', error);
-          return;
+      // ── Create and Load Slim Pin SVG (MAPIT Logo Style) ──
+      const SLIM_PIN_SVG = `
+        <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 42C16 42 32 26.2426 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.2426 16 42 16 42Z" fill="#50C878"/>
+          <circle cx="16" cy="16" r="6" fill="white"/>
+        </svg>
+      `;
+
+      const img = new Image(32, 42);
+      img.onload = () => {
+        if (!map.hasImage('skyvee-pin')) {
+          map.addImage('skyvee-pin', img);
         }
-        if (image && !map.hasImage('skyvee-pin')) {
-          map.addImage('skyvee-pin', image, { sdf: true });
-        }
-      });
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
 
       // ── Create GeoJSON Source for Media Points ──
       const mediaGeoJSON = {
@@ -462,13 +467,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           source: 'media-source',
           layout: {
             'icon-image': 'skyvee-pin',
-            'icon-size': 0.5,           // Slim needle-style pins
-            'icon-anchor': 'bottom',
-            'icon-offset': [0, 0],
+            'icon-size': 0.45,           // Scaled down to be slim and needle-like
+            'icon-anchor': 'bottom',     // Pointy end on the coordinate
             'icon-allow-overlap': true,
-          },
-          paint: {
-            'icon-color': '#50C878',     // SkyVee Emerald Green
           },
         });
       }

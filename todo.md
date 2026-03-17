@@ -2238,3 +2238,12 @@
 - [x] Update media-pins layer icon-size from 1.0 to 0.5 for slim appearance
 - [x] Add icon-offset [0, 0] for precise positioning
 - [x] Remove halo effect (no icon-halo-color or icon-halo-width) for clean pins
+
+## Custom SVG Needle Pin (v2.1.0+)
+- [x] Create custom SVG needle-style pin matching MAPIT logo design
+- [x] Implement teardrop shape with #50C878 emerald green fill
+- [x] Add white center circle (r=6) to match logo aesthetic
+- [x] Load SVG as Mapbox image using base64 data URI encoding
+- [x] Configure Symbol Layer with icon-size 0.45 for slim appearance
+- [x] Set icon-anchor to 'bottom' for precise coordinate positioning
+- [x] Remove all legacy circle markers and numbered labels
