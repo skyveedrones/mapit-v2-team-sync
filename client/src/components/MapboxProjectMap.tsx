@@ -462,12 +462,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           source: 'media-source',
           layout: {
             'icon-image': 'skyvee-pin',
-            'icon-size': 1.0,
+            'icon-size': 0.5,           // Slim needle-style pins
             'icon-anchor': 'bottom',
+            'icon-offset': [0, 0],
             'icon-allow-overlap': true,
           },
           paint: {
-            'icon-color': '#50C878', // SkyVee Emerald Green
+            'icon-color': '#50C878',     // SkyVee Emerald Green
           },
         });
       }

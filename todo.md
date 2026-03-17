@@ -2233,3 +2233,8 @@
 - [x] Implement hover cursor changes (pointer on enter, default on leave)
 - [x] Remove individual marker loop and numbered labels from pins
 - [x] Fix TypeScript errors in geometry coordinate access
+
+## Slim Needle-Style Pins (v2.1.0+)
+- [x] Update media-pins layer icon-size from 1.0 to 0.5 for slim appearance
+- [x] Add icon-offset [0, 0] for precise positioning
+- [x] Remove halo effect (no icon-halo-color or icon-halo-width) for clean pins
