@@ -2218,3 +2218,7 @@
 - [x] Update manifest.json name to "MAPIT by SkyVee Drones", short_name to "MAPIT"
 - [x] Add manifest categories, orientation fields for better PWA store metadata
 - [x] Bump version to v2.1.0
+
+## Marker Styling Update (v2.1.0+)
+- [x] Update MapboxProjectMap.tsx markers to use SkyVee emerald green (#50C878)
+- [x] Set marker scale to 0.65 for optimized small pin size

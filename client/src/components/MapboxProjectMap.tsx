@@ -429,7 +429,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           className: "mapbox-media-popup",
         }).setHTML(popupHtml);
 
-        const marker = new mapboxgl.Marker({ element: el })
+        const marker = new mapboxgl.Marker({
+          element: el,
+          color: '#50C878', // SkyVee Emerald Green
+          scale: 0.65,      // Optimized small pin size
+        })
           .setLngLat([lng, lat])
           .setPopup(popup)
           .addTo(map);
