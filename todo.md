@@ -2255,3 +2255,9 @@
 - [x] Update Login.tsx to use handleBrandedLogin() on form submit
 - [x] Pass email state variable as login_hint parameter
 - [x] Change Sign In button to type="submit" for form submission
+
+## GPS Location Always Visible (v2.1.0+)
+- [x] Remove conditional rendering that hides GPS Location box when coordinates are null
+- [x] Add "No GPS Location" placeholder text for files without GPS metadata
+- [x] Keep Edit button visible and functional for manual coordinate entry
+- [x] Test GPS Location box displays for all media files

@@ -46,7 +46,7 @@ export function MediaMetadataDisplay({
   const hasCameraData = cameraMake || cameraModel;
   const hasMetadata = hasGpsData || hasCameraData || altitude || capturedAt;
 
-  if (!hasMetadata) {
+  if (!hasMetadata && !canEdit) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <AlertCircle className="h-4 w-4" />
@@ -57,47 +57,53 @@ export function MediaMetadataDisplay({
 
   return (
     <div className="space-y-3">
-      {/* GPS Coordinates */}
-      {hasGpsData && (
-        <Card className="p-3">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-foreground">GPS Location</p>
-                {canEdit && onEditGps && (
-                  <button
-                    onClick={onEditGps}
-                    className="text-xs text-blue-600 hover:underline font-medium"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground font-mono break-all">
-                {latitude?.toFixed(7)}, {longitude?.toFixed(7)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
+      {/* GPS Coordinates - Always visible */}
+      <Card className="p-3">
+        <div className="flex items-start gap-2">
+          <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-medium text-foreground">GPS Location</p>
+              {canEdit && onEditGps && (
                 <button
-                  onClick={onViewOnMap}
-                  className="text-blue-600 hover:underline"
+                  onClick={onEditGps}
+                  className="text-xs text-blue-600 hover:underline font-medium"
                 >
-                  View on Project Map
+                  Edit
                 </button>
-              </p>
-              {/* Mapping Grade Indicator */}
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  Mapping Grade
-                </Badge>
-                <span className="text-xs text-green-600 font-medium">
-                  ✓ 1.0m-2.0m accuracy
-                </span>
-              </div>
+              )}
             </div>
+            {hasGpsData ? (
+              <>
+                <p className="text-xs text-muted-foreground font-mono break-all">
+                  {latitude?.toFixed(7)}, {longitude?.toFixed(7)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <button
+                    onClick={onViewOnMap}
+                    className="text-blue-600 hover:underline"
+                  >
+                    View on Project Map
+                  </button>
+                </p>
+                {/* Mapping Grade Indicator */}
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    Mapping Grade
+                  </Badge>
+                  <span className="text-xs text-green-600 font-medium">
+                    ✓ 1.0m-2.0m accuracy
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                No GPS Location
+              </p>
+            )}
           </div>
-        </Card>
-      )}
+        </div>
+      </Card>
 
       {/* Altitude */}
       {altitude !== null && altitude !== undefined && (
