@@ -209,6 +209,8 @@ export default function ProjectMap() {
         el.textContent = String(index + 1);
         el.addEventListener("mouseenter", () => (el.style.transform = "scale(1.15)"));
         el.addEventListener("mouseleave", () => (el.style.transform = "scale(1)"));
+        // Proper closure to capture unique media item
+        el.addEventListener("click", () => setSelectedMedia(media));
 
         const thumbnailUrl = media.thumbnailUrl || media.url;
         const popupHtml = `

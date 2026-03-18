@@ -34,6 +34,7 @@ import Welcome from "./pages/Welcome";
 import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
+import SignupPage from "./pages/SignupPage";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -161,6 +162,7 @@ function Router() {
       <Switch>
       <Route path="/" component={Home} />
       <Route path="/welcome" component={Welcome} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />

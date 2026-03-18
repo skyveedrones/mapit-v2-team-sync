@@ -2270,3 +2270,10 @@
 - [x] Increase LazyImage buffer from 200px to 800px for smoother preloading
 - [x] Stabilize virtualization keys with item.id prefix
 - [x] Add explicit height constraints to LazyImage and MediaCard containers
+
+## ProjectMap & Signup Fixes (v2.1.0+)
+- [x] Fix ProjectMap marker click handlers with proper closure to capture unique media items
+- [x] Ensure ProjectMap style is set to mapbox://styles/mapbox/satellite-streets-v12 (already hardcoded)
+- [x] Add /signup route to App.tsx
+- [x] Create SignupPage component with ref parameter capture
+- [x] Verify build and test marker clicks and signup route
