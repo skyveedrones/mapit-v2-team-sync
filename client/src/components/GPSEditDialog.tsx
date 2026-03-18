@@ -126,6 +126,8 @@ export function GPSEditDialog({
 
       map.on("load", () => {
         mapRef.current = map;
+        // Add this line to fix the blank map
+        map.resize();
 
         // Add existing GPS point markers (gray dots)
         existingGPSPoints.forEach((point) => {
