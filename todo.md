@@ -2277,3 +2277,10 @@
 - [x] Add /signup route to App.tsx
 - [x] Create SignupPage component with ref parameter capture
 - [x] Verify build and test marker clicks and signup route
+
+## Surgical Performance Optimizations (v2.1.0+)
+- [x] Add staleTime: Infinity and refetchOnWindowFocus: false to media query
+- [x] Update LazyImage rootMargin from 800px to 1200px
+- [x] Ensure LazyImage img has decoding="async" and loading="lazy" (already present)
+- [x] Add content-visibility: auto to MediaCard thumbnail container
+- [x] Fix Billing page undefined property crash (added fallback to PLAN_FEATURES.free)

@@ -108,7 +108,7 @@ const LazyImage = memo(function LazyImage({ src, alt, className, onError }: Lazy
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      { rootMargin: "800px" } // Start loading 800px before entering viewport for smoother scrolling
+      { rootMargin: "1200px" } // Start loading 1200px before entering viewport for smoother scrolling
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -164,6 +164,7 @@ const MediaCard = memo(function MediaCard({
           ? "border-primary ring-2 ring-primary/20"
           : "border-border hover:border-primary/50"
       }`}
+      style={{ contentVisibility: "auto" }}
       onClick={() => !isDemoProject && onCardClick(item)}
     >
       <LazyImage
@@ -363,8 +364,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
 
   // Fetch media - use demo procedure for unauthenticated demo access
   const { data: mediaList, isLoading } = isDemoProject
-    ? trpc.media.listDemo.useQuery({ projectId, flightId })
-    : trpc.media.list.useQuery({ projectId, flightId });
+    ? trpc.media.listDemo.useQuery({ projectId, flightId }, { staleTime: Infinity, refetchOnWindowFocus: false })
+    : trpc.media.list.useQuery({ projectId, flightId }, { staleTime: Infinity, refetchOnWindowFocus: false });
   const deleteMutation = trpc.media.delete.useMutation();
   const updateNotesMutation = trpc.media.updateNotes.useMutation({
     onSuccess: () => {

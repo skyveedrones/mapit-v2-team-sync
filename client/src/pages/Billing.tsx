@@ -81,7 +81,7 @@ export default function Billing() {
   }
 
   const currentPlan = user.subscriptionTier || "free";
-  const currentPlanData = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES];
+  const currentPlanData = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.free;
   const billingPeriod = user.billingPeriod || "month";
   const nextBillingDate = user.currentPeriodEnd ? new Date(user.currentPeriodEnd) : null;
 
