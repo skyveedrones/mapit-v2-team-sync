@@ -2284,3 +2284,18 @@
 - [x] Ensure LazyImage img has decoding="async" and loading="lazy" (already present)
 - [x] Add content-visibility: auto to MediaCard thumbnail container
 - [x] Fix Billing page undefined property crash (added fallback to PLAN_FEATURES.free)
+
+## Large Video Upload & Version Bump (v2.1.0+)
+- [ ] Create getUploadSignature tRPC procedure in media router
+- [ ] Switch MediaUploadDialog to direct Cloudinary upload
+- [ ] Bump version from 1.0.9 to 1.1.0
+- [ ] Update footer/sidebar version strings
+- [ ] Verify /signup route functionality
+- [ ] Verify project map marker clicks show correct images
+- [ ] Publish to production
+
+## Local Dev Environment Fixes
+- [x] Add organization bypass in App.tsx for missing organizationId (localhost check)
+- [x] Fix tRPC router organization guard for local dev (NODE_ENV=development bypass)
+- [x] Fix Project Detail access for localhost (development mode fallback)
+- [x] Create scripts/bootstrap-local.ts seed script

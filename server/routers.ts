@@ -840,6 +840,15 @@ export const appRouter = router({
           }
         }
         
+        // Local dev bypass: if running on localhost, allow access to any project by ID
+        if (process.env.NODE_ENV === 'development') {
+          const devProject = await getProjectById(input.id);
+          if (devProject) {
+            const overlays = await fetchOverlays(devProject.id);
+            return { ...devProject, overlays, accessRole: 'owner' as const };
+          }
+        }
+
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Project not found or you don't have access",
@@ -1897,6 +1906,36 @@ export const appRouter = router({
           .where(eq(media.id, input.mediaId));
 
         return updated;
+      }),
+
+    // Get Cloudinary upload signature for direct browser uploads
+    getUploadSignature: protectedProcedure
+      .query(async ({ ctx }) => {
+        try {
+          // Generate timestamp
+          const timestamp = Math.floor(Date.now() / 1000);
+          
+          // Build signature string: "folder=...&timestamp=..." + api_secret
+          const signatureString = `folder=mapit/${ctx.user.id}&timestamp=${timestamp}${process.env.CLOUDINARY_API_SECRET}`;
+          
+          // Create SHA-1 hash
+          const crypto = require('crypto');
+          const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
+          
+          return {
+            signature,
+            timestamp,
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+            apiKey: process.env.CLOUDINARY_API_KEY || '',
+            folder: `mapit/${ctx.user.id}`,
+          };
+        } catch (error) {
+          console.error('Failed to generate upload signature:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to generate upload signature',
+          });
+        }
       }),
   }),
 
