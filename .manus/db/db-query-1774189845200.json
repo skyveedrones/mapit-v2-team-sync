@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, name, type FROM organizations LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, type FROM organizations LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "SkyVee Local",
+      "type": "drone_service_provider"
+    },
+    {
+      "id": "210001",
+      "name": "SkyVee Aerial Drones",
+      "type": "drone_service_provider"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttype\n1\tSkyVee Local\tdrone_service_provider\n210001\tSkyVee Aerial Drones\tdrone_service_provider\n",
+  "stderr": "",
+  "execution_time_ms": 109
+}

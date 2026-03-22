@@ -35,10 +35,11 @@ export default function AdminDashboard() {
   // Fetch admin data
   const { data: stats, isLoading: statsLoading } = trpc.admin.getDashboardStats.useQuery();
   const { data: orgs, isLoading: orgsLoading } = trpc.admin.getAllOrganizations.useQuery();
+  const { data: clients, isLoading: clientsLoading } = trpc.admin.getAllClients.useQuery();
   const { data: users, isLoading: usersLoading } = trpc.admin.getAllUsers.useQuery();
   const { data: projects, isLoading: projectsLoading } = trpc.admin.getAllProjects.useQuery();
 
-  const isLoading = statsLoading || orgsLoading || usersLoading || projectsLoading;
+  const isLoading = statsLoading || orgsLoading || clientsLoading || usersLoading || projectsLoading;
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
@@ -130,26 +131,26 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle>All Clients</CardTitle>
                   <CardDescription>
-                    {orgs?.length || 0} clients registered in the system
+                    {clients?.length || 0} clients registered in the system
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {orgs && orgs.length > 0 ? (
-                      orgs.map((org) => (
+                    {clients && clients.length > 0 ? (
+                      clients.map((client) => (
                         <div
-                          key={org.id}
+                          key={client.id}
                           className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
-                          onClick={() => setLocation(`/clients/${org.id}`)}
+                          onClick={() => setLocation(`/clients/${client.id}`)}
                         >
                           <div className="flex-1">
-                            <h3 className="font-semibold">{org.name}</h3>
+                            <h3 className="font-semibold">{client.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {org.userCount} users • {org.projectCount} projects
+                              {client.contactEmail} • {client.projectCount} projects
                             </p>
                           </div>
                           <div className="text-right text-sm text-muted-foreground">
-                            Created {new Date(org.createdAt).toLocaleDateString()}
+                            Created {new Date(client.createdAt).toLocaleDateString()}
                           </div>
                         </div>
                       ))

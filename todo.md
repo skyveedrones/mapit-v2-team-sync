@@ -2371,3 +2371,14 @@
 - [x] Update TabsList grid from 3 columns to 4 columns for new Clients tab
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Test dev server runs without errors
+
+## Admin Dashboard Clients Tab Data Fix (v2.2.5)
+- [x] Add getAllClients procedure to admin router
+- [x] Query clients table instead of organizations table for Clients tab
+- [x] Fetch client owner names from users table
+- [x] Update AdminDashboard to use getAllClients query
+- [x] Display client name, contact email, and project count in Clients tab
+- [x] Link clients to /clients/{id} route
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Test dev server runs without errors
+- [x] Clients tab now shows "City of Garland Texas" and "Forney TX Municipal"

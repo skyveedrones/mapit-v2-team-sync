@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../_core/trpc';
 import { getDb } from '../db';
-import { organizations, users, projects, media } from '../../drizzle/schema';
+import { organizations, users, projects, media, clients } from '../../drizzle/schema';
 import { eq, desc } from 'drizzle-orm';
 
 /**
@@ -22,6 +22,42 @@ const webmasterOnly = protectedProcedure.use(async ({ ctx, next }) => {
 });
 
 export const adminRouter = router({
+  /**
+   * Get all clients
+   */
+  getAllClients: webmasterOnly.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+    
+    const allClients = await db.select().from(clients).orderBy(desc(clients.createdAt));
+    
+    // Get owner names for each client
+    const enrichedClients = await Promise.all(
+      allClients.map(async (client) => {
+        let ownerName = 'N/A';
+        if (client.ownerId) {
+          const owner = await db.select().from(users).where(eq(users.id, client.ownerId)).limit(1);
+          if (owner.length > 0) {
+            ownerName = owner[0].name || 'Unknown';
+          }
+        }
+        
+        return {
+          id: client.id,
+          name: client.name,
+          contactEmail: client.contactEmail,
+          contactName: client.contactName,
+          ownerName: ownerName,
+          projectCount: client.projectCount,
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
+        };
+      })
+    );
+
+    return enrichedClients;
+  }),
+
   /**
    * Get all organizations with user counts and project counts
    */
