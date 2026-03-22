@@ -2338,3 +2338,11 @@
 - [x] Test dev server runs without errors
 - [ ] Bundle admin module as zip file for local import
 - [ ] Create integration instructions for local development
+
+## Admin Page Navigation Link (v2.2.1)
+- [x] Add "Admin Page" button to Account.tsx next to Account Role
+- [x] Button only visible when user.role === 'webmaster'
+- [x] Button links to /admin route
+- [x] Button uses Settings icon and ghost variant styling
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Test dev server runs without errors

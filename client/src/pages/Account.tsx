@@ -15,29 +15,30 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
-  Calendar,
-  CreditCard,
-  Crown,
-  Mail,
-  Shield,
-  User as UserIcon,
-  Building2,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  ExternalLink,
-  FolderOpen,
-  Image,
-  Users,
-  HardDrive,
-  Pencil,
-  Save,
-  X,
-  Camera,
-  Loader2,
-} from "lucide-react";
-import { Link } from "wouter";
+                  Calendar,
+                  CreditCard,
+                  Crown,
+                  Mail,
+                  Shield,
+                  User as UserIcon,
+                  Building2,
+                  Clock,
+                  CheckCircle2,
+                  AlertTriangle,
+                  XCircle,
+                  ExternalLink,
+                  FolderOpen,
+                  Image,
+                  Users,
+                  HardDrive,
+                  Pencil,
+                  Save,
+                  X,
+                  Camera,
+                  Loader2,
+                  Settings,
+                } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
@@ -560,11 +561,21 @@ export default function Account() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Role</p>
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                      <Badge variant="outline" className="capitalize text-xs">
-                        {user.role || "user"}
-                      </Badge>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {user.role || "user"}
+                        </Badge>
+                      </div>
+                      {user.role === 'webmaster' && (
+                        <Link href="/admin">
+                          <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 px-2">
+                            <Settings className="h-3.5 w-3.5" />
+                            Admin Page
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
