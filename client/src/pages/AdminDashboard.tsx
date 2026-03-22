@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                       <tbody>
                         {users && users.length > 0 ? (
                           users.map((user) => (
-                            <tr key={user.id} className="border-b border-border hover:bg-accent/50">
+                            <tr key={user.id} className="border-b border-border hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => setLocation(`/admin/user/${user.id}`)}>
                               <td className="py-3 px-4">{user.name}</td>
                               <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
                               <td className="py-3 px-4">{user.organizationName}</td>
