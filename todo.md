@@ -2361,3 +2361,13 @@
 - [x] Update both header button and access denied button
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Test dev server runs without errors
+
+## Admin Dashboard Link Navigation Fixes (v2.2.4)
+- [x] Update project links to navigate to /project/{id} instead of /admin/project/{id}
+- [x] Update organization links to navigate to /clients/{id} instead of /admin/org/{id}
+- [x] Update user table rows to navigate to /users page for user management
+- [x] Add "Clients" tab to Admin Dashboard
+- [x] Clients tab shows all organizations with clickable links to /clients/{id}
+- [x] Update TabsList grid from 3 columns to 4 columns for new Clients tab
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Test dev server runs without errors

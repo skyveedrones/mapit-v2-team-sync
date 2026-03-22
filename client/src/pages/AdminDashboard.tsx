@@ -117,11 +117,49 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="organizations" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="organizations">Organizations</TabsTrigger>
+              <TabsTrigger value="clients">Clients</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
             </TabsList>
+
+            {/* Clients Tab */}
+            <TabsContent value="clients" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Clients</CardTitle>
+                  <CardDescription>
+                    {orgs?.length || 0} clients registered in the system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {orgs && orgs.length > 0 ? (
+                      orgs.map((org) => (
+                        <div
+                          key={org.id}
+                          className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+                          onClick={() => setLocation(`/clients/${org.id}`)}
+                        >
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{org.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {org.userCount} users • {org.projectCount} projects
+                            </p>
+                          </div>
+                          <div className="text-right text-sm text-muted-foreground">
+                            Created {new Date(org.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">No clients found</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Organizations Tab */}
             <TabsContent value="organizations" className="mt-6">
@@ -139,7 +177,7 @@ export default function AdminDashboard() {
                         <div
                           key={org.id}
                           className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
-                          onClick={() => setLocation(`/admin/org/${org.id}`)}
+                          onClick={() => setLocation(`/clients/${org.id}`)}
                         >
                           <div className="flex-1">
                             <h3 className="font-semibold">{org.name}</h3>
@@ -184,7 +222,7 @@ export default function AdminDashboard() {
                       <tbody>
                         {users && users.length > 0 ? (
                           users.map((user) => (
-                            <tr key={user.id} className="border-b border-border hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => setLocation(`/admin/user/${user.id}`)}>
+                            <tr key={user.id} className="border-b border-border hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => setLocation(`/users`)}>
                               <td className="py-3 px-4">{user.name}</td>
                               <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
                               <td className="py-3 px-4">{user.organizationName}</td>
@@ -228,7 +266,7 @@ export default function AdminDashboard() {
                         <div
                           key={project.id}
                           className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
-                          onClick={() => setLocation(`/admin/project/${project.id}`)}
+                          onClick={() => setLocation(`/project/${project.id}`)}
                         >
                           <div className="flex-1">
                             <h3 className="font-semibold">{project.name}</h3>
