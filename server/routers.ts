@@ -9,6 +9,7 @@ import { getDb } from "./db";
 import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { adminRouter } from "./routers/admin";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   acceptProjectInvitation,
@@ -446,6 +447,7 @@ function hasRequiredRole(userRole: string | null, requiredRole: string): boolean
 
 export const appRouter = router({
   system: systemRouter,
+  admin: adminRouter,
   
   users: router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {

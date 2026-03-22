@@ -35,6 +35,7 @@ import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -252,6 +253,11 @@ function Router() {
       </Route>
       <Route path="/audit-log">
         {() => <ProtectedRoute component={AuditLog} />}
+      </Route>
+      
+      {/* Admin Dashboard */}
+      <Route path="/admin">
+        {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
       
       {/* Client management */}

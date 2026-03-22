@@ -2299,3 +2299,42 @@
 - [x] Fix tRPC router organization guard for local dev (NODE_ENV=development bypass)
 - [x] Fix Project Detail access for localhost (development mode fallback)
 - [x] Create scripts/bootstrap-local.ts seed script
+
+## Upload Fix & Local Dev Bundle (v2.1.0+)
+- [ ] Disable compressImage function in MediaUploadDialog.tsx
+- [ ] Route extractDroneTelemetry to original File object (not compressed)
+- [ ] Configure Cloudinary uploads to direct unsigned mode
+- [ ] Update bootstrap-local.ts with local TiDB/MySQL connection config
+- [ ] Bundle fresh project zip for local development
+
+
+## Admin/Webmaster Dashboard Module
+- [ ] Design tRPC procedures for webmaster sitewide access (clients, users, projects)
+- [ ] Create AdminDashboard page component with full data visibility
+- [ ] Build ClientCard, UserTable, and ProjectGrid components
+- [ ] Add role-based access control (webmaster only)
+- [ ] Bundle admin module as zip for local import
+
+
+## Admin/Webmaster Dashboard Module (v2.2.0)
+- [x] Create admin router (server/routers/admin.ts) with tRPC procedures
+  - [x] getAllOrganizations - Get all organizations with user/project counts
+  - [x] getAllUsers - Get all users across all organizations
+  - [x] getAllProjects - Get all projects across all organizations
+  - [x] getOrganizationDetails - Get detailed org info with users and projects
+  - [x] getProjectDetails - Get detailed project info with all media
+  - [x] getDashboardStats - Get sitewide statistics
+- [x] Implement webmaster role guard on all procedures
+- [x] Create AdminDashboard page component (client/src/pages/AdminDashboard.tsx)
+  - [x] Statistics cards (organizations, users, projects, media)
+  - [x] Tabbed interface (Organizations, Users, Projects)
+  - [x] Organization list with user/project counts
+  - [x] User table with organization and role info
+  - [x] Project list with media counts
+  - [x] Click handlers for detail views
+- [x] Add /admin route to App.tsx with role-based protection
+- [x] Write vitest tests for admin router (10 tests passing)
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Test dev server runs without errors
+- [ ] Bundle admin module as zip file for local import
+- [ ] Create integration instructions for local development

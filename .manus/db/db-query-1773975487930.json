@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, userId FROM projects WHERE name LIKE '%Holford%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, userId FROM projects WHERE name LIKE '%Holford%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "540001",
+      "name": "HOLFORD ROAD RECONSTRUCTION",
+      "userId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tuserId\n540001\tHOLFORD ROAD RECONSTRUCTION\t1\n",
+  "stderr": "",
+  "execution_time_ms": 107
+}

@@ -1,17 +1,27 @@
 /**
  * bootstrap-local.ts
- * 
+ *
  * Seeds a fresh local TiDB/MySQL database with:
  *   - A SkyVee organization
  *   - A local dev user (Clay Bechtol)
  *   - A Test Project 1
- * 
+ *
  * Usage:
  *   npx tsx scripts/bootstrap-local.ts
- * 
+ *
  * Prerequisites:
- *   - DATABASE_URL set in your .env file
- *   - pnpm db:push already run to create tables
+ *   1. Create a .env file in the project root with:
+ *
+ *      DATABASE_URL=mysql://root:password@localhost:4000/dronemapp
+ *
+ *      For TiDB Cloud:
+ *      DATABASE_URL=mysql://user:password@gateway01.us-east-1.prod.aws.tidbcloud.com:4000/dronemapp?ssl={"rejectUnauthorized":true}
+ *
+ *      For local MySQL:
+ *      DATABASE_URL=mysql://root:password@127.0.0.1:3306/dronemapp
+ *
+ *   2. Run `pnpm db:push` first to create all tables.
+ *   3. Then run this script: `npx tsx scripts/bootstrap-local.ts`
  */
 
 import * as dotenv from "dotenv";
@@ -22,14 +32,30 @@ import mysql from "mysql2/promise";
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL is not set. Please add it to your .env file.");
+  console.error("❌ DATABASE_URL is not set.");
+  console.error("");
+  console.error("   Create a .env file in the project root with:");
+  console.error("   DATABASE_URL=mysql://root:password@localhost:4000/dronemapp");
+  console.error("");
+  console.error("   For TiDB Cloud:");
+  console.error('   DATABASE_URL=mysql://user:pass@gateway01.us-east-1.prod.aws.tidbcloud.com:4000/dronemapp?ssl={"rejectUnauthorized":true}');
   process.exit(1);
 }
 
 async function bootstrap() {
   console.log("🚀 Starting local database bootstrap...");
+  console.log(`   Connecting to: ${DATABASE_URL!.replace(/:([^:@]+)@/, ":****@")}`);
 
-  const connection = await mysql.createConnection(DATABASE_URL as string);
+  let connection: mysql.Connection;
+  try {
+    connection = await mysql.createConnection(DATABASE_URL as string);
+    console.log("   ✅ Database connection established\n");
+  } catch (err) {
+    console.error("❌ Could not connect to database:", err);
+    console.error("");
+    console.error("   Check your DATABASE_URL and ensure the database server is running.");
+    process.exit(1);
+  }
 
   try {
     // ─── 1. Insert SkyVee Organization ───────────────────────────────────────
@@ -59,30 +85,33 @@ async function bootstrap() {
        )
        ON DUPLICATE KEY UPDATE
          organizationId = VALUES(organizationId),
-         orgRole = VALUES(orgRole),
-         updatedAt = NOW()`,
+         orgRole        = VALUES(orgRole),
+         updatedAt      = NOW()`,
       [
-        "local-dev-open-id",           // openId
-        "Clay Bechtol",                 // name
-        "clay@skyveedrones.com",        // email
-        "local",                        // loginMethod
-        "webmaster",                    // role
-        "SkyVee Aerial Drone Services", // organization
-        "Edward Clay Bechtol",          // defaultDronePilot
-        "5205636",                      // defaultFaaLicenseNumber
-        "LAANC-2025-001",               // defaultLaancAuthNumber
-        "enterprise",                   // subscriptionTier
-        "active",                       // subscriptionStatus
-        "annual",                       // billingPeriod
-        "no",                           // cancelAtPeriodEnd
-        orgId,                          // organizationId
-        "PROVIDER",                     // orgRole
+        "local-dev-open-id",            // openId
+        "Clay Bechtol",                  // name
+        "clay@skyveedrones.com",         // email
+        "local",                         // loginMethod
+        "webmaster",                     // role
+        "SkyVee Aerial Drone Services",  // organization
+        "Edward Clay Bechtol",           // defaultDronePilot
+        "5205636",                       // defaultFaaLicenseNumber
+        "LAANC-2025-001",                // defaultLaancAuthNumber
+        "enterprise",                    // subscriptionTier
+        "active",                        // subscriptionStatus
+        "annual",                        // billingPeriod
+        "no",                            // cancelAtPeriodEnd
+        orgId,                           // organizationId
+        "PROVIDER",                      // orgRole
       ]
     );
-    const userId = userResult.insertId || (await getUserId(connection, "clay@skyveedrones.com"));
-    console.log(`   ✅ User ID: ${userId}`);
 
-    // Update user's organizationId if already existed (ON DUPLICATE KEY doesn't return insertId)
+    const userId =
+      userResult.insertId > 0
+        ? userResult.insertId
+        : await getUserId(connection, "clay@skyveedrones.com");
+
+    // If user already existed, ensure organizationId is linked
     if (userResult.insertId === 0) {
       await connection.execute(
         `UPDATE users SET organizationId = ?, orgRole = 'PROVIDER' WHERE email = ?`,
@@ -90,6 +119,7 @@ async function bootstrap() {
       );
       console.log(`   ✅ Updated existing user's organizationId to ${orgId}`);
     }
+    console.log(`   ✅ User ID: ${userId}`);
 
     // ─── 3. Insert Test Project 1 ─────────────────────────────────────────────
     console.log("📁 Creating Test Project 1...");
@@ -118,19 +148,26 @@ async function bootstrap() {
 
     // ─── Summary ──────────────────────────────────────────────────────────────
     console.log("\n✅ Bootstrap complete!");
-    console.log("─────────────────────────────────────────");
-    console.log(`   Organization: SkyVee Aerial Drone Services (ID: ${orgId})`);
-    console.log(`   User:         Clay Bechtol (ID: ${userId})`);
-    console.log(`   Project:      Test Project 1 (ID: ${projectId})`);
-    console.log("─────────────────────────────────────────");
-    console.log("\n🔑 To log in locally, set your JWT_SECRET and use the Manus OAuth callback.");
-    console.log("   Or manually set a session cookie with userId:", userId);
+    console.log("─────────────────────────────────────────────────────");
+    console.log(`   Organization : SkyVee Aerial Drone Services (ID: ${orgId})`);
+    console.log(`   User         : Clay Bechtol (ID: ${userId})`);
+    console.log(`   Project      : Test Project 1 (ID: ${projectId})`);
+    console.log("─────────────────────────────────────────────────────");
+    console.log("\n📌 Next steps:");
+    console.log("   1. Run `pnpm dev` to start the dev server");
+    console.log("   2. Visit http://localhost:3000");
+    console.log("   3. The app will bypass onboarding in development mode");
+    console.log(`   4. Your user ID is ${userId} — use this for manual session setup if needed`);
+    console.log("\n🔑 For OAuth login locally, ensure these .env vars are set:");
+    console.log("   VITE_OAUTH_PORTAL_URL=https://auth.manus.im");
+    console.log("   VITE_APP_ID=<your-app-id>");
+    console.log("   JWT_SECRET=<any-random-string-for-local-dev>");
 
   } catch (error) {
     console.error("❌ Bootstrap failed:", error);
     process.exit(1);
   } finally {
-    await connection.end();
+    await connection!.end();
   }
 }
 
@@ -139,7 +176,10 @@ async function getUserId(connection: mysql.Connection, email: string): Promise<n
     `SELECT id FROM users WHERE email = ? LIMIT 1`,
     [email]
   );
-  return rows[0]?.id ?? 1;
+  if (!rows[0]?.id) {
+    throw new Error(`User with email ${email} not found after insert.`);
+  }
+  return rows[0].id;
 }
 
 bootstrap();

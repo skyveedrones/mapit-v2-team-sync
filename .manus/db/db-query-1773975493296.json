@@ -1,0 +1,990 @@
+{
+  "query": "SELECT id, filename, latitude, longitude, altitude, mediaType, capturedAt, createdAt FROM media WHERE projectId = 540001 AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY capturedAt ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, filename, latitude, longitude, altitude, mediaType, capturedAt, createdAt FROM media WHERE projectId = 540001 AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY capturedAt ASC;",
+  "rows": [
+    {
+      "id": "1140001",
+      "filename": "Project Image",
+      "latitude": "32.970742000",
+      "longitude": "-96.648247000",
+      "altitude": "NULL",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-02-28 10:01:55"
+    },
+    {
+      "id": "1410003",
+      "filename": "DJI_20260302133145_0265_D_SKYVEE.JPG",
+      "latitude": "32.976158139",
+      "longitude": "-96.647987417",
+      "altitude": "153.45",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:27"
+    },
+    {
+      "id": "1410004",
+      "filename": "DJI_20260302133258_0266_D_SKYVEE.JPG",
+      "latitude": "32.975400778",
+      "longitude": "-96.648014944",
+      "altitude": "153.75",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:32"
+    },
+    {
+      "id": "1410005",
+      "filename": "DJI_20260302133321_0267_D_SKYVEE.JPG",
+      "latitude": "32.975311056",
+      "longitude": "-96.648063944",
+      "altitude": "153.75",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:37"
+    },
+    {
+      "id": "1410006",
+      "filename": "DJI_20260302133353_0268_D_SKYVEE.JPG",
+      "latitude": "32.975066361",
+      "longitude": "-96.648057694",
+      "altitude": "153.75",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:42"
+    },
+    {
+      "id": "1410007",
+      "filename": "DJI_20260302133425_0269_D_SKYVEE.JPG",
+      "latitude": "32.974787167",
+      "longitude": "-96.648013583",
+      "altitude": "156.95",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:47"
+    },
+    {
+      "id": "1410008",
+      "filename": "DJI_20260302133515_0270_D_SKYVEE.JPG",
+      "latitude": "32.974459917",
+      "longitude": "-96.648030222",
+      "altitude": "157.15",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:51"
+    },
+    {
+      "id": "1410009",
+      "filename": "DJI_20260302134130_0271_D_SKYVEE.JPG",
+      "latitude": "32.973963972",
+      "longitude": "-96.648025028",
+      "altitude": "171.34",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:48:57"
+    },
+    {
+      "id": "1410010",
+      "filename": "DJI_20260302134216_0272_D_SKYVEE.JPG",
+      "latitude": "32.973712694",
+      "longitude": "-96.648044667",
+      "altitude": "171.34",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:03"
+    },
+    {
+      "id": "1410011",
+      "filename": "DJI_20260302134247_0273_D_SKYVEE.JPG",
+      "latitude": "32.973539556",
+      "longitude": "-96.648057583",
+      "altitude": "171.34",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:09"
+    },
+    {
+      "id": "1410012",
+      "filename": "DJI_20260302134500_0274_D_SKYVEE.JPG",
+      "latitude": "32.972024528",
+      "longitude": "-96.648094472",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:13"
+    },
+    {
+      "id": "1410013",
+      "filename": "DJI_20260302134528_0275_D_SKYVEE.JPG",
+      "latitude": "32.971931722",
+      "longitude": "-96.648087639",
+      "altitude": "171.94",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:18"
+    },
+    {
+      "id": "1410014",
+      "filename": "DJI_20260302134623_0276_D_SKYVEE.JPG",
+      "latitude": "32.971544139",
+      "longitude": "-96.648138861",
+      "altitude": "172.24",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:23"
+    },
+    {
+      "id": "1410015",
+      "filename": "DJI_20260302134726_0277_D_SKYVEE.JPG",
+      "latitude": "32.971403611",
+      "longitude": "-96.648063833",
+      "altitude": "172.74",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:29"
+    },
+    {
+      "id": "1410016",
+      "filename": "DJI_20260302134800_0278_D_SKYVEE.JPG",
+      "latitude": "32.971101500",
+      "longitude": "-96.648145611",
+      "altitude": "172.94",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:35"
+    },
+    {
+      "id": "1410017",
+      "filename": "DJI_20260302134837_0279_D_SKYVEE.JPG",
+      "latitude": "32.970952111",
+      "longitude": "-96.648389667",
+      "altitude": "173.14",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:42"
+    },
+    {
+      "id": "1410018",
+      "filename": "DJI_20260302135142_0280_D_SKYVEE.JPG",
+      "latitude": "32.971926778",
+      "longitude": "-96.647780972",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:48"
+    },
+    {
+      "id": "1410019",
+      "filename": "DJI_20260302135213_0281_D_SKYVEE.JPG",
+      "latitude": "32.971929472",
+      "longitude": "-96.647829778",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:52"
+    },
+    {
+      "id": "1410020",
+      "filename": "DJI_20260302135303_0282_D_SKYVEE.JPG",
+      "latitude": "32.972027167",
+      "longitude": "-96.647840250",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:49:58"
+    },
+    {
+      "id": "1410021",
+      "filename": "DJI_20260302135331_0283_D_SKYVEE.JPG",
+      "latitude": "32.972125528",
+      "longitude": "-96.647834306",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:03"
+    },
+    {
+      "id": "1410022",
+      "filename": "DJI_20260302135357_0284_D_SKYVEE.JPG",
+      "latitude": "32.972150056",
+      "longitude": "-96.647823833",
+      "altitude": "171.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:08"
+    },
+    {
+      "id": "1410023",
+      "filename": "DJI_20260302135513_0285_D_SKYVEE.JPG",
+      "latitude": "32.972887306",
+      "longitude": "-96.647791278",
+      "altitude": "168.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:15"
+    },
+    {
+      "id": "1410024",
+      "filename": "DJI_20260302135525_0286_D_SKYVEE.JPG",
+      "latitude": "32.972926889",
+      "longitude": "-96.647787639",
+      "altitude": "168.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:22"
+    },
+    {
+      "id": "1410025",
+      "filename": "DJI_20260302135630_0287_D_SKYVEE.JPG",
+      "latitude": "32.973394694",
+      "longitude": "-96.647742722",
+      "altitude": "165.14",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:28"
+    },
+    {
+      "id": "1410026",
+      "filename": "DJI_20260302135724_0288_D_SKYVEE.JPG",
+      "latitude": "32.973939083",
+      "longitude": "-96.647790917",
+      "altitude": "168.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:35"
+    },
+    {
+      "id": "1410027",
+      "filename": "DJI_20260302135750_0289_D_SKYVEE.JPG",
+      "latitude": "32.973954278",
+      "longitude": "-96.647784694",
+      "altitude": "168.74",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:41"
+    },
+    {
+      "id": "1410028",
+      "filename": "DJI_20260302135918_0290_D_SKYVEE.JPG",
+      "latitude": "32.974764000",
+      "longitude": "-96.647784250",
+      "altitude": "165.34",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:48"
+    },
+    {
+      "id": "1410029",
+      "filename": "DJI_20260302135947_0291_D_SKYVEE.JPG",
+      "latitude": "32.974780583",
+      "longitude": "-96.647782750",
+      "altitude": "165.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:50:55"
+    },
+    {
+      "id": "1410030",
+      "filename": "DJI_20260302135954_0292_D_SKYVEE.JPG",
+      "latitude": "32.974790639",
+      "longitude": "-96.647782167",
+      "altitude": "165.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:02"
+    },
+    {
+      "id": "1410031",
+      "filename": "DJI_20260302140024_0293_D_SKYVEE.JPG",
+      "latitude": "32.974805278",
+      "longitude": "-96.647735472",
+      "altitude": "159.14",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:08"
+    },
+    {
+      "id": "1410032",
+      "filename": "DJI_20260302140051_0294_D_SKYVEE.JPG",
+      "latitude": "32.974996806",
+      "longitude": "-96.647729139",
+      "altitude": "158.84",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:14"
+    },
+    {
+      "id": "1410033",
+      "filename": "DJI_20260302140137_0295_D_SKYVEE.JPG",
+      "latitude": "32.975206556",
+      "longitude": "-96.647787833",
+      "altitude": "160.24",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:21"
+    },
+    {
+      "id": "1410034",
+      "filename": "DJI_20260302140157_0296_D_SKYVEE.JPG",
+      "latitude": "32.975226028",
+      "longitude": "-96.647782556",
+      "altitude": "160.24",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:28"
+    },
+    {
+      "id": "1410035",
+      "filename": "DJI_20260302140230_0297_D_SKYVEE.JPG",
+      "latitude": "32.975396639",
+      "longitude": "-96.647780667",
+      "altitude": "157.04",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:34"
+    },
+    {
+      "id": "1410036",
+      "filename": "DJI_20260302140301_0298_D_SKYVEE.JPG",
+      "latitude": "32.975587000",
+      "longitude": "-96.647783500",
+      "altitude": "157.04",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:42"
+    },
+    {
+      "id": "1410037",
+      "filename": "DJI_20260302140344_0299_D_SKYVEE.JPG",
+      "latitude": "32.976148806",
+      "longitude": "-96.647775500",
+      "altitude": "157.04",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:49"
+    },
+    {
+      "id": "1410038",
+      "filename": "DJI_20260302140356_0300_D_SKYVEE.JPG",
+      "latitude": "32.976164333",
+      "longitude": "-96.647775722",
+      "altitude": "157.04",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:51:55"
+    },
+    {
+      "id": "1410039",
+      "filename": "DJI_20260302140425_0301_D_SKYVEE.JPG",
+      "latitude": "32.976389972",
+      "longitude": "-96.647779528",
+      "altitude": "157.14",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:02"
+    },
+    {
+      "id": "1410040",
+      "filename": "DJI_20260302140538_0302_D_SKYVEE.JPG",
+      "latitude": "32.977013917",
+      "longitude": "-96.647765917",
+      "altitude": "157.24",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:08"
+    },
+    {
+      "id": "1410041",
+      "filename": "DJI_20260302140546_0303_D_SKYVEE.JPG",
+      "latitude": "32.977023750",
+      "longitude": "-96.647764611",
+      "altitude": "157.24",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:13"
+    },
+    {
+      "id": "1410042",
+      "filename": "DJI_20260302140615_0304_D_SKYVEE.JPG",
+      "latitude": "32.977225361",
+      "longitude": "-96.647766167",
+      "altitude": "159.54",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:20"
+    },
+    {
+      "id": "1410043",
+      "filename": "DJI_20260302140710_0305_D_SKYVEE.JPG",
+      "latitude": "32.977830611",
+      "longitude": "-96.647759722",
+      "altitude": "163.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:27"
+    },
+    {
+      "id": "1410044",
+      "filename": "DJI_20260302140718_0306_D_SKYVEE.JPG",
+      "latitude": "32.977842639",
+      "longitude": "-96.647759444",
+      "altitude": "163.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:33"
+    },
+    {
+      "id": "1410045",
+      "filename": "DJI_20260302140746_0307_D_SKYVEE.JPG",
+      "latitude": "32.978044361",
+      "longitude": "-96.647759472",
+      "altitude": "163.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:39"
+    },
+    {
+      "id": "1410046",
+      "filename": "DJI_20260302140831_0308_D_SKYVEE.JPG",
+      "latitude": "32.978667083",
+      "longitude": "-96.647753639",
+      "altitude": "163.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:45"
+    },
+    {
+      "id": "1410047",
+      "filename": "DJI_20260302140843_0309_D_SKYVEE.JPG",
+      "latitude": "32.978863556",
+      "longitude": "-96.647756361",
+      "altitude": "163.44",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:51"
+    },
+    {
+      "id": "1410048",
+      "filename": "DJI_20260302140928_0310_D_SKYVEE.JPG",
+      "latitude": "32.978824361",
+      "longitude": "-96.647694861",
+      "altitude": "159.94",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:52:57"
+    },
+    {
+      "id": "1410049",
+      "filename": "DJI_20260302150842_0311_D_SKYVEE.JPG",
+      "latitude": "32.979822250",
+      "longitude": "-96.647749694",
+      "altitude": "169.12",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:04"
+    },
+    {
+      "id": "1410050",
+      "filename": "DJI_20260302150857_0312_D_SKYVEE.JPG",
+      "latitude": "32.979820139",
+      "longitude": "-96.647772333",
+      "altitude": "171.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:12"
+    },
+    {
+      "id": "1410051",
+      "filename": "DJI_20260302151046_0313_D_SKYVEE.JPG",
+      "latitude": "32.980786139",
+      "longitude": "-96.647722361",
+      "altitude": "169.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:19"
+    },
+    {
+      "id": "1410052",
+      "filename": "DJI_20260302151058_0314_D_SKYVEE.JPG",
+      "latitude": "32.980792750",
+      "longitude": "-96.647733694",
+      "altitude": "169.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:26"
+    },
+    {
+      "id": "1410053",
+      "filename": "DJI_20260302151250_0315_D_SKYVEE.JPG",
+      "latitude": "32.981947306",
+      "longitude": "-96.647713417",
+      "altitude": "167.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:33"
+    },
+    {
+      "id": "1410054",
+      "filename": "DJI_20260302151301_0316_D_SKYVEE.JPG",
+      "latitude": "32.981956000",
+      "longitude": "-96.647723833",
+      "altitude": "167.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:40"
+    },
+    {
+      "id": "1410055",
+      "filename": "DJI_20260302151359_0317_D_SKYVEE.JPG",
+      "latitude": "32.982373389",
+      "longitude": "-96.647717500",
+      "altitude": "168.12",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:47"
+    },
+    {
+      "id": "1410056",
+      "filename": "DJI_20260302151425_0318_D_SKYVEE.JPG",
+      "latitude": "32.982366111",
+      "longitude": "-96.647802722",
+      "altitude": "168.82",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:53:54"
+    },
+    {
+      "id": "1410057",
+      "filename": "DJI_20260302151454_0319_D_SKYVEE.JPG",
+      "latitude": "32.982405833",
+      "longitude": "-96.647725889",
+      "altitude": "169.02",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:01"
+    },
+    {
+      "id": "1410058",
+      "filename": "DJI_20260302151545_0320_D_SKYVEE.JPG",
+      "latitude": "32.982518500",
+      "longitude": "-96.647596639",
+      "altitude": "168.82",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:10"
+    },
+    {
+      "id": "1410059",
+      "filename": "DJI_20260302151710_0321_D_SKYVEE.JPG",
+      "latitude": "32.982626306",
+      "longitude": "-96.647802556",
+      "altitude": "171.82",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:17"
+    },
+    {
+      "id": "1410060",
+      "filename": "DJI_20260302151719_0322_D_SKYVEE.JPG",
+      "latitude": "32.982626056",
+      "longitude": "-96.647819944",
+      "altitude": "171.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:24"
+    },
+    {
+      "id": "1410061",
+      "filename": "DJI_20260302151809_0323_D_SKYVEE.JPG",
+      "latitude": "32.982637167",
+      "longitude": "-96.647740167",
+      "altitude": "172.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:30"
+    },
+    {
+      "id": "1410062",
+      "filename": "DJI_20260302151857_0324_D_SKYVEE.JPG",
+      "latitude": "32.982815389",
+      "longitude": "-96.647728472",
+      "altitude": "165.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:37"
+    },
+    {
+      "id": "1410063",
+      "filename": "DJI_20260302152010_0325_D_SKYVEE.JPG",
+      "latitude": "32.983647167",
+      "longitude": "-96.647715944",
+      "altitude": "161.62",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:44"
+    },
+    {
+      "id": "1410064",
+      "filename": "DJI_20260302152018_0326_D_SKYVEE.JPG",
+      "latitude": "32.983669056",
+      "longitude": "-96.647716833",
+      "altitude": "161.62",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:54:51"
+    },
+    {
+      "id": "1410065",
+      "filename": "DJI_20260302152123_0327_D_SKYVEE.JPG",
+      "latitude": "32.984153194",
+      "longitude": "-96.647721750",
+      "altitude": "163.72",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:00"
+    },
+    {
+      "id": "1410066",
+      "filename": "DJI_20260302152249_0328_D_SKYVEE.JPG",
+      "latitude": "32.984596389",
+      "longitude": "-96.647824222",
+      "altitude": "166.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:07"
+    },
+    {
+      "id": "1410067",
+      "filename": "DJI_20260302152303_0329_D_SKYVEE.JPG",
+      "latitude": "32.984549500",
+      "longitude": "-96.647824444",
+      "altitude": "166.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:15"
+    },
+    {
+      "id": "1410068",
+      "filename": "DJI_20260302152343_0330_D_SKYVEE.JPG",
+      "latitude": "32.984111417",
+      "longitude": "-96.647837306",
+      "altitude": "167.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:20"
+    },
+    {
+      "id": "1410069",
+      "filename": "DJI_20260302152412_0331_D_SKYVEE.JPG",
+      "latitude": "32.983927194",
+      "longitude": "-96.647942861",
+      "altitude": "167.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:27"
+    },
+    {
+      "id": "1410070",
+      "filename": "DJI_20260302152457_0332_D_SKYVEE.JPG",
+      "latitude": "32.983697250",
+      "longitude": "-96.647852833",
+      "altitude": "167.52",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:34"
+    },
+    {
+      "id": "1410071",
+      "filename": "DJI_20260302152727_0333_D_SKYVEE.JPG",
+      "latitude": "32.982310889",
+      "longitude": "-96.647959306",
+      "altitude": "168.32",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:43"
+    },
+    {
+      "id": "1410072",
+      "filename": "DJI_20260302152744_0334_D_SKYVEE.JPG",
+      "latitude": "32.982231889",
+      "longitude": "-96.648035194",
+      "altitude": "168.52",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:50"
+    },
+    {
+      "id": "1410073",
+      "filename": "DJI_20260302152825_0335_D_SKYVEE.JPG",
+      "latitude": "32.981962028",
+      "longitude": "-96.648022000",
+      "altitude": "172.72",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:55:58"
+    },
+    {
+      "id": "1410074",
+      "filename": "DJI_20260302152906_0336_D_SKYVEE.JPG",
+      "latitude": "32.981776111",
+      "longitude": "-96.648047722",
+      "altitude": "172.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:07"
+    },
+    {
+      "id": "1410075",
+      "filename": "DJI_20260302152927_0337_D_SKYVEE.JPG",
+      "latitude": "32.981760333",
+      "longitude": "-96.648034556",
+      "altitude": "173.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:14"
+    },
+    {
+      "id": "1410076",
+      "filename": "DJI_20260302153121_0338_D_SKYVEE.JPG",
+      "latitude": "32.980789750",
+      "longitude": "-96.648026694",
+      "altitude": "172.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:24"
+    },
+    {
+      "id": "1410077",
+      "filename": "DJI_20260302153147_0339_D_SKYVEE.JPG",
+      "latitude": "32.980546556",
+      "longitude": "-96.647976194",
+      "altitude": "172.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:32"
+    },
+    {
+      "id": "1410078",
+      "filename": "DJI_20260302153208_0340_D_SKYVEE.JPG",
+      "latitude": "32.980428278",
+      "longitude": "-96.648042278",
+      "altitude": "172.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:40"
+    },
+    {
+      "id": "1410079",
+      "filename": "DJI_20260302153214_0341_D_SKYVEE.JPG",
+      "latitude": "32.980409194",
+      "longitude": "-96.648051333",
+      "altitude": "172.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:49"
+    },
+    {
+      "id": "1410080",
+      "filename": "DJI_20260302153244_0342_D_SKYVEE.JPG",
+      "latitude": "32.980225222",
+      "longitude": "-96.648041722",
+      "altitude": "172.52",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:56:56"
+    },
+    {
+      "id": "1410081",
+      "filename": "DJI_20260302153251_0343_D_SKYVEE.JPG",
+      "latitude": "32.980207611",
+      "longitude": "-96.648042778",
+      "altitude": "172.52",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:57:03"
+    },
+    {
+      "id": "1410082",
+      "filename": "DJI_20260302153340_0344_D_SKYVEE.JPG",
+      "latitude": "32.979809583",
+      "longitude": "-96.648044083",
+      "altitude": "171.12",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 14:57:12"
+    },
+    {
+      "id": "1440001",
+      "filename": "DJI_20260302153403_0345_D_SKYVEE.JPG",
+      "latitude": "32.979532167",
+      "longitude": "-96.648056694",
+      "altitude": "171.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:49:48"
+    },
+    {
+      "id": "1440002",
+      "filename": "DJI_20260302153417_0346_D_SKYVEE.JPG",
+      "latitude": "32.979511694",
+      "longitude": "-96.648057167",
+      "altitude": "171.32",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:50:46"
+    },
+    {
+      "id": "1440003",
+      "filename": "DJI_20260302153436_0347_D_SKYVEE.JPG",
+      "latitude": "32.979458694",
+      "longitude": "-96.647990222",
+      "altitude": "171.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:50:54"
+    },
+    {
+      "id": "1440004",
+      "filename": "DJI_20260302153503_0348_D_SKYVEE.JPG",
+      "latitude": "32.979171972",
+      "longitude": "-96.648074444",
+      "altitude": "171.62",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:51:02"
+    },
+    {
+      "id": "1440005",
+      "filename": "DJI_20260302153517_0349_D_SKYVEE.JPG",
+      "latitude": "32.979154778",
+      "longitude": "-96.648063167",
+      "altitude": "171.72",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:51:09"
+    },
+    {
+      "id": "1440006",
+      "filename": "DJI_20260302153537_0350_D_SKYVEE.JPG",
+      "latitude": "32.979021222",
+      "longitude": "-96.648059111",
+      "altitude": "171.82",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:51:16"
+    },
+    {
+      "id": "1440007",
+      "filename": "DJI_20260302153558_0351_D_SKYVEE.JPG",
+      "latitude": "32.978972972",
+      "longitude": "-96.647998333",
+      "altitude": "171.92",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:00"
+    },
+    {
+      "id": "1440008",
+      "filename": "DJI_20260302153615_0352_D_SKYVEE.JPG",
+      "latitude": "32.978954722",
+      "longitude": "-96.648073167",
+      "altitude": "172.02",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:08"
+    },
+    {
+      "id": "1440009",
+      "filename": "DJI_20260302153629_0353_D_SKYVEE.JPG",
+      "latitude": "32.978948778",
+      "longitude": "-96.648060722",
+      "altitude": "172.02",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:15"
+    },
+    {
+      "id": "1440010",
+      "filename": "DJI_20260302153659_0354_D_SKYVEE.JPG",
+      "latitude": "32.978679750",
+      "longitude": "-96.647996278",
+      "altitude": "172.22",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:21"
+    },
+    {
+      "id": "1440011",
+      "filename": "DJI_20260302153721_0355_D_SKYVEE.JPG",
+      "latitude": "32.978618139",
+      "longitude": "-96.648003139",
+      "altitude": "172.32",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:27"
+    },
+    {
+      "id": "1440012",
+      "filename": "DJI_20260302153730_0356_D_SKYVEE.JPG",
+      "latitude": "32.978599111",
+      "longitude": "-96.648058611",
+      "altitude": "172.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:34"
+    },
+    {
+      "id": "1440013",
+      "filename": "DJI_20260302153835_0357_D_SKYVEE.JPG",
+      "latitude": "32.977865139",
+      "longitude": "-96.648002417",
+      "altitude": "173.02",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:41"
+    },
+    {
+      "id": "1440014",
+      "filename": "DJI_20260302153913_0358_D_SKYVEE.JPG",
+      "latitude": "32.977446611",
+      "longitude": "-96.648057667",
+      "altitude": "167.62",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:48"
+    },
+    {
+      "id": "1440015",
+      "filename": "DJI_20260302153955_0359_D_SKYVEE.JPG",
+      "latitude": "32.977036556",
+      "longitude": "-96.648009778",
+      "altitude": "166.32",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:52:56"
+    },
+    {
+      "id": "1440016",
+      "filename": "DJI_20260302154022_0360_D_SKYVEE.JPG",
+      "latitude": "32.976967694",
+      "longitude": "-96.648056472",
+      "altitude": "167.42",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:53:04"
+    },
+    {
+      "id": "1440017",
+      "filename": "DJI_20260302154332_0361_D_SKYVEE.JPG",
+      "latitude": "32.976968500",
+      "longitude": "-96.647802583",
+      "altitude": "174.58",
+      "mediaType": "photo",
+      "capturedAt": "NULL",
+      "createdAt": "2026-03-05 15:53:13"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfilename\tlatitude\tlongitude\taltitude\tmediaType\tcapturedAt\tcreatedAt\n1140001\tProject Image\t32.970742000\t-96.648247000\tNULL\tphoto\tNULL\t2026-02-28 10:01:55\n1410003\tDJI_20260302133145_0265_D_SKYVEE.JPG\t32.976158139\t-96.647987417\t153.45\tphoto\tNULL\t2026-03-05 14:48:27\n1410004\tDJI_20260302133258_0266_D_SKYVEE.JPG\t32.975400778\t-96.648014944\t153.75\tphoto\tNULL\t2026-03-05 14:48:32\n1410005\tDJI_20260302133321_0267_D_SKYVEE.JPG\t32.975311056\t-96.648063944\t153.75\tphoto\tNULL\t2026-03-05 14:48:37\n1410006\tDJI_20260302133353_0268_D_SKYVEE.JPG\t32.975066361\t-96.648057694\t153.75\tphoto\tNULL\t2026-03-05 14:48:42\n1410007\tDJI_20260302133425_0269_D_SKYVEE.JPG\t32.974787167\t-96.648013583\t156.95\tphoto\tNULL\t2026-03-05 14:48:47\n1410008\tDJI_20260302133515_0270_D_SKYVEE.JPG\t32.974459917\t-96.648030222\t157.15\tphoto\tNULL\t2026-03-05 14:48:51\n1410009\tDJI_20260302134130_0271_D_SKYVEE.JPG\t32.973963972\t-96.648025028\t171.34\tphoto\tNULL\t2026-03-05 14:48:57\n1410010\tDJI_20260302134216_0272_D_SKYVEE.JPG\t32.973712694\t-96.648044667\t171.34\tphoto\tNULL\t2026-03-05 14:49:03\n1410011\tDJI_20260302134247_0273_D_SKYVEE.JPG\t32.973539556\t-96.648057583\t171.34\tphoto\tNULL\t2026-03-05 14:49:09\n1410012\tDJI_20260302134500_0274_D_SKYVEE.JPG\t32.972024528\t-96.648094472\t171.84\tphoto\tNULL\t2026-03-05 14:49:13\n1410013\tDJI_20260302134528_0275_D_SKYVEE.JPG\t32.971931722\t-96.648087639\t171.94\tphoto\tNULL\t2026-03-05 14:49:18\n1410014\tDJI_20260302134623_0276_D_SKYVEE.JPG\t32.971544139\t-96.648138861\t172.24\tphoto\tNULL\t2026-03-05 14:49:23\n1410015\tDJI_20260302134726_0277_D_SKYVEE.JPG\t32.971403611\t-96.648063833\t172.74\tphoto\tNULL\t2026-03-05 14:49:29\n1410016\tDJI_20260302134800_0278_D_SKYVEE.JPG\t32.971101500\t-96.648145611\t172.94\tphoto\tNULL\t2026-03-05 14:49:35\n1410017\tDJI_20260302134837_0279_D_SKYVEE.JPG\t32.970952111\t-96.648389667\t173.14\tphoto\tNULL\t2026-03-05 14:49:42\n1410018\tDJI_20260302135142_0280_D_SKYVEE.JPG\t32.971926778\t-96.647780972\t171.84\tphoto\tNULL\t2026-03-05 14:49:48\n1410019\tDJI_20260302135213_0281_D_SKYVEE.JPG\t32.971929472\t-96.647829778\t171.84\tphoto\tNULL\t2026-03-05 14:49:52\n1410020\tDJI_20260302135303_0282_D_SKYVEE.JPG\t32.972027167\t-96.647840250\t171.84\tphoto\tNULL\t2026-03-05 14:49:58\n1410021\tDJI_20260302135331_0283_D_SKYVEE.JPG\t32.972125528\t-96.647834306\t171.84\tphoto\tNULL\t2026-03-05 14:50:03\n1410022\tDJI_20260302135357_0284_D_SKYVEE.JPG\t32.972150056\t-96.647823833\t171.84\tphoto\tNULL\t2026-03-05 14:50:08\n1410023\tDJI_20260302135513_0285_D_SKYVEE.JPG\t32.972887306\t-96.647791278\t168.44\tphoto\tNULL\t2026-03-05 14:50:15\n1410024\tDJI_20260302135525_0286_D_SKYVEE.JPG\t32.972926889\t-96.647787639\t168.44\tphoto\tNULL\t2026-03-05 14:50:22\n1410025\tDJI_20260302135630_0287_D_SKYVEE.JPG\t32.973394694\t-96.647742722\t165.14\tphoto\tNULL\t2026-03-05 14:50:28\n1410026\tDJI_20260302135724_0288_D_SKYVEE.JPG\t32.973939083\t-96.647790917\t168.84\tphoto\tNULL\t2026-03-05 14:50:35\n1410027\tDJI_20260302135750_0289_D_SKYVEE.JPG\t32.973954278\t-96.647784694\t168.74\tphoto\tNULL\t2026-03-05 14:50:41\n1410028\tDJI_20260302135918_0290_D_SKYVEE.JPG\t32.974764000\t-96.647784250\t165.34\tphoto\tNULL\t2026-03-05 14:50:48\n1410029\tDJI_20260302135947_0291_D_SKYVEE.JPG\t32.974780583\t-96.647782750\t165.44\tphoto\tNULL\t2026-03-05 14:50:55\n1410030\tDJI_20260302135954_0292_D_SKYVEE.JPG\t32.974790639\t-96.647782167\t165.44\tphoto\tNULL\t2026-03-05 14:51:02\n1410031\tDJI_20260302140024_0293_D_SKYVEE.JPG\t32.974805278\t-96.647735472\t159.14\tphoto\tNULL\t2026-03-05 14:51:08\n1410032\tDJI_20260302140051_0294_D_SKYVEE.JPG\t32.974996806\t-96.647729139\t158.84\tphoto\tNULL\t2026-03-05 14:51:14\n1410033\tDJI_20260302140137_0295_D_SKYVEE.JPG\t32.975206556\t-96.647787833\t160.24\tphoto\tNULL\t2026-03-05 14:51:21\n1410034\tDJI_20260302140157_0296_D_SKYVEE.JPG\t32.975226028\t-96.647782556\t160.24\tphoto\tNULL\t2026-03-05 14:51:28\n1410035\tDJI_20260302140230_0297_D_SKYVEE.JPG\t32.975396639\t-96.647780667\t157.04\tphoto\tNULL\t2026-03-05 14:51:34\n1410036\tDJI_20260302140301_0298_D_SKYVEE.JPG\t32.975587000\t-96.647783500\t157.04\tphoto\tNULL\t2026-03-05 14:51:42\n1410037\tDJI_20260302140344_0299_D_SKYVEE.JPG\t32.976148806\t-96.647775500\t157.04\tphoto\tNULL\t2026-03-05 14:51:49\n1410038\tDJI_20260302140356_0300_D_SKYVEE.JPG\t32.976164333\t-96.647775722\t157.04\tphoto\tNULL\t2026-03-05 14:51:55\n1410039\tDJI_20260302140425_0301_D_SKYVEE.JPG\t32.976389972\t-96.647779528\t157.14\tphoto\tNULL\t2026-03-05 14:52:02\n1410040\tDJI_20260302140538_0302_D_SKYVEE.JPG\t32.977013917\t-96.647765917\t157.24\tphoto\tNULL\t2026-03-05 14:52:08\n1410041\tDJI_20260302140546_0303_D_SKYVEE.JPG\t32.977023750\t-96.647764611\t157.24\tphoto\tNULL\t2026-03-05 14:52:13\n1410042\tDJI_20260302140615_0304_D_SKYVEE.JPG\t32.977225361\t-96.647766167\t159.54\tphoto\tNULL\t2026-03-05 14:52:20\n1410043\tDJI_20260302140710_0305_D_SKYVEE.JPG\t32.977830611\t-96.647759722\t163.44\tphoto\tNULL\t2026-03-05 14:52:27\n1410044\tDJI_20260302140718_0306_D_SKYVEE.JPG\t32.977842639\t-96.647759444\t163.44\tphoto\tNULL\t2026-03-05 14:52:33\n1410045\tDJI_20260302140746_0307_D_SKYVEE.JPG\t32.978044361\t-96.647759472\t163.44\tphoto\tNULL\t2026-03-05 14:52:39\n1410046\tDJI_20260302140831_0308_D_SKYVEE.JPG\t32.978667083\t-96.647753639\t163.44\tphoto\tNULL\t2026-03-05 14:52:45\n1410047\tDJI_20260302140843_0309_D_SKYVEE.JPG\t32.978863556\t-96.647756361\t163.44\tphoto\tNULL\t2026-03-05 14:52:51\n1410048\tDJI_20260302140928_0310_D_SKYVEE.JPG\t32.978824361\t-96.647694861\t159.94\tphoto\tNULL\t2026-03-05 14:52:57\n1410049\tDJI_20260302150842_0311_D_SKYVEE.JPG\t32.979822250\t-96.647749694\t169.12\tphoto\tNULL\t2026-03-05 14:53:04\n1410050\tDJI_20260302150857_0312_D_SKYVEE.JPG\t32.979820139\t-96.647772333\t171.22\tphoto\tNULL\t2026-03-05 14:53:12\n1410051\tDJI_20260302151046_0313_D_SKYVEE.JPG\t32.980786139\t-96.647722361\t169.22\tphoto\tNULL\t2026-03-05 14:53:19\n1410052\tDJI_20260302151058_0314_D_SKYVEE.JPG\t32.980792750\t-96.647733694\t169.22\tphoto\tNULL\t2026-03-05 14:53:26\n1410053\tDJI_20260302151250_0315_D_SKYVEE.JPG\t32.981947306\t-96.647713417\t167.92\tphoto\tNULL\t2026-03-05 14:53:33\n1410054\tDJI_20260302151301_0316_D_SKYVEE.JPG\t32.981956000\t-96.647723833\t167.92\tphoto\tNULL\t2026-03-05 14:53:40\n1410055\tDJI_20260302151359_0317_D_SKYVEE.JPG\t32.982373389\t-96.647717500\t168.12\tphoto\tNULL\t2026-03-05 14:53:47\n1410056\tDJI_20260302151425_0318_D_SKYVEE.JPG\t32.982366111\t-96.647802722\t168.82\tphoto\tNULL\t2026-03-05 14:53:54\n1410057\tDJI_20260302151454_0319_D_SKYVEE.JPG\t32.982405833\t-96.647725889\t169.02\tphoto\tNULL\t2026-03-05 14:54:01\n1410058\tDJI_20260302151545_0320_D_SKYVEE.JPG\t32.982518500\t-96.647596639\t168.82\tphoto\tNULL\t2026-03-05 14:54:10\n1410059\tDJI_20260302151710_0321_D_SKYVEE.JPG\t32.982626306\t-96.647802556\t171.82\tphoto\tNULL\t2026-03-05 14:54:17\n1410060\tDJI_20260302151719_0322_D_SKYVEE.JPG\t32.982626056\t-96.647819944\t171.92\tphoto\tNULL\t2026-03-05 14:54:24\n1410061\tDJI_20260302151809_0323_D_SKYVEE.JPG\t32.982637167\t-96.647740167\t172.42\tphoto\tNULL\t2026-03-05 14:54:30\n1410062\tDJI_20260302151857_0324_D_SKYVEE.JPG\t32.982815389\t-96.647728472\t165.92\tphoto\tNULL\t2026-03-05 14:54:37\n1410063\tDJI_20260302152010_0325_D_SKYVEE.JPG\t32.983647167\t-96.647715944\t161.62\tphoto\tNULL\t2026-03-05 14:54:44\n1410064\tDJI_20260302152018_0326_D_SKYVEE.JPG\t32.983669056\t-96.647716833\t161.62\tphoto\tNULL\t2026-03-05 14:54:51\n1410065\tDJI_20260302152123_0327_D_SKYVEE.JPG\t32.984153194\t-96.647721750\t163.72\tphoto\tNULL\t2026-03-05 14:55:00\n1410066\tDJI_20260302152249_0328_D_SKYVEE.JPG\t32.984596389\t-96.647824222\t166.92\tphoto\tNULL\t2026-03-05 14:55:07\n1410067\tDJI_20260302152303_0329_D_SKYVEE.JPG\t32.984549500\t-96.647824444\t166.92\tphoto\tNULL\t2026-03-05 14:55:15\n1410068\tDJI_20260302152343_0330_D_SKYVEE.JPG\t32.984111417\t-96.647837306\t167.22\tphoto\tNULL\t2026-03-05 14:55:20\n1410069\tDJI_20260302152412_0331_D_SKYVEE.JPG\t32.983927194\t-96.647942861\t167.42\tphoto\tNULL\t2026-03-05 14:55:27\n1410070\tDJI_20260302152457_0332_D_SKYVEE.JPG\t32.983697250\t-96.647852833\t167.52\tphoto\tNULL\t2026-03-05 14:55:34\n1410071\tDJI_20260302152727_0333_D_SKYVEE.JPG\t32.982310889\t-96.647959306\t168.32\tphoto\tNULL\t2026-03-05 14:55:43\n1410072\tDJI_20260302152744_0334_D_SKYVEE.JPG\t32.982231889\t-96.648035194\t168.52\tphoto\tNULL\t2026-03-05 14:55:50\n1410073\tDJI_20260302152825_0335_D_SKYVEE.JPG\t32.981962028\t-96.648022000\t172.72\tphoto\tNULL\t2026-03-05 14:55:58\n1410074\tDJI_20260302152906_0336_D_SKYVEE.JPG\t32.981776111\t-96.648047722\t172.92\tphoto\tNULL\t2026-03-05 14:56:07\n1410075\tDJI_20260302152927_0337_D_SKYVEE.JPG\t32.981760333\t-96.648034556\t173.42\tphoto\tNULL\t2026-03-05 14:56:14\n1410076\tDJI_20260302153121_0338_D_SKYVEE.JPG\t32.980789750\t-96.648026694\t172.22\tphoto\tNULL\t2026-03-05 14:56:24\n1410077\tDJI_20260302153147_0339_D_SKYVEE.JPG\t32.980546556\t-96.647976194\t172.22\tphoto\tNULL\t2026-03-05 14:56:32\n1410078\tDJI_20260302153208_0340_D_SKYVEE.JPG\t32.980428278\t-96.648042278\t172.42\tphoto\tNULL\t2026-03-05 14:56:40\n1410079\tDJI_20260302153214_0341_D_SKYVEE.JPG\t32.980409194\t-96.648051333\t172.42\tphoto\tNULL\t2026-03-05 14:56:49\n1410080\tDJI_20260302153244_0342_D_SKYVEE.JPG\t32.980225222\t-96.648041722\t172.52\tphoto\tNULL\t2026-03-05 14:56:56\n1410081\tDJI_20260302153251_0343_D_SKYVEE.JPG\t32.980207611\t-96.648042778\t172.52\tphoto\tNULL\t2026-03-05 14:57:03\n1410082\tDJI_20260302153340_0344_D_SKYVEE.JPG\t32.979809583\t-96.648044083\t171.12\tphoto\tNULL\t2026-03-05 14:57:12\n1440001\tDJI_20260302153403_0345_D_SKYVEE.JPG\t32.979532167\t-96.648056694\t171.22\tphoto\tNULL\t2026-03-05 15:49:48\n1440002\tDJI_20260302153417_0346_D_SKYVEE.JPG\t32.979511694\t-96.648057167\t171.32\tphoto\tNULL\t2026-03-05 15:50:46\n1440003\tDJI_20260302153436_0347_D_SKYVEE.JPG\t32.979458694\t-96.647990222\t171.42\tphoto\tNULL\t2026-03-05 15:50:54\n1440004\tDJI_20260302153503_0348_D_SKYVEE.JPG\t32.979171972\t-96.648074444\t171.62\tphoto\tNULL\t2026-03-05 15:51:02\n1440005\tDJI_20260302153517_0349_D_SKYVEE.JPG\t32.979154778\t-96.648063167\t171.72\tphoto\tNULL\t2026-03-05 15:51:09\n1440006\tDJI_20260302153537_0350_D_SKYVEE.JPG\t32.979021222\t-96.648059111\t171.82\tphoto\tNULL\t2026-03-05 15:51:16\n1440007\tDJI_20260302153558_0351_D_SKYVEE.JPG\t32.978972972\t-96.647998333\t171.92\tphoto\tNULL\t2026-03-05 15:52:00\n1440008\tDJI_20260302153615_0352_D_SKYVEE.JPG\t32.978954722\t-96.648073167\t172.02\tphoto\tNULL\t2026-03-05 15:52:08\n1440009\tDJI_20260302153629_0353_D_SKYVEE.JPG\t32.978948778\t-96.648060722\t172.02\tphoto\tNULL\t2026-03-05 15:52:15\n1440010\tDJI_20260302153659_0354_D_SKYVEE.JPG\t32.978679750\t-96.647996278\t172.22\tphoto\tNULL\t2026-03-05 15:52:21\n1440011\tDJI_20260302153721_0355_D_SKYVEE.JPG\t32.978618139\t-96.648003139\t172.32\tphoto\tNULL\t2026-03-05 15:52:27\n1440012\tDJI_20260302153730_0356_D_SKYVEE.JPG\t32.978599111\t-96.648058611\t172.42\tphoto\tNULL\t2026-03-05 15:52:34\n1440013\tDJI_20260302153835_0357_D_SKYVEE.JPG\t32.977865139\t-96.648002417\t173.02\tphoto\tNULL\t2026-03-05 15:52:41\n1440014\tDJI_20260302153913_0358_D_SKYVEE.JPG\t32.977446611\t-96.648057667\t167.62\tphoto\tNULL\t2026-03-05 15:52:48\n1440015\tDJI_20260302153955_0359_D_SKYVEE.JPG\t32.977036556\t-96.648009778\t166.32\tphoto\tNULL\t2026-03-05 15:52:56\n1440016\tDJI_20260302154022_0360_D_SKYVEE.JPG\t32.976967694\t-96.648056472\t167.42\tphoto\tNULL\t2026-03-05 15:53:04\n1440017\tDJI_20260302154332_0361_D_SKYVEE.JPG\t32.976968500\t-96.647802583\t174.58\tphoto\tNULL\t2026-03-05 15:53:13\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}
