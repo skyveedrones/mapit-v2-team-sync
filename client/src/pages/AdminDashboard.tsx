@@ -23,8 +23,8 @@ export default function AdminDashboard() {
             <p className="text-sm text-muted-foreground mb-4">
               Only webmasters can access the admin dashboard.
             </p>
-            <Button onClick={() => setLocation('/dashboard')} className="w-full">
-              Back to Dashboard
+            <Button onClick={() => setLocation('/account')} className="w-full">
+              Back to Account
             </Button>
           </CardContent>
         </Card>
@@ -46,11 +46,11 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <Button
           variant="ghost"
-          onClick={() => setLocation('/dashboard')}
+          onClick={() => setLocation('/account')}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Back to Account
         </Button>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-2">
