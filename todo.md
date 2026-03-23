@@ -2390,3 +2390,25 @@
 - [x] Documented that script is no longer auto-executed
 - [x] Verified production data is locked down
 - [x] Confirmed all projects, clients, users, and media are protected
+
+
+## Pilot View Cockpit Features
+- [ ] Mapbox Fly Controls (Zoom, Rotate, Pitch) component
+- [ ] Media Detail Sidebar component
+- [ ] Sidebar integration with map pin interactions
+- [ ] Download button for media in sidebar
+- [ ] GPS/Altitude metadata display
+- [ ] Media preview in sidebar
+- [ ] Test all cockpit features
+- [ ] Bundle for ZIP export
+
+
+## Pilot View Cockpit Features (COMPLETED)
+- [x] Mapbox Fly Controls (Zoom, Rotate, Pitch) component
+- [x] Media Detail Sidebar component
+- [x] Sidebar integration with map pin interactions
+- [x] Download button for media in sidebar
+- [x] GPS/Altitude metadata display
+- [x] Media preview in sidebar
+- [x] Test all cockpit features (14 tests passing)
+- [x] Bundle for ZIP export

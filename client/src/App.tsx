@@ -52,6 +52,7 @@ const GpsDataExport = lazy(() => import("./pages/features/GpsDataExport"));
 const PdfMapOverlay = lazy(() => import("./pages/features/PdfMapOverlay"));
 const InstallAsApp = lazy(() => import("./pages/features/InstallAsApp"));
 const ProjectTemplates = lazy(() => import("./pages/features/ProjectTemplates"));
+const PilotViewCockpit = lazy(() => import("./pages/PilotViewCockpit"));
 
 /**
  * Admin-only routes that client users must not access
@@ -238,6 +239,11 @@ function Router() {
       <Route path="/features/pdf-map-overlay" component={PdfMapOverlay} />
       <Route path="/features/install-as-app" component={InstallAsApp} />
       <Route path="/features/project-templates" component={ProjectTemplates} />
+      
+      {/* Pilot View Cockpit */}
+      <Route path="/project/:projectId/cockpit">
+        {(params) => <ProtectedRoute component={PilotViewCockpit} />}
+      </Route>
       
       {/* Settings */}
       <Route path="/settings">
