@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, name, clientId, description, mediaCount, createdAt FROM projects ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, clientId, description, mediaCount, createdAt FROM projects ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Project 1",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "14",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "30001",
+      "name": "30001",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "32",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "30002",
+      "name": "Gail Wilson",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "19",
+      "createdAt": "2026-03-20 23:03:32"
+    },
+    {
+      "id": "30003",
+      "name": "30003",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "13",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "60001",
+      "name": "60001",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "4",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "90004",
+      "name": "90004",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "12",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "420001",
+      "name": "420001",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "34",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "540001",
+      "name": "540001",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "99",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "750001",
+      "name": "750001",
+      "clientId": "NULL",
+      "description": "NULL",
+      "mediaCount": "260",
+      "createdAt": "2026-03-20 23:05:18"
+    },
+    {
+      "id": "1020001",
+      "name": "Holford Road Project",
+      "clientId": "330001",
+      "description": "NULL",
+      "mediaCount": "98",
+      "createdAt": "2026-03-20 03:44:19"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tclientId\tdescription\tmediaCount\tcreatedAt\n1\tProject 1\tNULL\tNULL\t14\t2026-03-20 23:05:18\n30001\t30001\tNULL\tNULL\t32\t2026-03-20 23:05:18\n30002\tGail Wilson\tNULL\tNULL\t19\t2026-03-20 23:03:32\n30003\t30003\tNULL\tNULL\t13\t2026-03-20 23:05:18\n60001\t60001\tNULL\tNULL\t4\t2026-03-20 23:05:18\n90004\t90004\tNULL\tNULL\t12\t2026-03-20 23:05:18\n420001\t420001\tNULL\tNULL\t34\t2026-03-20 23:05:18\n540001\t540001\tNULL\tNULL\t99\t2026-03-20 23:05:18\n750001\t750001\tNULL\tNULL\t260\t2026-03-20 23:05:18\n1020001\tHolford Road Project\t330001\tNULL\t98\t2026-03-20 03:44:19\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

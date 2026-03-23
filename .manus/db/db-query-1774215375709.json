@@ -1,0 +1,31 @@
+{
+  "query": "SELECT id, name, ownerId, contactEmail, createdAt FROM clients ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, ownerId, contactEmail, createdAt FROM clients ORDER BY id;",
+  "rows": [
+    {
+      "id": "330001",
+      "name": "City of Garland Texas",
+      "ownerId": "1",
+      "contactEmail": "MRozelle@garlandtx.gov",
+      "createdAt": "2026-02-28 09:47:09"
+    },
+    {
+      "id": "4560004",
+      "name": "Forney TX Municipal",
+      "ownerId": "1",
+      "contactEmail": "tbechtol@forneytx.gov",
+      "createdAt": "2026-03-11 20:13:23"
+    },
+    {
+      "id": "4590005",
+      "name": "SkyVee Aerial Drone Services",
+      "ownerId": "1",
+      "contactEmail": "NULL",
+      "createdAt": "2026-03-14 04:10:10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\townerId\tcontactEmail\tcreatedAt\n330001\tCity of Garland Texas\t1\tMRozelle@garlandtx.gov\t2026-02-28 09:47:09\n4560004\tForney TX Municipal\t1\ttbechtol@forneytx.gov\t2026-03-11 20:13:23\n4590005\tSkyVee Aerial Drone Services\t1\tNULL\t2026-03-14 04:10:10\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

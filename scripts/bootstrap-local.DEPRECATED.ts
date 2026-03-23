@@ -1,15 +1,40 @@
 /**
- * bootstrap-local.ts
+ * ⚠️  DEPRECATED: bootstrap-local.DEPRECATED.ts
  *
+ * ⛔ DO NOT USE THIS SCRIPT IN PRODUCTION ⛔
+ *
+ * This script is DEPRECATED and should NEVER be executed against the production database.
+ * It was used for local development setup only and has been renamed to prevent accidental use.
+ *
+ * PRODUCTION DATA PROTECTION:
+ * - All production data has been restored and verified
+ * - This script WILL overwrite existing rows if executed
+ * - Running this script will corrupt your production database
+ * - If you need to reset local development data, use a separate development database
+ *
+ * HISTORY:
+ * - This script was responsible for creating 'Project 1' and test data
+ * - It has been disabled to protect production integrity
+ * - All existing projects, clients, and media are now locked down
+ * - Renamed from bootstrap-local.ts to bootstrap-local.DEPRECATED.ts on March 22, 2026
+ *
+ * WHAT THIS SCRIPT DOES (for reference only):
  * Seeds a fresh local TiDB/MySQL database with:
  *   - A SkyVee organization
  *   - A local dev user (Clay Bechtol)
  *   - A Test Project 1
  *
- * Usage:
- *   npx tsx scripts/bootstrap-local.ts
+ * ⚠️  ORIGINAL USAGE (DO NOT USE):
+ *   npx tsx scripts/bootstrap-local.DEPRECATED.ts
  *
- * Prerequisites:
+ * FOR LOCAL DEVELOPMENT:
+ * If you need to set up a fresh local development database:
+ * 1. Create a separate local MySQL/TiDB instance
+ * 2. Set DATABASE_URL to point to your local instance
+ * 3. Run `pnpm db:push` to create tables
+ * 4. Then you can use this script (at your own risk)
+ *
+ * Prerequisites (if you must use this):
  *   1. Create a .env file in the project root with:
  *
  *      DATABASE_URL=mysql://root:password@localhost:4000/dronemapp
@@ -21,7 +46,7 @@
  *      DATABASE_URL=mysql://root:password@127.0.0.1:3306/dronemapp
  *
  *   2. Run `pnpm db:push` first to create all tables.
- *   3. Then run this script: `npx tsx scripts/bootstrap-local.ts`
+ *   3. Then run this script: `npx tsx scripts/bootstrap-local.DEPRECATED.ts`
  */
 
 import * as dotenv from "dotenv";
@@ -43,6 +68,7 @@ if (!DATABASE_URL) {
 }
 
 async function bootstrap() {
+  console.log("⚠️  WARNING: This script is DEPRECATED and should only be used for LOCAL DEVELOPMENT");
   console.log("🚀 Starting local database bootstrap...");
   console.log(`   Connecting to: ${DATABASE_URL!.replace(/:([^:@]+)@/, ":****@")}`);
 

@@ -1,0 +1,59 @@
+{
+  "query": "SELECT id, name, email, role, createdAt FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, email, role, createdAt FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Clay Bechtol",
+      "email": "clay@skyveedrones.com",
+      "role": "webmaster",
+      "createdAt": "2026-03-20 03:44:15"
+    },
+    {
+      "id": "1560095",
+      "name": "Clay",
+      "email": "claybechtol@gmail.com",
+      "role": "webmaster",
+      "createdAt": "2026-03-21 03:24:48"
+    },
+    {
+      "id": "4560004",
+      "name": "Tracey Bechtol",
+      "email": "TBechtol@forneytx.gov",
+      "role": "admin",
+      "createdAt": "2026-03-21 03:24:48"
+    },
+    {
+      "id": "7920012",
+      "name": "cmcquiston",
+      "email": "cmcquiston@forneytx.gov",
+      "role": "user",
+      "createdAt": "2026-03-21 03:24:48"
+    },
+    {
+      "id": "16050001",
+      "name": "Mike Rozelle",
+      "email": "mrozelle@garlandtx.gov",
+      "role": "user",
+      "createdAt": "2026-03-21 03:32:10"
+    },
+    {
+      "id": "16140001",
+      "name": "eluna",
+      "email": "eluna@forneytx.gov",
+      "role": "user",
+      "createdAt": "2026-03-21 03:24:48"
+    },
+    {
+      "id": "19680001",
+      "name": "Clay Bechtol",
+      "email": "clay@skyveedrones.com",
+      "role": "webmaster",
+      "createdAt": "2026-03-22 00:08:07"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tcreatedAt\n1\tClay Bechtol\tclay@skyveedrones.com\twebmaster\t2026-03-20 03:44:15\n1560095\tClay\tclaybechtol@gmail.com\twebmaster\t2026-03-21 03:24:48\n4560004\tTracey Bechtol\tTBechtol@forneytx.gov\tadmin\t2026-03-21 03:24:48\n7920012\tcmcquiston\tcmcquiston@forneytx.gov\tuser\t2026-03-21 03:24:48\n16050001\tMike Rozelle\tmrozelle@garlandtx.gov\tuser\t2026-03-21 03:32:10\n16140001\teluna\teluna@forneytx.gov\tuser\t2026-03-21 03:24:48\n19680001\tClay Bechtol\tclay@skyveedrones.com\twebmaster\t2026-03-22 00:08:07\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

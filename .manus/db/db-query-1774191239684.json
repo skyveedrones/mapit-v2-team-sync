@@ -1,0 +1,14 @@
+{
+  "query": "SELECT DATABASE() as current_db, VERSION() as tidb_version;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT DATABASE() as current_db, VERSION() as tidb_version;",
+  "rows": [
+    {
+      "current_db": "FiS5WF2NaftJTm6fu3BYQb",
+      "tidb_version": "8.0.11-TiDB-v8.5.3-serverless"
+    }
+  ],
+  "messages": [],
+  "stdout": "current_db\ttidb_version\nFiS5WF2NaftJTm6fu3BYQb\t8.0.11-TiDB-v8.5.3-serverless\n",
+  "stderr": "",
+  "execution_time_ms": 110
+}

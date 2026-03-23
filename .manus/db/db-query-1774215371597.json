@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, type, createdAt FROM organizations ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, type, createdAt FROM organizations ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "SkyVee Local",
+      "type": "drone_service_provider",
+      "createdAt": "2026-03-20 03:44:10"
+    },
+    {
+      "id": "210001",
+      "name": "SkyVee Aerial Drones",
+      "type": "drone_service_provider",
+      "createdAt": "2026-03-21 03:41:30"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttype\tcreatedAt\n1\tSkyVee Local\tdrone_service_provider\t2026-03-20 03:44:10\n210001\tSkyVee Aerial Drones\tdrone_service_provider\t2026-03-21 03:41:30\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

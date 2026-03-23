@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total_media, projectId FROM media WHERE projectId = 1020001 GROUP BY projectId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT COUNT(*) as total_media, projectId FROM media WHERE projectId = 1020001 GROUP BY projectId;",
+  "rows": [
+    {
+      "total_media": "99",
+      "projectId": "1020001"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_media\tprojectId\n99\t1020001\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
