@@ -81,14 +81,21 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
-    // Clear all caches before refresh to ensure latest version loads
-    if ('caches' in window) {
-      caches.keys().then(names => {
-        names.forEach(name => caches.delete(name));
+    // Use service worker to skip cache and reload with fresh assets
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister();
+        });
+      }).then(() => {
+        // After unregistering service worker, do a hard refresh
+        // This bypasses all caches and fetches fresh assets
+        window.location.href = window.location.href;
       });
+    } else {
+      // Fallback: hard reload with cache busting
+      window.location.href = window.location.href + '?t=' + Date.now();
     }
-    // Force a hard reload
-    window.location.reload();
   };
 
   // Auto-check on mount if enabled

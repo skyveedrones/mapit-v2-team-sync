@@ -52,6 +52,12 @@ try {
   // Also set environment variable for Vite
   process.env.VITE_BUILD_HASH = commitHash;
   console.log(`✓ Set VITE_BUILD_HASH=${commitHash}`);
+  
+  // Write build hash to .env.local so Vite picks it up
+  const envPath = path.join(process.cwd(), '.env.local');
+  const envContent = `VITE_BUILD_HASH=${commitHash}\n`;
+  fs.writeFileSync(envPath, envContent);
+  console.log(`✓ Wrote VITE_BUILD_HASH to .env.local`);
 
 } catch (error) {
   console.warn('⚠ Git not available in build environment, using fallback hash');
@@ -82,4 +88,10 @@ try {
   
   process.env.VITE_BUILD_HASH = fallbackHash;
   console.log(`✓ Set VITE_BUILD_HASH=${fallbackHash}`);
+  
+  // Write build hash to .env.local so Vite picks it up
+  const envPath = path.join(process.cwd(), '.env.local');
+  const envContent = `VITE_BUILD_HASH=${fallbackHash}\n`;
+  fs.writeFileSync(envPath, envContent);
+  console.log(`✓ Wrote VITE_BUILD_HASH to .env.local`);
 }
