@@ -2443,3 +2443,10 @@
 - [x] Add webmaster bypass to clientPortal.getProjects
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Dev server running smoothly
+
+
+## ClientManage React Hooks Fix
+- [x] Move redirect logic into useEffect
+- [x] Fix hooks violation in ClientManage component
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Dev server running smoothly

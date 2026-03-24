@@ -55,7 +55,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import { ProjectAssignmentDialog } from "@/components/ProjectAssignmentDialog";
@@ -108,8 +108,13 @@ export default function ClientManage() {
   
   // Redirect organization IDs to their correct client
   // Organization 240001 (City of Forney) -> Client 4560004 (Forney TX Municipal)
+  useEffect(() => {
+    if (clientId === "240001") {
+      setLocation("/clients/4560004");
+    }
+  }, [clientId, setLocation]);
+  
   if (clientId === "240001") {
-    setLocation("/clients/4560004");
     return null;
   }
   
