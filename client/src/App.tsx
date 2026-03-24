@@ -19,6 +19,7 @@ import Clients from "./pages/Clients";
 import ClientProjects from "./pages/ClientProjects";
 import ClientPortal from "./pages/ClientPortal";
 import ClientManage from "./pages/ClientManage";
+import { ClientIdGuard } from "./components/RouteGuards/ClientIdGuard";
 import ClientInviteAccept from "./pages/ClientInviteAccept";
 import ManageUser from "./pages/ManageUser";
 import Users from "./pages/Users";
@@ -271,7 +272,15 @@ function Router() {
         {() => <ProtectedRoute component={Clients} />}
       </Route>
       <Route path="/clients/:clientId">
-        {() => <ProtectedRoute component={ClientManage} />}
+        {() => (
+          <ProtectedRoute
+            component={() => (
+              <ClientIdGuard>
+                <ClientManage />
+              </ClientIdGuard>
+            )}
+          />
+        )}
       </Route>
       <Route path="/clients/:clientId/projects">
         {() => <ProtectedRoute component={ClientProjects} />}
