@@ -114,11 +114,6 @@ export default function ClientManage() {
     }
   }, [clientId, setLocation]);
   
-  // Return early if redirecting
-  if (clientId === "240001") {
-    return null;
-  }
-  
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -148,34 +143,34 @@ export default function ClientManage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
-  // Fetch client data
+  // Fetch client data (skip if redirecting)
   const {
     data: client,
     isLoading: clientLoading,
     refetch: refetchClient,
   } = trpc.clientPortal.get.useQuery(
     { id: parseInt(clientId || "0") },
-    { enabled: !!clientId }
+    { enabled: !!clientId && clientId !== "240001" }
   );
 
-  // Fetch client users
+  // Fetch client users (skip if redirecting)
   const {
     data: clientUsers,
     isLoading: usersLoading,
     refetch: refetchUsers,
   } = trpc.clientPortal.getUsers.useQuery(
     { clientId: parseInt(clientId || "0") },
-    { enabled: !!clientId }
+    { enabled: !!clientId && clientId !== "240001" }
   );
 
-  // Fetch pending invitations
+  // Fetch pending invitations (skip if redirecting)
   const {
     data: pendingInvitations,
     isLoading: invitationsLoading,
     refetch: refetchInvitations,
   } = trpc.clientPortal.getPendingInvitations.useQuery(
     { clientId: parseInt(clientId || "0") },
-    { enabled: !!clientId }
+    { enabled: !!clientId && clientId !== "240001" }
   );
 
   // Mutations
