@@ -556,6 +556,17 @@ export async function userHasProjectAccess(projectId: number, userId: number): P
     throw new Error("Database not available");
   }
 
+  // Check if user is a webmaster (global access bypass)
+  const user = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  if (user.length > 0 && user[0].role === 'webmaster') {
+    return true;
+  }
+
    // Check if user is the owner
   const project = await db
     .select()
@@ -2049,6 +2060,17 @@ export async function userHasClientProjectAccess(userId: number, projectId: numb
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
+  }
+
+  // Check if user is a webmaster (global access bypass)
+  const user = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  if (user.length > 0 && user[0].role === 'webmaster') {
+    return true;
   }
 
   // Get the project to check its clientId
