@@ -6,13 +6,13 @@ import { APP_VERSION, getVersionString } from "@shared/version";
 import { AlertCircle, CheckCircle2, Info, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable } from "@/lib/buildVersion";
 
 interface VersionInfo {
-  version: string;
-  commit: string;
-  fullCommit?: string;
-  buildDate: string;
-  timestamp: number;
+  hash: string;
+  fullHash: string;
+  timestamp: string;
+  buildTime: string;
 }
 
 export default function VersionCheck() {
@@ -27,76 +27,39 @@ export default function VersionCheck() {
   const [versionMismatch, setVersionMismatch] = useState(false);
   const [backendVersion, setBackendVersion] = useState<string | null>(null);
 
-  const currentVersion = APP_VERSION.commit.substring(0, 7);
+  const currentVersion = getBuildHash();
 
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
-      // Fetch the latest version from the deployed site's version.json
-      // This file should be generated during build and contain the latest commit hash
-      const response = await fetch('/version.json?_=' + Date.now(), {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
+      // Fetch the remote version.json which contains the deployed commit hash
+      const remoteVersion = await fetchRemoteVersion();
       
-      if (!response.ok) {
+      if (!remoteVersion) {
         throw new Error('Failed to fetch version info');
       }
       
-      const versionData: VersionInfo = await response.json();
-      const deployedVersion = versionData.commit?.substring(0, 7) || versionData.fullCommit?.substring(0, 7) || currentVersion;
-      
-      setLatestVersion(deployedVersion);
+      const remoteHash = remoteVersion.hash;
+      setLatestVersion(remoteHash);
       setLastChecked(new Date());
       
-      // Compare versions - if deployed version is different from current, update is available
-      const hasUpdate = deployedVersion !== currentVersion;
+      // Compare commit hashes - if they differ, an update is available
+      const hasUpdate = checkUpdateAvailable(remoteHash);
       setUpdateAvailable(hasUpdate);
-      
-      // Check backend version if available
-      try {
-        const backendResponse = await fetch('/api/version', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
-        
-        if (backendResponse.ok) {
-          const backendData = await backendResponse.json();
-          const backendVer = backendData.commit?.substring(0, 7) || currentVersion;
-          setBackendVersion(backendVer);
-          
-          // Check if frontend and backend versions match
-          if (deployedVersion !== backendVer) {
-            setVersionMismatch(true);
-            toast.warning("Version mismatch detected", {
-              description: `Frontend: ${deployedVersion}, Backend: ${backendVer}. Please refresh.`,
-              duration: 10000,
-            });
-          } else {
-            setVersionMismatch(false);
-          }
-        }
-      } catch (error) {
-        // Backend version check is optional
-        console.debug("Could not verify backend version:", error);
-      }
+      setVersionMismatch(false); // Hash-based detection eliminates mismatches
       
       if (hasUpdate) {
         toast.info("New version available!", {
-          description: `Version ${deployedVersion} is ready. Refresh to update.`,
+          description: `Build ${remoteHash} is ready. Refresh to update.`,
           duration: 10000,
         });
-      } else if (!versionMismatch) {
+      } else {
         toast.success("You're up to date!", {
           description: "You're using the latest version.",
         });
       }
     } catch (error) {
-      console.error("Failed to check for updates:", error);
+      console.error("[UpdateChecker] Failed to check for updates:", error);
       // Fallback: assume we're up to date if we can't check
       setLatestVersion(currentVersion);
       setLastChecked(new Date());
@@ -180,10 +143,10 @@ export default function VersionCheck() {
               <div className="flex-1">
                 <div className="font-medium text-red-500">Version Mismatch Detected</div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  Frontend: {latestVersion} | Backend: {backendVersion}
+                  Current: {currentVersion} | Remote: {latestVersion}
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
-                  The frontend and backend versions don't match. This may cause issues. Please refresh the page.
+                  A newer build is available. Please refresh the page to load the latest version.
                 </div>
                 <Button
                   onClick={handleRefresh}

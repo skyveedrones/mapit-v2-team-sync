@@ -2466,3 +2466,21 @@
 - [x] Sync update checker with new version in shared/version.ts
 - [x] Verify webmaster dashboard shows all 11 projects
 - [x] Dev server running with 0 TypeScript errors
+
+
+## Commit Hash-Based Update Checker
+- [ ] Create build script to generate version.json with commit hash
+- [ ] Inject VITE_BUILD_HASH environment variable into frontend
+- [ ] Update UpdateChecker component to compare commit hashes
+- [ ] Test hash-based version detection
+- [ ] Remove manual version number logic from version check
+- [ ] Deploy and verify automatic hash detection works
+
+
+## Commit Hash-Based Update Checker
+- [x] Create build script to generate version.json with commit hash
+- [x] Inject VITE_BUILD_HASH environment variable to frontend
+- [x] Update VersionCheck component to compare commit hashes
+- [x] Create vitest tests for hash-based detection (9 tests passing)
+- [x] Clean up manual version references and documentation
+- [ ] Deploy and verify hash detection works on live site
