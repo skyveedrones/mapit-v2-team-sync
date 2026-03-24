@@ -3841,6 +3841,17 @@ export const appRouter = router({
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
+        // WEBMASTER BYPASS: Allow webmaster to view all clients
+        if (ctx.user.role === 'webmaster') {
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+          const client = await db.select().from(clients).where(eq(clients.id, input.id)).then(rows => rows[0]);
+          if (!client) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Client not found' });
+          }
+          return client;
+        }
+        
         const client = await getOwnerClient(input.id, ctx.user.id);
         if (!client) {
           throw new TRPCError({
@@ -3991,6 +4002,11 @@ export const appRouter = router({
     getProjects: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
+        // WEBMASTER BYPASS: Allow webmaster to view all client projects
+        if (ctx.user.role === 'webmaster') {
+          return getClientProjects(input.clientId);
+        }
+        
         // Verify user has access to this client (owner or client user)
         const hasAccess = await userHasClientAccess(input.clientId, ctx.user.id);
         if (!hasAccess) {
