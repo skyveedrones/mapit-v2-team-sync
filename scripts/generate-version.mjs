@@ -54,6 +54,32 @@ try {
   console.log(`✓ Set VITE_BUILD_HASH=${commitHash}`);
 
 } catch (error) {
-  console.error('Error generating version.json:', error.message);
-  process.exit(1);
+  console.warn('⚠ Git not available in build environment, using fallback hash');
+  
+  // Fallback: generate a hash from timestamp and environment
+  const timestamp = new Date().toISOString();
+  const fallbackHash = 'build-' + Date.now().toString(36).slice(-8);
+  
+  const versionData = {
+    hash: fallbackHash,
+    fullHash: fallbackHash,
+    timestamp: timestamp,
+    buildTime: new Date().toLocaleString(),
+    isGitless: true
+  };
+  
+  const publicDir = path.join(process.cwd(), 'client', 'public');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+  
+  const versionFilePath = path.join(publicDir, 'version.json');
+  fs.writeFileSync(versionFilePath, JSON.stringify(versionData, null, 2));
+  
+  console.log(`✓ Generated version.json with fallback hash: ${fallbackHash}`);
+  console.log(`  Timestamp: ${timestamp}`);
+  console.log(`  Location: ${versionFilePath}`);
+  
+  process.env.VITE_BUILD_HASH = fallbackHash;
+  console.log(`✓ Set VITE_BUILD_HASH=${fallbackHash}`);
 }
