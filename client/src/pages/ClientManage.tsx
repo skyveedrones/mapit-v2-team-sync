@@ -104,15 +104,20 @@ This is an automated message from MapIt. Please do not reply to this email.`;
 export default function ClientManage() {
   const { clientId } = useParams<{ clientId: string }>();
   const [, setLocation] = useLocation();
+  const { user, loading: authLoading } = useAuth();
   
-  // Redirect organization IDs BEFORE any other hooks
+  // Redirect organization IDs using useEffect to avoid hook order violation
   // Organization 240001 (City of Forney) -> Client 4560004 (Forney TX Municipal)
+  useEffect(() => {
+    if (clientId === "240001") {
+      setLocation("/clients/4560004");
+    }
+  }, [clientId, setLocation]);
+  
+  // Return early if redirecting
   if (clientId === "240001") {
-    setLocation("/clients/4560004");
     return null;
   }
-  
-  const { user, loading: authLoading } = useAuth();
   
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
