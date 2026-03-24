@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name, ownerId FROM clients WHERE id = 4560004; SELECT id, name FROM organizations WHERE id = 240001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, ownerId FROM clients WHERE id = 4560004; SELECT id, name FROM organizations WHERE id = 240001;",
+  "rows": [
+    {
+      "id": "4560004",
+      "name": "Forney TX Municipal",
+      "ownerId": "240001"
+    }
+  ],
+  "messages": [
+    "id\tname",
+    "240001\tCity of Forney"
+  ],
+  "stdout": "id\tname\townerId\n4560004\tForney TX Municipal\t240001\nid\tname\n240001\tCity of Forney\n",
+  "stderr": "",
+  "execution_time_ms": 582
+}

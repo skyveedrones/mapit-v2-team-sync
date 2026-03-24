@@ -106,6 +106,13 @@ export default function ClientManage() {
   const [, setLocation] = useLocation();
   const { user, loading: authLoading } = useAuth();
   
+  // Redirect organization IDs to their correct client
+  // Organization 240001 (City of Forney) -> Client 4560004 (Forney TX Municipal)
+  if (clientId === "240001") {
+    setLocation("/clients/4560004");
+    return null;
+  }
+  
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);

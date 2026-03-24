@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, name, clientId, mediaCount FROM projects WHERE id IN (30001, 30002, 30003, 420001, 750001);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, clientId, mediaCount FROM projects WHERE id IN (30001, 30002, 30003, 420001, 750001);",
+  "rows": [
+    {
+      "id": "30001",
+      "name": "30001",
+      "clientId": "4560004",
+      "mediaCount": "32"
+    },
+    {
+      "id": "30002",
+      "name": "Gail Wilson",
+      "clientId": "4560004",
+      "mediaCount": "19"
+    },
+    {
+      "id": "30003",
+      "name": "30003",
+      "clientId": "4560004",
+      "mediaCount": "13"
+    },
+    {
+      "id": "420001",
+      "name": "420001",
+      "clientId": "4560004",
+      "mediaCount": "34"
+    },
+    {
+      "id": "750001",
+      "name": "750001",
+      "clientId": "4560004",
+      "mediaCount": "260"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tclientId\tmediaCount\n30001\t30001\t4560004\t32\n30002\tGail Wilson\t4560004\t19\n30003\t30003\t4560004\t13\n420001\t420001\t4560004\t34\n750001\t750001\t4560004\t260\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

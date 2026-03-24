@@ -2412,3 +2412,12 @@
 - [x] Media preview in sidebar
 - [x] Test all cockpit features (14 tests passing)
 - [x] Bundle for ZIP export
+
+
+## City of Forney Consolidation (COMPLETED)
+- [x] Migrate users 7920012 (cmcquiston) and 16140001 (eluna) to Organization 240001
+- [x] Set user orgRole to 'ORG_USER'
+- [x] Implement permanent redirect: /clients/240001 -> /clients/4560004
+- [x] Verify Admin Dashboard displays "City of Forney" with 5 projects and 359 pins
+- [x] Verify all projects correctly linked to client 4560004 (Forney TX Municipal)
+- [x] Verify all 359 media items remain intact after consolidation
