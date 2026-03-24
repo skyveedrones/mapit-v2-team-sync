@@ -827,6 +827,16 @@ export const appRouter = router({
             return { ...demoProject, logoUrl, overlays, accessRole: 'demo' as const, isDemoProject: true };
           }
         }
+        
+        // WEBMASTER GLOBAL ACCESS: Allow webmaster to view all projects
+        if (ctx.user.role === 'webmaster') {
+          const project = await getProjectById(input.id);
+          if (project) {
+            const overlays = await fetchOverlays(project.id);
+            return { ...project, logoUrl: project.logoUrl, overlays, accessRole: 'webmaster' as const };
+          }
+        }
+        
         // First check if user is owner
         const ownedProject = await getUserProject(input.id, ctx.user.id);
         if (ownedProject) {
