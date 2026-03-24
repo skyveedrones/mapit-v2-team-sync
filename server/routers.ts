@@ -1,6 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -753,7 +753,19 @@ export const appRouter = router({
       }),
     // List all projects for the current user
     list: protectedProcedure.query(async ({ ctx }) => {
-      // Get projects owned by the user and shared with them (collaborator)
+      // WEBMASTER GLOBAL VIEW: If user is webmaster, return all projects from all organizations
+      if (ctx.user.role === 'webmaster') {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        const allProjects = await db.select().from(projects).where(isNull(projects.deletedAt));
+        return allProjects.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      }
+      
+      // For non-webmaster users: Get projects owned by the user and shared with them (collaborator)
       const { owned: ownedProjects, shared: sharedProjects } = await getUserAccessibleProjects(ctx.user.id);
       
       // Get projects accessible through client memberships

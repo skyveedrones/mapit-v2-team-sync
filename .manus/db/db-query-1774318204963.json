@@ -1,0 +1,31 @@
+{
+  "query": "SELECT id, name, email, organizationId, orgRole FROM users WHERE organizationId = 240001 ORDER BY orgRole DESC, name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, email, organizationId, orgRole FROM users WHERE organizationId = 240001 ORDER BY orgRole DESC, name;",
+  "rows": [
+    {
+      "id": "7920012",
+      "name": "cmcquiston",
+      "email": "cmcquiston@forneytx.gov",
+      "organizationId": "240001",
+      "orgRole": "ORG_USER"
+    },
+    {
+      "id": "16140001",
+      "name": "eluna",
+      "email": "eluna@forneytx.gov",
+      "organizationId": "240001",
+      "orgRole": "ORG_USER"
+    },
+    {
+      "id": "20220001",
+      "name": "Tracey Bechtol",
+      "email": "tbechtol@forneytx.gov",
+      "organizationId": "240001",
+      "orgRole": "ORG_ADMIN"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\torganizationId\torgRole\n7920012\tcmcquiston\tcmcquiston@forneytx.gov\t240001\tORG_USER\n16140001\teluna\teluna@forneytx.gov\t240001\tORG_USER\n20220001\tTracey Bechtol\ttbechtol@forneytx.gov\t240001\tORG_ADMIN\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}
