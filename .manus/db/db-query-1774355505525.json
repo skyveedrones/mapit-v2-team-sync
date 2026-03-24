@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE projects SET name = 'Downtown District' WHERE id = 30001 AND clientId = 4560004;\nUPDATE projects SET name = 'Residential Area' WHERE id = 30003 AND clientId = 4560004;\nUPDATE projects SET name = 'Commercial Zone' WHERE id = 420001 AND clientId = 4560004;\nUPDATE projects SET name = 'Industrial Park' WHERE id = 750001 AND clientId = 4560004;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute UPDATE projects SET name = 'Downtown District' WHERE id = 30001 AND clientId = 4560004;\nUPDATE projects SET name = 'Residential Area' WHERE id = 30003 AND clientId = 4560004;\nUPDATE projects SET name = 'Commercial Zone' WHERE id = 420001 AND clientId = 4560004;\nUPDATE projects SET name = 'Industrial Park' WHERE id = 750001 AND clientId = 4560004;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 89
+}

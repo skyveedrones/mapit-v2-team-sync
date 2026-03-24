@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, name, clientName, description, location FROM projects WHERE clientId = 4560004 AND deletedAt IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, name, clientName, description, location FROM projects WHERE clientId = 4560004 AND deletedAt IS NULL;",
+  "rows": [
+    {
+      "id": "30001",
+      "name": "30001",
+      "clientName": "NULL",
+      "description": "NULL",
+      "location": "NULL"
+    },
+    {
+      "id": "30002",
+      "name": "Gail Wilson",
+      "clientName": "NULL",
+      "description": "NULL",
+      "location": "NULL"
+    },
+    {
+      "id": "30003",
+      "name": "30003",
+      "clientName": "NULL",
+      "description": "NULL",
+      "location": "NULL"
+    },
+    {
+      "id": "420001",
+      "name": "420001",
+      "clientName": "NULL",
+      "description": "NULL",
+      "location": "NULL"
+    },
+    {
+      "id": "750001",
+      "name": "750001",
+      "clientName": "NULL",
+      "description": "NULL",
+      "location": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tclientName\tdescription\tlocation\n30001\t30001\tNULL\tNULL\tNULL\n30002\tGail Wilson\tNULL\tNULL\tNULL\n30003\t30003\tNULL\tNULL\tNULL\n420001\t420001\tNULL\tNULL\tNULL\n750001\t750001\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 167
+}
