@@ -1,0 +1,31 @@
+{
+  "query": "SHOW TABLES LIKE '%project%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SHOW TABLES LIKE '%project%';",
+  "rows": [
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "client_project_assignments"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "project_collaborators"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "project_invitations"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "project_members"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "project_overlays"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "project_templates"
+    },
+    {
+      "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)": "projects"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_FiS5WF2NaftJTm6fu3BYQb (%project%)\nclient_project_assignments\nproject_collaborators\nproject_invitations\nproject_members\nproject_overlays\nproject_templates\nprojects\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

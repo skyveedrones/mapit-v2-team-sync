@@ -1,0 +1,18 @@
+{
+  "query": "SELECT u.id, u.name, u.email, u.organizationId, o.id as orgId, o.name as orgName FROM users u LEFT JOIN organizations o ON u.organizationId = o.id WHERE u.id = 20220001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT u.id, u.name, u.email, u.organizationId, o.id as orgId, o.name as orgName FROM users u LEFT JOIN organizations o ON u.organizationId = o.id WHERE u.id = 20220001;",
+  "rows": [
+    {
+      "id": "20220001",
+      "name": "Tracey Bechtol",
+      "email": "tbechtol@forneytx.gov",
+      "organizationId": "240001",
+      "orgId": "240001",
+      "orgName": "City of Forney"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\torganizationId\torgId\torgName\n20220001\tTracey Bechtol\ttbechtol@forneytx.gov\t240001\t240001\tCity of Forney\n",
+  "stderr": "",
+  "execution_time_ms": 113
+}
