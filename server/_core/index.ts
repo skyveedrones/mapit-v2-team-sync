@@ -35,7 +35,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
-async function startServer() {
+export async function startServer() {
   const app = express();
   const server = createServer(app);
 
@@ -160,7 +160,7 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback (registered AFTER Vite to avoid 404)
   registerOAuthRoutes(app);
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
+  const preferredPort = Number(process.env.PORT) || 8080;
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
