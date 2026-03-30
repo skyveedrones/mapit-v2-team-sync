@@ -35,7 +35,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
-export async function startServer() {
+async function startServer() {
   const app = express();
   const server = createServer(app);
 
@@ -67,6 +67,9 @@ export async function startServer() {
     }
     next(err);
   });
+  
+  // OAuth callback under /api/oauth/callback
+  registerOAuthRoutes(app);
   
   // Extract user from session cookie before rate limiting so tier is correct
   app.use('/api/trpc', async (req: Request, _res: Response, next: NextFunction) => {
@@ -156,11 +159,8 @@ export async function startServer() {
   } else {
     serveStatic(app);
   }
-  
-  // OAuth callback under /api/oauth/callback (registered AFTER Vite to avoid 404)
-  registerOAuthRoutes(app);
 
-  const preferredPort = Number(process.env.PORT) || 8080;
+  const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
