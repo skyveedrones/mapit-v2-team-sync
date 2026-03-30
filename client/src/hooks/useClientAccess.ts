@@ -50,8 +50,8 @@ export function useClientAccess(projectId?: number) {
   // Check if user is the owner
   const isOwner = project.userId === user.id;
 
-  // Check if user has platform admin role (users.role = 'admin')
-  const isPlatformAdmin = user.role === 'admin';
+  // Check if user has platform admin or webmaster role
+  const isPlatformAdmin = user.role === 'admin' || user.role === 'webmaster';
 
   // Check if user is a collaborator (would need to query collaborators)
   // For now, we'll assume if they're not the owner but have access, they're a client user
