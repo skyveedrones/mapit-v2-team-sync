@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Project } from "../../../drizzle/schema";
-import { Calendar, Loader2, MapPin, Plane, Shield, User } from "lucide-react";
+import { Calendar, ImagePlus, Loader2, MapPin, Plane, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ interface EditProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  onOpenLogoDialog?: () => void;
 }
 
 export function EditProjectDialog({
@@ -40,6 +41,7 @@ export function EditProjectDialog({
   open,
   onOpenChange,
   onSuccess,
+  onOpenLogoDialog,
 }: EditProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -309,6 +311,26 @@ export function EditProjectDialog({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Logo Section */}
+            <div className="border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <ImagePlus className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Project Logo</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Upload a logo to display in project reports and exports.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-border"
+                onClick={() => onOpenLogoDialog?.()}
+              >
+                <ImagePlus className="h-4 w-4 mr-2" />
+                {project?.logoUrl ? 'Change Logo' : 'Upload Logo'}
+              </Button>
             </div>
 
             {/* Warranty Section */}

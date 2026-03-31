@@ -2484,3 +2484,12 @@
 - [x] Create vitest tests for hash-based detection (9 tests passing)
 - [x] Clean up manual version references and documentation
 - [ ] Deploy and verify hash detection works on live site
+
+## Critical Bug Fixes (Session 2)
+
+- [x] Task 1: Fix admin user visibility - userid 20220001 cannot see users for clientid 330001
+- [x] Task 2a: Fix Upload Logo feature failure on Project page
+- [x] Task 2b: Move "Change Logo" button from Project Actions to Edit Project page
+- [x] Task 2c: Fix Export GPS Data not providing exported report
+- [x] Task 3: Fix Client Portal Login access - shows "No Client Access" error
+- [ ] Task 4: Add/verify Organization page link for organizations

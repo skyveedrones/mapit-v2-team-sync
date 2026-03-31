@@ -2288,6 +2288,21 @@ export const appRouter = router({
         }
 
         const media = await getProjectMedia(input.projectId, ctx.user.id);
+        if (!media || media.length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No media found for this project',
+          });
+        }
+        
+        const gpsMedia = media.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No media with GPS coordinates found in this project',
+          });
+        }
+        
         const kmlContent = generateKML(project.name, media);
         
         return {
@@ -2310,6 +2325,21 @@ export const appRouter = router({
         }
 
         const media = await getProjectMedia(input.projectId, ctx.user.id);
+        if (!media || media.length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No media found for this project',
+          });
+        }
+        
+        const gpsMedia = media.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No media with GPS coordinates found in this project',
+          });
+        }
+        
         const csvContent = generateCSV(media);
         
         return {
@@ -2332,6 +2362,21 @@ export const appRouter = router({
         }
 
         const media = await getProjectMedia(input.projectId, ctx.user.id);
+        if (!media || media.length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No media found for this project',
+          });
+        }
+        
+        const gpsMedia = media.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No media with GPS coordinates found in this project',
+          });
+        }
+        
         const geojsonContent = generateGeoJSON(project.name, media);
         
         return {
@@ -2354,6 +2399,21 @@ export const appRouter = router({
         }
 
         const media = await getProjectMedia(input.projectId, ctx.user.id);
+        if (!media || media.length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No media found for this project',
+          });
+        }
+        
+        const gpsMedia = media.filter(m => m.latitude && m.longitude);
+        if (gpsMedia.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No media with GPS coordinates found in this project',
+          });
+        }
+        
         const gpxContent = generateGPX(project.name, media);
         
         return {

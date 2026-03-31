@@ -433,10 +433,6 @@ export default function ProjectDetail() {
                             Share Project
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setLogoDialogOpen(true)}>
-                            <ImagePlus className="h-4 w-4 mr-2 text-pink-500" />
-                            {project.logoUrl ? 'Change Logo' : 'Upload Logo'}
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                             <Pencil className="h-4 w-4 mr-2" />
                             Edit Project
@@ -622,6 +618,7 @@ export default function ProjectDetail() {
         project={project}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
+        onOpenLogoDialog={() => setLogoDialogOpen(true)}
       />
 
       <DeleteProjectDialog

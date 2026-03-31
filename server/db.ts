@@ -1585,7 +1585,7 @@ export async function getOwnerClients(ownerId: number) {
     throw new Error("Database not available");
   }
 
-  // Check if the requesting user is a webmaster — they can see all clients
+  // Check if the requesting user is a webmaster or admin — they can see all clients
   const userResult = await db
     .select({ role: users.role })
     .from(users)
@@ -1593,12 +1593,13 @@ export async function getOwnerClients(ownerId: number) {
     .limit(1);
 
   const isWebmaster = userResult.length > 0 && userResult[0].role === 'webmaster';
+  const isAdmin = userResult.length > 0 && userResult[0].role === 'admin';
 
   return db
     .select()
     .from(clients)
     .where(
-      isWebmaster
+      isWebmaster || isAdmin
         ? isNull(clients.deletedAt)
         : and(eq(clients.ownerId, ownerId), isNull(clients.deletedAt))
     )
@@ -1633,7 +1634,7 @@ export async function getOwnerClient(clientId: number, ownerId: number) {
     throw new Error("Database not available");
   }
 
-  // Check if the requesting user is a webmaster — they can access any client
+  // Check if the requesting user is a webmaster or admin — they can access any client
   const userResult = await db
     .select({ role: users.role })
     .from(users)
@@ -1641,12 +1642,13 @@ export async function getOwnerClient(clientId: number, ownerId: number) {
     .limit(1);
 
   const isWebmaster = userResult.length > 0 && userResult[0].role === 'webmaster';
+  const isAdmin = userResult.length > 0 && userResult[0].role === 'admin';
 
   const result = await db
     .select()
     .from(clients)
     .where(
-      isWebmaster
+      isWebmaster || isAdmin
         ? and(eq(clients.id, clientId), isNull(clients.deletedAt))
         : and(eq(clients.id, clientId), eq(clients.ownerId, ownerId), isNull(clients.deletedAt))
     )
@@ -1855,7 +1857,7 @@ export async function getUserClientAccess(userId: number) {
     })
     .from(clientUsers)
     .innerJoin(clients, eq(clientUsers.clientId, clients.id))
-    .where(eq(clientUsers.userId, userId));
+    .where(and(eq(clientUsers.userId, userId), isNull(clients.deletedAt)));
 
   return result;
 }
