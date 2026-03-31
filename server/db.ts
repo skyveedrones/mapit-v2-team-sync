@@ -595,7 +595,16 @@ export async function getProjectWithAccess(projectId: number, userId: number) {
     throw new Error("Database not available");
   }
 
-   const project = await db
+  // Check if user is webmaster - they can access any project
+  const userResult = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  const isWebmaster = userResult.length > 0 && userResult[0].role === 'webmaster';
+
+  const project = await db
     .select()
     .from(projects)
     .where(and(eq(projects.id, projectId), isNull(projects.deletedAt)))
@@ -603,7 +612,13 @@ export async function getProjectWithAccess(projectId: number, userId: number) {
   if (project.length === 0) {
     return null;
   }
-  // Check if user is ownerr
+  
+  // Webmaster can access any project
+  if (isWebmaster) {
+    return { ...project[0], accessRole: 'owner' as const };
+  }
+  
+  // Check if user is owner
   if (project[0].userId === userId) {
     return { ...project[0], accessRole: 'owner' as const };
   }
