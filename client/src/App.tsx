@@ -267,6 +267,14 @@ function Router() {
         {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
       
+      {/* Organization management */}
+      <Route path="/organization/:id">
+        {(params) => {
+          const AdminOrganizationDetail = lazy(() => import('./pages/AdminOrganizationDetail'));
+          return <ProtectedRoute component={() => <AdminOrganizationDetail id={params.id} />} />;
+        }}
+      </Route>
+      
       {/* Client management */}
       <Route path="/clients">
         {() => <ProtectedRoute component={Clients} />}

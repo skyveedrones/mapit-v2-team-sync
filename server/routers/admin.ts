@@ -161,13 +161,81 @@ export const adminRouter = router({
   }),
 
   /**
-   * Get organization details with all users and projects
+   * List organizations - for webmasters and org admins
    */
-  getOrganizationDetails: webmasterOnly
-    .input(z.object({ organizationId: z.number() }))
-    .query(async ({ input }) => {
+  listOrganizations: protectedProcedure
+    .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      
+      // Webmasters can see all organizations
+      if (ctx.user.role === 'webmaster') {
+        const allOrgs = await db.select().from(organizations);
+        
+        const enrichedOrgs = await Promise.all(
+          allOrgs.map(async (org) => {
+            const userCount = await db.select().from(users).where(eq(users.organizationId, org.id));
+            const projectCount = await db.select().from(projects).where(eq(projects.organizationId, org.id));
+            
+            return {
+              id: org.id,
+              name: org.name,
+              type: org.type,
+              userCount: userCount.length,
+              projectCount: projectCount.length,
+              createdAt: org.createdAt,
+              updatedAt: org.updatedAt,
+            };
+          })
+        );
+        
+        return enrichedOrgs;
+      }
+      
+      // Org admins can only see their own organization
+      if (ctx.user.orgRole === 'ORG_ADMIN' && ctx.user.organizationId) {
+        const org = await db.select().from(organizations).where(eq(organizations.id, ctx.user.organizationId)).limit(1);
+        
+        if (org.length === 0) {
+          return [];
+        }
+        
+        const userCount = await db.select().from(users).where(eq(users.organizationId, org[0].id));
+        const projectCount = await db.select().from(projects).where(eq(projects.organizationId, org[0].id));
+        
+        return [{
+          id: org[0].id,
+          name: org[0].name,
+          type: org[0].type,
+          userCount: userCount.length,
+          projectCount: projectCount.length,
+          createdAt: org[0].createdAt,
+          updatedAt: org[0].updatedAt,
+        }];
+      }
+      
+      return [];
+    }),
+
+  /**
+   * Get organization details with all users and projects
+   */
+  getOrganizationDetails: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      
+      // Check access: webmaster or org admin for their own organization
+      const isWebmaster = ctx.user.role === 'webmaster';
+      const isOrgAdmin = ctx.user.orgRole === 'ORG_ADMIN' && ctx.user.organizationId === input.organizationId;
+      
+      if (!isWebmaster && !isOrgAdmin) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to access this organization',
+        });
+      }
       
       const org = await db.select().from(organizations).where(eq(organizations.id, input.organizationId)).limit(1);
       

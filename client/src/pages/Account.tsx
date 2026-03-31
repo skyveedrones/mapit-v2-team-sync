@@ -283,12 +283,22 @@ export default function Account() {
               View your account information, subscription details, and billing status.
             </p>
           </div>
-          <Link href="/pricing">
-            <Button variant="outline" className="gap-2">
-              <Crown className="h-4 w-4" />
-              {tier === "free" ? "Upgrade Plan" : "Change Plan"}
-            </Button>
-          </Link>
+          <div className="flex gap-2 flex-wrap">
+            {(user.role === 'webmaster' || user.orgRole === 'ORG_ADMIN') && (
+              <Link to="/organization/list">
+                <Button variant="outline" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Organization
+                </Button>
+              </Link>
+            )}
+            <Link to="/pricing">
+              <Button variant="outline" className="gap-2">
+                <Crown className="h-4 w-4" />
+                {tier === "free" ? "Upgrade Plan" : "Change Plan"}
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Plan Overview Card */}

@@ -10,8 +10,12 @@ export default function AdminOrganizationDetail({ id }: { id: string }) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Check if user is webmaster
-  if (user?.role !== 'webmaster') {
+  // Check if user is webmaster or org admin for their own organization
+  const orgId = parseInt(id);
+  const isWebmaster = user?.role === 'webmaster';
+  const isOrgAdmin = user?.orgRole === 'ORG_ADMIN' && user?.organizationId === orgId;
+  
+  if (!isWebmaster && !isOrgAdmin) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Card className="w-full max-w-md">
