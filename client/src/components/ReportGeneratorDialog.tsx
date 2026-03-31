@@ -273,7 +273,7 @@ export function ReportGeneratorDialog({
                       min={5}
                       max={20}
                       step={1}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                     />
                   </div>
                 )}
@@ -343,7 +343,7 @@ export function ReportGeneratorDialog({
                     </Button>
                   </div>
                   <div className="max-h-64 overflow-y-auto grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 p-3 border rounded-lg">
-                    {media.map((m, idx) => (
+                    {media.filter(m => m.mediaType === 'photo').map((m, idx) => (
                       <div key={m.id} className="flex flex-col items-center gap-2 relative">
                         <Checkbox
                           id={`media-${idx}`}

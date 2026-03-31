@@ -2493,3 +2493,8 @@
 - [x] Task 2c: Fix Export GPS Data not providing exported report
 - [x] Task 3: Fix Client Portal Login access - shows "No Client Access" error
 - [ ] Task 4: Add/verify Organization page link for organizations
+
+## Critical Bug Fixes (Session 3)
+
+- [x] Fix: Video MP4 thumbnails should not show in report media selection
+- [x] Fix: Map zoom slider does not work in Generate Report dialog
