@@ -2549,3 +2549,7 @@
 - [ ] Fix user dropdown menu missing "My Account" and "Settings" options
 - [ ] Fix version display showing "Unknown" instead of current version
 - [ ] Fix persistent "Refresh Now" button that doesn't disappear
+
+## SEO Fixes
+
+- [x] Fix homepage title - currently 5 characters, should be 30-60 characters

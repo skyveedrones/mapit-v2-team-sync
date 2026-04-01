@@ -112,6 +112,11 @@ export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
 
+  // Set page title for SEO
+  useEffect(() => {
+    document.title = "SkyVee MAPIT - Drone Mapping & Aerial Data Analysis";
+  }, []);
+
   return (
     <div className="min-h-screen text-foreground">
       {/* Enterprise Navigation */}
