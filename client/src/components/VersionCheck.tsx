@@ -6,7 +6,7 @@ import { APP_VERSION, getVersionString } from "@shared/version";
 import { AlertCircle, CheckCircle2, Info, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable, validateVersionWithBackend } from "@/lib/buildVersion";
+import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable, validateVersionWithBackend, getVersionInfo } from "@/lib/buildVersion";
 import { trpc } from "@/lib/trpc";
 
 interface VersionInfo {
@@ -27,8 +27,18 @@ export default function VersionCheck() {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [versionMismatch, setVersionMismatch] = useState(false);
   const [backendVersion, setBackendVersion] = useState<string | null>(null);
+  const [displayVersion, setDisplayVersion] = useState<string | null>(null);
 
   const currentVersion = getBuildHash();
+  
+  // Load version info on mount
+  useEffect(() => {
+    getVersionInfo().then(info => {
+      if (info) {
+        setDisplayVersion(`${info.version} (${info.commit})`);
+      }
+    });
+  }, []);
 
   const checkForUpdates = async () => {
     setIsChecking(true);
@@ -155,7 +165,7 @@ export default function VersionCheck() {
           <div>
             <div className="text-sm font-medium">Current Version</div>
             <div className="text-xs text-muted-foreground mt-1">
-              {getVersionString()}
+              {displayVersion || getVersionString()}
             </div>
           </div>
           {updateAvailable || versionMismatch ? (

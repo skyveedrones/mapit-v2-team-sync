@@ -216,6 +216,9 @@ const plugins = [
 ];
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_BUILD_HASH': JSON.stringify(process.env.VITE_BUILD_HASH || 'dev'),
+  },
   plugins,
   resolve: {
     alias: {

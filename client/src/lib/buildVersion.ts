@@ -64,6 +64,28 @@ export function getDisplayHash(): string {
 }
 
 /**
+ * Get version string from version.json or env
+ */
+export async function getVersionInfo(): Promise<{
+  version: string;
+  commit: string;
+} | null> {
+  try {
+    const response = await fetch('/version.json', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        version: data.version || 'unknown',
+        commit: data.commit || 'unknown'
+      };
+    }
+  } catch (error) {
+    console.warn('[buildVersion] Error fetching version info:', error);
+  }
+  return null;
+}
+
+/**
  * Validate client version with backend
  * Returns whether an update is needed
  */

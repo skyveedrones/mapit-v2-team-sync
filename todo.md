@@ -2536,3 +2536,10 @@
 - [x] Fix version validation cycling - message keeps appearing and page keeps refreshing
 - [x] Ensure version.json is properly updated after publish
 - [x] Prevent auto-refresh loop when version mismatch is detected
+
+## Critical Bugs (Session 7)
+
+- [x] Fix version display - shows v2.4.1 (ac54270) instead of updated version
+- [x] Fix Update Version button - goes back to Settings instantly instead of updating
+- [x] Fix "New Version Available" popup cycling continuously
+- [x] Fix Users page - not showing all users and missing client users for tbechtol@forneytx.gov

@@ -2611,6 +2611,10 @@ export async function getOwnerUsers(ownerId: number) {
     throw new Error("Database not available");
   }
 
+  // Get the owner's organization
+  const owner = await db.select({ organizationId: users.organizationId }).from(users).where(eq(users.id, ownerId));
+  const ownerOrgId = owner[0]?.organizationId;
+
   // Get all projects owned by this user
   const ownerProjects = await db
     .select({ id: projects.id })
@@ -2639,8 +2643,26 @@ export async function getOwnerUsers(ownerId: number) {
     .innerJoin(users, eq(projectCollaborators.userId, users.id))
     .where(inArray(projectCollaborators.projectId, projectIds));
 
+  // Get all users in the same organization (client users)
+  const orgUsers = ownerOrgId ? await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      companyName: users.companyName,
+      department: users.department,
+      phone: users.phone,
+    })
+    .from(users)
+    .where(and(
+      eq(users.organizationId, ownerOrgId)
+    )) : [];
+
   // Deduplicate users and count their projects
   const userMap = new Map<number, any>();
+  
+  // Add collaborators
   for (const collab of allCollaborators) {
     if (!userMap.has(collab.id)) {
       userMap.set(collab.id, {
@@ -2656,6 +2678,22 @@ export async function getOwnerUsers(ownerId: number) {
     }
     const user = userMap.get(collab.id)!;
     user.projectCount++;
+  }
+  
+  // Add organization users
+  for (const orgUser of orgUsers) {
+    if (!userMap.has(orgUser.id)) {
+      userMap.set(orgUser.id, {
+        id: orgUser.id,
+        name: orgUser.name,
+        email: orgUser.email,
+        role: orgUser.role,
+        companyName: orgUser.companyName,
+        department: orgUser.department,
+        phone: orgUser.phone,
+        projectCount: 0,
+      });
+    }
   }
 
   return Array.from(userMap.values());
