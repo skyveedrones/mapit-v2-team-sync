@@ -50,17 +50,6 @@ export default function VersionCheck() {
         setLatestVersion(backendValidation.currentCommit);
         setLastChecked(new Date());
         setUpdateAvailable(backendValidation.updateNeeded);
-        
-        if (backendValidation.updateNeeded) {
-          toast.warning("Update Required", {
-            description: backendValidation.message,
-            duration: 10000,
-          });
-        } else {
-          toast.success("You're up to date!", {
-            description: "You're using the latest version.",
-          });
-        }
       } else {
         // Fallback to local version.json check
         const remoteVersion = await fetchRemoteVersion();
@@ -75,17 +64,6 @@ export default function VersionCheck() {
         
         const hasUpdate = checkUpdateAvailable(remoteHash);
         setUpdateAvailable(hasUpdate);
-        
-        if (hasUpdate) {
-          toast.info("New version available!", {
-            description: `Build ${remoteHash} is ready. Refresh to update.`,
-            duration: 10000,
-          });
-        } else {
-          toast.success("You're up to date!", {
-            description: "You're using the latest version.",
-          });
-        }
       }
     } catch (error) {
       console.error("[UpdateChecker] Failed to check for updates:", error);
@@ -132,17 +110,17 @@ export default function VersionCheck() {
     }
   }, []); // Only run on mount
 
-  // Auto-refresh if update is available
-  useEffect(() => {
-    if (updateAvailable && !isChecking) {
-      // Auto-refresh after 3 seconds
-      const timer = setTimeout(() => {
-        console.log('[VersionCheck] Auto-refreshing to pull latest version');
-        handleRefresh();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [updateAvailable, isChecking]);
+  // Auto-refresh if update is available - DISABLED
+  // useEffect(() => {
+  //   if (updateAvailable && !isChecking) {
+  //     // Auto-refresh after 3 seconds
+  //     const timer = setTimeout(() => {
+  //       console.log('[VersionCheck] Auto-refreshing to pull latest version');
+  //       handleRefresh();
+  //     }, 3000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [updateAvailable, isChecking]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border/50">
