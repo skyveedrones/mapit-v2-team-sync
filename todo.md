@@ -2530,3 +2530,9 @@
 - [x] Update frontend to send client version to backend on check
 - [x] Implement forced update response when version mismatch detected
 - [x] Test version validation across different client versions
+
+## Version Update Cycling Bug (Session 6)
+
+- [x] Fix version validation cycling - message keeps appearing and page keeps refreshing
+- [x] Ensure version.json is properly updated after publish
+- [x] Prevent auto-refresh loop when version mismatch is detected
