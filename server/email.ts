@@ -3,6 +3,10 @@ import { Resend } from 'resend';
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+if (!process.env.RESEND_API_KEY) {
+  console.warn('[Email] RESEND_API_KEY not configured - emails will not be sent');
+}
+
 // Enterprise-friendly light theme colors (better for corporate email filters)
 const BRAND_COLORS = {
   primary: '#10b981', // Emerald green

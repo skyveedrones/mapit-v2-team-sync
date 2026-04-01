@@ -2509,3 +2509,12 @@
 ## Municipal Page Hero Cards Fix
 
 - [x] Fix hero cards on /municipal page to navigate to feature pages instead of email template
+
+## Email Sending Issues
+
+- [ ] Fix: Apply for Pilot Program email not sending
+- [ ] Fix: Request a Briefing email not sending
+- [ ] Fix: Support email not sending
+- [ ] Fix: Referral Program email not sending
+- [ ] Fix: Share Project email not sending
+- [ ] Fix: Invite User email not sending

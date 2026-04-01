@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface ContactModalProps {
   open: boolean;
@@ -41,7 +42,23 @@ export function ContactModal({ open, onOpenChange }: ContactModalProps) {
     projectType: "",
     message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const submitMutation = trpc.municipal.submitBriefingRequest.useMutation({
+    onSuccess: () => {
+      toast.success("Request Sent! The SkyVee team will contact you shortly.");
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        projectType: "",
+        message: "",
+      });
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to send request: " + error.message);
+    },
+  });
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -62,26 +79,15 @@ export function ContactModal({ open, onOpenChange }: ContactModalProps) {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // Simulate form submission (replace with actual API call if needed)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success("Request Sent! The SkyVee team will contact you shortly.");
-      setFormData({
-        name: "",
-        email: "",
-        company: "",
-        projectType: "",
-        message: "",
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast.error("Failed to send request. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    submitMutation.mutate({
+      name: formData.name,
+      email: formData.email,
+      city: formData.company || 'Not specified',
+      department: formData.projectType,
+      primaryInterest: formData.projectType,
+      message: formData.message,
+      title: 'Project Inquiry',
+    });
   };
 
   return (
@@ -167,8 +173,8 @@ export function ContactModal({ open, onOpenChange }: ContactModalProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Sending..." : "Send Request"}
+            <Button type="submit" disabled={submitMutation.isPending}>
+              {submitMutation.isPending ? "Sending..." : "Send Request"}
             </Button>
           </div>
         </form>
