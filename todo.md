@@ -2518,3 +2518,8 @@
 - [ ] Fix: Referral Program email not sending
 - [ ] Fix: Share Project email not sending
 - [ ] Fix: Invite User email not sending
+
+## Version Update Feature Bug (Session 4)
+
+- [x] Fix version update check to compare against published version (3ee3fb56) not cached version (ac54270)
+- [x] Implement automatic version pull when published version differs from current version

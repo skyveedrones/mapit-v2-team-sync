@@ -105,6 +105,18 @@ export default function VersionCheck() {
     }
   }, []); // Only run on mount
 
+  // Auto-refresh if update is available
+  useEffect(() => {
+    if (updateAvailable && !isChecking) {
+      // Auto-refresh after 3 seconds
+      const timer = setTimeout(() => {
+        console.log('[VersionCheck] Auto-refreshing to pull latest version');
+        handleRefresh();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [updateAvailable, isChecking]);
+
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border/50">
       <CardHeader>
