@@ -2505,3 +2505,7 @@
 - [x] Add Organization routes to App.tsx
 - [x] Create Organization list page
 - [x] Add navigation links to Organization pages
+
+## Municipal Page Hero Cards Fix
+
+- [x] Fix hero cards on /municipal page to navigate to feature pages instead of email template

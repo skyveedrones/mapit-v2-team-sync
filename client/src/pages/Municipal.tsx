@@ -49,6 +49,7 @@ const pillars = [
   {
     icon: Eye,
     title: "Sub-Surface Verification",
+    route: "/municipal",
     value:
       'Document "open trench" utility installations before they are buried. Create a permanent X-ray of city assets for future maintenance.',
     image: TRENCH_IMG,
@@ -56,6 +57,7 @@ const pillars = [
   {
     icon: Users,
     title: "Inter-Departmental Access",
+    route: "/municipal",
     value:
       "Shared situational awareness for Public Works, Engineering, Fire, and Planning. One map, zero data silos.",
     image: DIGITAL_TWIN_IMG,
@@ -63,6 +65,7 @@ const pillars = [
   {
     icon: Layers,
     title: "Engineering-Grade Overlays",
+    route: "/municipal",
     value:
       "Verify construction alignment against design plans with centimeter-level precision using our 2-point calibration engine.",
     image: GIS_IMG,
@@ -70,6 +73,7 @@ const pillars = [
   {
     icon: FileCheck,
     title: "Stakeholder Accountability",
+    route: "/municipal",
     value:
       "Generate visual progress reports for City Council, public meetings, and project stakeholders — proving that infrastructure investments are on-time and on-budget.",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp",
@@ -237,7 +241,7 @@ export default function Municipal() {
                   key={pillar.title}
                   variants={fadeInUp}
                   className="group relative bg-[#111b2e] border border-slate-700/50 rounded-2xl overflow-hidden hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer"
-                  onClick={() => setContactOpen(true)}
+                  onClick={() => setLocation(pillar.route)}
                 >
                   {/* Image strip with blueprint-swipe reveal on hover */}
                   <div className="h-52 overflow-hidden relative">
