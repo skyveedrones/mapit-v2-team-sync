@@ -6,7 +6,8 @@ import { APP_VERSION, getVersionString } from "@shared/version";
 import { AlertCircle, CheckCircle2, Info, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable } from "@/lib/buildVersion";
+import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable, validateVersionWithBackend } from "@/lib/buildVersion";
+import { trpc } from "@/lib/trpc";
 
 interface VersionInfo {
   hash: string;
@@ -32,39 +33,55 @@ export default function VersionCheck() {
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
-      // Fetch the remote version.json which contains the deployed commit hash
-      const remoteVersion = await fetchRemoteVersion();
+      // First, validate with backend to check for version mismatch
+      const backendValidation = await validateVersionWithBackend(trpc);
       
-      if (!remoteVersion) {
-        throw new Error('Failed to fetch version info');
-      }
-      
-      const remoteHash = remoteVersion.hash;
-      setLatestVersion(remoteHash);
-      setLastChecked(new Date());
-      
-      // Compare commit hashes - if they differ, an update is available
-      const hasUpdate = checkUpdateAvailable(remoteHash);
-      setUpdateAvailable(hasUpdate);
-      setVersionMismatch(false); // Hash-based detection eliminates mismatches
-      
-      if (hasUpdate) {
-        toast.info("New version available!", {
-          description: `Build ${remoteHash} is ready. Refresh to update.`,
-          duration: 10000,
-        });
+      if (backendValidation) {
+        setLatestVersion(backendValidation.currentCommit);
+        setLastChecked(new Date());
+        setUpdateAvailable(backendValidation.updateNeeded);
+        
+        if (backendValidation.updateNeeded) {
+          toast.warning("Update Required", {
+            description: backendValidation.message,
+            duration: 10000,
+          });
+        } else {
+          toast.success("You're up to date!", {
+            description: "You're using the latest version.",
+          });
+        }
       } else {
-        toast.success("You're up to date!", {
-          description: "You're using the latest version.",
-        });
+        // Fallback to local version.json check
+        const remoteVersion = await fetchRemoteVersion();
+        
+        if (!remoteVersion) {
+          throw new Error('Failed to fetch version info');
+        }
+        
+        const remoteHash = remoteVersion.hash;
+        setLatestVersion(remoteHash);
+        setLastChecked(new Date());
+        
+        const hasUpdate = checkUpdateAvailable(remoteHash);
+        setUpdateAvailable(hasUpdate);
+        
+        if (hasUpdate) {
+          toast.info("New version available!", {
+            description: `Build ${remoteHash} is ready. Refresh to update.`,
+            duration: 10000,
+          });
+        } else {
+          toast.success("You're up to date!", {
+            description: "You're using the latest version.",
+          });
+        }
       }
     } catch (error) {
       console.error("[UpdateChecker] Failed to check for updates:", error);
-      // Fallback: assume we're up to date if we can't check
       setLatestVersion(currentVersion);
       setLastChecked(new Date());
       setUpdateAvailable(false);
-      setVersionMismatch(false);
       
       toast.error("Failed to check for updates", {
         description: "Unable to connect to update server.",

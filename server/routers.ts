@@ -729,6 +729,41 @@ export const appRouter = router({
     }),
   }),
 
+    validate: publicProcedure
+      .input(z.object({
+        clientVersion: z.string(),
+        clientCommit: z.string(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { APP_VERSION } = await import("../shared/version");
+          const serverCommit = APP_VERSION.commit;
+          const clientCommit = input.clientCommit;
+          
+          // Compare commits - if they differ, update is needed
+          const updateNeeded = serverCommit !== clientCommit && serverCommit !== 'unknown';
+          
+          return {
+            updateNeeded,
+            currentVersion: APP_VERSION.version,
+            currentCommit: serverCommit,
+            clientVersion: input.clientVersion,
+            clientCommit: clientCommit,
+            message: updateNeeded ? 'A newer version is available. Please refresh to update.' : 'You are up to date.',
+          };
+        } catch (error) {
+          console.error("Failed to validate version:", error);
+          return {
+            updateNeeded: false,
+            currentVersion: "unknown",
+            currentCommit: "unknown",
+            clientVersion: input.clientVersion,
+            clientCommit: input.clientCommit,
+            message: "Unable to validate version.",
+          };
+        }
+      }),
+
   // Project management procedures
   project: router({
     // Get demo project without authentication

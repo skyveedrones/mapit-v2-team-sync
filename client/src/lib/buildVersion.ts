@@ -62,3 +62,28 @@ export function getDisplayHash(): string {
   const hash = getBuildHash();
   return hash === 'dev' ? 'development' : hash;
 }
+
+/**
+ * Validate client version with backend
+ * Returns whether an update is needed
+ */
+export async function validateVersionWithBackend(trpc: any): Promise<{
+  updateNeeded: boolean;
+  currentCommit: string;
+  message: string;
+} | null> {
+  try {
+    const clientCommit = getBuildHash();
+    const clientVersion = import.meta.env.VITE_APP_VERSION || 'unknown';
+    
+    const result = await trpc.version.validate.query({
+      clientVersion,
+      clientCommit,
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('[VersionCheck] Failed to validate version with backend:', error);
+    return null;
+  }
+}
