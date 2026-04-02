@@ -727,8 +727,6 @@ export const appRouter = router({
         };
       }
     }),
-  }),
-
     validate: publicProcedure
       .input(z.object({
         clientVersion: z.string(),
@@ -763,6 +761,7 @@ export const appRouter = router({
           };
         }
       }),
+  }),
 
   // Project management procedures
   project: router({

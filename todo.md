@@ -2544,11 +2544,11 @@
 - [x] Fix "New Version Available" popup cycling continuously
 - [x] Fix Users page - not showing all users and missing client users for tbechtol@forneytx.gov
 
-## Critical Bugs (Session 8)
-
-- [ ] Fix user dropdown menu missing "My Account" and "Settings" options
-- [ ] Fix version display showing "Unknown" instead of current version
-- [ ] Fix persistent "Refresh Now" button that doesn't disappear
+### Critical Bugs (Session 8)
+- [x] Fix user dropdown menu missing "My Account" and "Settings" options
+- [x] Fix version display showing "Unknown" instead of current version
+- [x] Fix persistent "Refresh Now" button that doesn't disappear
+- [x] Fix tRPC hook error in VersionCheck component - moved validate procedure inside version router
 
 ## SEO Fixes
 
