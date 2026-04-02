@@ -6,8 +6,7 @@ import { APP_VERSION, getVersionString } from "@shared/version";
 import { AlertCircle, CheckCircle2, Info, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable, validateVersionWithBackend, getVersionInfo } from "@/lib/buildVersion";
-import { trpc } from "@/lib/trpc";
+import { getBuildHash, fetchRemoteVersion, isUpdateAvailable as checkUpdateAvailable, getVersionInfo } from "@/lib/buildVersion";
 
 interface VersionInfo {
   hash: string;
@@ -43,28 +42,19 @@ export default function VersionCheck() {
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
-      // First, validate with backend to check for version mismatch
-      const backendValidation = await validateVersionWithBackend(trpc);
+      // Fallback to local version.json check (backend validation removed due to tRPC hook limitation)
+      const remoteVersion = await fetchRemoteVersion();
       
-      if (backendValidation) {
-        setLatestVersion(backendValidation.currentCommit);
-        setLastChecked(new Date());
-        setUpdateAvailable(backendValidation.updateNeeded);
-      } else {
-        // Fallback to local version.json check
-        const remoteVersion = await fetchRemoteVersion();
-        
-        if (!remoteVersion) {
-          throw new Error('Failed to fetch version info');
-        }
-        
-        const remoteHash = remoteVersion.hash;
-        setLatestVersion(remoteHash);
-        setLastChecked(new Date());
-        
-        const hasUpdate = checkUpdateAvailable(remoteHash);
-        setUpdateAvailable(hasUpdate);
+      if (!remoteVersion) {
+        throw new Error('Failed to fetch version info');
       }
+      
+      const remoteHash = remoteVersion.hash;
+      setLatestVersion(remoteHash);
+      setLastChecked(new Date());
+      
+      const hasUpdate = checkUpdateAvailable(remoteHash);
+      setUpdateAvailable(hasUpdate);
     } catch (error) {
       console.error("[UpdateChecker] Failed to check for updates:", error);
       setLatestVersion(currentVersion);

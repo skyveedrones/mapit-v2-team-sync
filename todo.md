@@ -2559,3 +2559,9 @@
 - [x] Fix GPS marker popup image matching - improved click handler to find closest feature when multiple markers exist at same location
 - [x] Created comprehensive unit tests for media gallery grid layout and GPS marker distance calculation (6 tests passing)
 - [x] Fix version check popup cycling every 5 seconds - disabled automatic version checking in main.tsx and useVersionCheck hook, now only available in Settings page
+
+## Critical Bugs (Session 10)
+- [ ] Hide "Explore a Sample Municipal Project" section from dashboard until better version is ready
+- [ ] Fix login issues on sandbox website - user cannot login to mapit.sk
+## Critical Bugs (Session 11)
+- [x] Fix VersionCheck tRPC hook error "hooks[lastArg] is not a function" on Settings page - removed backend validation call from utility function and simplified to use local version.json check

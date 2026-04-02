@@ -94,8 +94,8 @@ const cardVariants = {
 export function GettingStartedGuide() {
   return (
     <section className="mt-20 border-t border-white/5 pt-12 pb-20">
-      {/* Demo Project Banner — always first */}
-      <div className="mb-12 p-8 bg-gradient-to-br from-[#10b981]/20 to-slate-900 border border-[#10b981]/30 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* Demo Project Banner — HIDDEN until better version is ready */}
+      {/* <div className="mb-12 p-8 bg-gradient-to-br from-[#10b981]/20 to-slate-900 border border-[#10b981]/30 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="text-left">
           <div className="flex items-center gap-2 mb-2">
             <span className="flex h-2 w-2 rounded-full bg-[#10b981] animate-ping" />
@@ -113,7 +113,7 @@ export function GettingStartedGuide() {
         >
           Launch Demo Project
         </a>
-      </div>
+      </div> */}
 
       {/* Header — below Demo box */}
       <div className="mt-16 flex items-center gap-3 mb-2">
