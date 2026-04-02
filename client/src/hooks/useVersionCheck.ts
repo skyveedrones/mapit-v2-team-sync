@@ -111,11 +111,11 @@ export function useVersionCheck() {
       }
     };
 
-    // Check immediately on mount
-    checkVersion();
+    // DISABLED: Check immediately on mount - was causing cycling popups
+    // checkVersion();
 
-    // Then check every 30 seconds
-    intervalRef.current = setInterval(checkVersion, 30000);
+    // DISABLED: Then check every 30 seconds - was causing cycling popups
+    // intervalRef.current = setInterval(checkVersion, 30000);
 
     // Cleanup interval on unmount
     return () => {

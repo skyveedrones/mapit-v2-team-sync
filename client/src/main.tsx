@@ -76,10 +76,11 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-// Initialize version checking on app load
-// This ensures the app always uses the latest deployed version
-initializeVersionCheck();
-startPeriodicVersionCheck();
+// DISABLED: Initialize version checking on app load
+// This was causing cycling popups every 5 seconds
+// Version checking is now only available in Settings page
+// initializeVersionCheck();
+// startPeriodicVersionCheck();
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
