@@ -479,7 +479,25 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const features = map.queryRenderedFeatures({ layers: ['media-pins'] });
         if (!features || features.length === 0) return;
 
-        const feature = features[0];
+        // If multiple features exist, find the one closest to the click point
+        let feature = features[0];
+        if (features.length > 1) {
+          const clickLngLat = e.lngLat;
+          let minDistance = Infinity;
+          
+          for (const f of features) {
+            const coords = (f.geometry as any).coordinates as [number, number];
+            const dx = coords[0] - clickLngLat.lng;
+            const dy = coords[1] - clickLngLat.lat;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < minDistance) {
+              minDistance = distance;
+              feature = f;
+            }
+          }
+        }
+        
         const props = feature.properties as any;
 
         setSelectedMedia({

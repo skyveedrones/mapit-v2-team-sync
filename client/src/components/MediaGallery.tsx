@@ -305,7 +305,7 @@ const VirtualMediaGrid = memo(function VirtualMediaGrid({
   }, [items, colCount]);
 
   return (
-    <VList style={{ height: "70vh" }}>
+    <VList style={{ height: "calc(100vh - 300px)", maxHeight: "80vh" }}>
       {rows.map((row, rowIdx) => (
         <div key={rowIdx} className="flex gap-4 mb-4">
           {row.map((item) => (
