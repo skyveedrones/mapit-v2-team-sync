@@ -419,11 +419,7 @@ export default function ProjectDetail() {
                         <Download className="h-4 w-4 mr-2 text-purple-500" />
                         Export GPS Data {isDemoProject && '(Demo)'}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleOverlayClick}>
-                        <Layers className="h-4 w-4 mr-2 text-orange-500" />
-                        Project Map Overlay
-                      </DropdownMenuItem>
-                      {/* file input is rendered at the bottom of the page, outside the dropdown */}
+                      {/* Project Map Overlay moved to Overlay Manager sidebar */}
                       {/* Owner-only actions */}
                       {isOwner && !isDemoProject && (
                         <>
@@ -518,6 +514,7 @@ export default function ProjectDetail() {
                       normalProjectQuery.refetch();
                     }
                   }}
+                  onOverlayButtonClick={handleOverlayClick}
                 />
               </LazyMapWrapper>
             </motion.div>

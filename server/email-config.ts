@@ -232,7 +232,7 @@ export function generateEmailTemplate(content: EmailTemplateConfig): string {
   <div class="container">
     <div class="card">
       <div class="header">
-        <h1>MAPIT</h1>
+        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/BlackFontLogo_a0b398e8.webp" alt="MAPIT" style="max-width: 250px; height: auto; display: block; margin: 0 auto;">
       </div>
       <div class="content">
         <div class="body-text">${body}</div>
