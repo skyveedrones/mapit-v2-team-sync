@@ -52,7 +52,7 @@ export function ContactSalesModal({ open, onOpenChange }: ContactSalesModalProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim() || !formData.company.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.company.trim() || !formData.phone.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -63,7 +63,7 @@ export function ContactSalesModal({ open, onOpenChange }: ContactSalesModalProps
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         company: formData.company.trim(),
-        phone: formData.phone.trim() || undefined,
+        phone: formData.phone.trim(),
         message: formData.message.trim() || undefined,
       });
     } finally {

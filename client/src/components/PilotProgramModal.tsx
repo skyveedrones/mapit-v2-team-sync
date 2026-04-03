@@ -35,6 +35,7 @@ export function PilotProgramModal({ open, onOpenChange }: PilotProgramModalProps
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     city: "",
     department: "",
     primaryInterest: "",
@@ -52,6 +53,7 @@ export function PilotProgramModal({ open, onOpenChange }: PilotProgramModalProps
       setFormData({
         name: "",
         email: "",
+        phone: "",
         city: "",
         department: "",
         primaryInterest: "",
@@ -72,6 +74,7 @@ export function PilotProgramModal({ open, onOpenChange }: PilotProgramModalProps
     if (
       !formData.name.trim() ||
       !formData.email.trim() ||
+      !formData.phone.trim() ||
       !formData.city.trim() ||
       !formData.department.trim() ||
       !formData.primaryInterest.trim()
@@ -85,6 +88,7 @@ export function PilotProgramModal({ open, onOpenChange }: PilotProgramModalProps
       await submitMutation.mutateAsync({
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
         city: formData.city.trim(),
         department: formData.department.trim(),
         primaryInterest: formData.primaryInterest.trim(),
@@ -132,6 +136,21 @@ export function PilotProgramModal({ open, onOpenChange }: PilotProgramModalProps
               placeholder="your@municipality.gov"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-2">
+            <Label htmlFor="pilot-phone">
+              Phone Number <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="pilot-phone"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
             />
           </div>

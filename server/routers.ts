@@ -4828,7 +4828,7 @@ export const appRouter = router({
           name: z.string().min(1),
           email: z.string().email(),
           company: z.string().min(1),
-          phone: z.string().optional(),
+          phone: z.string().min(1),
           message: z.string().optional(),
         })
       )
@@ -4960,6 +4960,7 @@ export const appRouter = router({
         z.object({
           name: z.string().min(1),
           email: z.string().email(),
+          phone: z.string().min(1),
           city: z.string().min(1),
           department: z.string().min(1),
           primaryInterest: z.string().min(1),
@@ -4975,6 +4976,8 @@ export const appRouter = router({
         const adminTitle = `[PILOT APPLICATION] New Application from ${input.city}`;
         const adminContent = [
           `Name: ${input.name}`,
+          `Email: ${input.email}`,
+          `Phone: ${input.phone}`,
           `Title: ${input.department}`,
           `City/Municipality: ${input.city}`,
           `Primary Interest: ${input.primaryInterest}`,
@@ -5011,6 +5014,8 @@ export const appRouter = router({
             <td style="padding:30px;color:#e2e8f0;">
               <table style="width:100%;border-collapse:collapse;">
                 <tr><td style="padding:8px 0;color:#94a3b8;width:140px;">Name</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.name}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Email</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.email}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Phone</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.phone}</td></tr>
                 <tr><td style="padding:8px 0;color:#94a3b8;">Title</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.department}</td></tr>
                 <tr><td style="padding:8px 0;color:#94a3b8;">City</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.city}</td></tr>
                 <tr><td style="padding:8px 0;color:#94a3b8;">Interest</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.primaryInterest}</td></tr>

@@ -2570,3 +2570,9 @@
 ## Critical Bugs (Session 12)
 - [ ] Fix email sending backend for Contact Sales, Request Briefing, and Pilot Program forms
 - [ ] Reorganize Share Project dialog: move Invitation Method below Access Level, add required field indicators (*), update instructions text
+
+
+## Session 14 Tasks
+- [ ] Task 1: Add phone field to contact forms and email templates
+- [ ] Task 2: Reorganize media into Media Files and Document Files folders with path updates
+- [ ] Task 3: Add image numbering to Mapbox GPS markers to match thumbnail order
