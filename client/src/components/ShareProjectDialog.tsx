@@ -237,26 +237,19 @@ export function ShareProjectDialog({
           </TabsList>
 
           <TabsContent value="invite" className="space-y-4 mt-4">
+            {/* Instructions */}
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-2">
+              <p className="text-sm text-blue-300">
+                Select an <strong>Access Level</strong> to determine what your team member can do on this project.
+              </p>
+            </div>
+
             <form onSubmit={handleInvite} className="space-y-4">
-              <div className="space-y-3">
-                <Label>Invitation Method</Label>
-                <RadioGroup value={inviteMethod} onValueChange={(v) => setInviteMethod(v as "email" | "copy")}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="email" id="share-method-email" />
-                    <Label htmlFor="share-method-email" className="font-normal cursor-pointer">
-                      Send via MapIt Email - Automated email delivery
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="copy" id="share-method-copy" />
-                    <Label htmlFor="share-method-copy" className="font-normal cursor-pointer">
-                      Copy Link Only - I'll send manually
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+              {/* Email Address */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">
+                  Email Address <span className="text-red-500 font-bold">*</span>
+                </Label>
                 <div className="flex gap-2">
                   <Input
                     id="email"
@@ -265,12 +258,16 @@ export function ShareProjectDialog({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="flex-1"
+                    required
                   />
                 </div>
               </div>
 
+              {/* Access Level */}
               <div className="space-y-2">
-                <Label htmlFor="role">Access Level</Label>
+                <Label htmlFor="role">
+                  Access Level <span className="text-red-500 font-bold">*</span>
+                </Label>
                 <Select value={role} onValueChange={(v) => setRole(v as "viewer" | "editor")}>
                   <SelectTrigger id="role">
                     <SelectValue />
@@ -296,6 +293,27 @@ export function ShareProjectDialog({
                 </Select>
               </div>
 
+              {/* Invitation Method */}
+              <div className="space-y-3 border-t pt-4">
+                <Label>
+                  Invitation Method <span className="text-red-500 font-bold">*</span>
+                </Label>
+                <RadioGroup value={inviteMethod} onValueChange={(v) => setInviteMethod(v as "email" | "copy")}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="email" id="share-method-email" />
+                    <Label htmlFor="share-method-email" className="font-normal cursor-pointer">
+                      Send via MapIt Email - Automated email delivery
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="copy" id="share-method-copy" />
+                    <Label htmlFor="share-method-copy" className="font-normal cursor-pointer">
+                      Copy Link Only - I'll send manually
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -309,7 +327,7 @@ export function ShareProjectDialog({
                 ) : inviteMethod === "copy" ? (
                   <>
                     <Copy className="h-4 w-4 mr-2" />
-                    Generate Invitation Link
+                    Generate & Copy Link
                   </>
                 ) : (
                   <>
@@ -320,34 +338,21 @@ export function ShareProjectDialog({
               </Button>
             </form>
 
-            <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-              <p className="font-medium mb-1">How invitations work:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Invited users will receive an email with a link</li>
-                <li>They must create an account or sign in to accept</li>
-                <li>Invitations expire after 7 days</li>
-              </ul>
-            </div>
-
-            {/* Copy Invitation Link & Template - Only show when copy method was used */}
-            {lastInviteResult && inviteMethod === "copy" && (
+            {/* Copy Section */}
+            {lastInviteResult && (
               <div className="space-y-3 border-t pt-4">
-                <p className="text-sm font-medium">Copy Invitation Link & Template</p>
-                <p className="text-xs text-muted-foreground">
-                  Use this when email servers block automated emails. Copy the link and email template to send manually.
-                </p>
-                
                 <div className="space-y-2">
-                  <Label className="text-xs">Invitation Link</Label>
+                  <Label>Invitation Link</Label>
                   <div className="flex gap-2">
                     <Input
-                      value={lastInviteResult.inviteUrl}
                       readOnly
-                      className="font-mono text-xs"
+                      value={lastInviteResult.inviteUrl}
+                      className="flex-1 font-mono text-xs"
                     />
                     <Button
+                      type="button"
+                      size="sm"
                       variant="outline"
-                      size="icon"
                       onClick={() => {
                         navigator.clipboard.writeText(lastInviteResult.inviteUrl);
                         toast.success("Link copied to clipboard");
@@ -357,20 +362,23 @@ export function ShareProjectDialog({
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label className="text-xs">Email Template</Label>
+                  <Label>Email Template</Label>
                   <Textarea
-                    value={generateProjectInviteEmailTemplate(lastInviteResult)}
                     readOnly
-                    className="font-mono text-xs min-h-[200px]"
+                    value={generateProjectInviteEmailTemplate(lastInviteResult)}
+                    className="font-mono text-xs h-48"
                   />
                   <Button
-                    variant="outline"
+                    type="button"
                     size="sm"
+                    variant="outline"
                     className="w-full"
                     onClick={() => {
-                      navigator.clipboard.writeText(generateProjectInviteEmailTemplate(lastInviteResult));
+                      navigator.clipboard.writeText(
+                        generateProjectInviteEmailTemplate(lastInviteResult)
+                      );
                       toast.success("Email template copied to clipboard");
                     }}
                   >
@@ -380,139 +388,92 @@ export function ShareProjectDialog({
                 </div>
               </div>
             )}
+
+            {/* Info Box */}
+            <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-sm text-slate-400 space-y-2">
+              <p className="font-semibold text-slate-300">How invitations work:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Invited users will receive an email with a link</li>
+                <li>They must create an account or sign in to accept</li>
+                <li>Invitations expire after 7 days</li>
+              </ul>
+            </div>
           </TabsContent>
 
-          <TabsContent value="members" className="mt-4">
-            <div className="space-y-4">
-              {/* Current Collaborators */}
-              {loadingCollaborators ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : collaborators && collaborators.length > 0 ? (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    Active Collaborators
-                  </h4>
-                  {collaborators.map((collab) => (
-                    <div
-                      key={collab.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
-                            {(collab.userName || collab.userEmail || "U")[0].toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {collab.userName || collab.userEmail}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {collab.role === "editor" ? "Editor" : "Viewer"}
-                          </p>
-                        </div>
+          {/* Members Tab */}
+          <TabsContent value="members" className="space-y-4 mt-4">
+            {/* Pending Invitations */}
+            {pendingInvitations.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Pending Invitations</h3>
+                {pendingInvitations.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-700"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Clock className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{inv.email}</p>
+                        <p className="text-xs text-slate-400">
+                          {inv.role} • Expires {format(new Date(inv.expiresAt), "MMM d")}
+                        </p>
                       </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-2 flex-shrink-0"
+                      onClick={() => handleRevokeInvitation(inv.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Active Collaborators */}
+            {collaborators && collaborators.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Active Collaborators</h3>
+                {collaborators.map((collab) => (
+                  <div
+                    key={collab.id}
+                    className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-700"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{collab.userEmail || 'Unknown'}</p>
+                        <p className="text-xs text-slate-400">
+                          {collab.role} • Joined {format(new Date(collab.createdAt), "MMM d")}
+                        </p>
+                      </div>
+                    </div>
+                    {user?.id !== collab.id && (
                       <Button
-                        variant="ghost"
                         size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleRemoveCollaborator(collab.userId)}
-                        disabled={removeCollaboratorMutation.isPending}
+                        variant="ghost"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-2 flex-shrink-0"
+                        onClick={() => handleRemoveCollaborator(collab.id)}
                       >
                         <UserMinus className="h-4 w-4" />
                       </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {/* Pending Invitations */}
-              {loadingInvitations ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : pendingInvitations.length > 0 ? (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    Pending Invitations
-                  </h4>
-                  {pendingInvitations.map((inv) => (
-                    <div
-                      key={inv.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-dashed bg-card/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                          <Clock className="h-4 w-4 text-yellow-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{inv.email}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {inv.role === "editor" ? "Editor" : "Viewer"} • Expires{" "}
-                            {format(new Date(inv.expiresAt), "MMM d, yyyy")}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleRevokeInvitation(inv.id)}
-                        disabled={revokeMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {/* Empty State */}
-              {!loadingCollaborators &&
-                !loadingInvitations &&
-                (!collaborators || collaborators.length === 0) &&
-                pendingInvitations.length === 0 && (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      No collaborators yet. Send an invitation to get started.
-                    </p>
+                    )}
                   </div>
-                )}
+                ))}
+              </div>
+            )}
 
-              {/* Past Invitations (collapsed by default) */}
-              {pastInvitations.length > 0 && (
-                <details className="mt-4">
-                  <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                    Past invitations ({pastInvitations.length})
-                  </summary>
-                  <div className="mt-2 space-y-2">
-                    {pastInvitations.map((inv) => (
-                      <div
-                        key={inv.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          {inv.status === "accepted" ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : inv.status === "expired" ? (
-                            <Clock className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <X className="h-4 w-4 text-red-500" />
-                          )}
-                          <span className="text-muted-foreground">{inv.email}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {inv.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </div>
+            {/* Empty State */}
+            {(!collaborators || collaborators.length === 0) && pendingInvitations.length === 0 && (
+              <div className="text-center py-8">
+                <Users className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No collaborators yet</p>
+                <p className="text-xs text-slate-500">Invite team members from the Invite tab</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>

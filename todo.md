@@ -2565,3 +2565,8 @@
 - [ ] Fix login issues on sandbox website - user cannot login to mapit.sk
 ## Critical Bugs (Session 11)
 - [x] Fix VersionCheck tRPC hook error "hooks[lastArg] is not a function" on Settings page - removed backend validation call from utility function and simplified to use local version.json check
+
+
+## Critical Bugs (Session 12)
+- [ ] Fix email sending backend for Contact Sales, Request Briefing, and Pilot Program forms
+- [ ] Reorganize Share Project dialog: move Invitation Method below Access Level, add required field indicators (*), update instructions text

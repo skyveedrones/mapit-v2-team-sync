@@ -4822,6 +4822,277 @@ export const appRouter = router({
 
   // ─── Municipal Lead Capture ───
   municipal: router({
+    submitContactSales: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          email: z.string().email(),
+          company: z.string().min(1),
+          phone: z.string().optional(),
+          message: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { notifyOwner } = await import('./_core/notification');
+        const { sendEmail } = await import('./_core/email');
+
+        // 1. Notify Clay (admin) via in-app notification
+        const adminTitle = `[SALES INQUIRY] New Contact from ${input.company}`;
+        const adminContent = [
+          `Name: ${input.name}`,
+          `Email: ${input.email}`,
+          `Company: ${input.company}`,
+          input.phone ? `Phone: ${input.phone}` : null,
+          input.message ? `Message: ${input.message}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        // Send in-app notification
+        try {
+          await notifyOwner({ title: adminTitle, content: adminContent });
+        } catch (e) {
+          console.warn('[Sales] notifyOwner failed:', e);
+        }
+
+        // 2. Send admin email notification to Clay
+        const adminEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#0b1120;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#111b2e;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#10b981 0%,#059669 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:24px;">New Sales Inquiry</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:14px;">from ${input.company}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px;color:#e2e8f0;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#94a3b8;width:140px;">Name</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.name}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Email</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.email}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Company</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.company}</td></tr>
+                ${input.phone ? `<tr><td style="padding:8px 0;color:#94a3b8;">Phone</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.phone}</td></tr>` : ''}
+                ${input.message ? `<tr><td style="padding:8px 0;color:#94a3b8;vertical-align:top;">Message</td><td style="padding:8px 0;color:#f1f5f9;">${input.message}</td></tr>` : ''}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#0b1120;text-align:center;border-top:1px solid #1e3a5f;">
+              <p style="margin:0;font-size:12px;color:#64748b;">MAPIT Sales Inquiry</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        // Send admin email (Clay gets notified)
+        try {
+          await sendEmail({
+            to: 'clay@skyveedrones.com',
+            subject: adminTitle,
+            html: adminEmailHtml,
+          });
+        } catch (e) {
+          console.warn('[Sales] Admin email failed:', e);
+        }
+
+        // 3. Auto-responder to the lead
+        const autoResponderHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#f8fafc;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#10b981 0%,#059669 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:28px;font-weight:700;letter-spacing:2px;">MAP<span style="color:#ecfdf5;">i</span>T</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Enterprise Solutions</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:35px 30px;color:#334155;">
+              <h2 style="margin:0 0 16px;color:#10b981;font-size:22px;">Thank You, ${input.name}</h2>
+              <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">Thank you for your interest in MAPIT. Our sales team has received your inquiry and will contact you within 24 hours to discuss how we can help <strong style="color:#1e293b;">${input.company}</strong> achieve your goals.</p>
+              <p style="margin:0;line-height:1.7;font-size:14px;color:#64748b;">If you have immediate questions, reply directly to this email.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#f1f5f9;text-align:center;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">MAPIT by SkyVee Drones &mdash; Infrastructure Intelligence</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        try {
+          await sendEmail({
+            to: input.email,
+            subject: `Thank You for Your Interest in MAPIT`,
+            html: autoResponderHtml,
+          });
+        } catch (e) {
+          console.warn('[Sales] Auto-responder email failed:', e);
+        }
+
+        console.log(`[Sales] Inquiry received: ${input.name} from ${input.company}`);
+
+        return { success: true };
+      }),
+
+    submitPilotApplication: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          email: z.string().email(),
+          city: z.string().min(1),
+          department: z.string().min(1),
+          primaryInterest: z.string().min(1),
+          timeline: z.string().optional(),
+          message: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { notifyOwner } = await import('./_core/notification');
+        const { sendEmail } = await import('./_core/email');
+
+        // 1. Notify Clay (admin) via in-app notification
+        const adminTitle = `[PILOT APPLICATION] New Application from ${input.city}`;
+        const adminContent = [
+          `Name: ${input.name}`,
+          `Title: ${input.department}`,
+          `City/Municipality: ${input.city}`,
+          `Primary Interest: ${input.primaryInterest}`,
+          input.timeline ? `Timeline: ${input.timeline}` : null,
+          input.message ? `Message: ${input.message}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        // Send in-app notification
+        try {
+          await notifyOwner({ title: adminTitle, content: adminContent });
+        } catch (e) {
+          console.warn('[Pilot] notifyOwner failed:', e);
+        }
+
+        // 2. Send admin email notification to Clay
+        const adminEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#0b1120;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#111b2e;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:24px;">New Pilot Application</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:14px;">from ${input.city}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px;color:#e2e8f0;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#94a3b8;width:140px;">Name</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.name}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Title</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.department}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">City</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.city}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Interest</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.primaryInterest}</td></tr>
+                ${input.timeline ? `<tr><td style="padding:8px 0;color:#94a3b8;">Timeline</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${input.timeline}</td></tr>` : ''}
+                ${input.message ? `<tr><td style="padding:8px 0;color:#94a3b8;vertical-align:top;">Message</td><td style="padding:8px 0;color:#f1f5f9;">${input.message}</td></tr>` : ''}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#0b1120;text-align:center;border-top:1px solid #1e3a5f;">
+              <p style="margin:0;font-size:12px;color:#64748b;">MAPIT Pilot Program Application</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        // Send admin email (Clay gets notified)
+        try {
+          await sendEmail({
+            to: 'clay@skyveedrones.com',
+            subject: adminTitle,
+            html: adminEmailHtml,
+          });
+        } catch (e) {
+          console.warn('[Pilot] Admin email failed:', e);
+        }
+
+        // 3. Auto-responder to the applicant
+        const autoResponderHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background-color:#f8fafc;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:28px;font-weight:700;letter-spacing:2px;">MAP<span style="color:#bfdbfe;">i</span>T</h1>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Municipal Pilot Program</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:35px 30px;color:#334155;">
+              <h2 style="margin:0 0 16px;color:#2563eb;font-size:22px;">Application Received, ${input.name}</h2>
+              <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">Thank you for applying to the MAPIT Municipal Pilot Program for <strong style="color:#1e293b;">${input.city}</strong>. We're excited about the potential to transform your infrastructure oversight.</p>
+              <p style="margin:0 0 16px;line-height:1.7;font-size:15px;color:#475569;">Our team will review your application and contact you within 48 hours to schedule a discovery call and discuss program details.</p>
+              <p style="margin:0;line-height:1.7;font-size:14px;color:#64748b;">If you have immediate questions, reply directly to this email.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 30px;background-color:#f1f5f9;text-align:center;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">MAPIT by SkyVee Drones &mdash; Infrastructure Intelligence</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        try {
+          await sendEmail({
+            to: input.email,
+            subject: `MAPIT Pilot Program Application Received — ${input.city}`,
+            html: autoResponderHtml,
+          });
+        } catch (e) {
+          console.warn('[Pilot] Auto-responder email failed:', e);
+        }
+
+        console.log(`[Pilot] Application received: ${input.name} from ${input.city}`);
+
+        return { success: true };
+      }),
+
     submitBriefingRequest: publicProcedure
       .input(
         z.object({
