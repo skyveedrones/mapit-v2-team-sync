@@ -9,6 +9,19 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+// Suppress ResizeObserver errors from VList virtualization library
+// These are harmless notifications that occur after component unmount
+const originalError = console.error;
+console.error = (...args: any[]) => {
+  if (
+    args[0] instanceof Error &&
+    args[0].message === "ResizeObserver loop completed with undelivered notifications."
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
 const queryClient = new QueryClient();
 
 // Check if current path is a demo route that doesn't require authentication

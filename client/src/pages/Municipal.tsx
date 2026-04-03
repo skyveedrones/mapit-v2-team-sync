@@ -270,9 +270,7 @@ export default function Municipal() {
                           <line x1="50" y1="40" x2="140" y2="70" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
                         </svg>
                       </div>
-                      <div className="absolute top-3 right-3 bg-blue-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
-                        Click to Request Briefing
-                      </div>
+
                     </div>
                     <div className="absolute inset-0 h-52 bg-gradient-to-t from-[#111b2e] via-transparent to-transparent" />
                   </div>
