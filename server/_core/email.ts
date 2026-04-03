@@ -28,7 +28,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Mapit <onboarding@updates.manus.space>',
+        from: 'Mapit <noreply@skyveedrones.com>',
         to: [to],
         subject,
         html,
