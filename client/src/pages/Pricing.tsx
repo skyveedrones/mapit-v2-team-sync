@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import { ContactSalesModal } from "@/components/ContactSalesModal";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -42,6 +43,7 @@ export default function Pricing() {
   const [, setLocation] = useLocation();
   const [isAnnual, setIsAnnual] = useState(true);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [showContactSalesModal, setShowContactSalesModal] = useState(false);
 
   // Get referral ID from URL param first, then localStorage as fallback
   const referralId = typeof window !== "undefined"
@@ -353,13 +355,14 @@ export default function Pricing() {
               Get Started
             </Button>
             <Button
-              onClick={() => alert("Contact sales functionality coming soon!")}
+              onClick={() => setShowContactSalesModal(true)}
               size="lg"
               variant="outline"
               className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-lg px-8 rounded-full"
             >
               Contact Sales
             </Button>
+            <ContactSalesModal open={showContactSalesModal} onOpenChange={setShowContactSalesModal} />
           </div>
         </div>
       </section>

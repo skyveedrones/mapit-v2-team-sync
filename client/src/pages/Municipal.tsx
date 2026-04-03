@@ -5,7 +5,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
+import { PilotProgramModal } from "@/components/PilotProgramModal";
 import Footer from "@/components/Footer";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
@@ -384,7 +384,7 @@ export default function Municipal() {
       <Footer onContactClick={() => setContactOpen(true)} />
 
       {/* ─── Contact Modal ─── */}
-      <MunicipalBriefingForm open={contactOpen} onOpenChange={setContactOpen} />
+      <PilotProgramModal open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 }
