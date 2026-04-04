@@ -6,6 +6,7 @@ import { readFile, writeFile, rm } from "fs/promises";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { storagePut } from "../storage";
 
 const execFileAsync = promisify(execFile);
 const router = Router();
@@ -75,6 +76,12 @@ async function convertPdfToOverlay(
 
     // Read output PNG
     const outputBuffer = await readFile(outputPath);
+    
+    // Upload to S3
+    const filename = `converted-${Date.now()}.png`;
+    const fileKey = `overlays/converted/${filename}`;
+    const { url: s3Url } = await storagePut(fileKey, outputBuffer, "image/png");
+    
     return outputBuffer;
   } catch (error) {
     console.error("[PDF Converter] ImageMagick conversion failed:", error);
@@ -108,10 +115,14 @@ router.post("/convert-pdf-overlay", upload.single("file"), async (req: Request, 
       parseInt(dpi)
     );
 
-    // Return PNG as response
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", `attachment; filename="${req.file.originalname.replace(".pdf", ".png")}"`);
-    res.send(pngBuffer);
+      // Upload to S3 and return S3 URL
+      const filename = `converted-${Date.now()}-${req.file.originalname.replace(".pdf", ".png")}`;
+      const fileKey = `overlays/converted/${filename}`;
+      const { url: s3Url } = await storagePut(fileKey, pngBuffer, "image/png");
+      
+      // Return JSON with S3 URL
+      res.setHeader("Content-Type", "application/json");
+      res.json({ pngUrl: s3Url, filename: filename });
   } catch (error) {
     console.error("[PDF Converter] Error:", error);
     res.status(500).json({ error: "Conversion failed" });

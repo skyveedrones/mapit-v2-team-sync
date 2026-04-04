@@ -100,10 +100,10 @@ export function PdfToOverlayConverter({
         throw new Error(error.message || "Conversion failed");
       }
 
-      // Response is binary PNG data, not JSON
-      const pngBlob = await response.blob();
-      const pngUrl = URL.createObjectURL(pngBlob);
-      const filename = response.headers.get("content-disposition")?.split("filename=")[1]?.replace(/"/g, "") || selectedFile.name.replace(".pdf", ".png");
+      // Response is JSON with S3 URL
+      const result = await response.json();
+      const pngUrl = result.pngUrl;
+      const filename = result.filename;
 
       toast.success("PDF converted successfully!");
 
