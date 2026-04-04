@@ -82,7 +82,7 @@ async function pdfToPng(pdfBuffer: Buffer, dpi: number): Promise<Buffer> {
   }
 }
 
-// Process PNG using ffmpeg to make white transparent
+// Process PNG using ffmpeg to make white transparent and recolor lines
 async function processPngOverlay(
   pngBuffer: Buffer,
   lineColor: [number, number, number],
@@ -90,13 +90,14 @@ async function processPngOverlay(
 ): Promise<Buffer> {
   const tmpDir = await mkdtemp(join(tmpdir(), "png-process-"));
   const inputPath = join(tmpDir, "input.png");
+  const step1Path = join(tmpDir, "step1.png");
   const outputPath = join(tmpDir, "output.png");
 
   try {
     // Write input PNG
     await writeFile(inputPath, pngBuffer);
 
-    // Use ffmpeg to process the image
+    // Step 1: Use ffmpeg to make white transparent
     // colorkey makes white pixels transparent based on threshold
     // Similarity is 0-1 scale, so convert percentage to 0-1
     const similarity = Math.round((255 - whiteThreshold) / 255 * 100) / 100;
@@ -104,6 +105,22 @@ async function processPngOverlay(
     await execFileAsync("ffmpeg", [
       "-i", inputPath,
       "-vf", `format=rgba,colorkey=white:${similarity}:0`,
+      "-y", // Overwrite output
+      step1Path,
+    ]);
+
+    // Step 2: Recolor the dark lines to the selected color using colorchannelmixer
+    // This converts dark pixels (near black) to the selected color while preserving alpha
+    const [r, g, b] = lineColor;
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+    
+    // Use colorchannelmixer to remap colors: take any non-transparent pixel and map to target color
+    // We use a combination of filters to achieve this
+    await execFileAsync("ffmpeg", [
+      "-i", step1Path,
+      "-vf", `format=rgba,split[main][alpha];[main]eq=saturation=0[gray];[gray]curves=r='0/0 255/${r}':g='0/0 255/${g}':b='0/0 255/${b}'[colored];[colored][alpha]alphamerge`,
       "-y", // Overwrite output
       outputPath,
     ]);
