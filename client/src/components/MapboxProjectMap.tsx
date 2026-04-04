@@ -26,6 +26,7 @@ import {
   Crosshair,
   Eye,
   EyeOff,
+  FileText,
   Layers,
   Lock,
   Maximize,
@@ -48,6 +49,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { PdfToOverlayConverter } from "./PdfToOverlayConverter";
 import type { Media } from "../../../drizzle/schema";
 import turfDistance from "@turf/distance";
 import turfArea from "@turf/area";
@@ -189,6 +191,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [measureMode, setMeasureMode] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
     const [measureResult, setMeasureResult] = useState<{ distance: number; area: number } | null>(null);
+
+    // PDF Converter state
+    const [showPdfConverter, setShowPdfConverter] = useState(false);
 
     const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
     const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
@@ -1586,6 +1591,18 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           <Layers size={16} className="text-orange-400" />
                           <span className="text-sm font-medium">Add Map Overlay</span>
                         </button>
+
+                        {/* Convert PDF to Overlay */}
+                        <button
+                          onClick={() => setShowPdfConverter(true)}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all"
+                        >
+                          <FileText size={16} className="text-green-400" />
+                          <div className="text-left">
+                            <span className="text-sm font-medium block">Convert PDF</span>
+                            <span className="text-[10px] text-slate-400">Blueprint to overlay</span>
+                          </div>
+                        </button>
                       </div>
 
                       {/* ── PER-OVERLAY CONTROLS ── */}
@@ -1831,13 +1848,23 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                     </span>
                   </div>
                 </div>
-              </div>
+               </div>
             </div>
           )}
+
+          {/* PDF to Overlay Converter Dialog */}
+          <PdfToOverlayConverter
+            open={showPdfConverter}
+            onOpenChange={setShowPdfConverter}
+            onConversionComplete={(pngUrl, filename) => {
+              toast.success(`Overlay converted: ${filename}`);
+              // Optionally auto-add the converted overlay to the map
+              // This would require adding a new overlay to the project
+            }}
+          />
         </CardContent>
       </Card>
     );
   }
 );
-
 MapboxProjectMap.displayName = "MapboxProjectMap";
