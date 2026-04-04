@@ -56,12 +56,12 @@ async function startServer() {
   // PDF to PNG converter route — uses multer for multipart parsing
   app.use("/api", pdfConverterRouter);
   
-  // Create overlay route — auto-add converted overlays to projects
-  app.use("/api", createOverlayRouter);
-  
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
+  
+  // Create overlay route — auto-add converted overlays to projects (AFTER express.json)
+  app.use("/api", createOverlayRouter);
   
   // Custom error handler for payload too large errors - return JSON instead of HTML
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

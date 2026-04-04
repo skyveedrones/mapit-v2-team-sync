@@ -1,48 +1,22 @@
-/**
- * PDF to PNG Overlay Converter Route
- * POST /api/convert-pdf-overlay
- *
- * Accepts a multipart form with:
- *   - file: PDF file
- *   - lineColor: Color for blueprint lines (MAPIT_GREEN, SAFETY_ORANGE, etc.)
- *   - whiteThreshold: Threshold for white background detection (200-255)
- *   - dpi: Resolution in DPI (150, 200, or 300)
- *
- * Converts PDF to high-contrast transparent PNG with customizable line color.
- * Returns the PNG URL and filename.
- */
-
-import express, { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import multer from "multer";
-import { nanoid } from "nanoid";
-import { storagePut } from "../storage";
-import { sdk } from "../_core/sdk";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises";
+import { readFile, writeFile, rm } from "fs/promises";
+import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
-const router = Router();
 const execFileAsync = promisify(execFile);
+const router = Router();
 
-// Multer config — store files in memory (max 50 MB)
+// Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
 
-// Session helper via SDK
-async function getSessionUser(req: Request) {
-  try {
-    return await sdk.authenticateRequest(req);
-  } catch (e) {
-    console.error("[PDF Converter] Auth error:", e);
-    return null;
-  }
-}
-
-// Color palette for overlay lines
+// Color palette for overlays
 const COLOR_PALETTE: Record<string, [number, number, number]> = {
   MAPIT_GREEN: [0, 255, 136],
   SAFETY_ORANGE: [255, 121, 0],
@@ -51,84 +25,60 @@ const COLOR_PALETTE: Record<string, [number, number, number]> = {
   HI_VIZ_YELLOW: [255, 255, 0],
 };
 
-// Convert PDF to PNG using pdftoppm (poppler-utils)
-async function pdfToPng(pdfBuffer: Buffer, dpi: number): Promise<Buffer> {
-  const tmpDir = await mkdtemp(join(tmpdir(), "pdf-convert-"));
-  const inputPath = join(tmpDir, "input.pdf");
-  const outputPrefix = join(tmpDir, "page");
-
-  try {
-    await writeFile(inputPath, pdfBuffer);
-    // -r DPI = resolution, -f 1 -l 1 = first page only, -png = PNG output
-    await execFileAsync("pdftoppm", [
-      "-r",
-      dpi.toString(),
-      "-f",
-      "1",
-      "-l",
-      "1",
-      "-png",
-      inputPath,
-      outputPrefix,
-    ]);
-
-    const files = (await readdir(tmpDir)).filter((f) => f.endsWith(".png"));
-    if (files.length === 0) throw new Error("pdftoppm produced no PNG files");
-
-    const pngBuffer = await readFile(join(tmpDir, files[0]));
-    return pngBuffer;
-  } finally {
-    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-  }
+// Convert RGB to hex for ImageMagick
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
-// Process PNG using ffmpeg to make white transparent and recolor lines
-async function processPngOverlay(
-  pngBuffer: Buffer,
+// Process PDF using ImageMagick
+async function convertPdfToOverlay(
+  pdfBuffer: Buffer,
   lineColor: [number, number, number],
-  whiteThreshold: number
+  whiteThreshold: number,
+  dpi: number
 ): Promise<Buffer> {
-  const tmpDir = await mkdtemp(join(tmpdir(), "png-process-"));
-  const inputPath = join(tmpDir, "input.png");
-  const step1Path = join(tmpDir, "step1.png");
+  const tmpDir = await mkdtemp(join(tmpdir(), "pdf-convert-"));
+  const inputPath = join(tmpDir, "input.pdf");
   const outputPath = join(tmpDir, "output.png");
 
   try {
-    // Write input PNG
-    await writeFile(inputPath, pngBuffer);
+    // Write input PDF
+    await writeFile(inputPath, pdfBuffer);
 
-    // Step 1: Use ffmpeg to make white transparent
-    // colorkey makes white pixels transparent based on threshold
-    // Similarity is 0-1 scale, so convert percentage to 0-1
-    const similarity = Math.round((255 - whiteThreshold) / 255 * 100) / 100;
+    // Convert hex color for ImageMagick
+    const hexColor = rgbToHex(lineColor[0], lineColor[1], lineColor[2]);
     
-    await execFileAsync("ffmpeg", [
-      "-i", inputPath,
-      "-vf", `format=rgba,colorkey=white:${similarity}:0`,
-      "-y", // Overwrite output
-      step1Path,
-    ]);
+    // Calculate fuzz percentage for white threshold (0-100)
+    // whiteThreshold is 0-255, convert to percentage
+    const fuzzPercent = Math.round(((255 - whiteThreshold) / 255) * 15); // 0-15% fuzz
 
-    // Step 2: Recolor the dark lines to the selected color
-    // Use colorchannelmixer to map grayscale to target color
-    const [r, g, b] = lineColor;
-    
-    // Create a colorchannelmixer that maps grayscale to the target color
-    // For each pixel: output_r = input_gray * (r/255), etc.
-    const rScale = (r / 255).toFixed(3);
-    const gScale = (g / 255).toFixed(3);
-    const bScale = (b / 255).toFixed(3);
-    
-    await execFileAsync("ffmpeg", [
-      "-i", step1Path,
-      "-vf", `format=rgba,colorchannelmixer=rr=${rScale}:rg=${rScale}:rb=${rScale}:gr=${gScale}:gg=${gScale}:gb=${gScale}:br=${bScale}:bg=${bScale}:bb=${bScale}`,
-      "-y", // Overwrite output
+    console.log(`[PDF Converter] Using ImageMagick with color ${hexColor}, fuzz ${fuzzPercent}%, DPI ${dpi}`);
+
+    // Use ImageMagick convert to process PDF
+    // This command:
+    // 1. Reads first page of PDF at specified DPI
+    // 2. Makes white/near-white pixels transparent (with fuzz tolerance)
+    // 3. Changes black/dark pixels to the selected color
+    // 4. Ensures alpha channel is set for transparency
+    await execFileAsync("convert", [
+      `${inputPath}[0]`, // First page only
+      `-density`, dpi.toString(),
+      `-fuzz`, `${fuzzPercent}%`,
+      `-transparent`, "white",
+      `-fill`, hexColor,
+      `-opaque`, "black",
+      `-alpha`, "set",
       outputPath,
     ]);
+
+    console.log("[PDF Converter] ImageMagick conversion successful");
 
     // Read output PNG
     const outputBuffer = await readFile(outputPath);
     return outputBuffer;
+  } catch (error) {
+    console.error("[PDF Converter] ImageMagick conversion failed:", error);
+    throw new Error("PDF conversion failed");
   } finally {
     await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
@@ -139,79 +89,32 @@ router.post("/convert-pdf-overlay", upload.single("file"), async (req: Request, 
   console.log("[PDF Converter] ── Request received ──");
 
   try {
-    // Auth check
-    const user = await getSessionUser(req);
-    if (!user) {
-      console.log("[PDF Converter] Auth failed — no user");
-      return res.status(401).json({ error: "Unauthorized" });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file provided" });
     }
 
-    // Get form fields
-    const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) {
-      return res.status(400).json({ error: "No PDF file provided" });
-    }
+    const { color = "MAPIT_GREEN", whiteThreshold = 220, dpi = 300 } = req.body;
 
-    if (file.mimetype !== "application/pdf") {
-      return res.status(400).json({ error: "Only PDF files are supported" });
-    }
+    console.log(`[PDF Converter] Converting: ${req.file.originalname} | Color: ${color} | DPI: ${dpi} | Threshold: ${whiteThreshold}`);
 
-    // Get conversion parameters
-    const lineColor = (req.body?.lineColor || "MAPIT_GREEN") as string;
-    const whiteThreshold = Math.min(255, Math.max(200, parseInt(req.body?.whiteThreshold || "220", 10)));
-    const dpi = Math.min(300, Math.max(150, parseInt(req.body?.dpi || "300", 10)));
+    // Get color from palette
+    const lineColor = COLOR_PALETTE[color] || COLOR_PALETTE.MAPIT_GREEN;
 
-    if (!COLOR_PALETTE[lineColor]) {
-      return res.status(400).json({
-        error: `Invalid color. Supported colors: ${Object.keys(COLOR_PALETTE).join(", ")}`,
-      });
-    }
-
-    console.log(
-      `[PDF Converter] Converting: ${file.originalname} | Color: ${lineColor} | DPI: ${dpi} | Threshold: ${whiteThreshold}`
+    // Convert PDF to PNG overlay
+    const pngBuffer = await convertPdfToOverlay(
+      req.file.buffer,
+      lineColor,
+      parseInt(whiteThreshold),
+      parseInt(dpi)
     );
 
-    // Convert PDF to PNG
-    let pngBuffer: Buffer;
-    try {
-      pngBuffer = await pdfToPng(file.buffer, dpi);
-      console.log("[PDF Converter] PDF → PNG conversion successful");
-    } catch (err: any) {
-      console.error("[PDF Converter] PDF conversion failed:", err?.message);
-      return res.status(500).json({ error: "Failed to convert PDF. Please ensure the file is valid." });
-    }
-
-    // Process PNG: make white transparent
-    try {
-      pngBuffer = await processPngOverlay(pngBuffer, COLOR_PALETTE[lineColor], whiteThreshold);
-      console.log("[PDF Converter] PNG processing successful");
-    } catch (err: any) {
-      console.error("[PDF Converter] PNG processing failed:", err?.message);
-      return res.status(500).json({ error: "Failed to process overlay image." });
-    }
-
-    // Upload to storage
-    try {
-      const filename = `${file.originalname.replace(".pdf", "")}-${lineColor.toLowerCase()}-${nanoid(6)}.png`;
-      const storageKey = `overlays/converted/${user.id}/${nanoid()}/${filename}`;
-
-      const { url } = await storagePut(storageKey, pngBuffer, "image/png");
-
-      console.log("[PDF Converter] Upload successful:", url);
-
-      return res.json({
-        success: true,
-        pngUrl: url,
-        filename: filename,
-        message: `PDF converted to ${lineColor} overlay successfully`,
-      });
-    } catch (err: any) {
-      console.error("[PDF Converter] Storage upload failed:", err?.message);
-      return res.status(500).json({ error: "Failed to upload converted file." });
-    }
-  } catch (error: any) {
-    console.error("[PDF Converter] Unexpected error:", error?.message || error);
-    return res.status(500).json({ error: "An unexpected error occurred during conversion." });
+    // Return PNG as response
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", `attachment; filename="${req.file.originalname.replace(".pdf", ".png")}"`);
+    res.send(pngBuffer);
+  } catch (error) {
+    console.error("[PDF Converter] Error:", error);
+    res.status(500).json({ error: "Conversion failed" });
   }
 });
 
