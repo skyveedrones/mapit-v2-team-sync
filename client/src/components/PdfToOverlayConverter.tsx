@@ -1,6 +1,7 @@
 /**
  * PDF to Overlay PNG Converter
  * Converts PDF blueprints to high-contrast transparent PNG overlays
+ * with preview and direct save to project media
  */
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Upload, Loader2, Download, FileText } from "lucide-react";
+import { Upload, Loader2, Download, FileText, Check, X } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -55,6 +56,9 @@ export function PdfToOverlayConverter({
   const [dpi, setDpi] = useState(300);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFilename, setPreviewFilename] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,16 +104,13 @@ export function PdfToOverlayConverter({
 
       toast.success("PDF converted successfully!");
 
+      // Show preview
+      setPreviewUrl(result.pngUrl);
+      setPreviewFilename(result.filename);
+
       if (onConversionComplete) {
         onConversionComplete(result.pngUrl, result.filename);
       }
-
-      // Reset form
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      onOpenChange(false);
     } catch (error) {
       console.error("Conversion error:", error);
       toast.error(
@@ -120,6 +121,127 @@ export function PdfToOverlayConverter({
     }
   };
 
+  const handleSaveToMedia = async () => {
+    if (!previewUrl || !previewFilename) {
+      toast.error("No preview available");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Create overlay in project media
+      const response = await fetch("/api/create-overlay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          fileUrl: previewUrl,
+          label: previewFilename.replace(".png", ""),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save overlay to project");
+      }
+
+      const result = await response.json();
+      toast.success("Overlay saved to project!");
+
+      if (onOverlayCreated && result.overlay?.id) {
+        onOverlayCreated(result.overlay.id);
+      }
+
+      // Reset and close
+      setPreviewUrl(null);
+      setPreviewFilename("");
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save overlay"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setPreviewUrl(null);
+    setPreviewFilename("");
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Show preview dialog if preview is available
+  if (previewUrl) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Preview Converted Overlay</DialogTitle>
+            <DialogDescription>
+              Review the converted overlay before saving to project media
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Preview Image */}
+            <div className="border rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center" style={{ height: "400px" }}>
+              <img
+                src={previewUrl}
+                alt="Converted overlay preview"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+
+            {/* File Info */}
+            <div className="text-sm text-slate-600">
+              <p><strong>Filename:</strong> {previewFilename}</p>
+              <p><strong>Color:</strong> {COLOR_PALETTE[selectedColor].label}</p>
+              <p><strong>DPI:</strong> {dpi}</p>
+              <p><strong>White Threshold:</strong> {whiteThreshold}</p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveToMedia}
+              disabled={isSaving}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Save to Project
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Show conversion dialog
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -155,33 +277,25 @@ export function PdfToOverlayConverter({
               ) : (
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="w-8 h-8 text-slate-400" />
-                  <p className="text-sm font-medium">Click to upload PDF</p>
-                  <p className="text-xs text-slate-500">or drag and drop</p>
+                  <span className="text-sm text-slate-600">
+                    Click to select PDF or drag and drop
+                  </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Line Color Selection */}
+          {/* Color Selection */}
           <div className="space-y-2">
             <Label htmlFor="color-select">Line Color</Label>
-            <Select
-              value={selectedColor}
-              onValueChange={(value: any) => setSelectedColor(value)}
-            >
+            <Select value={selectedColor} onValueChange={(value: any) => setSelectedColor(value)}>
               <SelectTrigger id="color-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(COLOR_PALETTE).map(([key, { label, rgb }]) => (
+                {Object.entries(COLOR_PALETTE).map(([key, { label }]) => (
                   <SelectItem key={key} value={key}>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{ backgroundColor: rgb }}
-                      />
-                      <span>{label}</span>
-                    </div>
+                    {label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -190,58 +304,61 @@ export function PdfToOverlayConverter({
 
           {/* White Threshold Slider */}
           <div className="space-y-2">
-            <Label>White Background Threshold: {whiteThreshold}</Label>
+            <Label>White Threshold: {whiteThreshold}</Label>
             <Slider
               value={[whiteThreshold]}
-              onValueChange={([value]) => setWhiteThreshold(value)}
-              min={200}
+              onValueChange={(value) => setWhiteThreshold(value[0])}
+              min={180}
               max={255}
               step={1}
               className="w-full"
             />
             <p className="text-xs text-slate-500">
-              Higher values detect more white areas. Adjust if your PDF has a
-              greyish background.
+              Lower = more aggressive transparency removal
             </p>
           </div>
 
           {/* DPI Selection */}
           <div className="space-y-2">
             <Label htmlFor="dpi-select">Resolution (DPI)</Label>
-            <Select
-              value={dpi.toString()}
-              onValueChange={(value) => setDpi(parseInt(value))}
-            >
+            <Select value={dpi.toString()} onValueChange={(value) => setDpi(parseInt(value))}>
               <SelectTrigger id="dpi-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="150">150 DPI (Smaller file)</SelectItem>
+                <SelectItem value="150">150 DPI (Fast)</SelectItem>
                 <SelectItem value="200">200 DPI (Balanced)</SelectItem>
-                <SelectItem value="300">300 DPI (Best quality)</SelectItem>
+                <SelectItem value="300">300 DPI (High Quality)</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              onOpenChange(false);
+              handleCancel();
+            }}
+            disabled={isConverting}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleConvert}
             disabled={!selectedFile || isConverting}
-            className="gap-2"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {isConverting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Converting...
               </>
             ) : (
               <>
-                <Download className="w-4 h-4" />
-                Convert to PNG
+                <Download className="w-4 h-4 mr-2" />
+                Convert
               </>
             )}
           </Button>
