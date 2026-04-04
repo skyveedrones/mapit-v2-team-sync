@@ -82,7 +82,7 @@ async function pdfToPng(pdfBuffer: Buffer, dpi: number): Promise<Buffer> {
   }
 }
 
-// Process PNG: remove white background and recolor lines using a Node.js script
+// Process PNG using ffmpeg to make white transparent
 async function processPngOverlay(
   pngBuffer: Buffer,
   lineColor: [number, number, number],
@@ -91,89 +91,21 @@ async function processPngOverlay(
   const tmpDir = await mkdtemp(join(tmpdir(), "png-process-"));
   const inputPath = join(tmpDir, "input.png");
   const outputPath = join(tmpDir, "output.png");
-  const scriptPath = join(tmpDir, "process.mjs");
 
   try {
     // Write input PNG
     await writeFile(inputPath, pngBuffer);
 
-    // Create a Node.js script using only built-in and available packages
-    const nodeScript = `
-import { readFileSync, writeFileSync } from 'fs';
-import sharp from 'sharp';
-
-const inputPath = '${inputPath}';
-const outputPath = '${outputPath}';
-const lineColor = [${lineColor[0]}, ${lineColor[1]}, ${lineColor[2]}];
-const whiteThreshold = ${whiteThreshold};
-
-async function processImage() {
-  try {
-    // Read the PNG
-    const imageBuffer = readFileSync(inputPath);
+    // Use ffmpeg to process the image
+    // colorkey makes white pixels transparent based on threshold
+    const fuzzPercent = Math.round((255 - whiteThreshold) / 255 * 100);
     
-    // Use sharp to process the image
-    const image = sharp(imageBuffer);
-    const metadata = await image.metadata();
-    
-    // Extract raw pixel data
-    const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
-    
-    // Process pixels
-    for (let i = 0; i < data.length; i += info.channels) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      
-      // Check if pixel is white (above threshold)
-      if (r > whiteThreshold && g > whiteThreshold && b > whiteThreshold) {
-        // Make transparent
-        data[i] = 0;
-        data[i + 1] = 0;
-        data[i + 2] = 0;
-        if (info.channels === 4) data[i + 3] = 0; // Alpha
-      } else {
-        // Apply line color
-        data[i] = lineColor[0];
-        data[i + 1] = lineColor[1];
-        data[i + 2] = lineColor[2];
-        if (info.channels === 4) data[i + 3] = 255; // Full opacity
-      }
-    }
-    
-    // Create output image with alpha channel
-    await sharp(data, {
-      raw: {
-        width: info.width,
-        height: info.height,
-        channels: 4
-      }
-    })
-    .png()
-    .toFile(outputPath);
-    
-    console.log('OK');
-  } catch (err) {
-    console.error('ERROR:', err.message);
-    process.exit(1);
-  }
-}
-
-processImage();
-`;
-
-    await writeFile(scriptPath, nodeScript);
-
-    // Execute Node.js script
-    const { stdout, stderr } = await execFileAsync("node", [scriptPath], { timeout: 30000 });
-
-    if (stderr && !stderr.includes("OK")) {
-      console.warn("[PDF Converter] Node script stderr:", stderr);
-    }
-
-    if (!stdout.includes("OK")) {
-      throw new Error("Node script did not complete successfully");
-    }
+    await execFileAsync("ffmpeg", [
+      "-i", inputPath,
+      "-vf", `format=rgba,colorkey=white:${fuzzPercent}:0`,
+      "-y", // Overwrite output
+      outputPath,
+    ]);
 
     // Read output PNG
     const outputBuffer = await readFile(outputPath);
@@ -230,7 +162,7 @@ router.post("/convert-pdf-overlay", upload.single("file"), async (req: Request, 
       return res.status(500).json({ error: "Failed to convert PDF. Please ensure the file is valid." });
     }
 
-    // Process PNG: remove white background and recolor lines
+    // Process PNG: make white transparent
     try {
       pngBuffer = await processPngOverlay(pngBuffer, COLOR_PALETTE[lineColor], whiteThreshold);
       console.log("[PDF Converter] PNG processing successful");
