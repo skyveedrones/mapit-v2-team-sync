@@ -28,7 +28,9 @@ import { toast } from "sonner";
 interface PdfToOverlayConverterProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId: number;
   onConversionComplete?: (pngUrl: string, filename: string) => void;
+  onOverlayCreated?: (overlayId: number) => void;
 }
 
 const COLOR_PALETTE = {
@@ -42,7 +44,9 @@ const COLOR_PALETTE = {
 export function PdfToOverlayConverter({
   open,
   onOpenChange,
+  projectId,
   onConversionComplete,
+  onOverlayCreated,
 }: PdfToOverlayConverterProps) {
   const [selectedColor, setSelectedColor] = useState<keyof typeof COLOR_PALETTE>(
     "MAPIT_GREEN"

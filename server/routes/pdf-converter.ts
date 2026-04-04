@@ -98,11 +98,12 @@ async function processPngOverlay(
 
     // Use ffmpeg to process the image
     // colorkey makes white pixels transparent based on threshold
-    const fuzzPercent = Math.round((255 - whiteThreshold) / 255 * 100);
+    // Similarity is 0-1 scale, so convert percentage to 0-1
+    const similarity = Math.round((255 - whiteThreshold) / 255 * 100) / 100;
     
     await execFileAsync("ffmpeg", [
       "-i", inputPath,
-      "-vf", `format=rgba,colorkey=white:${fuzzPercent}:0`,
+      "-vf", `format=rgba,colorkey=white:${similarity}:0`,
       "-y", // Overwrite output
       outputPath,
     ]);

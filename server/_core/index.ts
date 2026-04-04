@@ -16,6 +16,7 @@ import { sdk } from "./sdk";
 import emailRouter from "../routes/email";
 import overlayUploadRouter from "../routes/overlay-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
+import createOverlayRouter from "../routes/create-overlay";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -54,6 +55,9 @@ async function startServer() {
   
   // PDF to PNG converter route — uses multer for multipart parsing
   app.use("/api", pdfConverterRouter);
+  
+  // Create overlay route — auto-add converted overlays to projects
+  app.use("/api", createOverlayRouter);
   
   // Configure body parser with larger size limit for file uploads (1.5GB for base64 encoded 1GB files)
   app.use(express.json({ limit: "1500mb" }));

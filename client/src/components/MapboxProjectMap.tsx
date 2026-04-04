@@ -1856,10 +1856,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           <PdfToOverlayConverter
             open={showPdfConverter}
             onOpenChange={setShowPdfConverter}
+            projectId={projectId}
             onConversionComplete={(pngUrl, filename) => {
               toast.success(`Overlay converted: ${filename}`);
-              // Optionally auto-add the converted overlay to the map
-              // This would require adding a new overlay to the project
+            }}
+            onOverlayCreated={() => {
+              // Refresh overlays after new one is created
+              window.location.reload();
             }}
           />
         </CardContent>
