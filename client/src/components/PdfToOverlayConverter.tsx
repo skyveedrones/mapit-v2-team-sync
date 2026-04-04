@@ -100,16 +100,19 @@ export function PdfToOverlayConverter({
         throw new Error(error.message || "Conversion failed");
       }
 
-      const result = await response.json();
+      // Response is binary PNG data, not JSON
+      const pngBlob = await response.blob();
+      const pngUrl = URL.createObjectURL(pngBlob);
+      const filename = response.headers.get("content-disposition")?.split("filename=")[1]?.replace(/"/g, "") || selectedFile.name.replace(".pdf", ".png");
 
       toast.success("PDF converted successfully!");
 
       // Show preview
-      setPreviewUrl(result.pngUrl);
-      setPreviewFilename(result.filename);
+      setPreviewUrl(pngUrl);
+      setPreviewFilename(filename);
 
       if (onConversionComplete) {
-        onConversionComplete(result.pngUrl, result.filename);
+        onConversionComplete(pngUrl, filename);
       }
     } catch (error) {
       console.error("Conversion error:", error);
