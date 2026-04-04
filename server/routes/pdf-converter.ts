@@ -109,18 +109,19 @@ async function processPngOverlay(
       step1Path,
     ]);
 
-    // Step 2: Recolor the dark lines to the selected color using colorchannelmixer
-    // This converts dark pixels (near black) to the selected color while preserving alpha
+    // Step 2: Recolor the dark lines to the selected color
+    // Use colorchannelmixer to map grayscale to target color
     const [r, g, b] = lineColor;
-    const rNorm = r / 255;
-    const gNorm = g / 255;
-    const bNorm = b / 255;
     
-    // Use colorchannelmixer to remap colors: take any non-transparent pixel and map to target color
-    // We use a combination of filters to achieve this
+    // Create a colorchannelmixer that maps grayscale to the target color
+    // For each pixel: output_r = input_gray * (r/255), etc.
+    const rScale = (r / 255).toFixed(3);
+    const gScale = (g / 255).toFixed(3);
+    const bScale = (b / 255).toFixed(3);
+    
     await execFileAsync("ffmpeg", [
       "-i", step1Path,
-      "-vf", `format=rgba,split[main][alpha];[main]eq=saturation=0[gray];[gray]curves=r='0/0 255/${r}':g='0/0 255/${g}':b='0/0 255/${b}'[colored];[colored][alpha]alphamerge`,
+      "-vf", `format=rgba,colorchannelmixer=rr=${rScale}:rg=${rScale}:rb=${rScale}:gr=${gScale}:gg=${gScale}:gb=${gScale}:br=${bScale}:bg=${bScale}:bb=${bScale}`,
       "-y", // Overwrite output
       outputPath,
     ]);
