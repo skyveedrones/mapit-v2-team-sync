@@ -82,7 +82,7 @@ async function pdfToPng(pdfBuffer: Buffer, dpi: number): Promise<Buffer> {
   }
 }
 
-// Process PNG using Python script for pixel manipulation
+// Process PNG: remove white background and recolor lines using a Node.js script
 async function processPngOverlay(
   pngBuffer: Buffer,
   lineColor: [number, number, number],
@@ -91,59 +91,88 @@ async function processPngOverlay(
   const tmpDir = await mkdtemp(join(tmpdir(), "png-process-"));
   const inputPath = join(tmpDir, "input.png");
   const outputPath = join(tmpDir, "output.png");
-  const scriptPath = join(tmpDir, "process.py");
+  const scriptPath = join(tmpDir, "process.mjs");
 
   try {
     // Write input PNG
     await writeFile(inputPath, pngBuffer);
 
-    // Create Python script for image processing
-    const pythonScript = `
-import sys
-from PIL import Image
-import numpy as np
+    // Create a Node.js script using only built-in and available packages
+    const nodeScript = `
+import { readFileSync, writeFileSync } from 'fs';
+import sharp from 'sharp';
 
-input_path = "${inputPath}"
-output_path = "${outputPath}"
-line_color = (${lineColor[0]}, ${lineColor[1]}, ${lineColor[2]})
-white_threshold = ${whiteThreshold}
+const inputPath = '${inputPath}';
+const outputPath = '${outputPath}';
+const lineColor = [${lineColor[0]}, ${lineColor[1]}, ${lineColor[2]}];
+const whiteThreshold = ${whiteThreshold};
 
-# Load image
-img = Image.open(input_path).convert("RGBA")
-data = np.array(img)
+async function processImage() {
+  try {
+    // Read the PNG
+    const imageBuffer = readFileSync(inputPath);
+    
+    // Use sharp to process the image
+    const image = sharp(imageBuffer);
+    const metadata = await image.metadata();
+    
+    // Extract raw pixel data
+    const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
+    
+    // Process pixels
+    for (let i = 0; i < data.length; i += info.channels) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      
+      // Check if pixel is white (above threshold)
+      if (r > whiteThreshold && g > whiteThreshold && b > whiteThreshold) {
+        // Make transparent
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        if (info.channels === 4) data[i + 3] = 0; // Alpha
+      } else {
+        // Apply line color
+        data[i] = lineColor[0];
+        data[i + 1] = lineColor[1];
+        data[i + 2] = lineColor[2];
+        if (info.channels === 4) data[i + 3] = 255; // Full opacity
+      }
+    }
+    
+    // Create output image with alpha channel
+    await sharp(data, {
+      raw: {
+        width: info.width,
+        height: info.height,
+        channels: 4
+      }
+    })
+    .png()
+    .toFile(outputPath);
+    
+    console.log('OK');
+  } catch (err) {
+    console.error('ERROR:', err.message);
+    process.exit(1);
+  }
+}
 
-# Extract channels
-red = data[:, :, 0]
-green = data[:, :, 1]
-blue = data[:, :, 2]
-
-# Detect white background
-white_areas = (red > white_threshold) & (green > white_threshold) & (blue > white_threshold)
-line_areas = ~white_areas
-
-# Apply color to lines
-data[line_areas] = [line_color[0], line_color[1], line_color[2], 255]
-
-# Make background transparent
-data[white_areas] = [0, 0, 0, 0]
-
-# Save result
-result = Image.fromarray(data)
-result.save(output_path, "PNG")
-print("OK")
+processImage();
 `;
 
-    await writeFile(scriptPath, pythonScript);
+    await writeFile(scriptPath, nodeScript);
 
-    // Execute Python script
-    const { stdout, stderr } = await execFileAsync("python3", [scriptPath]);
+    // Execute Node.js script
+    const { stdout, stderr } = await execFileAsync("node", [scriptPath], { timeout: 30000 });
 
-    if (stderr) {
-      console.warn("[PDF Converter] Python stderr:", stderr);
+    if (stderr && !stderr.includes("OK")) {
+      console.warn("[PDF Converter] Node script stderr:", stderr);
     }
 
     if (!stdout.includes("OK")) {
-      throw new Error("Python script did not complete successfully");
+      throw new Error("Node script did not complete successfully");
     }
 
     // Read output PNG
