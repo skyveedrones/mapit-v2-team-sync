@@ -14,6 +14,7 @@ import { LazyMapWrapper } from "@/components/LazyMapWrapper";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
+import { ProjectDocuments } from "@/components/ProjectDocuments";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { NewFlightDialog } from "@/components/NewFlightDialog";
 import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
@@ -600,6 +601,11 @@ export default function ProjectDetail() {
                   </CardContent>
                 </Card>
               )}
+            </motion.div>
+
+            {/* Project Documents */}
+            <motion.div variants={fadeInUp}>
+              <ProjectDocuments projectId={projectId} />
             </motion.div>
 
             {/* Project Metadata */}
