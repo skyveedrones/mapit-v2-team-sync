@@ -239,6 +239,13 @@
       "when": 1773705173255,
       "tag": "0033_normal_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1775400551370,
+      "tag": "0034_new_whistler",
+      "breakpoints": true
     }
   ]
 }

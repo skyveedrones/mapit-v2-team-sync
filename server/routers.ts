@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations } from "../drizzle/schema";
+import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations, projectDocuments } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminRouter } from "./routers/admin";
@@ -1077,6 +1077,72 @@ export const appRouter = router({
           .set({ label: input.label })
           .where(and(eq(projectOverlays.id, input.overlayId), eq(projectOverlays.projectId, input.projectId)));
 
+        return { success: true };
+      }),
+
+    // Get all documents for a project
+    getDocuments: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Verify access
+        const ownedProject = await db.select().from(projects).where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.user.id))).limit(1);
+        const sharedProject = await db.select().from(projectCollaborators).where(and(eq(projectCollaborators.projectId, input.projectId), eq(projectCollaborators.userId, ctx.user.id))).limit(1);
+
+        if (!ownedProject[0] && !sharedProject[0] && ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
+        }
+
+        const docs = await db.select().from(projectDocuments).where(eq(projectDocuments.projectId, input.projectId)).orderBy(desc(projectDocuments.createdAt));
+        return docs;
+      }),
+
+    // Upload a document
+    uploadDocument: protectedProcedure
+      .input(z.object({ projectId: z.number(), fileName: z.string(), fileUrl: z.string(), fileKey: z.string(), fileType: z.string(), fileSize: z.number(), category: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Verify access
+        const ownedProject = await db.select().from(projects).where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.user.id))).limit(1);
+        if (!ownedProject[0] && ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
+        }
+
+        const result = await db.insert(projectDocuments).values({
+          projectId: input.projectId,
+          fileName: input.fileName,
+          fileUrl: input.fileUrl,
+          fileKey: input.fileKey,
+          fileType: input.fileType,
+          fileSize: input.fileSize,
+          category: input.category as any,
+          uploadedBy: ctx.user.id,
+        });
+
+        return { id: result[0], success: true };
+      }),
+
+    // Delete a document
+    deleteDocument: protectedProcedure
+      .input(z.object({ documentId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Get document and verify access
+        const doc = await db.select().from(projectDocuments).where(eq(projectDocuments.id, input.documentId)).limit(1);
+        if (!doc[0]) throw new TRPCError({ code: 'NOT_FOUND', message: 'Document not found' });
+
+        const ownedProject = await db.select().from(projects).where(and(eq(projects.id, doc[0].projectId), eq(projects.userId, ctx.user.id))).limit(1);
+        if (!ownedProject[0] && ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to delete this document' });
+        }
+
+        await db.delete(projectDocuments).where(eq(projectDocuments.id, input.documentId));
         return { success: true };
       }),
   }),

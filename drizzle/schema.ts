@@ -594,3 +594,39 @@ export const referrals = mysqlTable("referrals", {
 
 export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = typeof referrals.$inferInsert;
+
+
+/**
+ * Project Documents table for storing PDFs, blueprints, permits, contracts, and other project-related files.
+ * Separate from project_media (drone photos) to keep the media section clean and organized.
+ */
+export const projectDocuments = mysqlTable("project_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to projects table */
+  projectId: int("projectId").notNull(),
+  /** Document file name */
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  /** Document file URL (stored in S3) */
+  fileUrl: varchar("fileUrl", { length: 512 }).notNull(),
+  /** S3 storage key for the file */
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  /** File type: pdf, docx, doc, xlsx, xls, jpg, png, etc */
+  fileType: varchar("fileType", { length: 20 }).notNull(),
+  /** File size in bytes */
+  fileSize: int("fileSize"),
+  /** Document category: blueprint, permit, contract, site_plan, other */
+  category: mysqlEnum("category", ["blueprint", "permit", "contract", "site_plan", "other"]).default("other").notNull(),
+  /** If this document was converted from PDF to PNG overlay, store the converted PNG URL */
+  convertedOverlayUrl: varchar("convertedOverlayUrl", { length: 512 }),
+  /** If this document was converted to overlay, store the overlay ID for quick access */
+  linkedOverlayId: int("linkedOverlayId"),
+  /** Document description or notes */
+  description: text("description"),
+  /** User who uploaded the document */
+  uploadedBy: int("uploadedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectDocument = typeof projectDocuments.$inferSelect;
+export type InsertProjectDocument = typeof projectDocuments.$inferInsert;
