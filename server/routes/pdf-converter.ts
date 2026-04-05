@@ -100,12 +100,16 @@ router.post("/convert-pdf-overlay", upload.single("file"), async (req: Request, 
       return res.status(400).json({ error: "No file provided" });
     }
 
-    const { color = "MAPIT_GREEN", whiteThreshold = 220, dpi = 300 } = req.body;
+    const { lineColor: colorHex = "00FF88", whiteThreshold = 220, dpi = 300 } = req.body;
 
-    console.log(`[PDF Converter] Converting: ${req.file.originalname} | Color: ${color} | DPI: ${dpi} | Threshold: ${whiteThreshold}`);
+    console.log(`[PDF Converter] Converting: ${req.file.originalname} | Color: ${colorHex} | DPI: ${dpi} | Threshold: ${whiteThreshold}`);
 
-    // Get color from palette
-    const lineColor = COLOR_PALETTE[color] || COLOR_PALETTE.MAPIT_GREEN;
+    // Convert hex color to RGB
+    const hexToRgb = (hex: string): [number, number, number] => {
+      const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [0, 255, 136];
+    };
+    const lineColor = hexToRgb(colorHex);
 
     // Convert PDF to PNG overlay
     const pngBuffer = await convertPdfToOverlay(
@@ -120,9 +124,9 @@ router.post("/convert-pdf-overlay", upload.single("file"), async (req: Request, 
       const fileKey = `overlays/converted/${filename}`;
       const { url: s3Url } = await storagePut(fileKey, pngBuffer, "image/png");
       
-      // Return JSON with S3 URL
+      // Return JSON with S3 URL and key
       res.setHeader("Content-Type", "application/json");
-      res.json({ pngUrl: s3Url, filename: filename });
+      res.json({ overlayUrl: s3Url, overlayKey: fileKey, filename: filename });
   } catch (error) {
     console.error("[PDF Converter] Error:", error);
     res.status(500).json({ error: "Conversion failed" });

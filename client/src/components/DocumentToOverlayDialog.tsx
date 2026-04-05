@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Card } from "@/components/ui/card";
 import { Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface Document {
   id: number;
@@ -75,6 +76,22 @@ export function DocumentToOverlayDialog({
       });
 
       if (!overlayResponse.ok) throw new Error("Failed to create overlay");
+
+      // Save the converted PNG to project documents
+      try {
+        const uploadMutation = trpc.project.uploadDocument.useMutation();
+        await uploadMutation.mutateAsync({
+          projectId,
+          fileName: document.fileName.replace(/\.pdf$/i, ".png"),
+          fileUrl: data.overlayUrl,
+          fileKey: data.overlayKey,
+          fileType: "image/png",
+          fileSize: 0,
+          category: "converted_overlay",
+        });
+      } catch (error) {
+        console.warn("Warning: Overlay created but document not saved to project documents", error);
+      }
 
       toast.success("Document converted and added as overlay!");
       onSuccess();
