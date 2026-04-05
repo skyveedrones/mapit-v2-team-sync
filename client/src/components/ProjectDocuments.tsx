@@ -1,9 +1,11 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Download, Trash2, FileText, Upload, MapPin } from "lucide-react";
+import { Download, Trash2, FileText, Upload, MapPin, Eye } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { DocumentPreviewModal } from "./DocumentPreviewModal";
+import { DocumentToOverlayDialog } from "./DocumentToOverlayDialog";
 
 interface ProjectDocumentsProps {
   projectId: number;
@@ -11,6 +13,8 @@ interface ProjectDocumentsProps {
 
 export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<any>(null);
+  const [conversionDoc, setConversionDoc] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch project documents
@@ -67,22 +71,29 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     }
 
     setIsUploading(true);
-
-    // For now, just show a placeholder - full implementation would upload to S3
     toast.info("Document upload feature coming soon");
     setIsUploading(false);
   };
 
-  const handleUseAsOverlay = (documentId: number, fileUrl: string) => {
-    // TODO: Trigger overlay conversion and alignment workflow
-    toast.info("Opening overlay alignment tool...");
+  const handlePreviewClick = (doc: any) => {
+    setPreviewDoc(doc);
+  };
+
+  const handleConvertClick = (doc: any) => {
+    setConversionDoc(doc);
+  };
+
+  const handleConvertSuccess = () => {
+    setPreviewDoc(null);
+    setConversionDoc(null);
+    refetch();
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes("pdf")) return "📄";
-    if (fileType.includes("word") || fileType.includes("document")) return "📝";
-    if (fileType.includes("sheet") || fileType.includes("excel")) return "📊";
-    if (fileType.includes("image")) return "🖼️";
+    if (fileType?.includes("pdf")) return "📄";
+    if (fileType?.includes("word") || fileType?.includes("document")) return "📝";
+    if (fileType?.includes("sheet") || fileType?.includes("excel")) return "📊";
+    if (fileType?.includes("image")) return "🖼️";
     return "📎";
   };
 
@@ -91,93 +102,137 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   }
 
   return (
-    <Card className="mt-8">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Project Documents
-        </CardTitle>
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          size="sm"
-          variant="outline"
-          className="gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          {isUploading ? "Uploading..." : "Upload Document"}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelect}
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-          className="hidden"
-        />
-      </CardHeader>
+    <>
+      <Card className="mt-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Project Documents
+          </CardTitle>
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            {isUploading ? "Uploading..." : "Upload Document"}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileSelect}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            className="hidden"
+          />
+        </CardHeader>
 
-      <CardContent>
-        {documents.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No documents uploaded yet</p>
-            <p className="text-sm mt-2">Upload blueprints, permits, or other project files</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {documents.map((doc: any) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-2xl">{getFileIcon(doc.fileType)}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{doc.fileName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.category} • {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
-                    </p>
+        <CardContent>
+          {documents.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No documents uploaded yet</p>
+              <p className="text-sm mt-2">Upload blueprints, permits, or other project files</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {documents.map((doc: any) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-2xl">{getFileIcon(doc.mimeType)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{doc.fileName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {(doc.fileType.includes("pdf") || doc.fileType.includes("image")) && (
+                  <div className="flex items-center gap-2">
+                    {doc.mimeType?.includes("pdf") && (
+                      <>
+                        <Button
+                          onClick={() => handlePreviewClick(doc)}
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={() => handleConvertClick(doc)}
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          To Overlay
+                        </Button>
+                      </>
+                    )}
+                    {!doc.mimeType?.includes("pdf") && (
+                      <Button
+                        onClick={() => handlePreviewClick(doc)}
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Preview
+                      </Button>
+                    )}
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex"
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </Button>
+                    </a>
                     <Button
-                      onClick={() => handleUseAsOverlay(doc.id, doc.fileUrl)}
+                      onClick={() => deleteMutation.mutate({ documentId: doc.id })}
                       size="sm"
                       variant="outline"
-                      className="gap-2"
+                      className="gap-2 text-destructive"
                     >
-                      <MapPin className="w-4 h-4" />
-                      Use as Overlay
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  )}
-
-                  <a
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex"
-                  >
-                    <Button size="sm" variant="ghost">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </a>
-
-                  <Button
-                    onClick={() => deleteMutation.mutate({ documentId: doc.id })}
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Preview Modal */}
+      <DocumentPreviewModal
+        document={previewDoc}
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        onConvertToOverlay={handleConvertClick}
+      />
+
+      {/* Conversion Dialog */}
+      <DocumentToOverlayDialog
+        document={conversionDoc}
+        projectId={projectId}
+        isOpen={!!conversionDoc}
+        onClose={() => setConversionDoc(null)}
+        onSuccess={handleConvertSuccess}
+      />
+    </>
   );
 }
