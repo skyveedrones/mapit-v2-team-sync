@@ -18,10 +18,30 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch project documents
-  const { data: documents = [], isLoading, refetch } = trpc.project.getDocuments.useQuery(
+  const { data: documents = [], isLoading, error, refetch } = trpc.project.getDocuments.useQuery(
     { projectId },
-    { enabled: !!projectId }
+    { 
+      enabled: !!projectId,
+      retry: false
+    }
   );
+
+  // Handle missing table gracefully
+  if (error && error.message && error.message.includes('project_documents')) {
+    return (
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Project Documents
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Project Documents feature is being initialized. Please refresh the page in a moment.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Upload document mutation
   const uploadMutation = trpc.project.uploadDocument.useMutation({

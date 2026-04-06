@@ -246,6 +246,13 @@
       "when": 1775400551370,
       "tag": "0034_new_whistler",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1775435219147,
+      "tag": "0035_slow_mesmero",
+      "breakpoints": true
     }
   ]
 }
