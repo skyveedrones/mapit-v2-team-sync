@@ -56,9 +56,9 @@ export async function handleCheckoutSessionCompleted(event: WebhookEvent) {
         subscriptionTier: planTier,
         subscriptionStatus: "active",
         billingPeriod: (subscription.items.data[0]?.price.recurring?.interval === "year" ? "annual" : "monthly") as "monthly" | "annual",
-        currentPeriodStart: new Date((subscription.current_period_start as number || 0) * 1000),
-        currentPeriodEnd: new Date((subscription.current_period_end as number || 0) * 1000),
-        updatedAt: new Date(),
+        currentPeriodStart: new Date((subscription.current_period_start as number || 0) * 1000).toISOString(),
+        currentPeriodEnd: new Date((subscription.current_period_end as number || 0) * 1000).toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, userId));
   }
@@ -101,10 +101,10 @@ export async function handleSubscriptionUpdated(event: WebhookEvent) {
         subscriptionTier: planTier,
         subscriptionStatus: subscription.status as "active" | "past_due" | "canceled" | "trialing" | "incomplete",
         billingPeriod: (subscription.items.data[0]?.price.recurring?.interval === "year" ? "annual" : "monthly") as "monthly" | "annual",
-        currentPeriodStart: new Date((subscription.current_period_start as number || 0) * 1000),
-        currentPeriodEnd: new Date((subscription.current_period_end as number || 0) * 1000),
+        currentPeriodStart: new Date((subscription.current_period_start as number || 0) * 1000).toISOString(),
+        currentPeriodEnd: new Date((subscription.current_period_end as number || 0) * 1000).toISOString(),
         cancelAtPeriodEnd: subscription.cancel_at_period_end ? "yes" : "no",
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, userId));
   }
@@ -135,7 +135,7 @@ export async function handleSubscriptionDeleted(event: WebhookEvent) {
         subscriptionTier: "free",
         subscriptionStatus: "canceled",
         stripeSubscriptionId: null,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, userId));
   }
@@ -190,7 +190,7 @@ export async function handleInvoicePaymentFailed(event: WebhookEvent) {
       .update(users)
       .set({
         subscriptionStatus: "past_due",
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, userId));
   }

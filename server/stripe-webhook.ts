@@ -100,10 +100,10 @@ async function handleCheckoutSessionCompleted(
         billingPeriod: billingPeriod,
         currentPeriodStart: new Date(
           (subscription as any).current_period_start * 1000
-        ),
-        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+        ).toISOString(),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000).toISOString(),
         cancelAtPeriodEnd: subscription.cancel_at_period_end ? "yes" : "no",
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, userId));
 
@@ -159,10 +159,10 @@ async function handleCustomerSubscriptionUpdated(
         billingPeriod: billingPeriod,
         currentPeriodStart: new Date(
           (subscription as any).current_period_start * 1000
-        ),
-        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+        ).toISOString(),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000).toISOString(),
         cancelAtPeriodEnd: subscription.cancel_at_period_end ? "yes" : "no",
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, user.id));
 
@@ -220,7 +220,7 @@ async function handleCustomerSubscriptionDeleted(
         currentPeriodStart: null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: "no",
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, user.id));
 

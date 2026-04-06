@@ -253,6 +253,13 @@
       "when": 1775435219147,
       "tag": "0035_slow_mesmero",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1775435661270,
+      "tag": "0036_elite_redwing",
+      "breakpoints": true
     }
   ]
 }

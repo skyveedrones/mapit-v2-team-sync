@@ -1,6 +1,9 @@
 import { getDb } from "./db";
-import { projectTemplates, type InsertProjectTemplate, type ProjectTemplate } from "../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { projectTemplates } from "../drizzle/schema";
+import { type InferInsertModel, type InferSelectModel, eq, and, desc } from "drizzle-orm";
+
+type InsertProjectTemplate = InferInsertModel<typeof projectTemplates>;
+type ProjectTemplate = InferSelectModel<typeof projectTemplates>;
 
 /**
  * Template configuration interface
@@ -99,9 +102,10 @@ export async function createTemplate(data: {
       isSystem: data.isSystem ? "yes" : "no",
       useCount: 0,
     })
-    .$returningId();
+    .$returningId() as Promise<{ id: number }[]>;
   
-  const created = await getTemplateById(template.id, data.userId);
+  if (!template || template.length === 0) throw new Error("Failed to create template");
+  const created = await getTemplateById(template[0].id, data.userId);
   if (!created) throw new Error("Failed to create template");
   return created;
 }
@@ -175,7 +179,7 @@ export async function incrementTemplateUse(templateId: number, userId: number): 
     .update(projectTemplates)
     .set({
       useCount: (template.useCount || 0) + 1,
-      lastUsedAt: new Date(),
+      lastUsedAt: new Date().toISOString(),
     })
     .where(eq(projectTemplates.id, templateId));
 }
