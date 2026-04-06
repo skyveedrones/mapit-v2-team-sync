@@ -267,6 +267,13 @@
       "when": 1775436172038,
       "tag": "0037_numerous_carlie_cooper",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "5",
+      "when": 1775485971738,
+      "tag": "0038_nifty_puppet_master",
+      "breakpoints": true
     }
   ]
 }

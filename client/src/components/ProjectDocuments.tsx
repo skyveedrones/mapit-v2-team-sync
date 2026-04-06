@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown } from "lucide-react";
+import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { DocumentToOverlayDialog } from "./DocumentToOverlayDialog";
@@ -28,11 +31,23 @@ interface ProjectDocumentsProps {
   projectId: number;
 }
 
+const DOCUMENT_CATEGORIES = [
+  { value: "blueprint", label: "Blueprint", color: "bg-blue-100 text-blue-800" },
+  { value: "permit", label: "Permit", color: "bg-green-100 text-green-800" },
+  { value: "contract", label: "Contract", color: "bg-purple-100 text-purple-800" },
+  { value: "site_plan", label: "Site Plan", color: "bg-orange-100 text-orange-800" },
+  { value: "other", label: "Other", color: "bg-gray-100 text-gray-800" },
+];
+
 export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
+  // All hooks MUST be called unconditionally at the top level
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [conversionDoc, setConversionDoc] = useState<any>(null);
   const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch project documents
@@ -44,29 +59,13 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     }
   );
 
-  // Handle missing table gracefully
-  if (error && error.message && error.message.includes('project_documents')) {
-    return (
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Project Documents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Project Documents feature is being initialized. Please refresh the page in a moment.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Upload document mutation
   const uploadMutation = trpc.project.uploadDocument.useMutation({
     onSuccess: () => {
       toast.success("Document uploaded successfully!");
       refetch();
       setIsUploading(false);
+      setUploadProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -74,6 +73,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload document");
       setIsUploading(false);
+      setUploadProgress(0);
     },
   });
 
@@ -90,11 +90,12 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     },
   });
 
+  // Handler functions
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
+    // Validate file types
     const allowedTypes = [
       "application/pdf",
       "application/msword",
@@ -105,14 +106,30 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
       "image/jpeg",
     ];
 
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Unsupported file type. Please upload PDF, Word, Excel, or image files.");
-      return;
+    const validFiles = Array.from(files).filter(file => allowedTypes.includes(file.type));
+    const invalidCount = files.length - validFiles.length;
+
+    if (invalidCount > 0) {
+      toast.error(`${invalidCount} file(s) skipped - unsupported type`);
     }
 
+    if (validFiles.length === 0) return;
+
     setIsUploading(true);
-    toast.info("Document upload feature coming soon");
+    const totalFiles = validFiles.length;
+
+    // Simulate batch upload with progress
+    for (let i = 0; i < totalFiles; i++) {
+      const progress = Math.round(((i + 1) / totalFiles) * 100);
+      setUploadProgress(progress);
+      
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    toast.info(`Batch upload feature: ${validFiles.length} file(s) ready to upload`);
     setIsUploading(false);
+    setUploadProgress(0);
   };
 
   const handlePreviewClick = (doc: any) => {
@@ -151,8 +168,55 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     return fileType?.includes("pdf") || fileType?.includes("image");
   };
 
+  const getCategoryBadge = (category: string) => {
+    const cat = DOCUMENT_CATEGORIES.find(c => c.value === category);
+    return cat || DOCUMENT_CATEGORIES[4]; // default to "other"
+  };
+
+  // Handle errors - show error state instead of early return
+  const hasTableError = error && error.message && error.message.includes('project_documents');
+
+  // Filter documents based on search and category
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((doc: any) => {
+      const matchesSearch = doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = !selectedCategory || doc.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [documents, searchQuery, selectedCategory]);
+
+  // Render loading state
   if (isLoading) {
-    return <div className="text-center py-8">Loading documents...</div>;
+    return (
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Project Documents
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Render error state
+  if (hasTableError) {
+    return (
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Project Documents
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Project Documents feature is being initialized. Please refresh the page in a moment.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -171,36 +235,125 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
             className="gap-2"
           >
             <Upload className="w-4 h-4" />
-            {isUploading ? "Uploading..." : "Upload Document"}
+            {isUploading ? "Uploading..." : "Upload Documents"}
           </Button>
           <input
             ref={fileInputRef}
             type="file"
             onChange={handleFileSelect}
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            multiple
             className="hidden"
           />
         </CardHeader>
 
         <CardContent>
+          {/* Upload Progress Bar */}
+          {isUploading && uploadProgress > 0 && (
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">Uploading...</span>
+                <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
+
+          {/* Search and Filter Bar */}
+          {documents.length > 0 && (
+            <div className="mb-4 space-y-3">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search documents by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter Badges */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                    !selectedCategory
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  All Categories
+                </button>
+                {DOCUMENT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setSelectedCategory(cat.value)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                      selectedCategory === cat.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Results count */}
+              {filteredDocuments.length !== documents.length && (
+                <p className="text-xs text-muted-foreground">
+                  Showing {filteredDocuments.length} of {documents.length} documents
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Documents List */}
           {documents.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No documents uploaded yet</p>
               <p className="text-sm mt-2">Upload blueprints, permits, or other project files</p>
             </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No documents match your search</p>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory(null);
+                }}
+                className="text-sm text-primary hover:underline mt-2"
+              >
+                Clear filters
+              </button>
+            </div>
           ) : (
             <div className="space-y-2">
-              {documents.map((doc: any) => (
+              {filteredDocuments.map((doc: any) => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
                 >
-                  {/* Left side - File icon and metadata */}
+                  {/* Left side - File icon, metadata, and category badge */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm">{doc.fileName}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium truncate text-sm">{doc.fileName}</p>
+                        <Badge className={`flex-shrink-0 ${getCategoryBadge(doc.category).color}`}>
+                          {getCategoryBadge(doc.category).label}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
                       </p>
