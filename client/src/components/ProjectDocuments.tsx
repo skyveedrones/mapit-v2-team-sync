@@ -1,8 +1,25 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Download, Trash2, FileText, Upload, MapPin, Eye } from "lucide-react";
+import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { DocumentToOverlayDialog } from "./DocumentToOverlayDialog";
@@ -15,6 +32,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [conversionDoc, setConversionDoc] = useState<any>(null);
+  const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch project documents
@@ -63,10 +81,12 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const deleteMutation = trpc.project.deleteDocument.useMutation({
     onSuccess: () => {
       toast.success("Document deleted");
+      setDeleteConfirmDoc(null);
       refetch();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete document");
+      setDeleteConfirmDoc(null);
     },
   });
 
@@ -103,6 +123,16 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     setConversionDoc(doc);
   };
 
+  const handleDeleteClick = (doc: any) => {
+    setDeleteConfirmDoc(doc);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmDoc) {
+      deleteMutation.mutate({ documentId: deleteConfirmDoc.id });
+    }
+  };
+
   const handleConvertSuccess = () => {
     setPreviewDoc(null);
     setConversionDoc(null);
@@ -115,6 +145,10 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     if (fileType?.includes("sheet") || fileType?.includes("excel")) return "📊";
     if (fileType?.includes("image")) return "🖼️";
     return "📎";
+  };
+
+  const isPdfOrImage = (fileType: string) => {
+    return fileType?.includes("pdf") || fileType?.includes("image");
   };
 
   if (isLoading) {
@@ -156,79 +190,74 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
               <p className="text-sm mt-2">Upload blueprints, permits, or other project files</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {documents.map((doc: any) => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
                 >
+                  {/* Left side - File icon and metadata */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-2xl">{getFileIcon(doc.mimeType)}</span>
+                    <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{doc.fileName}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium truncate text-sm">{doc.fileName}</p>
+                      <p className="text-xs text-muted-foreground">
                         {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {doc.mimeType?.includes("pdf") && (
-                      <>
-                        <Button
-                          onClick={() => handlePreviewClick(doc)}
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                        >
-                          <Eye className="w-4 h-4" />
+                  {/* Right side - Document Actions dropdown */}
+                  <div className="flex-shrink-0 ml-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-2">
+                          Document Actions
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {/* Use as Map Overlay - only for PDF and image files */}
+                        {isPdfOrImage(doc.fileType) && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleConvertClick(doc)}>
+                              <MapPin className="h-4 w-4 mr-2" />
+                              Use as Map Overlay
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+
+                        {/* Preview */}
+                        <DropdownMenuItem onClick={() => handlePreviewClick(doc)}>
+                          <Eye className="h-4 w-4 mr-2" />
                           Preview
-                        </Button>
-                        <Button
-                          onClick={() => handleConvertClick(doc)}
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
+                        </DropdownMenuItem>
+
+                        {/* Download */}
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="contents"
                         >
-                          <MapPin className="w-4 h-4" />
-                          To Overlay
-                        </Button>
-                      </>
-                    )}
-                    {!doc.mimeType?.includes("pdf") && (
-                      <Button
-                        onClick={() => handlePreviewClick(doc)}
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Preview
-                      </Button>
-                    )}
-                    <a
-                      href={doc.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex"
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </Button>
-                    </a>
-                    <Button
-                      onClick={() => deleteMutation.mutate({ documentId: doc.id })}
-                      size="sm"
-                      variant="outline"
-                      className="gap-2 text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                          <DropdownMenuItem>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </DropdownMenuItem>
+                        </a>
+
+                        {/* Delete */}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClick(doc)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -236,6 +265,27 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmDoc} onOpenChange={(open) => !open && setDeleteConfirmDoc(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteConfirmDoc?.fileName}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Preview Modal */}
       <DocumentPreviewModal

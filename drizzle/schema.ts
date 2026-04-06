@@ -206,23 +206,6 @@ export const projectOverlays = mysqlTable("project_overlays", {
 	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
 });
 
-export const projectDocuments = mysqlTable("project_documents", {
-	id: int().autoincrement().notNull(),
-	projectId: int().notNull(),
-	fileName: varchar({ length: 255 }).notNull(),
-	fileUrl: varchar({ length: 512 }).notNull(),
-	fileKey: varchar({ length: 512 }).notNull(),
-	fileType: varchar({ length: 50 }).notNull(),
-	fileSize: int().notNull(),
-	category: mysqlEnum(['blueprint','permit','contract','site_plan','other']).default('other').notNull(),
-	convertedOverlayUrl: varchar({ length: 512 }),
-	linkedOverlayId: int(),
-	description: text(),
-	uploadedBy: int().notNull(),
-	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
-	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
-});
-
 export const projectTemplates = mysqlTable("project_templates", {
 	id: int().autoincrement().notNull(),
 	userId: int().notNull(),
