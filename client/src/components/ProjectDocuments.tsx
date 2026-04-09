@@ -19,56 +19,56 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown, Search, X } from "lucide-react";
+import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown, Search, X, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { DocumentPreviewModal } from "./DocumentPreviewModal";
-import { DocumentToOverlayDialog } from "./DocumentToOverlayDialog";
 
 interface ProjectDocumentsProps {
   projectId: number;
+  mapInstance?: any; // Mapbox GL instance
+  projectCenter?: { lat: number; lng: number };
 }
 
-const DOCUMENT_CATEGORIES = [
-  { value: "blueprint", label: "Blueprint", color: "bg-blue-100 text-blue-800" },
-  { value: "permit", label: "Permit", color: "bg-green-100 text-green-800" },
-  { value: "contract", label: "Contract", color: "bg-purple-100 text-purple-800" },
-  { value: "site_plan", label: "Site Plan", color: "bg-orange-100 text-orange-800" },
-  { value: "other", label: "Other", color: "bg-gray-100 text-gray-800" },
-];
+interface DocumentRecord {
+  id: number;
+  projectId: number;
+  fileName: string;
+  fileKey: string;
+  fileType: string;
+  status: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
-  // All hooks MUST be called unconditionally at the top level
+export function ProjectDocuments({ projectId, mapInstance, projectCenter }: ProjectDocumentsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [previewDoc, setPreviewDoc] = useState<any>(null);
-  const [conversionDoc, setConversionDoc] = useState<any>(null);
-  const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<any>(null);
+  const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<DocumentRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRecord | null>(null);
+  const [isProcessingOverlay, setIsProcessingOverlay] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch project documents
-  const { data: documents = [], isLoading, error, refetch } = trpc.project.getDocuments.useQuery(
+  const { data: documents = [], isLoading, refetch } = trpc.project.getDocuments.useQuery(
     { projectId },
-    { 
-      enabled: !!projectId,
-      retry: false
-    }
+    { enabled: !!projectId, retry: false }
   );
 
-  // Upload document mutation
   const uploadMutation = trpc.project.uploadDocument.useMutation({
     onSuccess: () => {
       toast.success("Document uploaded successfully!");
       refetch();
       setIsUploading(false);
       setUploadProgress(0);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload document");
@@ -77,7 +77,6 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     },
   });
 
-  // Delete document mutation
   const deleteMutation = trpc.project.deleteDocument.useMutation({
     onSuccess: () => {
       toast.success("Document deleted");
@@ -90,12 +89,10 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     },
   });
 
-  // Handler functions
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Validate file types
     const allowedTypes = [
       "application/pdf",
       "application/msword",
@@ -104,88 +101,155 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "image/png",
       "image/jpeg",
+      "application/octet-stream", // .las/.laz
     ];
 
-    const validFiles = Array.from(files).filter(file => allowedTypes.includes(file.type));
+    const validFiles = Array.from(files).filter(f =>
+      allowedTypes.includes(f.type) ||
+      f.name.endsWith(".las") ||
+      f.name.endsWith(".laz")
+    );
     const invalidCount = files.length - validFiles.length;
-
-    if (invalidCount > 0) {
-      toast.error(`${invalidCount} file(s) skipped - unsupported type`);
-    }
-
+    if (invalidCount > 0) toast.error(`${invalidCount} file(s) skipped - unsupported type`);
     if (validFiles.length === 0) return;
 
     setIsUploading(true);
-    const totalFiles = validFiles.length;
-
-    // Simulate batch upload with progress
-    for (let i = 0; i < totalFiles; i++) {
-      const progress = Math.round(((i + 1) / totalFiles) * 100);
-      setUploadProgress(progress);
-      
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 300));
+    for (let i = 0; i < validFiles.length; i++) {
+      setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
+      const file = validFiles[i];
+      const ext = file.name.split(".").pop() || "bin";
+      const fileKey = `projects/${projectId}/documents/${Date.now()}-${file.name}`;
+      await uploadMutation.mutateAsync({
+        projectId,
+        fileName: file.name,
+        fileKey,
+        fileType: ext,
+      });
     }
 
-    toast.info(`Batch upload feature: ${validFiles.length} file(s) ready to upload`);
     setIsUploading(false);
     setUploadProgress(0);
   };
 
-  const handlePreviewClick = (doc: any) => {
-    setPreviewDoc(doc);
-  };
-
-  const handleConvertClick = (doc: any) => {
-    setConversionDoc(doc);
-  };
-
-  const handleDeleteClick = (doc: any) => {
-    setDeleteConfirmDoc(doc);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deleteConfirmDoc) {
-      deleteMutation.mutate({ documentId: deleteConfirmDoc.id });
-    }
-  };
-
-  const handleConvertSuccess = () => {
-    setPreviewDoc(null);
-    setConversionDoc(null);
-    refetch();
-  };
-
   const getFileIcon = (fileType: string) => {
-    if (fileType?.includes("pdf")) return "📄";
-    if (fileType?.includes("word") || fileType?.includes("document")) return "📝";
-    if (fileType?.includes("sheet") || fileType?.includes("excel")) return "📊";
-    if (fileType?.includes("image")) return "🖼️";
+    if (!fileType) return "📎";
+    const t = fileType.toLowerCase();
+    if (t === "pdf") return "📄";
+    if (t === "doc" || t === "docx") return "📝";
+    if (t === "xls" || t === "xlsx") return "📊";
+    if (t === "png" || t === "jpg" || t === "jpeg") return "🖼️";
+    if (t === "las" || t === "laz") return "🌐";
     return "📎";
   };
 
   const isPdfOrImage = (fileType: string) => {
-    return fileType?.includes("pdf") || fileType?.includes("image");
+    const t = (fileType || "").toLowerCase();
+    return t === "pdf" || t === "png" || t === "jpg" || t === "jpeg";
   };
 
-  const getCategoryBadge = (category: string) => {
-    const cat = DOCUMENT_CATEGORIES.find(c => c.value === category);
-    return cat || DOCUMENT_CATEGORIES[4]; // default to "other"
+  const generateDocumentUrl = (fileKey: string) => {
+    // Generate a signed/public URL for the document from S3
+    // This assumes the storage system provides a way to get URLs from fileKeys
+    return `/api/documents/view?key=${encodeURIComponent(fileKey)}`;
   };
 
-  // Handle errors - show error state instead of early return
-  const hasTableError = error && error.message && error.message.includes('project_documents');
+  const handlePreviewClick = (doc: DocumentRecord) => {
+    if (doc.fileType.toLowerCase() === "pdf") {
+      setPreviewDoc(doc);
+    } else {
+      toast.info("Preview is available for PDF files only");
+    }
+  };
 
-  // Filter documents based on search and category
+  const convertMutation = trpc.project.convertDocumentToPng.useMutation();
+
+  const handleMapOverlayClick = async (doc: DocumentRecord) => {
+    if (!mapInstance) {
+      toast.error("Map is not available");
+      return;
+    }
+
+    if (!isPdfOrImage(doc.fileType)) {
+      toast.error("Map overlay is only available for PDF and image files");
+      return;
+    }
+
+    setIsProcessingOverlay(true);
+    toast.loading("Processing overlay...");
+
+    try {
+      // Call backend to convert PDF to PNG
+      const result = await convertMutation.mutateAsync({
+        fileKey: doc.fileKey,
+        fileName: doc.fileName,
+      });
+
+      const { imageUrl } = result;
+
+      // Calculate bounding box from project center
+      const center = projectCenter || { lat: 32.7767, lng: -96.797 }; // Dallas default
+      const latOffset = 0.01; // ~1km
+      const lngOffset = 0.01;
+
+      const coordinates: [number, number][] = [
+        [center.lng - lngOffset, center.lat + latOffset], // top-left
+        [center.lng + lngOffset, center.lat + latOffset], // top-right
+        [center.lng + lngOffset, center.lat - latOffset], // bottom-right
+        [center.lng - lngOffset, center.lat - latOffset], // bottom-left
+      ];
+
+      // Add image source to map
+      const sourceId = `overlay-${doc.id}`;
+      const layerId = `overlay-layer-${doc.id}`;
+
+      // Remove existing source/layer if present
+      if (mapInstance.getSource(sourceId)) {
+        mapInstance.removeLayer(layerId);
+        mapInstance.removeSource(sourceId);
+      }
+
+      mapInstance.addSource(sourceId, {
+        type: "image",
+        url: imageUrl,
+        coordinates: coordinates,
+      });
+
+      mapInstance.addLayer(
+        {
+          id: layerId,
+          type: "raster",
+          source: sourceId,
+          paint: {
+            "raster-opacity": 0.7,
+          },
+        },
+        "water" // Insert before water layer for proper layering
+      );
+
+      toast.dismiss();
+      toast.success(`Overlay "${doc.fileName}" added to map`);
+      setIsProcessingOverlay(false);
+    } catch (error: any) {
+      toast.dismiss();
+      const errorMsg = error?.message || error?.toString?.() || "Failed to add overlay to map";
+      toast.error(errorMsg);
+      setIsProcessingOverlay(false);
+    }
+  };
+
   const filteredDocuments = useMemo(() => {
-    return documents.filter((doc: any) => {
-      const matchesSearch = doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = !selectedCategory || doc.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [documents, searchQuery, selectedCategory]);
+    return (documents as DocumentRecord[]).filter(doc =>
+      doc.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [documents, searchQuery]);
 
-  // Render loading state
+  const getStatusBadge = (status: string | null) => {
+    if (!status || status === "uploaded") return { label: "Uploaded", color: "bg-blue-100 text-blue-800" };
+    if (status === "processing") return { label: "Processing", color: "bg-yellow-100 text-yellow-800" };
+    if (status === "processed") return { label: "Processed", color: "bg-green-100 text-green-800" };
+    return { label: status, color: "bg-gray-100 text-gray-800" };
+  };
+
   if (isLoading) {
     return (
       <Card className="mt-8">
@@ -197,23 +261,6 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Render error state
-  if (hasTableError) {
-    return (
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Project Documents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Project Documents feature is being initialized. Please refresh the page in a moment.</p>
         </CardContent>
       </Card>
     );
@@ -241,14 +288,13 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
             ref={fileInputRef}
             type="file"
             onChange={handleFileSelect}
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.las,.laz"
             multiple
             className="hidden"
           />
         </CardHeader>
 
         <CardContent>
-          {/* Upload Progress Bar */}
           {isUploading && uploadProgress > 0 && (
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
@@ -259,10 +305,8 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
             </div>
           )}
 
-          {/* Search and Filter Bar */}
           {documents.length > 0 && (
-            <div className="mb-4 space-y-3">
-              {/* Search Input */}
+            <div className="mb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -280,144 +324,128 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
                   </button>
                 )}
               </div>
-
-              {/* Category Filter Badges */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                    !selectedCategory
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  All Categories
-                </button>
-                {DOCUMENT_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => setSelectedCategory(cat.value)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      selectedCategory === cat.value
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Results count */}
               {filteredDocuments.length !== documents.length && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-2">
                   Showing {filteredDocuments.length} of {documents.length} documents
                 </p>
               )}
             </div>
           )}
 
-          {/* Documents List */}
           {documents.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No documents uploaded yet</p>
-              <p className="text-sm mt-2">Upload blueprints, permits, or other project files</p>
+              <p className="text-sm mt-2">Upload blueprints, permits, point clouds, or other project files</p>
             </div>
           ) : filteredDocuments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No documents match your search</p>
               <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory(null);
-                }}
+                onClick={() => setSearchQuery("")}
                 className="text-sm text-primary hover:underline mt-2"
               >
-                Clear filters
+                Clear search
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredDocuments.map((doc: any) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
-                >
-                  {/* Left side - File icon, metadata, and category badge */}
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium truncate text-sm">{doc.fileName}</p>
-                        <Badge className={`flex-shrink-0 ${getCategoryBadge(doc.category).color}`}>
-                          {getCategoryBadge(doc.category).label}
-                        </Badge>
+              {filteredDocuments.map((doc) => {
+                const statusBadge = getStatusBadge(doc.status);
+                return (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium truncate text-sm">{doc.fileName}</p>
+                          <Badge className={`flex-shrink-0 text-xs ${statusBadge.color}`}>
+                            {statusBadge.label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground uppercase">{doc.fileType}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
-                      </p>
                     </div>
-                  </div>
 
-                  {/* Right side - Document Actions dropdown */}
-                  <div className="flex-shrink-0 ml-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="outline" className="gap-2">
-                          Document Actions
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {/* Use as Map Overlay - only for PDF and image files */}
-                        {isPdfOrImage(doc.fileType) && (
-                          <>
-                            <DropdownMenuItem onClick={() => handleConvertClick(doc)}>
-                              <MapPin className="h-4 w-4 mr-2" />
-                              Use as Map Overlay
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-
-                        {/* Preview */}
-                        <DropdownMenuItem onClick={() => handlePreviewClick(doc)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
-                        </DropdownMenuItem>
-
-                        {/* Download */}
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="contents"
-                        >
-                          <DropdownMenuItem>
+                    <div className="flex-shrink-0 ml-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="gap-2" disabled={isProcessingOverlay}>
+                            Document Actions
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {isPdfOrImage(doc.fileType) && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleMapOverlayClick(doc)}
+                                disabled={isProcessingOverlay}
+                              >
+                                {isProcessingOverlay ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <MapPin className="h-4 w-4 mr-2" />
+                                    Use as Map Overlay
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem onClick={() => handlePreviewClick(doc)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Preview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toast.info("Download coming soon")}>
                             <Download className="h-4 w-4 mr-2" />
                             Download
                           </DropdownMenuItem>
-                        </a>
-
-                        {/* Delete */}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick(doc)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeleteConfirmDoc(doc)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* PDF Preview Modal */}
+      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="px-6 pt-4 pb-2">
+            <DialogTitle>{previewDoc?.fileName}</DialogTitle>
+          </DialogHeader>
+          {previewDoc && (
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={generateDocumentUrl(previewDoc.fileKey)}
+                width="100%"
+                height="600px"
+                className="border-0"
+                title={previewDoc.fileName}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteConfirmDoc} onOpenChange={(open) => !open && setDeleteConfirmDoc(null)}>
@@ -431,7 +459,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
+              onClick={() => deleteConfirmDoc && deleteMutation.mutate({ documentId: deleteConfirmDoc.id })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
@@ -439,23 +467,6 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Preview Modal */}
-      <DocumentPreviewModal
-        document={previewDoc}
-        isOpen={!!previewDoc}
-        onClose={() => setPreviewDoc(null)}
-        onConvertToOverlay={handleConvertClick}
-      />
-
-      {/* Conversion Dialog */}
-      <DocumentToOverlayDialog
-        document={conversionDoc}
-        projectId={projectId}
-        isOpen={!!conversionDoc}
-        onClose={() => setConversionDoc(null)}
-        onSuccess={handleConvertSuccess}
-      />
     </>
   );
 }

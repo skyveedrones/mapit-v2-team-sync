@@ -1095,13 +1095,19 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
         }
 
-        const docs = await db.select().from(projectDocuments).where(eq(projectDocuments.projectId, input.projectId)).orderBy(desc(projectDocuments.createdAt));
-        return docs;
+        try {
+          const docs = await db.select().from(projectDocuments).where(eq(projectDocuments.projectId, input.projectId)).orderBy(desc(projectDocuments.createdAt));
+          return docs || [];
+        } catch (error) {
+          console.error('[getDocuments Query Error]', error);
+          // Return empty array on query error
+          return [];
+        }
       }),
 
     // Upload a document
     uploadDocument: protectedProcedure
-      .input(z.object({ projectId: z.number(), fileName: z.string(), fileUrl: z.string(), fileKey: z.string(), fileType: z.string(), fileSize: z.number(), category: z.string() }))
+      .input(z.object({ projectId: z.number(), fileName: z.string(), fileKey: z.string(), fileType: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
@@ -1115,12 +1121,9 @@ export const appRouter = router({
         const result = await db.insert(projectDocuments).values({
           projectId: input.projectId,
           fileName: input.fileName,
-          fileUrl: input.fileUrl,
           fileKey: input.fileKey,
           fileType: input.fileType,
-          fileSize: input.fileSize,
-          category: input.category as any,
-          uploadedBy: ctx.user.id,
+          status: 'uploaded',
         });
 
         return { id: result[0], success: true };
@@ -1144,6 +1147,30 @@ export const appRouter = router({
 
         await db.delete(projectDocuments).where(eq(projectDocuments.id, input.documentId));
         return { success: true };
+      }),
+
+    // Convert document to PNG for map overlay
+    convertDocumentToPng: protectedProcedure
+      .input(z.object({ fileKey: z.string(), fileName: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Import the converter dynamically to avoid circular dependencies
+          const { convertPdfToPng, getImageUrl } = await import('./pdf-converter');
+          
+          // Check if it's already an image
+          const ext = input.fileName.split('.').pop()?.toLowerCase();
+          if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+            const imageUrl = await getImageUrl(input.fileKey);
+            return { imageUrl, success: true };
+          }
+          
+          // Convert PDF to PNG
+          const result = await convertPdfToPng(input.fileKey, input.fileName);
+          return result;
+        } catch (error: any) {
+          console.error('[convertDocumentToPng Error]', error);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Failed to convert document' });
+        }
       }),
   }),
 
