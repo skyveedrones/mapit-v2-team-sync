@@ -136,11 +136,12 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
 export async function storageDownload(relKey: string): Promise<{ buffer: Buffer; contentType: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-  const encoded = encodeKey(key);
 
-  // Step 1: get the presigned download URL
+  // Step 1: get the presigned download URL.
+  // Pass the RAW key to searchParams.set — URLSearchParams encodes it once (spaces → +).
+  // Do NOT pre-encode with encodeKey() as that causes double-encoding (%20 → %2520).
   const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(baseUrl));
-  downloadApiUrl.searchParams.set("path", encoded);
+  downloadApiUrl.searchParams.set("path", key);
   const urlResponse = await fetch(downloadApiUrl, {
     method: "GET",
     headers: buildAuthHeaders(apiKey),
@@ -149,18 +150,14 @@ export async function storageDownload(relKey: string): Promise<{ buffer: Buffer;
     const msg = await urlResponse.text().catch(() => urlResponse.statusText);
     throw new Error(`storageDownload: failed to get download URL (${urlResponse.status}): ${msg}`);
   }
-  const { url: presignedUrl } = await urlResponse.json();
+  const { url: rawPresignedUrl } = await urlResponse.json();
 
-  // Step 2: fetch the actual bytes
+  // Step 2: The proxy may return a CDN URL with literal spaces in the path.
+  // Encode spaces so the HTTP fetch doesn't fail with a malformed URL error.
+  const presignedUrl = rawPresignedUrl.replace(/ /g, '%20');
   let fileResponse = await fetch(presignedUrl);
   if (!fileResponse.ok) {
-    // Fallback: use the storage proxy's direct download endpoint
-    const directUrl = new URL("v1/storage/download", ensureTrailingSlash(baseUrl));
-    directUrl.searchParams.set("path", encoded);
-    fileResponse = await fetch(directUrl, { headers: buildAuthHeaders(apiKey) });
-    if (!fileResponse.ok) {
-      throw new Error(`storageDownload: fetch failed (${fileResponse.status}) for key: ${key}`);
-    }
+    throw new Error(`storageDownload: fetch failed (${fileResponse.status}) for key: ${key}`);
   }
 
   const buffer = Buffer.from(await fileResponse.arrayBuffer());

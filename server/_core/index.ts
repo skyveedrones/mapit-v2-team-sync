@@ -15,6 +15,7 @@ import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimite
 import { sdk } from "./sdk";
 import emailRouter from "../routes/email";
 import overlayUploadRouter from "../routes/overlay-upload";
+import documentUploadRouter from "../routes/document-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
 import createOverlayRouter from "../routes/create-overlay";
 
@@ -52,6 +53,9 @@ async function startServer() {
 
   // Overlay upload route — uses multer for multipart parsing (registered before express.json for safety)
   app.use("/api", overlayUploadRouter);
+  
+  // Document upload route — uploads file bytes to S3 and saves DB record
+  app.use("/api", documentUploadRouter);
   
   // PDF to PNG converter route — uses multer for multipart parsing
   app.use("/api", pdfConverterRouter);

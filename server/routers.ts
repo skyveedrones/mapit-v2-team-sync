@@ -1295,7 +1295,12 @@ export const appRouter = router({
           return { imageUrl: fileUrl, success: true };
         } catch (error: any) {
           console.error('[convertDocumentToPng Error]', error);
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Failed to convert document to overlay' });
+          const msg: string = error.message || '';
+          const isMissingFile = msg.includes('fetch failed (403)') || msg.includes('fetch failed (404)');
+          const userMessage = isMissingFile
+            ? 'This file was not found in storage. Please delete this record and re-upload the document, then try again.'
+            : (msg || 'Failed to convert document to overlay');
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: userMessage });
         }
       }),
   }),

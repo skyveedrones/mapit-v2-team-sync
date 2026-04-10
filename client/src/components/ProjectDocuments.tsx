@@ -115,23 +115,33 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
     if (validFiles.length === 0) return;
 
     setIsUploading(true);
-    for (let i = 0; i < validFiles.length; i++) {
-      setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
-      const file = validFiles[i];
-      const ext = file.name.split(".").pop() || "bin";
-      // Sanitize filename: replace spaces and unsafe chars so the storage proxy never sees a 400
-      const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._\-]/g, '_');
-      const fileKey = `projects/${projectId}/documents/${Date.now()}-${safeFileName}`;
-      await uploadMutation.mutateAsync({
-        projectId,
-        fileName: file.name,
-        fileKey,
-        fileType: ext,
-      });
+    try {
+      for (let i = 0; i < validFiles.length; i++) {
+        setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
+        const file = validFiles[i];
+        // Upload file bytes to S3 via the document upload endpoint (sanitizes key server-side)
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("projectId", String(projectId));
+        const res = await fetch("/api/document/upload", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => res.statusText);
+          throw new Error(`Upload failed (${res.status}): ${text}`);
+        }
+      }
+      toast.success(validFiles.length === 1 ? "Document uploaded successfully!" : `${validFiles.length} documents uploaded!`);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload document");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-
-    setIsUploading(false);
-    setUploadProgress(0);
   };
 
   const getFileIcon = (fileType: string) => {
