@@ -112,7 +112,7 @@ import {
   countAuditLog,
 } from "./db";
 import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageDownload } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
@@ -1173,21 +1173,14 @@ export const appRouter = router({
           let uploadExt: string;
 
           if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
-            // Already an image — fetch from S3 directly
-            const { url: fileUrl } = await storageGet(input.fileKey);
-            const response = await fetch(fileUrl);
-            if (!response.ok) throw new Error(`Failed to fetch file from storage: ${response.status}`);
-            const arrayBuffer = await response.arrayBuffer();
-            uploadBuffer = Buffer.from(arrayBuffer);
-            uploadMimetype = ext === 'png' ? 'image/png' : 'image/jpeg';
+            // Already an image — download bytes through authenticated proxy (avoids 403 on CDN)
+            const { buffer, contentType } = await storageDownload(input.fileKey);
+            uploadBuffer = buffer;
+            uploadMimetype = contentType.startsWith('image/') ? contentType : (ext === 'png' ? 'image/png' : 'image/jpeg');
             uploadExt = ext;
           } else if (ext === 'pdf') {
-            // Fetch PDF from S3, convert to PNG using the real pdfToPng pipeline
-            const { url: pdfUrl } = await storageGet(input.fileKey);
-            const response = await fetch(pdfUrl);
-            if (!response.ok) throw new Error(`Failed to fetch PDF from storage: ${response.status}`);
-            const arrayBuffer = await response.arrayBuffer();
-            const pdfBuffer = Buffer.from(arrayBuffer);
+            // Download PDF bytes through authenticated proxy (avoids 403 on CDN)
+            const { buffer: pdfBuffer } = await storageDownload(input.fileKey);
 
             // Use the same converter as overlay-upload route (pdftoppm → pdf-to-png-converter fallback)
             const { execFile } = await import('child_process');
