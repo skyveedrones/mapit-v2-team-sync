@@ -33,8 +33,9 @@ import { trpc } from "@/lib/trpc";
 
 interface ProjectDocumentsProps {
   projectId: number;
-  mapInstance?: any; // Mapbox GL instance
+  mapInstance?: any; // Mapbox GL instance (unused — overlay pipeline now goes through DB)
   projectCenter?: { lat: number; lng: number };
+  onOverlayAdded?: () => void; // Called after a doc is successfully converted and saved as overlay
 }
 
 interface DocumentRecord {
@@ -48,7 +49,7 @@ interface DocumentRecord {
   updatedAt: string;
 }
 
-export function ProjectDocuments({ projectId, mapInstance, projectCenter }: ProjectDocumentsProps) {
+export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOverlayAdded }: ProjectDocumentsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<DocumentRecord | null>(null);
@@ -164,75 +165,31 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter }: Proj
   const convertMutation = trpc.project.convertDocumentToPng.useMutation();
 
   const handleMapOverlayClick = async (doc: DocumentRecord) => {
-    if (!mapInstance) {
-      toast.error("Map is not available");
-      return;
-    }
-
     if (!isPdfOrImage(doc.fileType)) {
       toast.error("Map overlay is only available for PDF and image files");
       return;
     }
 
     setIsProcessingOverlay(true);
-    toast.loading("Processing overlay...");
+    const toastId = "overlay-processing";
+    toast.loading("Converting and adding to map...", { id: toastId });
 
     try {
-      // Call backend to convert PDF to PNG
-      const result = await convertMutation.mutateAsync({
+      // Convert PDF/image to PNG and save as a project_overlays row.
+      // The map will pick it up automatically when the project query is refetched.
+      await convertMutation.mutateAsync({
         fileKey: doc.fileKey,
         fileName: doc.fileName,
+        projectId,
       });
 
-      const { imageUrl } = result;
-
-      // Calculate bounding box from project center
-      const center = projectCenter || { lat: 32.7767, lng: -96.797 }; // Dallas default
-      const latOffset = 0.01; // ~1km
-      const lngOffset = 0.01;
-
-      const coordinates: [number, number][] = [
-        [center.lng - lngOffset, center.lat + latOffset], // top-left
-        [center.lng + lngOffset, center.lat + latOffset], // top-right
-        [center.lng + lngOffset, center.lat - latOffset], // bottom-right
-        [center.lng - lngOffset, center.lat - latOffset], // bottom-left
-      ];
-
-      // Add image source to map
-      const sourceId = `overlay-${doc.id}`;
-      const layerId = `overlay-layer-${doc.id}`;
-
-      // Remove existing source/layer if present
-      if (mapInstance.getSource(sourceId)) {
-        mapInstance.removeLayer(layerId);
-        mapInstance.removeSource(sourceId);
-      }
-
-      mapInstance.addSource(sourceId, {
-        type: "image",
-        url: imageUrl,
-        coordinates: coordinates,
-      });
-
-      mapInstance.addLayer(
-        {
-          id: layerId,
-          type: "raster",
-          source: sourceId,
-          paint: {
-            "raster-opacity": 0.7,
-          },
-        },
-        "water" // Insert before water layer for proper layering
-      );
-
-      toast.dismiss();
-      toast.success(`Overlay "${doc.fileName}" added to map`);
-      setIsProcessingOverlay(false);
+      toast.success(`Overlay "${doc.fileName}" added to map. Scroll up to see it.`, { id: toastId });
+      // Trigger project query refetch in the parent so the map receives the new overlay
+      onOverlayAdded?.();
     } catch (error: any) {
-      toast.dismiss();
       const errorMsg = error?.message || error?.toString?.() || "Failed to add overlay to map";
-      toast.error(errorMsg);
+      toast.error(errorMsg, { id: toastId });
+    } finally {
       setIsProcessingOverlay(false);
     }
   };

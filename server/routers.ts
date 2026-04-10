@@ -1153,27 +1153,149 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Convert document to PNG for map overlay
+    // Convert document to PNG and save as map overlay using the existing overlay pipeline
     convertDocumentToPng: protectedProcedure
-      .input(z.object({ fileKey: z.string(), fileName: z.string() }))
+      .input(z.object({ fileKey: z.string(), fileName: z.string(), projectId: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+        // Verify project access
+        const ownedProject = await db.select().from(projects).where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.user.id))).limit(1);
+        if (!ownedProject[0] && ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
+        }
+
         try {
-          // Import the converter dynamically to avoid circular dependencies
-          const { convertPdfToPng, getImageUrl } = await import('./pdf-converter');
-          
-          // Check if it's already an image
           const ext = input.fileName.split('.').pop()?.toLowerCase();
+          let uploadBuffer: Buffer;
+          let uploadMimetype: string;
+          let uploadExt: string;
+
           if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
-            const imageUrl = await getImageUrl(input.fileKey);
-            return { imageUrl, success: true };
+            // Already an image — fetch from S3 directly
+            const { url: fileUrl } = await storageGet(input.fileKey);
+            const response = await fetch(fileUrl);
+            if (!response.ok) throw new Error(`Failed to fetch file from storage: ${response.status}`);
+            const arrayBuffer = await response.arrayBuffer();
+            uploadBuffer = Buffer.from(arrayBuffer);
+            uploadMimetype = ext === 'png' ? 'image/png' : 'image/jpeg';
+            uploadExt = ext;
+          } else if (ext === 'pdf') {
+            // Fetch PDF from S3, convert to PNG using the real pdfToPng pipeline
+            const { url: pdfUrl } = await storageGet(input.fileKey);
+            const response = await fetch(pdfUrl);
+            if (!response.ok) throw new Error(`Failed to fetch PDF from storage: ${response.status}`);
+            const arrayBuffer = await response.arrayBuffer();
+            const pdfBuffer = Buffer.from(arrayBuffer);
+
+            // Use the same converter as overlay-upload route (pdftoppm → pdf-to-png-converter fallback)
+            const { execFile } = await import('child_process');
+            const { promisify } = await import('util');
+            const { mkdtemp, readdir, readFile, rm, writeFile } = await import('fs/promises');
+            const { tmpdir } = await import('os');
+            const { join } = await import('path');
+            const execFileAsync = promisify(execFile);
+
+            let pngBuffer: Buffer | null = null;
+            // Try pdftoppm first
+            try {
+              const tmpDir = await mkdtemp(join(tmpdir(), 'doc-overlay-'));
+              const inputPath = join(tmpDir, 'input.pdf');
+              const outputPrefix = join(tmpDir, 'page');
+              try {
+                await writeFile(inputPath, pdfBuffer);
+                await execFileAsync('pdftoppm', ['-r', '200', '-f', '1', '-l', '1', '-png', inputPath, outputPrefix]);
+                const files = (await readdir(tmpDir)).filter((f: string) => f.endsWith('.png'));
+                if (files.length > 0) {
+                  pngBuffer = await readFile(join(tmpDir, files[0]));
+                }
+              } finally {
+                await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+              }
+            } catch (pdftoppmErr: any) {
+              console.warn('[convertDocumentToPng] pdftoppm failed, trying JS fallback:', pdftoppmErr?.message);
+            }
+
+            // JS fallback
+            if (!pngBuffer) {
+              const { pdfToPng: convert } = await import('pdf-to-png-converter');
+              const arrayBuf = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength);
+              const pages = await convert(arrayBuf as ArrayBuffer, {
+                viewportScale: 2.0,
+                pagesToProcess: [1],
+                disableFontFace: true,
+                verbosityLevel: 0,
+              });
+              if (!pages || pages.length === 0 || !pages[0].content) {
+                throw new Error('PDF conversion produced no output');
+              }
+              pngBuffer = Buffer.from(pages[0].content);
+            }
+
+            uploadBuffer = pngBuffer;
+            uploadMimetype = 'image/png';
+            uploadExt = 'png';
+          } else {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only PDF and image files can be used as overlays' });
           }
-          
-          // Convert PDF to PNG
-          const result = await convertPdfToPng(input.fileKey, input.fileName);
-          return result;
+
+          // Upload converted PNG to S3
+          const storageKey = `overlays/${ctx.user.id}/${input.projectId}/${nanoid(10)}.${uploadExt}`;
+          const { url: fileUrl } = await storagePut(storageKey, uploadBuffer, uploadMimetype);
+
+          // Build default coordinates from project GPS data (reuse same logic as overlay-upload route)
+          const mediaRows = await db.select({ lat: media.latitude, lng: media.longitude }).from(media).where(eq(media.projectId, input.projectId)).limit(200);
+          const valid = mediaRows.filter((r: any) => r.lat != null && r.lng != null);
+          const lats = valid.map((r: any) => parseFloat(String(r.lat))).filter((v: number) => !isNaN(v));
+          const lngs = valid.map((r: any) => parseFloat(String(r.lng))).filter((v: number) => !isNaN(v));
+
+          let coordinates: [[number, number], [number, number], [number, number], [number, number]];
+          if (lats.length > 0 && lngs.length > 0) {
+            const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+            const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+            const latPad = (maxLat - minLat) * 0.10 || 0.0005;
+            const lngPad = (maxLng - minLng) * 0.10 || 0.0005;
+            const cLat = (minLat + maxLat) / 2, cLng = (minLng + maxLng) / 2;
+            const hLat = (maxLat - minLat) / 2 + latPad, hLng = (maxLng - minLng) / 2 + lngPad;
+            coordinates = [[cLng - hLng, cLat + hLat], [cLng + hLng, cLat + hLat], [cLng + hLng, cLat - hLat], [cLng - hLng, cLat - hLat]];
+          } else {
+            // Fallback to project location or Dallas default
+            const [proj] = await db.select({ location: projects.location }).from(projects).where(eq(projects.id, input.projectId)).limit(1);
+            let cLat = 32.7767, cLng = -96.797;
+            if (proj?.location) {
+              try {
+                const { makeRequest } = await import('./_core/map');
+                type GeoResult = { results: Array<{ geometry: { location: { lat: number; lng: number } } }> };
+                const geo = await makeRequest<GeoResult>(`/maps/api/geocode/json?address=${encodeURIComponent(proj.location)}`);
+                const loc = geo?.results?.[0]?.geometry?.location;
+                if (loc?.lat && loc?.lng) { cLat = loc.lat; cLng = loc.lng; }
+              } catch {}
+            }
+            coordinates = [[cLng - 0.0005, cLat + 0.0005], [cLng + 0.0005, cLat + 0.0005], [cLng + 0.0005, cLat - 0.0005], [cLng - 0.0005, cLat - 0.0005]];
+          }
+
+          // Get version number
+          const existingOverlays = await db.select({ id: projectOverlays.id }).from(projectOverlays).where(eq(projectOverlays.projectId, input.projectId));
+          const versionNumber = existingOverlays.length + 1;
+
+          // Insert into project_overlays — the map will pick it up on next project query refetch
+          await db.insert(projectOverlays).values({
+            projectId: input.projectId,
+            fileUrl,
+            opacity: '0.7',
+            coordinates,
+            originalCoordinates: coordinates,
+            isActive: 1,
+            label: `Doc: ${input.fileName.replace(/\.[^.]+$/, '')}`,
+            version_number: versionNumber,
+          } as any);
+
+          console.log(`[convertDocumentToPng] Overlay created for project ${input.projectId}, url: ${fileUrl}`);
+          return { imageUrl: fileUrl, success: true };
         } catch (error: any) {
           console.error('[convertDocumentToPng Error]', error);
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Failed to convert document' });
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Failed to convert document to overlay' });
         }
       }),
   }),

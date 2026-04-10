@@ -2576,3 +2576,11 @@
 - [ ] Task 1: Add phone field to contact forms and email templates
 - [ ] Task 2: Reorganize media into Media Files and Document Files folders with path updates
 - [ ] Task 3: Add image numbering to Mapbox GPS markers to match thumbnail order
+
+## Fix 'Use as Map Overlay' Button
+- [x] Diagnose broken LLM-based convertDocumentToPng procedure
+- [x] Replace with real pdfToPng pipeline (pdftoppm → pdf-to-png-converter fallback)
+- [x] Save converted PNG to S3 and insert row into project_overlays table
+- [x] Add onOverlayAdded callback to ProjectDocuments component
+- [x] Wire onOverlayAdded in ProjectDetail to refetch project query (map auto-updates)
+- [x] TypeScript check passes (0 errors)

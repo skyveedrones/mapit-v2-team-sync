@@ -605,7 +605,16 @@ export default function ProjectDetail() {
 
             {/* Project Documents */}
             <motion.div variants={fadeInUp}>
-              <ProjectDocuments projectId={projectId} />
+              <ProjectDocuments
+                projectId={projectId}
+                onOverlayAdded={() => {
+                  if (isDemoProject) {
+                    demoProjectQuery.refetch();
+                  } else {
+                    normalProjectQuery.refetch();
+                  }
+                }}
+              />
             </motion.div>
 
             {/* Project Metadata */}
