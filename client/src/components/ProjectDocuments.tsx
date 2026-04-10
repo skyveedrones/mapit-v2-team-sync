@@ -119,7 +119,9 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
       setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
       const file = validFiles[i];
       const ext = file.name.split(".").pop() || "bin";
-      const fileKey = `projects/${projectId}/documents/${Date.now()}-${file.name}`;
+      // Sanitize filename: replace spaces and unsafe chars so the storage proxy never sees a 400
+      const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._\-]/g, '_');
+      const fileKey = `projects/${projectId}/documents/${Date.now()}-${safeFileName}`;
       await uploadMutation.mutateAsync({
         projectId,
         fileName: file.name,

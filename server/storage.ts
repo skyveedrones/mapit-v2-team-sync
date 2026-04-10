@@ -18,9 +18,35 @@ function getStorageConfig(): StorageConfig {
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
 }
 
+/** Strip leading slashes */
+function normalizeKey(relKey: string): string {
+  return relKey.replace(/^\/+/, "");
+}
+
+/**
+ * Encode each path segment so spaces and special chars don't cause 400s from the proxy.
+ * Preserves `/` separators.
+ */
+function encodeKey(relKey: string): string {
+  return normalizeKey(relKey)
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/');
+}
+
+/**
+ * Sanitize a filename for use as a storage key segment:
+ * replaces spaces with hyphens and strips characters that are unsafe in S3 keys.
+ */
+export function sanitizeFilename(name: string): string {
+  return name
+    .replace(/\s+/g, '-')          // spaces → hyphens
+    .replace(/[^a-zA-Z0-9._\-]/g, '_'); // everything else unsafe → underscore
+}
+
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
   const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
+  url.searchParams.set("path", encodeKey(relKey));
   return url;
 }
 
@@ -33,20 +59,21 @@ async function buildDownloadUrl(
     "v1/storage/downloadUrl",
     ensureTrailingSlash(baseUrl)
   );
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
+  // Encode each segment so spaces/special chars don't cause 400 from the proxy
+  downloadApiUrl.searchParams.set("path", encodeKey(relKey));
   const response = await fetch(downloadApiUrl, {
     method: "GET",
     headers: buildAuthHeaders(apiKey),
   });
+  if (!response.ok) {
+    const msg = await response.text().catch(() => response.statusText);
+    throw new Error(`buildDownloadUrl: failed (${response.status}): ${msg}`);
+  }
   return (await response.json()).url;
 }
 
 function ensureTrailingSlash(value: string): string {
   return value.endsWith("/") ? value : `${value}/`;
-}
-
-function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
 }
 
 function toFormData(
@@ -103,18 +130,17 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
 
 /**
  * Download file bytes from storage through the authenticated proxy.
- * Use this instead of fetch(storageGet(...).url) to avoid 403 on presigned/CDN URLs.
+ * Use this instead of fetch(storageGet(...).url) to avoid 403/400 on CDN/presigned URLs.
+ * Handles spaces and special characters in file keys automatically.
  */
 export async function storageDownload(relKey: string): Promise<{ buffer: Buffer; contentType: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
-  // normalizeKey strips leading slashes; encodeURIComponent encodes spaces and special chars
-  // that cause 400 Bad Request from the storage proxy
   const key = normalizeKey(relKey);
-  const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+  const encoded = encodeKey(key);
 
   // Step 1: get the presigned download URL
   const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(baseUrl));
-  downloadApiUrl.searchParams.set("path", encodedKey);
+  downloadApiUrl.searchParams.set("path", encoded);
   const urlResponse = await fetch(downloadApiUrl, {
     method: "GET",
     headers: buildAuthHeaders(apiKey),
@@ -130,7 +156,7 @@ export async function storageDownload(relKey: string): Promise<{ buffer: Buffer;
   if (!fileResponse.ok) {
     // Fallback: use the storage proxy's direct download endpoint
     const directUrl = new URL("v1/storage/download", ensureTrailingSlash(baseUrl));
-    directUrl.searchParams.set("path", encodedKey);
+    directUrl.searchParams.set("path", encoded);
     fileResponse = await fetch(directUrl, { headers: buildAuthHeaders(apiKey) });
     if (!fileResponse.ok) {
       throw new Error(`storageDownload: fetch failed (${fileResponse.status}) for key: ${key}`);
@@ -149,22 +175,22 @@ export async function storageGetUploadUrl(
 ): Promise<{ key: string; uploadUrl: string; publicUrl: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-  
+
   // Get presigned upload URL from the storage proxy
   const presignUrl = new URL("v1/storage/presignUpload", ensureTrailingSlash(baseUrl));
-  presignUrl.searchParams.set("path", key);
+  presignUrl.searchParams.set("path", encodeKey(key));
   presignUrl.searchParams.set("contentType", contentType);
-  
+
   const response = await fetch(presignUrl, {
     method: "GET",
     headers: buildAuthHeaders(apiKey),
   });
-  
+
   if (!response.ok) {
     const message = await response.text().catch(() => response.statusText);
     throw new Error(`Failed to get presigned URL (${response.status}): ${message}`);
   }
-  
+
   const result = await response.json();
   return {
     key,
