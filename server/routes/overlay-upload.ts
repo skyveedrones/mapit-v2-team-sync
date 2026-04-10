@@ -17,7 +17,7 @@
 import express, { Router, Request, Response } from "express";
 import multer from "multer";
 import { getDb } from "../db";
-import { projectOverlays, projects, media } from "../../drizzle/schema";
+import { projectOverlays, projectDocuments, projects, media } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
@@ -299,6 +299,24 @@ router.post("/overlay/upload", upload.single("file"), async (req: Request, res: 
       .orderBy(projectOverlays.id)
       .limit(1)
       .offset(versionNumber - 1);
+
+    // ── Also save a record in project_documents so the file appears in the Documents panel ──
+    const safeOriginalName = file.originalname.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._\-]/g, '_');
+    const docFileKey = storageKey; // reuse the same S3 key
+    const docFileType = file.mimetype === 'application/pdf' ? 'pdf' : uploadExt;
+    try {
+      await db.insert(projectDocuments).values({
+        projectId,
+        fileName: safeOriginalName,
+        fileKey: docFileKey,
+        fileType: docFileType,
+        status: 'uploaded',
+      });
+      console.log("[Overlay Upload] Document record saved:", safeOriginalName);
+    } catch (docErr: any) {
+      // Non-fatal: overlay is already saved, just log
+      console.warn("[Overlay Upload] Failed to save document record:", docErr?.message);
+    }
 
     console.log("[Overlay Upload] ✓ Complete — overlay id:", inserted?.id, "url:", fileUrl);
     return res.json({ success: true, overlay: inserted });

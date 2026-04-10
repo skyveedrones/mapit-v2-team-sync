@@ -259,6 +259,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Progress bar animation for overlay upload */
+@keyframes progress {
+  0% { width: 0%; }
+  20% { width: 35%; }
+  50% { width: 60%; }
+  75% { width: 80%; }
+  90% { width: 90%; }
+  100% { width: 95%; }
+}
+
 /* Custom scrollbar - using Forest Green tones */
 ::-webkit-scrollbar {
   width: 8px;

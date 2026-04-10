@@ -192,12 +192,21 @@ export default function ProjectDetail() {
     const formData = new FormData();
     formData.append("file", file);
     setIsUploadingOverlay(true);
-    toast.loading(`Uploading "${file.name}"…`, { id: "overlay-upload" });
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+    const loadingMsg = isPdf
+      ? `Converting PDF "${file.name}" — this may take 10–20 seconds…`
+      : `Uploading "${file.name}"…`;
+    toast.loading(loadingMsg, { id: "overlay-upload" });
     try {
       const result = await uploadProjectOverlay(formData, projectId);
       if (result.success) {
-        toast.success("Overlay uploaded successfully!", { id: "overlay-upload" });
-        window.location.reload();
+        toast.success("Overlay added to map!", { id: "overlay-upload" });
+        // Refetch project data so the map picks up the new overlay without a full reload
+        if (isDemoProject) {
+          demoProjectQuery.refetch();
+        } else {
+          normalProjectQuery.refetch();
+        }
       } else {
         toast.error("Upload completed but returned no data.", { id: "overlay-upload" });
       }
@@ -740,8 +749,16 @@ export default function ProjectDetail() {
               <Layers className="absolute inset-0 m-auto h-7 w-7 text-primary" />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-lg">Uploading Overlay</p>
-              <p className="text-sm text-muted-foreground mt-1">Converting PDF and saving to map…</p>
+              <p className="font-semibold text-lg">Adding Map Overlay</p>
+              <p className="text-sm text-muted-foreground mt-1">PDF files may take 10–20 seconds to render…</p>
+              <p className="text-xs text-muted-foreground/60 mt-2">Please wait, do not close this page</p>
+            </div>
+            {/* Animated progress bar */}
+            <div className="w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full"
+                style={{ animation: 'progress 18s ease-in-out forwards' }}
+              />
             </div>
           </div>
         </div>
