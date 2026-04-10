@@ -107,11 +107,14 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
  */
 export async function storageDownload(relKey: string): Promise<{ buffer: Buffer; contentType: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
+  // normalizeKey strips leading slashes; encodeURIComponent encodes spaces and special chars
+  // that cause 400 Bad Request from the storage proxy
   const key = normalizeKey(relKey);
+  const encodedKey = key.split('/').map(encodeURIComponent).join('/');
 
   // Step 1: get the presigned download URL
   const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(baseUrl));
-  downloadApiUrl.searchParams.set("path", key);
+  downloadApiUrl.searchParams.set("path", encodedKey);
   const urlResponse = await fetch(downloadApiUrl, {
     method: "GET",
     headers: buildAuthHeaders(apiKey),
@@ -127,7 +130,7 @@ export async function storageDownload(relKey: string): Promise<{ buffer: Buffer;
   if (!fileResponse.ok) {
     // Fallback: use the storage proxy's direct download endpoint
     const directUrl = new URL("v1/storage/download", ensureTrailingSlash(baseUrl));
-    directUrl.searchParams.set("path", key);
+    directUrl.searchParams.set("path", encodedKey);
     fileResponse = await fetch(directUrl, { headers: buildAuthHeaders(apiKey) });
     if (!fileResponse.ok) {
       throw new Error(`storageDownload: fetch failed (${fileResponse.status}) for key: ${key}`);
