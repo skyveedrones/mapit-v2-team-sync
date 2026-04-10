@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNull, isNotNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, isNotNull, or, sql, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import type { Pool } from "mysql2/promise";
 import mysql from "mysql2/promise";
@@ -67,6 +67,13 @@ export async function getDb() {
   return _db;
 }
 
+export class EmailConflictError extends Error {
+  constructor(public readonly existingLoginMethod: string) {
+    super(`EMAIL_CONFLICT:${existingLoginMethod}`);
+    this.name = 'EmailConflictError';
+  }
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
@@ -82,6 +89,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     // Check if this is a new user (for welcome email)
     const existingUser = await getUserByOpenId(user.openId);
     const isNewUser = !existingUser;
+
+    // Email conflict check: if a different account already uses this email, block the new signup
+    if (isNewUser && user.email) {
+      const emailOwner = await getUserByEmail(user.email);
+      if (emailOwner && emailOwner.openId !== user.openId) {
+        const method = emailOwner.loginMethod || 'another provider';
+        console.warn(`[Auth] Email conflict: ${user.email} already registered via ${method}`);
+        throw new EmailConflictError(method);
+      }
+    }
 
     const values: InsertUser = {
       openId: user.openId,
@@ -948,7 +965,7 @@ export async function getPendingInvitationsForEmail(email: string) {
 }
 
 /**
- * Get user by email
+ * Get user by email (case-insensitive)
  */
 export async function getUserByEmail(email: string) {
   const db = await getDb();
@@ -959,7 +976,7 @@ export async function getUserByEmail(email: string) {
   const result = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
+    .where(sql`LOWER(${users.email}) = LOWER(${email})`)
     .limit(1);
 
   return result.length > 0 ? result[0] : null;

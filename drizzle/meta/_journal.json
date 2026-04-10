@@ -274,6 +274,13 @@
       "when": 1775485971738,
       "tag": "0038_nifty_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1775853707518,
+      "tag": "0039_milky_shockwave",
+      "breakpoints": true
     }
   ]
 }

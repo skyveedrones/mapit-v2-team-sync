@@ -455,8 +455,15 @@ export const appRouter = router({
       if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can manage users' });
       }
-      const { getOwnerUsers } = await import('./db');
-      return getOwnerUsers(ctx.user.id);
+      try {
+        const { getOwnerUsers } = await import('./db');
+        const result = await getOwnerUsers(ctx.user.id);
+        console.log(`[getOwnerUsers] User ${ctx.user.id}: returned ${result.length} users`);
+        return result;
+      } catch (error) {
+        console.error(`[getOwnerUsers] Error for user ${ctx.user.id}:`, error);
+        throw error;
+      }
     }),
     getUserDetails: protectedProcedure
       .input(z.object({ userId: z.number() }))

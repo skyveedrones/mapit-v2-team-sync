@@ -1,6 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
+import { EmailConflictError } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -62,6 +63,11 @@ export function registerOAuthRoutes(app: Express) {
       const redirectTo = destFromState ?? (dbUser?.role === 'client' ? '/portal' : '/');
       res.redirect(302, redirectTo);
     } catch (error) {
+      if (error instanceof EmailConflictError) {
+        const method = encodeURIComponent(error.existingLoginMethod);
+        res.redirect(302, `/auth-error?reason=email_conflict&method=${method}`);
+        return;
+      }
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
     }

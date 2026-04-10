@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLoginUrl } from "@/const";
 import NotFound from "@/pages/NotFound";
+import AuthError from "@/pages/AuthError";
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -312,6 +313,7 @@ function Router() {
       <Route path="/invite/:token" component={InviteAccept} />
       <Route path="/client-invite/:token" component={ClientInviteAccept} />
       
+      <Route path="/auth-error" component={AuthError} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

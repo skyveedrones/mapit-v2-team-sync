@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, int, varchar, text, timestamp, mysqlEnum, decimal, json, tinyint } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, uniqueIndex, int, varchar, text, timestamp, mysqlEnum, decimal, json, tinyint } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 export const auditLog = mysqlTable("audit_log", {
@@ -308,8 +308,9 @@ export const users = mysqlTable("users", {
 	orgRole: mysqlEnum(['PROVIDER','ORG_ADMIN','ORG_USER']).default('ORG_USER'),
 },
 (table) => [
-	index("users_openId_unique").on(table.openId),
-]);
+		index("users_openId_unique").on(table.openId),
+		uniqueIndex("users_email_unique").on(table.email),
+	]);
 
 export const warrantyReminders = mysqlTable("warranty_reminders", {
 	id: int().autoincrement().notNull(),
