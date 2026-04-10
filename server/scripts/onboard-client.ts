@@ -200,7 +200,7 @@ export async function onboardClient(args: {
     name: args.userName,
     email: args.userEmail,
     loginMethod: "invite",
-    lastSignedIn: new Date(),
+    lastSignedIn: new Date().toISOString(),
     // 'client' is now a valid enum value in drizzle/schema.ts.
     // A DB migration (ALTER TABLE users MODIFY COLUMN role ENUM(...,'client'))
     // must be applied to the live database before this takes effect.

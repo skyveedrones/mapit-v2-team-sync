@@ -83,11 +83,8 @@ export function DocumentToOverlayDialog({
         await uploadMutation.mutateAsync({
           projectId,
           fileName: document.fileName.replace(/\.pdf$/i, ".png"),
-          fileUrl: data.overlayUrl,
           fileKey: data.overlayKey,
           fileType: "image/png",
-          fileSize: 0,
-          category: "converted_overlay",
         });
       } catch (error) {
         console.warn("Warning: Overlay created but document not saved to project documents", error);

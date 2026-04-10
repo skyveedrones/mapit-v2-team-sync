@@ -238,10 +238,10 @@ export default function Dashboard() {
       utils.project.list.setData(undefined, (old) =>
         old
           ? old
-              .map((p) => (p.id === id ? { ...p, isPinned } : p))
+              .map((p) => (p.id === id ? { ...p, isPinned: isPinned ? 1 : 0 } : p))
               .sort((a, b) => {
-                const aPin = a.id === id ? isPinned : a.isPinned;
-                const bPin = b.id === id ? isPinned : b.isPinned;
+                const aPin = a.id === id ? (isPinned ? 1 : 0) : a.isPinned;
+                const bPin = b.id === id ? (isPinned ? 1 : 0) : b.isPinned;
                 if (aPin && !bPin) return -1;
                 if (!aPin && bPin) return 1;
                 return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();

@@ -160,7 +160,7 @@ export async function updateMediaWithProcessingResults(
       highResKey: processingResults.highResKey,
       highResFileSize: processingResults.highResFileSize,
       isHighResolution: 1,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 }

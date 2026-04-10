@@ -325,3 +325,50 @@ export const warrantyReminders = mysqlTable("warranty_reminders", {
 	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
 	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
 });
+
+// ─── Inferred Type Exports ───────────────────────────────────────────────────
+// Allow components to import types: import type { Project } from '../../../drizzle/schema'
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
+export type Project = InferSelectModel<typeof projects>;
+export type NewProject = InferInsertModel<typeof projects>;
+
+export type Media = InferSelectModel<typeof media>;
+export type NewMedia = InferInsertModel<typeof media>;
+
+export type Flight = InferSelectModel<typeof flights>;
+export type NewFlight = InferInsertModel<typeof flights>;
+
+export type ProjectOverlay = InferSelectModel<typeof projectOverlays>;
+export type NewProjectOverlay = InferInsertModel<typeof projectOverlays>;
+
+export type ProjectDocument = InferSelectModel<typeof projectDocuments>;
+export type NewProjectDocument = InferInsertModel<typeof projectDocuments>;
+
+export type ProjectTemplate = InferSelectModel<typeof projectTemplates>;
+export type NewProjectTemplate = InferInsertModel<typeof projectTemplates>;
+
+export type Client = InferSelectModel<typeof clients>;
+export type NewClient = InferInsertModel<typeof clients>;
+
+export type Organization = InferSelectModel<typeof organizations>;
+export type NewOrganization = InferInsertModel<typeof organizations>;
+
+export type Referral = InferSelectModel<typeof referrals>;
+export type WarrantyReminder = InferSelectModel<typeof warrantyReminders>;
+
+// Legacy Insert* aliases for backward compatibility with server/db.ts
+export type InsertFlight = InferInsertModel<typeof flights>;
+export type InsertMedia = InferInsertModel<typeof media>;
+export type InsertProject = InferInsertModel<typeof projects>;
+export type InsertProjectCollaborator = InferInsertModel<typeof projectCollaborators>;
+export type InsertProjectInvitation = InferInsertModel<typeof projectInvitations>;
+export type InsertUser = InferInsertModel<typeof users>;
+export type InsertWarrantyReminder = InferInsertModel<typeof warrantyReminders>;
+export type InsertClient = InferInsertModel<typeof clients>;
+export type InsertClientUser = InferInsertModel<typeof clientUsers>;
+export type InsertClientInvitation = InferInsertModel<typeof clientInvitations>;
+export type InsertClientProjectAssignment = InferInsertModel<typeof clientProjectAssignments>;

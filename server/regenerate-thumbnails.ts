@@ -76,7 +76,7 @@ export async function regenerateMissingThumbnails(projectId?: number) {
         .update(media)
         .set({
           thumbnailUrl: thumbResult.url,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
         })
         .where(eq(media.id, mediaItem.id));
       

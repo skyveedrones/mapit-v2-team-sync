@@ -35,9 +35,9 @@ interface Flight {
   projectId: number;
   name: string;
   description: string | null;
-  flightDate: Date | null;
+  flightDate: string | null;
   mediaCount: number;
-  createdAt: Date;
+  createdAt: string;
 }
 
 interface FlightCardProps {

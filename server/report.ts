@@ -277,11 +277,11 @@ export function generateReportHtml(
   project: Project,
   mediaImages: { filename: string; dataUrl: string; media: Media }[],
   mapImageDataUrl: string | null,
-  generatedAt: Date,
+  generatedAt: Date | string,
   userLogoUrl?: string,
   skyVeeLogoDataUrl?: string
 ): string {
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",

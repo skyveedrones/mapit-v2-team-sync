@@ -67,7 +67,7 @@ export async function updateMediaHighRes(
       thumbnailWidth: data.thumbnailWidth,
       thumbnailHeight: data.thumbnailHeight,
       isHighResolution: 1,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 }

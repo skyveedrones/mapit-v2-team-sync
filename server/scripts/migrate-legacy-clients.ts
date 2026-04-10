@@ -288,14 +288,15 @@ async function runMigration(opts: {
           logoUrl: null,
           logoKey: null,
           projectCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           deletedAt: null,
           deletedBy: null,
         };
       }
     }
 
+    if (!clientRecord) continue;
     // ── 3b. Link each project to the client ───────────────────────────────
     for (const project of groupProjects) {
       const action: MigrationAction = {

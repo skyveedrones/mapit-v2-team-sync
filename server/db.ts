@@ -115,11 +115,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
 
     if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
+      values.lastSignedIn = new Date().toISOString();
     }
 
     if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
+      updateSet.lastSignedIn = new Date().toISOString();
     }
 
     await db.insert(users).values(values).onDuplicateKeyUpdate({
@@ -459,7 +459,7 @@ export async function updateMediaGPS(
       latitude: gpsData.latitude,
       longitude: gpsData.longitude,
       altitude: gpsData.altitude,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 
@@ -491,7 +491,7 @@ export async function updateMediaUrls(
   const updateData: Record<string, unknown> = {
     url: urls.url,
     fileKey: urls.fileKey,
-    updatedAt: new Date(),
+    updatedAt: new Date().toISOString(),
   };
 
   if (urls.thumbnailUrl !== undefined) {
@@ -846,7 +846,7 @@ export async function acceptProjectInvitation(token: string, userId: number) {
     return { success: false, error: `Invitation has already been ${invitation.status}` };
   }
 
-  if (new Date() > invitation.expiresAt) {
+  if (new Date().toISOString() > invitation.expiresAt) {
     // Update status to expired
     await db
       .update(projectInvitations)
@@ -865,7 +865,7 @@ export async function acceptProjectInvitation(token: string, userId: number) {
   // Update invitation status
   await db
     .update(projectInvitations)
-    .set({ status: 'accepted', acceptedAt: new Date() })
+    .set({ status: 'accepted', acceptedAt: new Date().toISOString() })
     .where(eq(projectInvitations.id, invitation.id));
 
   return { success: true, invitation };
@@ -944,7 +944,7 @@ export async function getPendingInvitationsForEmail(email: string) {
     ));
 
   // Filter out expired ones
-  return invitations.filter(inv => inv.expiresAt > now);
+  return invitations.filter(inv => inv.expiresAt > now.toISOString());
 }
 
 /**
@@ -1453,7 +1453,7 @@ export async function createWarrantyReminder(reminder: InsertWarrantyReminder) {
     throw new Error("Database not available");
   }
 
-  const [result] = await db.insert(warrantyReminders).values(reminder).$returningId();
+  const [result] = (await db.insert(warrantyReminders).values(reminder).$returningId()) as unknown as { id: number }[];
   return result.id;
 }
 
@@ -1480,8 +1480,8 @@ export async function updateWarrantyReminder(
     emailSubject: string | null;
     emailMessage: string | null;
     enabled: "yes" | "no";
-    nextReminderDate: Date | null;
-    lastSentAt: Date | null;
+    nextReminderDate: string | null;
+    lastSentAt: string | null;
   }>
 ) {
   const db = await getDb();
@@ -1547,8 +1547,8 @@ export async function getDueWarrantyReminders() {
 export async function updateProjectWarranty(
   projectId: number,
   userId: number,
-  warrantyStartDate: Date | null,
-  warrantyEndDate: Date | null
+  warrantyStartDate: Date | string | null,
+  warrantyEndDate: Date | string | null
 ) {
   const db = await getDb();
   if (!db) {
@@ -1558,8 +1558,8 @@ export async function updateProjectWarranty(
   await db
     .update(projects)
     .set({
-      warrantyStartDate,
-      warrantyEndDate,
+      warrantyStartDate: warrantyStartDate instanceof Date ? warrantyStartDate.toISOString() : warrantyStartDate,
+      warrantyEndDate: warrantyEndDate instanceof Date ? warrantyEndDate.toISOString() : warrantyEndDate,
     })
     .where(
       and(
@@ -1997,7 +1997,7 @@ export async function acceptClientInvitation(token: string, userId: number) {
     return { success: false, error: "Invitation is no longer valid" };
   }
 
-  if (new Date() > invitation.expiresAt) {
+  if (new Date().toISOString() > invitation.expiresAt) {
     await db
       .update(clientInvitations)
       .set({ status: "expired" })
@@ -2015,7 +2015,7 @@ export async function acceptClientInvitation(token: string, userId: number) {
   // Update invitation status
   await db
     .update(clientInvitations)
-    .set({ status: "accepted", acceptedAt: new Date() })
+    .set({ status: "accepted", acceptedAt: new Date().toISOString() })
     .where(eq(clientInvitations.id, invitation.id));
 
   return { success: true, client };
@@ -2255,7 +2255,7 @@ export async function updateMediaNotes(
     .update(media)
     .set({
       notes: notes,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 
@@ -2284,7 +2284,7 @@ export async function updateMediaPriority(
     .update(media)
     .set({
       priority: priority,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 
@@ -2313,7 +2313,7 @@ export async function updateMediaFilename(
     .update(media)
     .set({
       filename: filename,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(media.id, mediaId));
 
@@ -2433,7 +2433,7 @@ export async function assignProjectToUser(
     assignment: {
       id: result[0]?.insertId ? Number(result[0].insertId) : 0,
       ...newAssignment,
-      assignedAt: new Date(),
+      assignedAt: new Date().toISOString(),
     },
   };
 }
@@ -2923,7 +2923,7 @@ export async function updateUserSubscription(
 
   const updateData: Record<string, any> = {
     subscriptionTier: data.subscriptionTier,
-    updatedAt: new Date(),
+    updatedAt: new Date().toISOString(),
   };
 
   if (data.stripeCustomerId) updateData.stripeCustomerId = data.stripeCustomerId;
@@ -2986,7 +2986,7 @@ export async function downgradeToFreeTier(userId: number) {
       currentPeriodStart: null,
       currentPeriodEnd: null,
       cancelAtPeriodEnd: "no",
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     })
     .where(eq(users.id, userId));
 }
@@ -3099,19 +3099,19 @@ export async function softDeleteProject(projectId: number, userId: number, delet
   // Soft-delete all media in this project
   await db
     .update(media)
-    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .set({ deletedAt: now.toISOString(), deletedBy: deletedByUserId })
     .where(and(eq(media.projectId, projectId), isNull(media.deletedAt)));
 
   // Soft-delete all flights in this project
   await db
     .update(flights)
-    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .set({ deletedAt: now.toISOString(), deletedBy: deletedByUserId })
     .where(and(eq(flights.projectId, projectId), isNull(flights.deletedAt)));
 
   // Soft-delete the project
   await db
     .update(projects)
-    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .set({ deletedAt: now.toISOString(), deletedBy: deletedByUserId })
     .where(eq(projects.id, projectId));
 
   return true;
@@ -3129,7 +3129,7 @@ export async function softDeleteMedia(mediaId: number, userId: number, deletedBy
 
   await db
     .update(media)
-    .set({ deletedAt: new Date(), deletedBy: deletedByUserId })
+    .set({ deletedAt: new Date().toISOString(), deletedBy: deletedByUserId })
     .where(eq(media.id, mediaId));
 
   // Decrement the project's media count
@@ -3153,13 +3153,13 @@ export async function softDeleteFlight(flightId: number, userId: number, deleted
   // Soft-delete all media in this flight
   await db
     .update(media)
-    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .set({ deletedAt: now.toISOString(), deletedBy: deletedByUserId })
     .where(and(eq(media.flightId, flightId), isNull(media.deletedAt)));
 
   // Soft-delete the flight
   await db
     .update(flights)
-    .set({ deletedAt: now, deletedBy: deletedByUserId })
+    .set({ deletedAt: now.toISOString(), deletedBy: deletedByUserId })
     .where(eq(flights.id, flightId));
 
   return existing;
@@ -3177,7 +3177,7 @@ export async function softDeleteClient(clientId: number, ownerId: number, delete
 
   await db
     .update(clients)
-    .set({ deletedAt: new Date(), deletedBy: deletedByUserId })
+    .set({ deletedAt: new Date().toISOString(), deletedBy: deletedByUserId })
     .where(eq(clients.id, clientId));
 
   return true;

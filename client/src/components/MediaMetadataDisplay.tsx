@@ -18,7 +18,7 @@ interface MediaMetadataDisplayProps {
   latitude?: number | null;
   longitude?: number | null;
   altitude?: number | null;
-  capturedAt?: Date | null;
+  capturedAt?: Date | string | null;
   cameraMake?: string | null;
   cameraModel?: string | null;
   fileSize?: number;

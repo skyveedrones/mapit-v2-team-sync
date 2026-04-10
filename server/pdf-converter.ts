@@ -1,5 +1,5 @@
 import { storagePut, storageGet } from "./storage";
-import { invokeLLM } from "./server/_core/llm";
+import { invokeLLM } from "./_core/llm";
 
 /**
  * Convert PDF to PNG using PDF rendering service
@@ -57,7 +57,8 @@ export async function convertPdfToPng(
       },
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const content = response.choices[0].message.content;
+    const result = JSON.parse((typeof content === "string" ? content : JSON.stringify(content)) || "{}");
     return result;
   } catch (error) {
     console.error("[PDF Converter Error]", error);

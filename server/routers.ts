@@ -147,7 +147,7 @@ async function extractExifData(buffer: Buffer): Promise<{
   latitude: number | null;
   longitude: number | null;
   altitude: number | null;
-  capturedAt: Date | null;
+  capturedAt: string | null;
   cameraMake: string | null;
   cameraModel: string | null;
 }> {
@@ -158,7 +158,7 @@ async function extractExifData(buffer: Buffer): Promise<{
       latitude: metadata.gpsLatitude ?? null,
       longitude: metadata.gpsLongitude ?? null,
       altitude: metadata.gpsAltitude ?? null,
-      capturedAt: metadata.dateTime ?? null,
+      capturedAt: metadata.dateTime ? metadata.dateTime.toISOString() : null,
       cameraMake: metadata.make ?? null,
       cameraModel: metadata.model ?? null,
     };
@@ -207,7 +207,7 @@ type MediaWithGPS = {
   latitude: string | null;
   longitude: string | null;
   altitude: string | null;
-  capturedAt: Date | null;
+  capturedAt: string | null;
   mediaType: string;
   url: string;
 };
@@ -831,7 +831,7 @@ export const appRouter = router({
         if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
         await db
           .update(projects)
-          .set({ isPinned: input.isPinned })
+          .set({ isPinned: input.isPinned ? 1 : 0 })
           .where(eq(projects.id, input.id));
         return { id: input.id, isPinned: input.isPinned };
       }),
@@ -935,7 +935,7 @@ export const appRouter = router({
           description: input.description ?? null,
           location: input.location ?? null,
           clientName: input.clientName ?? null,
-          flightDate: input.flightDate ?? null,
+          flightDate: input.flightDate ? (input.flightDate instanceof Date ? input.flightDate.toISOString() : String(input.flightDate)) : null,
         });
         return project;
       }),
@@ -944,7 +944,11 @@ export const appRouter = router({
     update: protectedProcedure
       .input(updateProjectSchema)
       .mutation(async ({ ctx, input }) => {
-        const { id, ...updates } = input;
+        const { id, flightDate, ...restUpdates } = input;
+        const updates = {
+          ...restUpdates,
+          ...(flightDate !== undefined ? { flightDate: flightDate ? (flightDate instanceof Date ? flightDate.toISOString() : String(flightDate)) : null } : {}),
+        };
         const project = await updateProject(id, ctx.user.id, updates);
         if (!project) {
           throw new TRPCError({
@@ -1429,7 +1433,7 @@ export const appRouter = router({
           latitude: input.latitude != null ? String(input.latitude) : null,
           longitude: input.longitude != null ? String(input.longitude) : null,
           altitude: input.altitude != null ? String(input.altitude) : null,
-          capturedAt: input.capturedAt ? new Date(input.capturedAt) : null,
+          capturedAt: input.capturedAt ? new Date(input.capturedAt).toISOString() : null,
           cameraMake: input.cameraMake ?? null,
           cameraModel: input.cameraModel ?? null,
           thumbnailUrl,
@@ -1482,7 +1486,7 @@ export const appRouter = router({
           latitude: null as number | null,
           longitude: null as number | null,
           altitude: null as number | null,
-          capturedAt: null as Date | null,
+          capturedAt: null as string | null,
           cameraMake: null as string | null,
           cameraModel: null as string | null,
         };
@@ -1541,7 +1545,7 @@ export const appRouter = router({
           latitude: (exifData.latitude && !isNaN(exifData.latitude)) ? exifData.latitude.toString() : null,
           longitude: (exifData.longitude && !isNaN(exifData.longitude)) ? exifData.longitude.toString() : null,
           altitude: (exifData.altitude && !isNaN(exifData.altitude)) ? exifData.altitude.toString() : null,
-          capturedAt: exifData.capturedAt,
+          capturedAt: exifData.capturedAt ? String(exifData.capturedAt) : null,
           cameraMake: exifData.cameraMake,
           cameraModel: exifData.cameraModel,
           thumbnailUrl,
@@ -1644,7 +1648,7 @@ export const appRouter = router({
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
           altitude: input.absoluteAltitude ?? null,
-          capturedAt: input.capturedAt ?? null,
+          capturedAt: input.capturedAt ? (input.capturedAt instanceof Date ? input.capturedAt.toISOString() : String(input.capturedAt)) : null,
           cameraMake: null as string | null,
           cameraModel: null as string | null,
         };
@@ -1662,7 +1666,7 @@ export const appRouter = router({
               latitude: exifData.latitude ?? serverExifData.latitude,
               longitude: exifData.longitude ?? serverExifData.longitude,
               altitude: exifData.altitude ?? serverExifData.altitude,
-              capturedAt: exifData.capturedAt ?? serverExifData.capturedAt,
+              capturedAt: exifData.capturedAt ?? (serverExifData.capturedAt ? String(serverExifData.capturedAt) : null),
               cameraMake: serverExifData.cameraMake,
               cameraModel: serverExifData.cameraModel,
             };
@@ -1704,7 +1708,7 @@ export const appRouter = router({
           latitude: exifData.latitude ? exifData.latitude.toString() : null,
           longitude: exifData.longitude ? exifData.longitude.toString() : null,
           altitude: exifData.altitude ? exifData.altitude.toString() : null,
-          capturedAt: exifData.capturedAt,
+          capturedAt: exifData.capturedAt ? String(exifData.capturedAt) : null,
           cameraMake: exifData.cameraMake,
           cameraModel: exifData.cameraModel,
           thumbnailUrl,
@@ -2047,7 +2051,7 @@ export const appRouter = router({
             highResFileSize: fileSize,
             originalWidth: uploadResult.width || null,
             originalHeight: uploadResult.height || null,
-            updatedAt: new Date(),
+            updatedAt: new Date().toISOString(),
           })
           .where(eq(media.id, input.mediaId));
 
@@ -2166,8 +2170,9 @@ export const appRouter = router({
         const token = nanoid(32);
         
         // Set expiration to 7 days from now
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
+        const expiresAtDate = new Date();
+        expiresAtDate.setDate(expiresAtDate.getDate() + 7);
+        const expiresAt = expiresAtDate.toISOString();
 
         // Create the invitation
         const { invitation, isNew } = await createProjectInvitation({
@@ -2616,7 +2621,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           name: input.name,
           description: input.description || null,
-          flightDate: input.flightDate || null,
+          flightDate: input.flightDate ? (input.flightDate instanceof Date ? input.flightDate.toISOString() : String(input.flightDate)) : null,
           dronePilot: input.dronePilot || null,
           faaLicenseNumber: input.faaLicenseNumber || null,
           laancAuthNumber: input.laancAuthNumber || null,
@@ -2685,7 +2690,11 @@ export const appRouter = router({
         laancAuthNumber: z.string().max(100).nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { id, ...updates } = input;
+        const { id, flightDate: fd, ...restUpdates } = input;
+        const updates = {
+          ...restUpdates,
+          ...(fd !== undefined ? { flightDate: fd ? (fd instanceof Date ? fd.toISOString() : String(fd)) : null } : {}),
+        };
         const updated = await updateFlight(id, ctx.user.id, updates);
 
         if (!updated) {
@@ -3840,8 +3849,8 @@ export const appRouter = router({
 
         // Calculate next reminder date based on intervals
         const warrantyEndDate = new Date(project.warrantyEndDate);
-        const now = new Date();
-        let nextReminderDate: Date | null = null;
+        const now = new Date(); const nowStr = now.toISOString();
+        let nextReminderDate: string | null = null;
 
         // Sort intervals in descending order (9, 6, 3)
         const sortedIntervals = [...input.intervals].sort((a, b) => b - a);
@@ -3851,7 +3860,7 @@ export const appRouter = router({
           reminderDate.setMonth(reminderDate.getMonth() - monthsBefore);
           
           if (reminderDate > now) {
-            nextReminderDate = reminderDate;
+            nextReminderDate = reminderDate.toISOString();
           }
         }
 
@@ -3926,7 +3935,7 @@ export const appRouter = router({
         }
 
         const warrantyEndDate = new Date(project.warrantyEndDate);
-        const now = new Date();
+        const now = new Date(); const nowStr = now.toISOString();
         const monthsRemaining = Math.ceil(
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
@@ -3966,7 +3975,7 @@ export const appRouter = router({
         if (!project.warrantyStartDate || !project.warrantyEndDate) continue;
 
         const warrantyEndDate = new Date(project.warrantyEndDate);
-        const now = new Date();
+        const now = new Date(); const nowStr = now.toISOString();
         const monthsRemaining = Math.ceil(
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
@@ -3989,20 +3998,20 @@ export const appRouter = router({
           // Calculate next reminder date
           const intervals: number[] = JSON.parse(reminder.intervals);
           const sortedIntervals = [...intervals].sort((a, b) => b - a);
-          let nextReminderDate: Date | null = null;
+          let nextReminderDate: string | null = null;
 
           for (const monthsBefore of sortedIntervals) {
             const reminderDate = new Date(warrantyEndDate);
             reminderDate.setMonth(reminderDate.getMonth() - monthsBefore);
             
             if (reminderDate > now) {
-              nextReminderDate = reminderDate;
+              nextReminderDate = reminderDate.toISOString();
             }
           }
 
           // Update reminder with last sent time and next reminder date
           await updateWarrantyReminder(reminder.id, reminder.userId, {
-            lastSentAt: now,
+            lastSentAt: now.toISOString(),
             nextReminderDate,
           });
         }
@@ -4337,8 +4346,9 @@ export const appRouter = router({
         }
 
         const token = nanoid(32);
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+        const expiresAtDate = new Date();
+        expiresAtDate.setDate(expiresAtDate.getDate() + 7);
+        const expiresAt = expiresAtDate.toISOString(); // 7 days expiry
 
         const invitation = await createClientInvitation({
           clientId: input.clientId,
@@ -4898,7 +4908,7 @@ export const appRouter = router({
           location: input.location || config.location,
           clientName: input.clientName || config.clientName,
           status: config.status || "active",
-          flightDate: input.flightDate ? new Date(input.flightDate) : undefined,
+          flightDate: input.flightDate ? new Date(input.flightDate).toISOString() : undefined,
           dronePilot: config.dronePilot || input.overrides?.dronePilot,
           faaLicenseNumber: config.faaLicenseNumber || input.overrides?.faaLicenseNumber,
           laancAuthNumber: config.laancAuthNumber || input.overrides?.laancAuthNumber,
@@ -5472,7 +5482,7 @@ export const appRouter = router({
           refereeName: input.refereeName,
           refereeEmail: input.refereeEmail.toLowerCase(),
           status: 'pending',
-          emailSent,
+          emailSent: emailSent ? 1 : 0,
         });
 
         return {

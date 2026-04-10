@@ -91,7 +91,7 @@ export async function createTemplate(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const [template] = await db
+  const result = await db
     .insert(projectTemplates)
     .values({
       userId: data.userId,
@@ -102,10 +102,12 @@ export async function createTemplate(data: {
       isSystem: data.isSystem ? "yes" : "no",
       useCount: 0,
     })
-    .$returningId() as Promise<{ id: number }[]>;
+    .$returningId() as unknown as { id: number }[];
   
-  if (!template || template.length === 0) throw new Error("Failed to create template");
-  const created = await getTemplateById(template[0].id, data.userId);
+  const [template] = result;
+  
+  if (!template) throw new Error("Failed to create template");
+  const created = await getTemplateById(template.id, data.userId);
   if (!created) throw new Error("Failed to create template");
   return created;
 }
