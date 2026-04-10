@@ -24,7 +24,29 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
+// APWA standard utility color palette
+const APWA_COLORS = [
+  { label: "Potable Water",    hex: "#0000FF", preview: "#0000FF" },
+  { label: "Sewers / Drain",   hex: "#00FF00", preview: "#00CC00" },
+  { label: "Electric",         hex: "#FF0000", preview: "#FF0000" },
+  { label: "Gas / Oil",        hex: "#FFFF00", preview: "#CCCC00" },
+  { label: "Comm / Signal",    hex: "#FF8C00", preview: "#FF8C00" },
+  { label: "Survey",           hex: "#FF1493", preview: "#FF1493" },
+  { label: "Excavation",       hex: "#FFFFFF", preview: "#AAAAAA" },
+  { label: "Reclaimed Water",  hex: "#A020F0", preview: "#A020F0" },
+];
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -33,9 +55,9 @@ import { trpc } from "@/lib/trpc";
 
 interface ProjectDocumentsProps {
   projectId: number;
-  mapInstance?: any; // Mapbox GL instance (unused — overlay pipeline now goes through DB)
+  mapInstance?: any;
   projectCenter?: { lat: number; lng: number };
-  onOverlayAdded?: () => void; // Called after a doc is successfully converted and saved as overlay
+  onOverlayAdded?: (overlayId?: number, overlayData?: any) => void;
 }
 
 interface DocumentRecord {
@@ -56,6 +78,9 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
   const [searchQuery, setSearchQuery] = useState("");
   const [previewDoc, setPreviewDoc] = useState<DocumentRecord | null>(null);
   const [isProcessingOverlay, setIsProcessingOverlay] = useState(false);
+  // APWA color selector modal state
+  const [apwaModalDoc, setApwaModalDoc] = useState<DocumentRecord | null>(null);
+  const [selectedApwaColor, setSelectedApwaColor] = useState(APWA_COLORS[0].hex);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: documents = [], isLoading, refetch } = trpc.project.getDocuments.useQuery(
@@ -176,30 +201,40 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
 
   const convertMutation = trpc.project.convertDocumentToPng.useMutation();
 
-  const handleMapOverlayClick = async (doc: DocumentRecord) => {
+  // Opens the APWA color selector modal for PDF/image docs
+  const handleMapOverlayClick = (doc: DocumentRecord) => {
     if (!isPdfOrImage(doc.fileType)) {
       toast.error("Map overlay is only available for PDF and image files");
       return;
     }
+    setSelectedApwaColor(APWA_COLORS[0].hex);
+    setApwaModalDoc(doc);
+  };
 
+  // Called when user confirms color and clicks "Process"
+  const handleApwaProcess = async () => {
+    if (!apwaModalDoc) return;
+    const doc = apwaModalDoc;
+    setApwaModalDoc(null);
     setIsProcessingOverlay(true);
     const toastId = "overlay-processing";
-    toast.loading("Converting and adding to map...", { id: toastId });
-
+    const colorEntry = APWA_COLORS.find(c => c.hex === selectedApwaColor);
+    const overlayLabel = colorEntry
+      ? `${colorEntry.label} \u2014 ${doc.fileName.replace(/\.[^.]+$/, '')}`
+      : `Doc: ${doc.fileName.replace(/\.[^.]+$/, '')}`;
+    toast.loading(`Converting with ${colorEntry?.label ?? "selected color"}\u2026`, { id: toastId });
     try {
-      // Convert PDF/image to PNG and save as a project_overlays row.
-      // The map will pick it up automatically when the project query is refetched.
-      await convertMutation.mutateAsync({
+      const result = await convertMutation.mutateAsync({
         fileKey: doc.fileKey,
         fileName: doc.fileName,
         projectId,
+        colorCode: selectedApwaColor,
+        overlayLabel,
       });
-
-      toast.success(`Overlay "${doc.fileName}" added to map. Scroll up to see it.`, { id: toastId });
-      // Trigger project query refetch in the parent so the map receives the new overlay
-      onOverlayAdded?.();
+      toast.success(`Overlay "${doc.fileName}" added to map.`, { id: toastId });
+      onOverlayAdded?.(result.overlayId ?? undefined, result.overlay ?? undefined);
     } catch (error: any) {
-      const errorMsg = error?.message || error?.toString?.() || "Failed to add overlay to map";
+      const errorMsg = error?.message || "Failed to add overlay to map";
       toast.error(errorMsg, { id: toastId });
     } finally {
       setIsProcessingOverlay(false);
@@ -395,6 +430,57 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
           )}
         </CardContent>
       </Card>
+
+      {/* APWA Color Selector Modal */}
+      <Dialog open={!!apwaModalDoc} onOpenChange={(open) => !open && setApwaModalDoc(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Select Utility Type (APWA Color)</DialogTitle>
+            <DialogDescription>
+              Choose the utility type to color-code this drawing before adding it to the map.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="apwa-color-select">Utility Type</Label>
+              <Select value={selectedApwaColor} onValueChange={setSelectedApwaColor}>
+                <SelectTrigger id="apwa-color-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APWA_COLORS.map((c) => (
+                    <SelectItem key={c.hex} value={c.hex}>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                          style={{ backgroundColor: c.preview }}
+                        />
+                        {c.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <span
+                className="w-8 h-8 rounded border border-border flex-shrink-0"
+                style={{ backgroundColor: APWA_COLORS.find(c => c.hex === selectedApwaColor)?.preview ?? selectedApwaColor }}
+              />
+              <div className="text-sm">
+                <p className="font-medium">{APWA_COLORS.find(c => c.hex === selectedApwaColor)?.label}</p>
+                <p className="text-muted-foreground text-xs">{apwaModalDoc?.fileName}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApwaModalDoc(null)}>Cancel</Button>
+            <Button onClick={handleApwaProcess}>
+              Process &amp; Add to Map
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* PDF Preview Modal */}
       <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>

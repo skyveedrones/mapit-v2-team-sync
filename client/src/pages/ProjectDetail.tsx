@@ -616,12 +616,29 @@ export default function ProjectDetail() {
             <motion.div variants={fadeInUp}>
               <ProjectDocuments
                 projectId={projectId}
-                onOverlayAdded={() => {
-                  if (isDemoProject) {
-                    demoProjectQuery.refetch();
-                  } else {
-                    normalProjectQuery.refetch();
-                  }
+                onOverlayAdded={(overlayId?: number, overlayData?: any) => {
+                  // Scroll to map section
+                  const mapElement = document.getElementById('project-map-section');
+                  if (mapElement) mapElement.scrollIntoView({ behavior: 'smooth' });
+                  // Refetch project data so the new overlay appears
+                  const refetchFn = isDemoProject ? demoProjectQuery.refetch : normalProjectQuery.refetch;
+                  refetchFn().then(() => {
+                    // After data is refreshed, auto-launch alignment editor for the new overlay
+                    if (overlayId != null && mapRef.current) {
+                      // Give the map a moment to render the new overlay source
+                      setTimeout(() => {
+                        // Build an OverlayData object from what convertDocumentToPng returned
+                        const freshOverlays: any[] = (isDemoProject
+                          ? (demoProjectQuery.data as any)?.overlays
+                          : (normalProjectQuery.data as any)?.overlays) ?? [];
+                        const targetOverlay = freshOverlays.find((o: any) => o.id === overlayId)
+                          ?? overlayData;
+                        if (targetOverlay) {
+                          mapRef.current?.startEditingOverlay(targetOverlay);
+                        }
+                      }, 600);
+                    }
+                  });
                 }}
               />
             </motion.div>

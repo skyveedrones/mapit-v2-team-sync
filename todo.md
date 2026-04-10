@@ -2584,3 +2584,11 @@
 - [x] Add onOverlayAdded callback to ProjectDocuments component
 - [x] Wire onOverlayAdded in ProjectDetail to refetch project query (map auto-updates)
 - [x] TypeScript check passes (0 errors)
+
+## APWA PDF Overlay Integration
+- [ ] Add APWA color selector modal in MapboxProjectMap sidebar (shown when PDF selected via "Add Map Overlay")
+- [ ] Update convertDocumentToPng procedure to accept colorCode, apply ImageMagick APWA recolor, return overlayId
+- [ ] Update ProjectDocuments handleMapOverlayClick to pass colorCode and receive overlayId
+- [ ] Add startEditingOverlay(id) to MapboxProjectMapHandle so parent can trigger alignment mode
+- [ ] On conversion success: inject new overlay into local state + auto-trigger alignment editing
+- [ ] Ensure both project_documents and project_overlays records are saved

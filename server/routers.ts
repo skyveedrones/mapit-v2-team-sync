@@ -1162,7 +1162,7 @@ export const appRouter = router({
 
     // Convert document to PNG and save as map overlay using the existing overlay pipeline
     convertDocumentToPng: protectedProcedure
-      .input(z.object({ fileKey: z.string(), fileName: z.string(), projectId: z.number() }))
+      .input(z.object({ fileKey: z.string(), fileName: z.string(), projectId: z.number(), colorCode: z.string().optional(), overlayLabel: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
@@ -1240,6 +1240,35 @@ export const appRouter = router({
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only PDF and image files can be used as overlays' });
           }
 
+          // Apply APWA color recolor if colorCode is provided (white → transparent, dark → APWA color)
+          if (uploadExt === 'png' && input.colorCode) {
+            try {
+              const sharp = (await import('sharp')).default;
+              const hexColor = input.colorCode.replace('#', '');
+              const targetR = parseInt(hexColor.substring(0, 2), 16);
+              const targetG = parseInt(hexColor.substring(2, 4), 16);
+              const targetB = parseInt(hexColor.substring(4, 6), 16);
+              const { data, info } = await sharp(uploadBuffer)
+                .ensureAlpha()
+                .raw()
+                .toBuffer({ resolveWithObject: true });
+              const threshold = 200;
+              for (let i = 0; i < info.width * info.height; i++) {
+                const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+                const brightness = (r + g + b) / 3;
+                if (brightness > threshold) {
+                  data[i * 4 + 3] = 0; // white → transparent
+                } else {
+                  data[i * 4] = targetR; data[i * 4 + 1] = targetG; data[i * 4 + 2] = targetB; data[i * 4 + 3] = 255;
+                }
+              }
+              uploadBuffer = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+              console.log(`[convertDocumentToPng] APWA recolor applied: ${input.colorCode}`);
+            } catch (recolorErr: any) {
+              console.warn('[convertDocumentToPng] APWA recolor failed (using original):', recolorErr?.message);
+            }
+          }
+
           // Upload converted PNG to S3
           const storageKey = `overlays/${ctx.user.id}/${input.projectId}/${nanoid(10)}.${uploadExt}`;
           const { url: fileUrl } = await storagePut(storageKey, uploadBuffer, uploadMimetype);
@@ -1280,6 +1309,7 @@ export const appRouter = router({
           const versionNumber = existingOverlays.length + 1;
 
           // Insert into project_overlays — the map will pick it up on next project query refetch
+          const overlayLabel = input.overlayLabel || `Doc: ${input.fileName.replace(/\.[^.]+$/, '')}`;
           await db.insert(projectOverlays).values({
             projectId: input.projectId,
             fileUrl,
@@ -1287,12 +1317,20 @@ export const appRouter = router({
             coordinates,
             originalCoordinates: coordinates,
             isActive: 1,
-            label: `Doc: ${input.fileName.replace(/\.[^.]+$/, '')}`,
+            label: overlayLabel,
             version_number: versionNumber,
           } as any);
 
-          console.log(`[convertDocumentToPng] Overlay created for project ${input.projectId}, url: ${fileUrl}`);
-          return { imageUrl: fileUrl, success: true };
+          // Fetch the inserted overlay to get its ID
+          const [insertedOverlay] = await db
+            .select({ id: projectOverlays.id, fileUrl: projectOverlays.fileUrl, coordinates: projectOverlays.coordinates, opacity: projectOverlays.opacity, isActive: projectOverlays.isActive, label: projectOverlays.label, rotation: projectOverlays.rotation })
+            .from(projectOverlays)
+            .where(eq(projectOverlays.projectId, input.projectId))
+            .orderBy(desc(projectOverlays.id))
+            .limit(1);
+
+          console.log(`[convertDocumentToPng] Overlay created for project ${input.projectId}, id: ${insertedOverlay?.id}, url: ${fileUrl}`);
+          return { imageUrl: fileUrl, success: true, overlayId: insertedOverlay?.id ?? null, overlay: insertedOverlay ?? null };
         } catch (error: any) {
           console.error('[convertDocumentToPng Error]', error);
           const msg: string = error.message || '';

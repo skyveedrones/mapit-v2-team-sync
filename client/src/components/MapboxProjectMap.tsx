@@ -81,6 +81,8 @@ export interface MapboxProjectMapHandle {
   panToMedia: (latitude: number, longitude: number, mediaId?: string) => void;
   getMap: () => mapboxgl.Map | null;
   isMapLoaded: () => boolean;
+  startEditingOverlay: (overlay: OverlayData) => void;
+  openSidebar: () => void;
 }
 
 interface MapboxProjectMapProps {
@@ -245,7 +247,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [overlays]);
 
-    // ── Expose panToMedia to parent ─────────────────────────────────────────
+    // ── Expose panToMedia + overlay editing to parent ─────────────────────
+    // Ref so useImperativeHandle can call handleStartEdit without stale closure
+    const handleStartEditRef = useRef<(ov: OverlayData) => void>(() => {});
     useImperativeHandle(ref, () => ({
       panToMedia: (latitude: number, longitude: number, mediaId?: string) => {
         const map = mapRef.current;
@@ -266,9 +270,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       },
       getMap: () => mapRef.current,
       isMapLoaded: () => mapLoaded,
+      startEditingOverlay: (overlay: OverlayData) => {
+        setSidebarOpen(true);
+        setTimeout(() => handleStartEditRef.current(overlay), 120);
+      },
+      openSidebar: () => setSidebarOpen(true),
     }), [mapLoaded]);
 
-    // ── Initialize Mapbox map ───────────────────────────────────────────────
+    // ── Initialize Mapbox map ─────────────────────────────────────────
     // NOTE: Map init is intentionally NOT dependent on isLoading or sortedMedia.
     // The map initializes once; the data watcher below handles marker placement
     // whenever sortedMedia arrives (before or after mapLoaded becomes true).
@@ -738,6 +747,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setEditRotation(typeof rot === "number" && !isNaN(rot) ? rot : 0);
       setEditMode(true);
     }, [overlayLocked]);
+    // Keep the ref in sync so useImperativeHandle can call it without stale closure
+    handleStartEditRef.current = handleStartEdit;
 
     const handleCancelEdit = useCallback(() => {
       clearEditMarkers();
