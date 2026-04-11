@@ -1,7 +1,7 @@
 /**
- * Municipal Solutions Landing Page
- * "Infrastructure Intelligence" — targeting City Managers and Municipal Leaders
- * Design: Institutional Blue + Slate Gray palette for stability and trust
+ * Municipal Solutions Landing Page — Jobsian Rewrite
+ * Design: Pure black (#0A0A0A), stark white, MAPIT Green (#00C853) reserved for CTA + product name only.
+ * Copy: Jobs-style — name the pain, deliver the promise, one door.
  */
 
 import { Button } from "@/components/ui/button";
@@ -9,373 +9,335 @@ import { PilotProgramModal } from "@/components/PilotProgramModal";
 import Footer from "@/components/Footer";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
-import {
-  Building2,
-  ChevronRight,
-  Eye,
-  FileCheck,
-  Globe,
-  Layers,
-  Lock,
-  Plane,
-  Shield,
-  Users,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
 
 const HERO_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-hero-aerial_0ce36c3a.jpg";
-const ENGINEERS_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-engineers-tablet_c89926cd.jpg";
 const TRENCH_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-subsurface-XheCyMcVLXCFkjdcG9yGnT.webp";
 const DIGITAL_TWIN_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-interdept-3mR7B9wUkt5ZFwjKKdLgCB.webp";
 const GIS_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-overlay-3nmwWrVxQ8Zqmu4hBtuZ8r.webp";
+const ACCOUNTABILITY_IMG =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp";
+
+// APWA Uniform Color Code palette
+const APWA_COLORS = [
+  { label: "Potable Water",    hex: "#0057FF", name: "Blue"   },
+  { label: "Sewers / Drain",   hex: "#00CC44", name: "Green"  },
+  { label: "Electric",         hex: "#FF2222", name: "Red"    },
+  { label: "Gas / Oil",        hex: "#FFE500", name: "Yellow" },
+  { label: "Comm / Signal",    hex: "#FF8C00", name: "Orange" },
+  { label: "Survey",           hex: "#FF1493", name: "Pink"   },
+  { label: "Excavation",       hex: "#FFFFFF", name: "White"  },
+  { label: "Reclaimed Water",  hex: "#A020F0", name: "Purple" },
+];
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  hidden: { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0 },
 };
 
-const staggerContainer = {
+const stagger = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
-const pillars = [
+const outcomeCards = [
   {
-    icon: Eye,
-    title: "Sub-Surface Verification",
-    route: "/municipal",
-    value:
-      'Document "open trench" utility installations before they are buried. Create a permanent X-ray of city assets for future maintenance.',
-    image: TRENCH_IMG,
-  },
-  {
-    icon: Users,
-    title: "Inter-Departmental Access",
-    route: "/municipal",
-    value:
-      "Shared situational awareness for Public Works, Engineering, Fire, and Planning. One map, zero data silos.",
+    headline: "Every department. One map.",
+    body: "Public Works, Engineering, and City Council all see the same aerial record — in real time. No data silos. No version conflicts.",
     image: DIGITAL_TWIN_IMG,
   },
   {
-    icon: Layers,
-    title: "Engineering-Grade Overlays",
-    route: "/municipal",
-    value:
-      "Verify construction alignment against design plans with centimeter-level precision using our 2-point calibration engine.",
+    headline: "No utility strike goes undocumented.",
+    body: "Overlay your existing utility drawings on live drone imagery. Know exactly what's there before you dig.",
+    image: TRENCH_IMG,
+  },
+  {
+    headline: "Plans meet reality.",
+    body: "Verify construction alignment against design plans with centimeter-level precision using our 2-point calibration engine.",
     image: GIS_IMG,
   },
   {
-    icon: FileCheck,
-    title: "Stakeholder Accountability",
-    route: "/municipal",
-    value:
-      "Generate visual progress reports for City Council, public meetings, and project stakeholders — proving that infrastructure investments are on-time and on-budget.",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp",
-  },
-];
-
-const compliancePoints = [
-  {
-    icon: Globe,
-    title: "Data Sovereignty",
-    text: "All project data is archived in secure, US-based cloud storage for long-term historical reference.",
-  },
-  {
-    icon: Layers,
-    title: "GIS Integration",
-    text: "Export high-resolution orthomosaics directly into your city's existing ArcGIS or AutoCAD workflows.",
-  },
-  {
-    icon: Plane,
-    title: "FAA Compliant",
-    text: "All flights are conducted by Part 107 certified pilots with comprehensive liability insurance.",
+    headline: "Your record. Forever.",
+    body: "Every flight is archived. Every project has a before, during, and after. Admissible in court. Presentable to City Council.",
+    image: ACCOUNTABILITY_IMG,
   },
 ];
 
 export default function Municipal() {
-  const [, setLocation] = useLocation();
   const [contactOpen, setContactOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-white overflow-y-auto">
-      {/* ─── Navigation ─── */}
+    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
       <GlobalHamburgerHeader />
 
-      {/* ─── Section 1: Hero ─── */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
-        {/* Background image with overlay */}
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Full-bleed aerial photo */}
         <div className="absolute inset-0">
           <img src={HERO_IMG} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0b1120]/80 via-[#0b1120]/60 to-[#0b1120]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-[#0A0A0A]" />
         </div>
 
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={staggerContainer}
-          className="relative z-10 max-w-4xl mx-auto px-6 text-center"
+          variants={stagger}
+          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
         >
-          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 rounded-full px-4 py-1.5 mb-8">
-            <Building2 className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-medium text-blue-300 tracking-wide">Municipal Infrastructure Intelligence</span>
-          </motion.div>
+          <motion.p
+            variants={fadeInUp}
+            className="text-sm font-semibold tracking-[0.25em] uppercase text-white/50 mb-8"
+          >
+            For Municipal Leaders
+          </motion.p>
 
           <motion.h1
             variants={fadeInUp}
-            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8"
           >
-            The Digital Foundation of{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-              Your City's Future
-            </span>
+            Your city.{" "}
+            <span className="text-[#00C853]">Documented.</span>
+            <br />
+            From above.
           </motion.h1>
 
-          <motion.p variants={fadeInUp} className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Bridge the gap between City Hall and the Job Site. MAPIT provides municipal leaders with the visual
-            transparency needed to manage infrastructure, mitigate risk, and protect taxpayer investment.
-          </motion.p>
-
-          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold shadow-lg shadow-blue-600/20"
-              onClick={() => setContactOpen(true)}
-            >
-              Request a Municipal Briefing
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-slate-500 text-slate-200 hover:bg-slate-800 px-8 py-6 text-base"
-              onClick={() => document.getElementById("pillars")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              View Service Capabilities
-            </Button>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ─── Section 2: The Municipal Challenge ─── */}
-      <section className="py-24 px-6 bg-[#0d1526]">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-2 gap-16 items-center"
-          >
-            <motion.div variants={fadeInUp}>
-              <h2
-                className="text-3xl sm:text-4xl font-bold mb-6 leading-tight"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Infrastructure shouldn't be a{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-                  "Best Guess."
-                </span>
-              </h2>
-              <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                Most municipalities rely on fragmented data and aging paper plans. This leads to utility strikes, budget
-                overruns, and a lack of historical records.
-              </p>
-              <div className="bg-blue-600/10 border border-blue-500/20 rounded-xl p-6">
-                <h3 className="text-blue-300 font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  The MAPIT Answer
-                </h3>
-                <p className="text-slate-300 leading-relaxed">
-                  We provide a <strong className="text-white">Single Source of Truth</strong>. By combining
-                  high-resolution drone imagery with precision design overlays, we create a{" "}
-                  <strong className="text-white">"Digital Twin"</strong> of your city's progress.
-                </p>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/20 border border-slate-700/50">
-                <img src={DIGITAL_TWIN_IMG} alt="Digital Twin visualization" className="w-full h-auto" />
-              </div>
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl" />
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── Section 3: Key Pillars of Municipal Success ─── */}
-      <section id="pillars" className="py-24 px-6 bg-[#0b1120]">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={staggerContainer}
-          >
-            <motion.div variants={fadeInUp} className="text-center mb-16">
-              <h2
-                className="text-3xl sm:text-4xl font-bold mb-4"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Key Pillars of{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                  Municipal Success
-                </span>
-              </h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                From underground utilities to City Council presentations, MAPIT covers every stage of infrastructure
-                oversight.
-              </p>
-            </motion.div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {pillars.map((pillar, i) => (
-                <motion.div
-                  key={pillar.title}
-                  variants={fadeInUp}
-                  className="group relative bg-[#111b2e] border border-slate-700/50 rounded-2xl overflow-hidden hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer"
-                  onClick={() => setLocation(pillar.route)}
-                >
-                  {/* Image strip with blueprint-swipe reveal on hover */}
-                  <div className="h-52 overflow-hidden relative">
-                    {/* Base image */}
-                    <img
-                      src={pillar.image}
-                      alt={pillar.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    {/* Blueprint overlay that slides in from left on hover */}
-                    <div
-                      className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/70 to-transparent
-                        translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 ease-out
-                        flex items-center justify-start pl-6"
-                    >
-                      <div className="text-blue-300 opacity-30 select-none pointer-events-none">
-                        <svg width="180" height="120" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="10" y="10" width="160" height="100" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4 2" />
-                          <line x1="10" y1="40" x2="170" y2="40" stroke="currentColor" strokeWidth="0.5" />
-                          <line x1="10" y1="70" x2="170" y2="70" stroke="currentColor" strokeWidth="0.5" />
-                          <line x1="50" y1="10" x2="50" y2="110" stroke="currentColor" strokeWidth="0.5" />
-                          <line x1="100" y1="10" x2="100" y2="110" stroke="currentColor" strokeWidth="0.5" />
-                          <line x1="140" y1="10" x2="140" y2="110" stroke="currentColor" strokeWidth="0.5" />
-                          <circle cx="50" cy="40" r="4" stroke="currentColor" strokeWidth="1" fill="none" />
-                          <circle cx="140" cy="70" r="4" stroke="currentColor" strokeWidth="1" fill="none" />
-                          <line x1="50" y1="40" x2="140" y2="70" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
-                        </svg>
-                      </div>
-
-                    </div>
-                    <div className="absolute inset-0 h-52 bg-gradient-to-t from-[#111b2e] via-transparent to-transparent" />
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6 -mt-8 relative z-10">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 mb-4 group-hover:bg-blue-600/40 transition-colors duration-300">
-                      <pillar.icon className="h-6 w-6 text-blue-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">{pillar.title}</h3>
-                    <p className="text-slate-400 leading-relaxed">{pillar.value}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── Section 4: Security & Compliance ─── */}
-      <section id="compliance" className="py-24 px-6 bg-[#0d1526]">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={staggerContainer}
-          >
-            <motion.div variants={fadeInUp} className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 bg-slate-700/30 border border-slate-600/40 rounded-full px-4 py-1.5 mb-6">
-                <Lock className="h-4 w-4 text-slate-400" />
-                <span className="text-sm font-medium text-slate-400 tracking-wide">Enterprise Security</span>
-              </div>
-              <h2
-                className="text-3xl sm:text-4xl font-bold mb-4"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Built for{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-400">
-                  Local Government Standards
-                </span>
-              </h2>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {compliancePoints.map((point) => (
-                <motion.div
-                  key={point.title}
-                  variants={fadeInUp}
-                  className="bg-[#111b2e] border border-slate-700/50 rounded-2xl p-8 text-center hover:border-slate-600/60 transition-colors"
-                >
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-700/30 border border-slate-600/40 mb-6">
-                    <point.icon className="h-7 w-7 text-slate-300" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-3">{point.title}</h3>
-                  <p className="text-slate-400 leading-relaxed text-sm">{point.text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── Section 5: Pilot Program CTA ─── */}
-      <section className="py-24 px-6 bg-[#0b1120] relative overflow-hidden">
-        {/* Decorative gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-cyan-900/10" />
-
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="relative z-10 max-w-4xl mx-auto text-center"
-        >
-          <motion.h2
+          <motion.p
             variants={fadeInUp}
-            className="text-3xl sm:text-4xl font-bold mb-6"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-xl text-white/60 max-w-xl mx-auto mb-12 leading-relaxed"
           >
-            Smart Data for the{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-              Modern Municipality
-            </span>
-          </motion.h2>
-
-          <motion.p variants={fadeInUp} className="text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Interested in modernizing your project oversight? We offer a{" "}
-            <strong className="text-white">Municipal Pilot Program</strong> designed to demonstrate the MAPIT impact on
-            your most complex active job site.
+            MAPIT gives every department a live aerial record of every project — roads, utilities, infrastructure —
+            updated from the sky.
           </motion.p>
 
           <motion.div variants={fadeInUp}>
             <Button
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-6 text-base font-semibold shadow-lg shadow-blue-600/20"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => setContactOpen(true)}
             >
-              Apply for the Pilot Program
+              Request the Municipal Pilot Program
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ─── APWA COLORIZATION ─── */}
+      <section className="w-full bg-[#0A0A0A] py-32 px-6 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            {/* Headline */}
+            <motion.div variants={fadeInUp} className="mb-20 max-w-3xl">
+              <p className="text-sm font-semibold tracking-[0.25em] uppercase text-[#00C853]/70 mb-6">
+                New Feature
+              </p>
+              <h2 className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8">
+                Black and white
+                <br />
+                is dead.
+              </h2>
+              <p className="text-xl text-white/60 leading-relaxed max-w-2xl">
+                One click. Every pipe, wire, and trench instantly translated from a faded PDF into the APWA Uniform Color
+                Code. Just glowing, unmistakable truth.
+              </p>
+            </motion.div>
+
+            {/* APWA Color Palette — edge-to-edge swatches */}
+            <motion.div
+              variants={stagger}
+              className="grid grid-cols-4 sm:grid-cols-8 gap-0 rounded-2xl overflow-hidden border border-white/5"
+            >
+              {APWA_COLORS.map((color) => (
+                <motion.div
+                  key={color.hex}
+                  variants={fadeInUp}
+                  className="group relative flex flex-col items-center justify-end py-8 px-2 cursor-default transition-all duration-300"
+                  style={{ backgroundColor: color.hex === "#FFFFFF" ? "#1a1a1a" : `${color.hex}18` }}
+                >
+                  {/* Glow bar at top */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1 transition-all duration-300 group-hover:h-2"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                  {/* Color dot */}
+                  <div
+                    className="w-10 h-10 rounded-full mb-4 shadow-lg transition-transform duration-300 group-hover:scale-125"
+                    style={{
+                      backgroundColor: color.hex,
+                      boxShadow: `0 0 20px ${color.hex}60`,
+                    }}
+                  />
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-white/80 text-center leading-tight">
+                    {color.label}
+                  </p>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Supporting statement */}
+            <motion.p
+              variants={fadeInUp}
+              className="mt-12 text-sm text-white/30 tracking-wide text-center"
+            >
+              APWA Uniform Color Code — the industry standard for underground utility identification
+            </motion.p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── THE PAIN ─── */}
+      <section className="py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-sm font-semibold tracking-[0.25em] uppercase text-white/30 mb-8"
+            >
+              The Problem
+            </motion.p>
+
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-12"
+            >
+              Your city has $40M in underground utilities.
+              <br />
+              <span className="text-white/40">You're managing them with a PDF from 2009.</span>
+            </motion.h2>
+
+            <motion.div variants={fadeInUp} className="border-t border-white/10 pt-12 grid md:grid-cols-2 gap-12">
+              <div>
+                <p className="text-lg text-white/60 leading-relaxed">
+                  When a crew hits an unmarked utility line, it costs $50,000 and two weeks. Every time. Most
+                  municipalities rely on fragmented data and aging paper plans — and nobody in City Hall knows it until
+                  something goes wrong.
+                </p>
+              </div>
+              <div>
+                <p className="text-lg text-white/60 leading-relaxed">
+                  MAPIT is a live aerial map of your active projects, overlaid with your utility drawings, accessible
+                  by every department. Updated after every flight. No consultants. No delays. No excuses.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── OUTCOME CARDS ─── */}
+      <section id="outcomes" className="py-24 px-6 bg-[#0A0A0A]">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-sm font-semibold tracking-[0.25em] uppercase text-white/30 mb-16"
+            >
+              What MAPIT Does
+            </motion.p>
+
+            <div className="grid md:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+              {outcomeCards.map((card) => (
+                <motion.div
+                  key={card.headline}
+                  variants={fadeInUp}
+                  className="group bg-[#0A0A0A] p-0 overflow-hidden relative"
+                >
+                  {/* Image */}
+                  <div className="h-56 overflow-hidden">
+                    <img
+                      src={card.image}
+                      alt={card.headline}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-70 group-hover:opacity-90"
+                    />
+                  </div>
+                  {/* Text */}
+                  <div className="p-8">
+                    <h3 className="text-2xl font-bold text-white mb-3 leading-tight">{card.headline}</h3>
+                    <p className="text-white/50 leading-relaxed">{card.body}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── COMPLIANCE — quiet, below the desire ─── */}
+      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeInUp} className="text-sm text-white/25 tracking-widest uppercase mb-6">
+              Built for Government Standards
+            </motion.p>
+            <motion.p variants={fadeInUp} className="text-white/40 text-base leading-relaxed">
+              US-based cloud storage &nbsp;·&nbsp; ArcGIS / AutoCAD export &nbsp;·&nbsp; Part 107 certified pilots
+              &nbsp;·&nbsp; FAA compliant &nbsp;·&nbsp; Comprehensive liability insurance
+            </motion.p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── ENCAPSULATION + CTA ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden">
+        {/* Subtle green ambient glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
+        </div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="relative z-10 max-w-4xl mx-auto text-center"
+        >
+          <motion.h2
+            variants={fadeInUp}
+            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-12"
+          >
+            MAPIT is the first time a city director can open a laptop and see exactly what is happening on every job
+            site —{" "}
+            <span className="text-[#00C853]">right now.</span>
+          </motion.h2>
+
+          <motion.div variants={fadeInUp}>
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
+              onClick={() => setContactOpen(true)}
+            >
+              See your city from above
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
 
-          <motion.p variants={fadeInUp} className="mt-6 text-sm text-slate-500">
-            No commitment required. We'll schedule a 30-minute discovery call to assess fit.
+          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
+            Municipal Pilot Program &nbsp;·&nbsp; No commitment required
           </motion.p>
         </motion.div>
       </section>
@@ -383,7 +345,7 @@ export default function Municipal() {
       {/* ─── Footer ─── */}
       <Footer onContactClick={() => setContactOpen(true)} />
 
-      {/* ─── Contact Modal ─── */}
+      {/* ─── Modal ─── */}
       <PilotProgramModal open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
