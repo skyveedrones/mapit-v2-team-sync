@@ -197,6 +197,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // PDF Converter state
     const [showPdfConverter, setShowPdfConverter] = useState(false);
 
+    // ── Selected overlay for alignment tools ────────────────────────────────
+    const [selectedOverlayId, setSelectedOverlayId] = useState<number | null>(null);
+
     const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
     const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
 
@@ -272,6 +275,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       isMapLoaded: () => mapLoaded,
       startEditingOverlay: (overlay: OverlayData) => {
         setSidebarOpen(true);
+        setSelectedOverlayId(overlay.id);
         setTimeout(() => handleStartEditRef.current(overlay), 120);
       },
       openSidebar: () => setSidebarOpen(true),
@@ -1047,6 +1051,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         }
         setOpacityMap((prev) => { const n = { ...prev }; delete n[ov.id]; return n; });
         setVisibilityMap((prev) => { const n = { ...prev }; delete n[ov.id]; return n; });
+        // Clear selection if the deleted overlay was selected
+        if (selectedOverlayId === ov.id) setSelectedOverlayId(null);
         setSidebarOpen(false);
         toast.success("Overlay deleted successfully");
         onOverlayUpdated?.();
@@ -1613,9 +1619,17 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                         const locked = overlayLocked[ov.id] ?? false;
                         const label = ov.label || `Plan ${ov.id}`;
                         const isRenaming = renamingOverlayId === ov.id;
+                        const isSelected = selectedOverlayId === ov.id;
 
                         return (
-                          <div key={ov.id} className="space-y-3 border-t border-slate-700 pt-4">
+                          <div
+                            key={ov.id}
+                            className={`space-y-3 border-t pt-4 rounded-lg px-2 transition-all ${
+                              isSelected
+                                ? "border-emerald-500/70 bg-emerald-950/30"
+                                : "border-slate-700"
+                            }`}
+                          >
                             {/* Overlay name + visibility + lock */}
                             <div className="flex items-center gap-2">
                               {isRenaming ? (
@@ -1696,7 +1710,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                             {/* Quick actions row */}
                             {!isDemoProject && (
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {/* Select for alignment */}
+                                <button
+                                  onClick={() => setSelectedOverlayId(isSelected ? null : ov.id)}
+                                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors text-xs ${
+                                    isSelected
+                                      ? "bg-emerald-600/30 border border-emerald-500/60 text-emerald-300"
+                                      : "bg-slate-800 hover:bg-emerald-900/40 hover:text-emerald-400"
+                                  }`}
+                                  title={isSelected ? "Deselect overlay" : "Select as alignment target"}
+                                >
+                                  <Crosshair size={13} />
+                                  <span>{isSelected ? "Selected ✓" : "Select"}</span>
+                                </button>
                                 <button
                                   onClick={() => handleFitToOverlay(ov)}
                                   className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs"
@@ -1722,73 +1749,100 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                       })}
 
                       {/* ── ALIGNMENT TOOLS section ── */}
-                      {!isDemoProject && activeOverlays.length > 0 && (
-                        <div className="pt-2 border-t border-slate-700 space-y-2">
-                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Alignment Tools</p>
-
-                          {/* Edit Alignment */}
-                          <button
-                            onClick={() => {
-                              if (editMode) { handleCancelEdit(); }
-                              else if (activeOverlays[0]) { handleStartEdit(activeOverlays[0]); setSidebarOpen(false); }
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                              editMode && !snapMode ? "bg-blue-600 shadow-lg shadow-blue-900/40" : "bg-slate-800 hover:bg-slate-700"
-                            }`}
-                          >
-                            <Move size={16} />
-                            <div className="text-left">
-                              <span className="text-sm font-medium block">{editMode && !snapMode ? "Stop Editing" : "Edit Alignment"}</span>
-                              <span className="text-[10px] text-slate-400">Drag corners to resize & rotate</span>
+                      {!isDemoProject && activeOverlays.length > 0 && (() => {
+                        const selectedOv = selectedOverlayId != null
+                          ? activeOverlays.find((o) => o.id === selectedOverlayId) ?? null
+                          : null;
+                        const noSelection = selectedOv == null;
+                        return (
+                          <div className="pt-2 border-t border-slate-700 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Alignment Tools</p>
+                              {noSelection && (
+                                <span className="text-[10px] text-amber-400/80 italic">Select an overlay above</span>
+                              )}
                             </div>
-                          </button>
 
-                          {/* 2-Point Snap */}
-                          {activeOverlays[0] && (
+                            {/* Edit Alignment */}
                             <button
+                              disabled={noSelection}
                               onClick={() => {
-                                if (snapMode) { cancelSnapMode(); handleCancelEdit(); }
-                                else { startSnapMode(activeOverlays[0]); }
+                                if (editMode) { handleCancelEdit(); }
+                                else if (selectedOv) { handleStartEdit(selectedOv); setSidebarOpen(false); }
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                                snapMode ? "bg-blue-600 shadow-lg shadow-blue-900/40" : "bg-slate-800 hover:bg-slate-700"
+                                noSelection
+                                  ? "bg-slate-800/40 opacity-40 cursor-not-allowed"
+                                  : editMode && !snapMode
+                                    ? "bg-blue-600 shadow-lg shadow-blue-900/40"
+                                    : "bg-slate-800 hover:bg-slate-700"
+                              }`}
+                            >
+                              <Move size={16} />
+                              <div className="text-left">
+                                <span className="text-sm font-medium block">{editMode && !snapMode ? "Stop Editing" : "Edit Alignment"}</span>
+                                <span className="text-[10px] text-slate-400">
+                                  {noSelection ? "Select an overlay first" : "Drag corners to resize & rotate"}
+                                </span>
+                              </div>
+                            </button>
+
+                            {/* 2-Point Snap */}
+                            <button
+                              disabled={noSelection}
+                              onClick={() => {
+                                if (snapMode) { cancelSnapMode(); handleCancelEdit(); }
+                                else if (selectedOv) { startSnapMode(selectedOv); }
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                                noSelection
+                                  ? "bg-slate-800/40 opacity-40 cursor-not-allowed"
+                                  : snapMode
+                                    ? "bg-blue-600 shadow-lg shadow-blue-900/40"
+                                    : "bg-slate-800 hover:bg-slate-700"
                               }`}
                             >
                               <Crosshair size={16} />
                               <div className="text-left">
                                 <span className="text-sm font-medium block">{snapMode ? "Cancel Snap" : "2-Point Snap"}</span>
-                                <span className="text-[10px] text-slate-400">Match 2 points for precise alignment</span>
+                                <span className="text-[10px] text-slate-400">
+                                  {noSelection ? "Select an overlay first" : "Match 2 points for precise alignment"}
+                                </span>
                               </div>
                             </button>
-                          )}
 
-                          {/* Reset to Default */}
-                          {activeOverlays[0] && (
-                            <button
-                              onClick={() => handleReset(activeOverlays[0])}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-amber-900/40 hover:text-amber-400 transition-all"
-                            >
-                              <RotateCcw size={16} />
-                              <span className="text-sm font-medium">Reset to Default</span>
-                            </button>
-                          )}
-                        </div>
-                      )}
+                            {/* Reset to Default */}
+                            {selectedOv && (
+                              <button
+                                onClick={() => handleReset(selectedOv)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-amber-900/40 hover:text-amber-400 transition-all"
+                              >
+                                <RotateCcw size={16} />
+                                <span className="text-sm font-medium">Reset to Default</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* ── DANGER ZONE ── */}
-                      {!isDemoProject && activeOverlays[0] && (
-                        <div className="pt-2 border-t border-red-900/30 space-y-2">
-                          <p className="text-[10px] uppercase tracking-widest text-red-500/60 font-bold">Danger Zone</p>
-                          <button
-                            onClick={() => handleDelete(activeOverlays[0])}
-                            disabled={isDeleting}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Trash2 size={16} />
-                            <span className="text-sm font-medium">{isDeleting ? "Deleting..." : "Delete Overlay"}</span>
-                          </button>
-                        </div>
-                      )}
+                      {!isDemoProject && selectedOverlayId != null && (() => {
+                        const selectedOv = activeOverlays.find((o) => o.id === selectedOverlayId);
+                        if (!selectedOv) return null;
+                        return (
+                          <div className="pt-2 border-t border-red-900/30 space-y-2">
+                            <p className="text-[10px] uppercase tracking-widest text-red-500/60 font-bold">Danger Zone</p>
+                            <button
+                              onClick={() => handleDelete(selectedOv)}
+                              disabled={isDeleting}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-red-900/40 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 size={16} />
+                              <span className="text-sm font-medium">{isDeleting ? "Deleting..." : "Delete Overlay"}</span>
+                            </button>
+                          </div>
+                        );
+                      })()}
 
                       {/* Edit mode tip */}
                       {editMode && !snapMode && (
