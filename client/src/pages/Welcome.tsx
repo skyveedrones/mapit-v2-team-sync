@@ -1,183 +1,122 @@
+/**
+ * MAPIT — /welcome Page — Jobsian Rewrite
+ * Pure black (#0A0A0A), stark white, MAPIT Green reserved for CTA only.
+ * Typography-as-Art: Drop / Snap / Share
+ */
+
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { useLocation, Link } from "wouter";
-import { ArrowRight, ArrowLeft, CheckCircle, Upload, Map, FileText, Shield, Zap, CreditCard } from "lucide-react";
+import { useLocation } from "wouter";
+import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import Footer from "@/components/Footer";
+import { useState } from "react";
+import { ContactModal } from "@/components/ContactModal";
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0 },
 };
 
-const staggerContainer = {
+const stagger = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
-const features = [
+const steps = [
   {
-    icon: Upload,
-    title: "Easy Upload",
-    description: "Upload drone photos and videos with automatic GPS extraction",
+    hook: "Drop.",
+    body: "Upload drone imagery and watch the GPS data extract automatically.",
   },
   {
-    icon: Map,
-    title: "Interactive Maps",
-    description: "Visualize flights on Mapbox with markers and flight paths",
+    hook: "Snap.",
+    body: "Align your blueprints to reality with centimeter-level precision.",
   },
   {
-    icon: FileText,
-    title: "Professional Reports",
-    description: "Generate branded PDF reports with maps and media galleries",
+    hook: "Share.",
+    body: "One link. Total site awareness for your entire team.",
   },
-];
-
-const benefits = [
-  "Secure authentication",
-  "Free tier available",
-  "No credit card required to start",
-  "Instant access after signup",
 ];
 
 export default function Welcome() {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      setLocation("/dashboard");
+    } else {
+      window.location.href = getLoginUrl();
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border py-4">
-        <div className="container flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Back to Homepage</span>
-          </Link>
-          <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => window.location.href = getLoginUrl()}
-          >
-            Sign In
-          </Button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
+      <GlobalHamburgerHeader />
 
-      {/* Hero Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/10" />
-        <div className="container relative z-10">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="max-w-3xl mx-auto text-center"
+      {/* ─── HERO ─── */}
+      <section className="pt-40 pb-32 px-6">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={stagger}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.h1
+            variants={fadeInUp}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8 text-white"
           >
-            <motion.h1
-              variants={fadeInUp}
-              className="text-5xl md:text-6xl font-bold mb-6"
-              style={{ fontFamily: "var(--font-display)" }}
+            The map begins here.
+          </motion.h1>
+
+          <motion.p
+            variants={fadeInUp}
+            className="text-xl text-gray-400 max-w-xl mx-auto mb-14 leading-relaxed"
+          >
+            Your footage. Our engine. Total clarity.
+            <br />
+            Let's build your first digital twin.
+          </motion.p>
+
+          <motion.div variants={fadeInUp}>
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
+              onClick={handleGetStarted}
             >
-              Welcome to MAPIT
-            </motion.h1>
-            <motion.p
-              variants={fadeInUp}
-              className="text-xl text-muted-foreground mb-8"
-            >
-              Professional drone mapping solutions that empower smarter project planning, monitoring, and decision-making.
-            </motion.p>
-            <motion.div
-              variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6"
-                onClick={() => setLocation("/pricing")}
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6"
-                onClick={() => setLocation("/demo")}
-              >
-                View Demo Project
-              </Button>
-            </motion.div>
+              Get Started
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* What You Can Do Section */}
-      <section className="py-20 relative">
-        <div className="container">
+      {/* ─── RULE OF THREE ─── */}
+      <section className="py-24 px-6 border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="max-w-4xl mx-auto"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
           >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl font-bold mb-12 text-center"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              What You Can Do
-            </motion.h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    variants={fadeInUp}
-                    className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                  >
-                    <Icon className="h-8 w-8 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 bg-primary/5 relative">
-        <div className="container">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="max-w-2xl mx-auto"
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl font-bold mb-12 text-center"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Why Choose MAPIT?
-            </motion.h2>
-            <div className="space-y-4">
-              {benefits.map((benefit, index) => (
+            <div className="grid md:grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-2xl">
+              {steps.map((step) => (
                 <motion.div
-                  key={index}
+                  key={step.hook}
                   variants={fadeInUp}
-                  className="flex items-center gap-4 p-4 rounded-lg border border-border/50"
+                  className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden"
                 >
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />
-                  <span className="text-lg">{benefit}</span>
+                  <p
+                    className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
+                    style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+                  >
+                    {step.hook}
+                  </p>
+                  <p className="text-gray-400 text-sm leading-relaxed">{step.body}</p>
                 </motion.div>
               ))}
             </div>
@@ -185,72 +124,42 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
-        <div className="container relative z-10">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="max-w-2xl mx-auto text-center"
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl font-bold mb-6"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Ready to Get Started?
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-xl text-muted-foreground mb-8"
-            >
-              Join thousands of professionals using MAPIT to streamline their drone mapping workflows.
-            </motion.p>
-            <motion.div
-              variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6"
-                onClick={() => setLocation("/pricing")}
-              >
-                Create Free Account
-                <Zap className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 text-lg px-8 py-6"
-                onClick={() => setLocation("/")}
-              >
-                Back to Home
-              </Button>
-            </motion.div>
-          </motion.div>
+      {/* ─── CLOSING CTA ─── */}
+      <section className="py-40 px-6 border-t border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] rounded-full bg-[#00C853]/5 blur-[100px]" />
         </div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="relative z-10 max-w-2xl mx-auto text-center"
+        >
+          <motion.h2
+            variants={fadeInUp}
+            className="text-4xl sm:text-5xl font-bold tracking-tight mb-12"
+          >
+            Ready to fly?
+          </motion.h2>
+          <motion.div variants={fadeInUp}>
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
+              onClick={handleGetStarted}
+            >
+              Create Free Account
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
+          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
+            No credit card required &nbsp;·&nbsp; Works with any drone
+          </motion.p>
+        </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-12 w-auto opacity-60"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 MAPIT. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer onContactClick={() => setShowContactModal(true)} />
+      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
 }
