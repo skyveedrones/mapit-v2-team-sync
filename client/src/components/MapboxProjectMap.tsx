@@ -1106,40 +1106,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Fullscreen toggle ───────────────────────────────────────────────────
     const toggleFullscreen = useCallback(() => {
-      const wrapper = mapWrapperRef.current;
-      if (!wrapper) return;
-
-      if (!isFullscreen) {
-        if (wrapper.requestFullscreen) {
-          wrapper.requestFullscreen();
-        } else if ((wrapper as any).webkitRequestFullscreen) {
-          (wrapper as any).webkitRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          (document as any).webkitExitFullscreen();
-        }
-      }
-    }, [isFullscreen]);
-
-    // Listen for fullscreen change events
-    useEffect(() => {
-      const handleFullscreenChange = () => {
-        const isFull = !!document.fullscreenElement;
-        setIsFullscreen(isFull);
-        // Resize map after fullscreen transition
+      // Use CSS pseudo-fullscreen (works inside iframes where requestFullscreen is blocked)
+      setIsFullscreen((prev) => {
         setTimeout(() => {
           mapRef.current?.resize();
-        }, 100);
-      };
-      document.addEventListener("fullscreenchange", handleFullscreenChange);
-      document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-      return () => {
-        document.removeEventListener("fullscreenchange", handleFullscreenChange);
-        document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      };
+        }, 150);
+        return !prev;
+      });
     }, []);
 
     // ── Measurement tool ────────────────────────────────────────────────────
@@ -1323,7 +1296,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           {/* Map wrapper — always rendered so mapContainerRef is never null */}
           <div
             ref={mapWrapperRef}
-            className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!rounded-none !border-0" : ""}`}
+            className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!fixed !inset-0 !z-[9999] !rounded-none !border-0 !w-screen !h-screen" : ""}`}
             style={isFullscreen ? { background: "#000" } : undefined}
           >
             {/* Mapbox container — always in DOM, polling init waits for non-zero dimensions */}
