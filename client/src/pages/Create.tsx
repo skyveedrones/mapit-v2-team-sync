@@ -1,33 +1,51 @@
 /**
  * MAPIT — /create Drop Zone
- * Minimal full-screen drop zone. No nav, no footer. Back arrow only.
- * States: idle → dragging → analyzing → done (redirect)
+ * Extracts GPS coordinates from dropped files via exifr,
+ * stores them in sessionStorage, then transitions to /map.
  */
 
 import { useCallback, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import exifr from "exifr";
 
-type DropState = "idle" | "dragging" | "analyzing";
+type DropState = "idle" | "dragging" | "analyzing" | "locating";
+
+/** Try to extract GPS from the first file that has it. */
+async function extractGPS(
+  files: File[]
+): Promise<{ lat: number; lng: number } | null> {
+  for (const file of files) {
+    try {
+      const gps = await exifr.gps(file);
+      if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
+        return { lat: gps.latitude, lng: gps.longitude };
+      }
+    } catch {
+      // file has no EXIF or unsupported format — try next
+    }
+  }
+  return null;
+}
 
 export default function Create() {
   const [, setLocation] = useLocation();
   const [dropState, setDropState] = useState<DropState>("idle");
   const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("Analyzing...");
 
-  // Simulate analysis progress then redirect
+  // Progress bar animation → redirect to /map
   useEffect(() => {
-    if (dropState !== "analyzing") return;
+    if (dropState !== "analyzing" && dropState !== "locating") return;
     setProgress(0);
-        const interval = setInterval(() => {
+    const interval = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) {
           clearInterval(interval);
           setTimeout(() => setLocation("/map"), 200);
           return 100;
         }
-        // Accelerate toward 80% quickly, then slow down
         const increment = p < 70 ? 3 : p < 90 ? 1 : 0.4;
         return Math.min(p + increment, 100);
       });
@@ -35,35 +53,63 @@ export default function Create() {
     return () => clearInterval(interval);
   }, [dropState, setLocation]);
 
+  const processFiles = useCallback(async (files: File[]) => {
+    setDropState("analyzing");
+    setStatusText("Analyzing...");
+
+    // Try GPS extraction in parallel with the progress animation
+    const coords = await extractGPS(files);
+
+    if (coords) {
+      // Store for MapView to consume
+      sessionStorage.setItem(
+        "mapit_fly_coords",
+        JSON.stringify({ lat: coords.lat, lng: coords.lng })
+      );
+      setStatusText("Located.");
+      setDropState("locating");
+    } else {
+      // No GPS found — clear any stale coords, fly to default
+      sessionStorage.removeItem("mapit_fly_coords");
+      setDropState("analyzing");
+    }
+  }, []);
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setDropState("dragging");
-  }, []);
+    if (dropState === "idle") setDropState("dragging");
+  }, [dropState]);
 
   const handleDragLeave = useCallback(() => {
     setDropState((s) => (s === "dragging" ? "idle" : s));
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) setDropState("analyzing");
-    else setDropState("idle");
-  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) processFiles(files);
+      else setDropState("idle");
+    },
+    [processFiles]
+  );
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) setDropState("analyzing");
-  }, []);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? []);
+      if (files.length > 0) processFiles(files);
+    },
+    [processFiles]
+  );
 
   const isDragging = dropState === "dragging";
-  const isAnalyzing = dropState === "analyzing";
+  const isProcessing = dropState === "analyzing" || dropState === "locating";
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
       {/* ─── Top progress bar ─── */}
       <AnimatePresence>
-        {isAnalyzing && (
+        {isProcessing && (
           <motion.div
             key="progress-bar"
             initial={{ opacity: 0 }}
@@ -104,36 +150,32 @@ export default function Create() {
           className={`
             relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
             border rounded-3xl select-none transition-all duration-300
-            ${isAnalyzing ? "cursor-default" : "cursor-pointer"}
+            ${isProcessing ? "cursor-default" : "cursor-pointer"}
             ${isDragging
               ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
               : "border-white/5 bg-transparent hover:border-white/10"
             }
           `}
         >
-          {/* Metallic hook — toggles between Drop. and Analyzing... */}
+          {/* Metallic hook */}
           <AnimatePresence mode="wait">
-            {isAnalyzing ? (
+            {isProcessing ? (
               <motion.p
-                key="analyzing"
+                key="processing"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3 }}
-                className="text-[clamp(3.5rem,10vw,6.5rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent animate-pulse"
+                className="text-[clamp(3rem,9vw,6rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent animate-pulse"
                 style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
               >
-                Analyzing...
+                {statusText}
               </motion.p>
             ) : (
               <motion.p
                 key="drop"
                 initial={{ opacity: 0, y: 8 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: isDragging ? 1.05 : 1,
-                }}
+                animate={{ opacity: 1, y: 0, scale: isDragging ? 1.05 : 1 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25 }}
                 className="text-[clamp(5rem,14vw,9rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent pointer-events-none"
@@ -146,7 +188,7 @@ export default function Create() {
 
           {/* Instruction */}
           <AnimatePresence>
-            {!isAnalyzing && (
+            {!isProcessing && (
               <motion.div
                 key="instructions"
                 initial={{ opacity: 0 }}
@@ -175,7 +217,7 @@ export default function Create() {
             accept="image/*,video/mp4,.mp4,.mov,.avi,.jpg,.jpeg,.png,.tiff,.tif"
             className="sr-only"
             onChange={handleFileInput}
-            disabled={isAnalyzing}
+            disabled={isProcessing}
           />
         </motion.label>
       </div>

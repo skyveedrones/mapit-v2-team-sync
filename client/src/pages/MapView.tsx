@@ -15,9 +15,24 @@ import { Layers, Ruler, Share2, ArrowLeft, X } from "lucide-react";
 // ─── Map style: dark satellite with no labels for maximum contrast ───────────
 const DARK_SATELLITE = "mapbox://styles/mapbox/satellite-v9";
 
-// ─── Default project location (used when no project is loaded yet) ───────────
+// ─── Default project location (used when no GPS is found in dropped files) ────
 const DEFAULT_LNG = -97.7431;
-const DEFAULT_LAT = 30.2672; // Austin, TX
+const DEFAULT_LAT = 30.2672; // Austin, TX — fallback only
+
+/** Read GPS coords stored by /create after EXIF extraction. */
+function getDropCoords(): { lat: number; lng: number } | null {
+  try {
+    const raw = sessionStorage.getItem("mapit_fly_coords");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed.lat === "number" && typeof parsed.lng === "number") {
+      return parsed;
+    }
+  } catch {
+    // malformed — ignore
+  }
+  return null;
+}
 
 export default function MapView() {
   const [, setLocation] = useLocation();
@@ -56,13 +71,22 @@ export default function MapView() {
     map.on("load", () => {
       setMapReady(true);
 
-      // Cinematic fly-in: world → project location
+      // Use GPS coords from dropped files, or fall back to default
+      const coords = getDropCoords();
+      const center: [number, number] = coords
+        ? [coords.lng, coords.lat]
+        : [DEFAULT_LNG, DEFAULT_LAT];
+
+      // Clear after use so a page refresh doesn't reuse stale coords
+      sessionStorage.removeItem("mapit_fly_coords");
+
+      // Cinematic fly-in: world altitude → exact project site
       map.flyTo({
-        center: [DEFAULT_LNG, DEFAULT_LAT],
-        zoom: 16,
-        pitch: 45,
-        bearing: -20,
-        duration: 3800,
+        center,
+        zoom: 17,
+        pitch: 50,
+        bearing: -15,
+        duration: 4000,
         essential: true,
         easing: (t: number) => 1 - Math.pow(1 - t, 4), // ease-out quartic
       });
