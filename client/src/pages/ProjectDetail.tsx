@@ -380,6 +380,21 @@ export default function ProjectDetail() {
                         Read-Only Demo
                       </span>
                     )}
+                    {/* 14-day trial badge — shown for trialing users on their own onboarding projects */}
+                    {!isDemoProject && user?.subscriptionStatus === 'trialing' && user?.currentPeriodEnd && new Date(user.currentPeriodEnd) > new Date() && (
+                      <span
+                        className="px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1.5"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          backdropFilter: 'blur(8px)',
+                          color: 'rgba(255,255,255,0.7)',
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                        14-day trial active
+                      </span>
+                    )}
                   </div>
                   {project.description && (
                     <p className="text-muted-foreground max-w-2xl">

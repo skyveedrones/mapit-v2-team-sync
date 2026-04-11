@@ -5176,6 +5176,43 @@ export const appRouter = router({
           .set({ userId: claimUser.id })
           .where(eq(projects.id, input.projectId));
 
+        // Fetch project name for the email
+        const claimedProject = await db
+          .select({ name: projects.name })
+          .from(projects)
+          .where(eq(projects.id, input.projectId))
+          .then((r) => r[0]);
+        const projectName = claimedProject?.name || 'your project';
+        const projectUrl = `https://mapit.skyveedrones.com/project/${input.projectId}/map`;
+
+        // Send Resend confirmation email (fire-and-forget — don't block the response)
+        try {
+          const { sendEmail } = await import('./_core/email');
+          await sendEmail({
+            to: input.email,
+            subject: 'Your project is secured',
+            html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your project is secured</title></head>
+<body style="margin:0;padding:0;background:#0A0A0A;font-family:'Inter',system-ui,sans-serif;color:#ffffff">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:48px 24px">
+    <tr><td>
+      <p style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0 0 32px">MAPIT</p>
+      <h1 style="font-size:clamp(2rem,8vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1;margin:0 0 24px;background:linear-gradient(to bottom,#ffffff,#6b7280);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Engineering triumph</h1>
+      <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 32px">You have successfully claimed your digital twin for <strong style="color:#ffffff">${projectName}</strong>. Your 14-day free trial is now active, providing full access to all precision mapping tools.</p>
+      <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 40px">Access your project anytime via the link below.</p>
+      <a href="${projectUrl}" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">View My Project</a>
+      <p style="margin:48px 0 0;font-size:12px;color:rgba(255,255,255,0.2)">MAPIT &nbsp;·&nbsp; Precision mapping for the modern job site</p>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+          });
+        } catch (emailErr) {
+          console.error('[claimProject] Email send failed:', emailErr);
+          // Non-fatal — project is already claimed
+        }
+
         return { success: true, userId: claimUser.id };
       }),
   }),
