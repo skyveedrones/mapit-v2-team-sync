@@ -24,7 +24,7 @@ export const GlobalHamburgerHeader = () => {
           onClick={() => setLocation("/")}
         >
           <img
-            src="/images/mapit-logo-branded.png"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
             className="h-[48px] w-auto object-contain select-none"
             draggable={false}
@@ -37,14 +37,14 @@ export const GlobalHamburgerHeader = () => {
             isAuthenticated ? (
               <button
                 onClick={handleDashboard}
-                className="text-white/80 hover:text-white text-sm font-semibold tracking-wide transition-colors"
+                className="text-white/50 hover:text-white text-sm font-medium tracking-wide transition-colors duration-200"
               >
-                Dashboard
+                Sign In
               </button>
             ) : (
               <button
                 onClick={handleSignIn}
-                className="text-white/80 hover:text-white text-sm font-semibold tracking-wide transition-colors"
+                className="text-white/50 hover:text-white text-sm font-medium tracking-wide transition-colors duration-200"
               >
                 Sign In
               </button>

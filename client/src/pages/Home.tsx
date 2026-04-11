@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
-import { ChevronRight, Map, Download, Layers } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -27,22 +27,16 @@ const stagger = {
 // 3 cards only — 4-word headline + one sentence each
 const featureCards = [
   {
-    icon: Map,
     headline: "See every inch.",
     body: "Interactive maps built from your footage, ready to share in minutes.",
-    image: "/images/feature-maps-new.jpg",
   },
   {
-    icon: Download,
     headline: "Your data. Any format.",
     body: "KML, CSV, GeoJSON, GPX — one click, every tool.",
-    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/gkNBTHRsPHDBWczp.png",
   },
   {
-    icon: Layers,
     headline: "Plans meet reality.",
     body: "Drop utility drawings onto live aerial maps. Align them with two points.",
-    image: "/images/feature-overlay-new.jpg",
   },
 ];
 
@@ -215,32 +209,100 @@ export default function Home() {
             variants={stagger}
           >
             <div className="grid md:grid-cols-3 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
-              {featureCards.map((card) => (
-                <motion.div
-                  key={card.headline}
-                  variants={fadeInUp}
-                  className="group bg-[#0A0A0A] overflow-hidden"
+              {/* Card 1 — Topographic grid with pulsing drone dot */}
+              <motion.div variants={fadeInUp} className="group bg-[#0A0A0A] overflow-hidden">
+                <div
+                  className="h-48 relative overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+                    backgroundSize: "28px 28px",
+                    backgroundColor: "#0A0A0A",
+                  }}
                 >
-                  {/* Image */}
-                  <div className="h-48 overflow-hidden">
-                    <img
-                      src={card.image}
-                      alt={card.headline}
-                      className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                      }}
-                    />
+                  {/* Radial vignette */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#0A0A0A_100%)]" />
+                  {/* Pulsing drone dot */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                    </span>
                   </div>
-                  {/* Text */}
-                  <div className="p-8">
-                    <h3 className="text-xl font-bold text-white mb-3 leading-tight">
-                      {card.headline}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{card.body}</p>
-                  </div>
-                </motion.div>
-              ))}
+                  {/* Glow halo */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-emerald-500/10 blur-xl" />
+                </div>
+                <div className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">See every inch.</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Interactive maps built from your footage, ready to share in minutes.</p>
+                </div>
+              </motion.div>
+
+              {/* Card 2 — Glassmorphic format pills */}
+              <motion.div variants={fadeInUp} className="group bg-[#0A0A0A] overflow-hidden">
+                <div className="h-48 relative overflow-hidden bg-[#0A0A0A] flex flex-wrap items-center justify-center gap-3 p-6">
+                  {[".KML", ".CSV", ".GeoJSON", ".GPX", ".KMZ"].map((fmt) => (
+                    <div
+                      key={fmt}
+                      className="px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-white text-xs font-mono font-semibold tracking-wider shadow-lg"
+                    >
+                      {fmt}
+                    </div>
+                  ))}
+                </div>
+                <div className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Your data. Any format.</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">KML, CSV, GeoJSON, GPX — one click, every tool.</p>
+                </div>
+              </motion.div>
+
+              {/* Card 3 — X-Ray APWA glowing lines */}
+              <motion.div variants={fadeInUp} className="group bg-[#0A0A0A] overflow-hidden">
+                <div className="h-48 relative overflow-hidden bg-black">
+                  {/* Electric — red */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "30%",
+                      left: 0,
+                      right: 0,
+                      height: "1.5px",
+                      background: "linear-gradient(90deg, transparent 0%, #FF2222 30%, #FF2222 70%, transparent 100%)",
+                      boxShadow: "0 0 8px 2px rgba(255,34,34,0.5)",
+                    }}
+                  />
+                  {/* Gas / Oil — yellow */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "52%",
+                      left: 0,
+                      right: 0,
+                      height: "1.5px",
+                      background: "linear-gradient(90deg, transparent 0%, #FFE500 30%, #FFE500 70%, transparent 100%)",
+                      boxShadow: "0 0 8px 2px rgba(255,229,0,0.5)",
+                    }}
+                  />
+                  {/* Potable Water — blue */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "72%",
+                      left: 0,
+                      right: 0,
+                      height: "1.5px",
+                      background: "linear-gradient(90deg, transparent 0%, #0057FF 30%, #0057FF 70%, transparent 100%)",
+                      boxShadow: "0 0 8px 2px rgba(0,87,255,0.5)",
+                    }}
+                  />
+                  {/* Vignette */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,#000_100%)]" />
+                </div>
+                <div className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Plans meet reality.</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Align them with two points.</p>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
