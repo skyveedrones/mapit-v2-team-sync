@@ -1,7 +1,8 @@
 /**
- * MAPIT — /create Drop Zone
+ * MAPIT — /create Drop Zone (Act 2)
  * Extracts GPS coordinates from dropped files via exifr,
- * stores them in sessionStorage, then transitions to /map.
+ * calls onboarding.initProject to create a real DB project,
+ * then transitions to /project/[id] for the production map.
  */
 
 import { useCallback, useState, useEffect } from "react";
@@ -9,8 +10,9 @@ import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
+import { trpc } from "@/lib/trpc";
 
-type DropState = "idle" | "dragging" | "analyzing" | "locating";
+type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
 
 /** Try to extract GPS from the first file that has it. */
 async function extractGPS(
@@ -35,33 +37,33 @@ export default function Create() {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing...");
 
-  // Progress bar animation → redirect to /map
+  const initProject = trpc.onboarding.initProject.useMutation();
+
+  // Progress bar animation
   useEffect(() => {
-    if (dropState !== "analyzing" && dropState !== "locating") return;
+    if (dropState !== "analyzing" && dropState !== "locating" && dropState !== "creating") return;
     setProgress(0);
     const interval = setInterval(() => {
       setProgress((p) => {
-        if (p >= 100) {
+        if (p >= 95) {
           clearInterval(interval);
-          setTimeout(() => setLocation("/map"), 200);
-          return 100;
+          return 95; // Hold at 95 until project is created
         }
-        const increment = p < 70 ? 3 : p < 90 ? 1 : 0.4;
-        return Math.min(p + increment, 100);
+        const increment = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
+        return Math.min(p + increment, 95);
       });
     }, 40);
     return () => clearInterval(interval);
-  }, [dropState, setLocation]);
+  }, [dropState]);
 
   const processFiles = useCallback(async (files: File[]) => {
     setDropState("analyzing");
     setStatusText("Analyzing...");
 
-    // Try GPS extraction in parallel with the progress animation
+    // Extract GPS in parallel with progress animation
     const coords = await extractGPS(files);
 
     if (coords) {
-      // Store for MapView to consume
       sessionStorage.setItem(
         "mapit_fly_coords",
         JSON.stringify({ lat: coords.lat, lng: coords.lng })
@@ -69,11 +71,37 @@ export default function Create() {
       setStatusText("Located.");
       setDropState("locating");
     } else {
-      // No GPS found — clear any stale coords, fly to default
       sessionStorage.removeItem("mapit_fly_coords");
-      setDropState("analyzing");
     }
-  }, []);
+
+    // Get project name from Act 1
+    const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
+
+    setStatusText("Creating...");
+    setDropState("creating");
+
+    try {
+      const result = await initProject.mutateAsync({
+        name: projectName,
+        lat: coords?.lat,
+        lng: coords?.lng,
+      });
+
+      // Store trial info for the Prestige modal
+      sessionStorage.setItem("mapit_project_id", String(result.projectId));
+      sessionStorage.setItem("mapit_project_name", projectName);
+      sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
+
+      // Complete progress bar and navigate
+      setProgress(100);
+      setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
+    } catch (err) {
+      console.error("[Create] Failed to create project:", err);
+      // Fallback: navigate to map without a project ID
+      setProgress(100);
+      setTimeout(() => setLocation("/map"), 400);
+    }
+  }, [initProject, setLocation]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -103,7 +131,7 @@ export default function Create() {
   );
 
   const isDragging = dropState === "dragging";
-  const isProcessing = dropState === "analyzing" || dropState === "locating";
+  const isProcessing = dropState === "analyzing" || dropState === "locating" || dropState === "creating";
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
@@ -129,7 +157,7 @@ export default function Create() {
       {/* ─── Back arrow ─── */}
       <div className="absolute top-8 left-8 z-20">
         <button
-          onClick={() => setLocation("/welcome")}
+          onClick={() => setLocation("/name")}
           className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
         >
           <ArrowLeft className="w-4 h-4" />

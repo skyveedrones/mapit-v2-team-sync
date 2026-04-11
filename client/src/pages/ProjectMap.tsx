@@ -32,6 +32,8 @@ import {
   Mountain,
 } from "lucide-react";
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { trpc as trpcClient } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
 
 interface GeotaggedMedia {
@@ -67,6 +69,38 @@ export default function ProjectMap() {
   const [enlargedImage, setEnlargedImage] = useState<GeotaggedMedia | null>(null);
   // Demo tour state — only shown for the City Park demo project
   const [showTour, setShowTour] = useState(isDemoProject);
+
+  // ── Prestige modal (onboarding funnel) ───────────────────────────────
+  const isOnboardingProject = !isDemoProject && !!sessionStorage.getItem("mapit_project_id") && sessionStorage.getItem("mapit_project_id") === String(projectId);
+  const [showPrestige, setShowPrestige] = useState(false);
+  const [prestigeEmail, setPrestigeEmail] = useState("");
+  const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
+  const [prestigeClaimed, setPrestigeClaimed] = useState(false);
+  const claimProject = trpcClient.onboarding.claimProject.useMutation();
+  const onboardingProjectName = sessionStorage.getItem("mapit_project_name") || "your project";
+
+  // Fire Prestige modal 5 seconds after map is ready (onboarding flow only)
+  useEffect(() => {
+    if (!isOnboardingProject || !mapReady) return;
+    const timer = setTimeout(() => setShowPrestige(true), 5000);
+    return () => clearTimeout(timer);
+  }, [isOnboardingProject, mapReady]);
+
+  const handlePrestigeClaim = async () => {
+    if (!prestigeEmail.trim() || prestigeSubmitting) return;
+    setPrestigeSubmitting(true);
+    try {
+      await claimProject.mutateAsync({ projectId, email: prestigeEmail.trim() });
+      setPrestigeClaimed(true);
+      // Clear onboarding session markers
+      sessionStorage.removeItem("mapit_project_id");
+      sessionStorage.removeItem("mapit_project_name");
+      sessionStorage.removeItem("mapit_trial_expires");
+      setTimeout(() => setShowPrestige(false), 2000);
+    } catch {
+      setPrestigeSubmitting(false);
+    }
+  };
 
   const { data: project, isLoading: projectLoading } = isDemoProject
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
@@ -675,6 +709,101 @@ export default function ProjectMap() {
           </div>
         </div>
       )}
+
+      {/* ── Prestige Modal (Onboarding Funnel) ── */}
+      <AnimatePresence>
+        {showPrestige && (
+          <motion.div
+            key="prestige-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(20px)" }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative max-w-md w-full mx-6 text-center"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "24px",
+                padding: "3rem 2.5rem",
+                backdropFilter: "blur(32px)",
+              }}
+            >
+              {!prestigeClaimed ? (
+                <>
+                  {/* Massive metallic hook */}
+                  <p
+                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-4"
+                    style={{
+                      fontSize: "clamp(3.5rem,12vw,5.5rem)",
+                      backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #6b7280 100%)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    It's yours
+                  </p>
+                  <p className="text-gray-300 text-base leading-relaxed mb-8">
+                    Your digital twin of <span className="text-white font-semibold">{onboardingProjectName}</span> is live.
+                    <br />
+                    Claim your 14-day free trial to save your work.
+                  </p>
+                  {/* Underline email input */}
+                  <input
+                    type="email"
+                    value={prestigeEmail}
+                    onChange={(e) => setPrestigeEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handlePrestigeClaim()}
+                    placeholder="Email address"
+                    className="w-full bg-transparent border-0 border-b border-white/30 focus:border-white/80 outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 mb-8"
+                    style={{ caretColor: "#10b981" }}
+                    disabled={prestigeSubmitting}
+                  />
+                  <button
+                    onClick={handlePrestigeClaim}
+                    disabled={!prestigeEmail.trim() || prestigeSubmitting}
+                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {prestigeSubmitting ? "Claiming..." : "Claim Project"}
+                  </button>
+                  <button
+                    onClick={() => setShowPrestige(false)}
+                    className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+                  >
+                    Continue exploring →
+                  </button>
+                </>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <p
+                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-4"
+                    style={{
+                      fontSize: "clamp(2.5rem,10vw,4rem)",
+                      backgroundImage: "linear-gradient(to bottom, #10b981 0%, #059669 100%)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    Done.
+                  </p>
+                  <p className="text-gray-300 text-base">
+                    Check your inbox to activate your trial.
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Fullscreen Viewer Modal */}
       {enlargedImage && (

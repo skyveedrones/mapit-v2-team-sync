@@ -33,6 +33,7 @@ import Account from "./pages/Account";
 import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
+import Name from "./pages/Name";
 import Create from "./pages/Create";
 import MapView from "./pages/MapView";
 import OnboardingPilot from "./pages/OnboardingPilot";
@@ -172,6 +173,7 @@ function Router() {
       <Switch>
       <Route path="/" component={Home} />
       <Route path="/welcome" component={Welcome} />
+      <Route path="/name" component={Name} />
       <Route path="/create" component={Create} />
       <Route path="/map" component={MapView} />
       <Route path="/signup" component={SignupPage} />

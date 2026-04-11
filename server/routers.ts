@@ -5098,6 +5098,88 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── Onboarding Funnel (public, no auth) ───
+  onboarding: router({
+    /**
+     * Act 2: Create a real project under the owner account.
+     * Returns { projectId, trialExpiresAt } so the frontend can
+     * navigate to /project/[id] and show the Prestige modal.
+     */
+    initProject: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(255),
+          lat: z.number().optional(),
+          lng: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+
+        const location = input.lat && input.lng
+          ? `${input.lat.toFixed(6)}, ${input.lng.toFixed(6)}`
+          : undefined;
+
+        const project = await createProject({
+          userId: ownerUser.id,
+          name: input.name,
+          description: 'Created via onboarding funnel — trial project',
+          location: location ?? null,
+          status: 'active',
+        });
+
+        const trialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        return { projectId: project.id, trialExpiresAt };
+      }),
+
+    /**
+     * Act 3 Prestige Modal: Associate an email with the trial project.
+     * Creates a new user row if the email is new, then transfers project ownership.
+     */
+    claimProject: publicProcedure
+      .input(
+        z.object({
+          projectId: z.number(),
+          email: z.string().email(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+
+        // Check if user already exists
+        let claimUser = await getUserByEmail(input.email);
+
+        if (!claimUser) {
+          // Create a lightweight user row for the new visitor
+          const guestOpenId = `guest_${nanoid(16)}`;
+          const { upsertUser: doUpsert } = await import('./db');
+          await doUpsert({
+            openId: guestOpenId,
+            email: input.email,
+            name: input.email.split('@')[0],
+            loginMethod: 'email',
+            role: 'user',
+            subscriptionTier: 'free',
+            subscriptionStatus: 'trialing',
+            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          });
+          claimUser = await getUserByEmail(input.email);
+        }
+
+        if (!claimUser) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
+
+        // Transfer project ownership to the claiming user
+        await db
+          .update(projects)
+          .set({ userId: claimUser.id })
+          .where(eq(projects.id, input.projectId));
+
+        return { success: true, userId: claimUser.id };
+      }),
+  }),
+
   // ─── Municipal Lead Capture ───
   municipal: router({
     submitContactSales: publicProcedure
@@ -5805,6 +5887,24 @@ export const appRouter = router({
     }),
   }),
 });
+
+// ─── Onboarding: anonymous project creation + email claim ───────────────────
+// These two public procedures power the 3-Act Jobsian funnel:
+//   /name → /create → /project/[id]
+// No auth required. Projects are created under the owner account and
+// claimed when the visitor provides their email.
+
+async function getOrCreateGuestUser(ownerOpenId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Try to find the owner user first
+  const { getUserByOpenId: getByOpenId } = await import('./db');
+  const ownerRow = await getByOpenId(ownerOpenId);
+  if (ownerRow) return ownerRow;
+
+  throw new Error("Owner user not found — cannot create guest project");
+}
 
 /** Build the branded referral email HTML */
 function buildReferralEmailHtml(params: {
