@@ -1189,6 +1189,16 @@ export const appRouter = router({
             // Download PDF bytes through authenticated proxy (avoids 403 on CDN)
             const { buffer: pdfBuffer } = await storageDownload(input.fileKey);
 
+            // Validate that the downloaded bytes are actually a PDF (magic bytes: %PDF)
+            // If the file was never uploaded to S3, the CDN may return an HTML error page
+            const pdfMagic = pdfBuffer.slice(0, 4).toString('ascii');
+            if (pdfMagic !== '%PDF') {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'This file was not found in storage or is corrupted. Please delete this record and re-upload the PDF, then try again.',
+              });
+            }
+
             // Use the same converter as overlay-upload route (pdftoppm → pdf-to-png-converter fallback)
             const { execFile } = await import('child_process');
             const { promisify } = await import('util');
