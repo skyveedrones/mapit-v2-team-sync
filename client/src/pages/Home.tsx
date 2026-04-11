@@ -188,10 +188,10 @@ export default function Home() {
               infrastructure — updated from the air. No consultants. No delays. No excuses.
             </motion.p>
 
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInUp} className="mt-12">
               <a
                 href="/municipal"
-                className="inline-flex items-center gap-2 text-white/60 hover:text-white text-base font-semibold transition-colors"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
               >
                 Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
               </a>
@@ -219,8 +219,8 @@ export default function Home() {
                   1cm
                 </p>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">See every inch.</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">Interactive maps built from your footage, ready to share in minutes.</p>
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Perfect clarity.</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Interactive maps built with centimeter-level accuracy, ready to share in minutes.</p>
                 </div>
               </motion.div>
 
