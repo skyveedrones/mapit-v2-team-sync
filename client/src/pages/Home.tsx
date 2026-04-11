@@ -1,555 +1,298 @@
 /**
- * MAPIT - Home Page
- * Design: Aurora Borealis Theme
- * - Dark forest green interface with lime/neon green accents
- * - Colors: Spearmint #117660, Forest Green #09323B, Lime Green #04B16F, Neon Green #14E114
- * - Orbitron display font, Inter body font
- * - Glowing card effects on hover
- * - Grid/topographic patterns
+ * MAPIT - Home Page — Jobsian Rewrite
+ * Design: Pure black (#0A0A0A), stark white, MAPIT Green (#00C853) reserved for CTA + product name only.
+ * Copy: Jobs-style — name the feeling, one door, no jargon.
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useTheme } from "@/contexts/ThemeContext";
-import { getLoginUrl, getPortalLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { AppDownloadDialog } from "@/components/AppDownloadDialog";
-import { trackEvent } from "@/lib/analytics";
-import { motion } from "framer-motion";
-import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
-import { CyberDivider } from "@/components/CyberDivider";
-import { MunicipalGateway } from "@/components/MunicipalGateway";
-import {
-  Upload,
-  Map,
-  Route,
-  Download,
-  Layers,
-  FileText,
-  ChevronRight,
-  Eye,
-  Zap,
-  Cpu,
-  LayoutDashboard,
-  Building2,
-  Users,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronRight, Map, Download, Layers } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { useLocation, Link } from "wouter";
-
-const features = [
-  {
-    icon: Upload,
-    title: "Easy Upload",
-    description:
-      "Upload drone photos and videos with automatic GPS metadata extraction",
-    image: "/images/feature-upload-new.jpg",
-    link: "/features/easy-upload",
-  },
-  {
-    icon: Map,
-    title: "Interactive Maps",
-    description:
-      "Visualize your flights on Mapbox with markers, popups, and key data",
-    image: "/images/feature-maps-new.jpg",
-    link: "/features/interactive-maps",
-  },
-  {
-    icon: Route,
-    title: "Flight Path Tracking",
-    description:
-      "Automatic flight path visualization connecting sequential GPS points",
-    image: "/images/feature-flightpath-new.jpg",
-    link: "/features/flight-path-tracking",
-  },
-  {
-    icon: Download,
-    title: "GPS Data Export",
-    description:
-      "Export in KML, CSV, GeoJSON, and GPX formats for any mapping software",
-    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/gkNBTHRsPHDBWczp.png",
-    link: "/features/gps-data-export",
-  },
-  {
-    icon: Layers,
-    title: "Project Map Overlay",
-    description:
-      "Overlay construction plans on your maps with precise corner positioning.",
-    image: "/images/feature-overlay-new.jpg",
-    link: "/features/pdf-map-overlay",
-  },
-
-  {
-    icon: FileText,
-    title: "Project Templates",
-    description:
-      "Save project configurations as templates and create new projects in seconds",
-    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/SxjCbukJOAezRSZP.png",
-    link: "/features/project-templates",
-  },
-];
+import { useLocation } from "wouter";
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0 },
 };
 
-const staggerContainer = {
+const stagger = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
+// 3 cards only — 4-word headline + one sentence each
+const featureCards = [
+  {
+    icon: Map,
+    headline: "See every inch.",
+    body: "Interactive maps built from your footage, ready to share in minutes.",
+    image: "/images/feature-maps-new.jpg",
+  },
+  {
+    icon: Download,
+    headline: "Your data. Any format.",
+    body: "KML, CSV, GeoJSON, GPX — one click, every tool.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/gkNBTHRsPHDBWczp.png",
+  },
+  {
+    icon: Layers,
+    headline: "Plans meet reality.",
+    body: "Drop utility drawings onto live aerial maps. Align them with two points.",
+    image: "/images/feature-overlay-new.jpg",
+  },
+];
+
+// 3-step workflow — human action, not software function
+const workflowSteps = [
+  {
+    number: "01",
+    label: "Fly",
+    body: "Take the shot. That's your only job.",
+  },
+  {
+    number: "02",
+    label: "MAPIT",
+    body: "GPS, flight paths, and metadata — extracted in seconds.",
+  },
+  {
+    number: "03",
+    label: "Share",
+    body: "A live map your whole team can see. No GIS degree required.",
+  },
+];
+
 export default function Home() {
-  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
 
-  // Set page title for SEO
   useEffect(() => {
-    document.title = "SkyVee MAPIT - Drone Mapping & Aerial Data Analysis";
+    document.title = "MAPIT — Your job site. From above. In minutes.";
   }, []);
 
   return (
-    <div className="min-h-screen text-foreground">
-      {/* Enterprise Navigation */}
+    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
       <GlobalHamburgerHeader />
 
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Full-bleed video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
+            type="video/mp4"
+          />
+        </video>
+        {/* Gradient overlay — dark at top for nav, fades to #0A0A0A at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#0A0A0A]" />
 
-
-      {/* Top Gradient Overlay for Readability */}
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
-
-      {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-start pt-0">
-        <div className="relative z-10 text-center pt-2 md:pt-3 lg:pt-4 w-full">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="max-w-4xl mx-auto"
+        {/* Hero content — headline + single CTA, nothing else */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={stagger}
+          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
+        >
+          <motion.h1
+            variants={fadeInUp}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8"
           >
+            Your job site.{" "}
+            <span className="text-[#00C853]">From above.</span>
+            <br />
+            In minutes.
+          </motion.h1>
 
+          <motion.p
+            variants={fadeInUp}
+            className="text-xl text-gray-300 max-w-xl mx-auto mb-12 leading-relaxed"
+          >
+            MAPIT turns drone footage into interactive maps, GPS exports, and utility overlays — automatically.
+          </motion.p>
 
-
-
+          <motion.div variants={fadeInUp}>
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
+              onClick={() => setLocation("/welcome")}
+            >
+              Start Mapping Free
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
           </motion.div>
-        </div>
-
-        {/* Video Section with CTA Buttons */}
-        <section className="relative w-full pt-20 lg:pt-24 h-[70vh] min-h-[500px] overflow-hidden bg-black pb-0">
-          {/* 1. THE VIDEO: Forced to cover every pixel */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4" type="video/mp4" />
-          </video>
-          {/* 2. THE BASE OVERLAY: Subtle and clean */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-white/10" />
-          {/* 3. THE TOP GRADIENT: Fades from black to clear for the Nav */}
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black via-black/60 to-transparent z-10" />
-          {/* 4. THE CONTENT: Centered perfectly over the video */}
-          <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-white text-4xl md:text-6xl font-extrabold tracking-tighter mb-4"
-              style={{
-                textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6)',
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-              }}
-            >
-              ELEVATE YOUR <span className="text-primary">VISION</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-gray-200 text-lg md:text-xl max-w-2xl leading-relaxed"
-            >
-              Precise drone mapping and geospatial data for smarter project planning.
-            </motion.p>
-          </div>
-
-        </section>
-
-        {/* --- BUTTON BRIDGE --- */}
-        <div className="bg-white dark:bg-black pt-8 pb-8 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10 transition-colors duration-300">
-          {/* The Get Started Button navigates to Welcome page */}
-          <Link href="/welcome">
-            <button
-              className="px-10 py-4 bg-primary text-primary-foreground font-extrabold rounded-full hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,225,20,0.3)] tracking-wide uppercase text-sm"
-            >
-              Get Started
-            </button>
-          </Link>
-
-          {/* The Learn More Button scrolls to Features */}
-          <button
-            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-10 py-4 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-all tracking-wide uppercase text-sm"
-          >
-            Learn More
-          </button>
-        </div>
-
-        {/* SECTION 3: STEPPER CARDS — moved here; Municipal is now outside hero section */}
-        <section className="relative bg-white dark:bg-black pt-16 pb-12 md:pb-16 px-6 z-40 transition-colors duration-300">
-          {/* Branded Background "Wing" Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          
-          <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-24">
-              <h2 className="text-3xl md:text-5xl font-bold font-semibold tracking-tight text-slate-900 dark:text-white mb-6">
-                From Flight to <span className="text-primary">Data</span> in Minutes
-              </h2>
-              <p className="text-slate-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
-                The streamlined workflow designed for drone professionals and project managers.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-50">
-              {[
-                {
-                  title: "Upload",
-                  impact: "Drag, Drop, Done.",
-                  desc: "Instant cloud sync for high-res drone media.",
-                  icon: Upload,
-                },
-                {
-                  title: "Process",
-                  impact: "Auto-Telemetry.",
-                  desc: "AI-driven extraction of GPS and flight paths.",
-                  icon: Cpu,
-                },
-                {
-                  title: "Visualize",
-                  impact: "Map Your Success.",
-                  desc: "Interactive 3D maps and pro-grade exports.",
-                  icon: LayoutDashboard,
-                },
-              ].map((step, index) => {
-                const IconComponent = step.icon;
-                return (
-                  <div 
-                    key={index} 
-                    className="group p-8 rounded-2xl bg-slate-100/50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 hover:border-[#22c55e] dark:hover:border-[#22c55e] hover:-translate-y-1 shadow-sm dark:shadow-none hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="flex items-start gap-5">
-                      {/* Icon with MAPIT Glow */}
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(20,225,20,0.1)] group-hover:shadow-[0_0_25px_rgba(20,225,20,0.3)] transition-all">
-                        <IconComponent className="w-6 h-6 text-primary" />
-                      </div>
-                      
-                      <div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1 block">
-                          Step 0{index + 1}
-                        </span>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-colors duration-300">{step.title}</h3>
-                        <p className="text-slate-900 dark:text-white font-medium mb-1 transition-colors duration-300">{step.impact}</p>
-                        <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed transition-colors duration-300">{step.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
+        </motion.div>
       </section>
 
-      {/* SECTION 2: MUNICIPAL GATEWAY — full-width, outside hero section */}
-      <CyberDivider />
-      <MunicipalGateway />
-
-      {/* SECTION 3: UNIVERSAL COMPATIBILITY — flows directly from Municipal, no divider */}
-      <section className="relative bg-slate-950 pt-12 pb-12 md:pb-16 z-20">
-        {/* Radial Glow for depth */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-bold tracking-[0.3em] text-primary uppercase mb-4">
-              Universal Integration
-            </h2>
-            <h3 className="text-3xl md:text-5xl font-bold text-white">
-              Compatible with <span className="text-white">All Major Drone Manufacturers</span>
-            </h3>
-            <p className="text-slate-400 mt-6 max-w-2xl mx-auto text-lg">
-              If your aircraft records GPS metadata, our system can process it.
-              Zero proprietary hardware locks.
-            </p>
-          </div>
-
-          {/* Brand Grid: Clean, minimalist logos */}
-          <div className="bg-white/5 border border-white/10 rounded-lg p-12 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center justify-items-center opacity-70">
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">DJI</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Enterprise</span>
-            </div>
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">AUTEL</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Robotics</span>
-            </div>
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">PARROT</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Anafi Series</span>
-            </div>
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">SKYDIO</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Autonomous</span>
-            </div>
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">MAVLINK</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">Open Source</span>
-            </div>
-            <div className="flex flex-col items-center group">
-              <span className="text-2xl font-black text-white group-hover:text-primary transition-colors">FIXED WING</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1">VTOL / Professional</span>
-            </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-slate-400 text-sm font-medium">Supporting 99.9% of commercial metadata formats (KML, CSV, GeoJSON)</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <CyberDivider />
-      {/* SECTION 4: FEATURES */}
-      <section id="features" className="relative bg-white dark:bg-black pt-12 md:pt-16 pb-12 md:pb-16 px-6 z-10 transition-colors duration-300">
-        <Features />
-      </section>
-
-      <CyberDivider />
-      {/* SECTION 5: HIRE A PILOT SERVICE */}
-      <section
-        className="relative py-20 md:py-28 px-6 overflow-hidden"
-        style={{
-          background: "#0a0f1a",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zM0 80c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm80 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm0-80c0 5.523 4.477 10 10 10s10-4.477 10-10-4.477-10-10-10-10 4.477-10 10z' fill='%2310b981' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C%2Fsvg%3E")`,
-        }}
-      >
-        {/* Radial glow behind content */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 70%)",
-          }}
-        />
-
-        <div className="container max-w-3xl mx-auto text-center relative z-10">
+      {/* ─── 3-STEP WORKFLOW ─── */}
+      <section className="py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={staggerContainer}
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl md:text-5xl font-bold text-white mb-5"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-4xl sm:text-5xl font-bold tracking-tight text-center mb-20"
             >
-              Need a Pilot?            </motion.h2>
+              Three steps. Zero complexity.
+            </motion.h2>
+
+            <div className="grid md:grid-cols-3 gap-0 border border-white/5 rounded-2xl overflow-hidden">
+              {workflowSteps.map((step, i) => (
+                <motion.div
+                  key={step.label}
+                  variants={fadeInUp}
+                  className={`p-10 bg-[#0A0A0A] ${
+                    i < workflowSteps.length - 1
+                      ? "border-b md:border-b-0 md:border-r border-white/5"
+                      : ""
+                  }`}
+                >
+                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/70 mb-4">
+                    {step.number}
+                  </p>
+                  <h3 className="text-3xl font-bold text-white mb-4">{step.label}</h3>
+                  <p className="text-gray-400 text-base leading-relaxed">{step.body}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── MUNICIPAL GATEWAY ─── */}
+      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-8"
+            >
+              Cities don't have time
+              <br />
+              to wait for paper maps.
+            </motion.h2>
+
             <motion.p
               variants={fadeInUp}
-              className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
+              className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12"
             >
-              Don&apos;t have a drone or a Part 107 pilot? SkyVee Drones — the team behind{" "}
-              <span className="font-semibold text-white">MAPIT</span> — provides
-              full-service aerial data collection and infrastructure inspections nationwide.
+              MAPIT gives municipal teams a live digital record of every project — roads, utilities,
+              infrastructure — updated from the air. No consultants. No delays. No excuses.
             </motion.p>
+
             <motion.div variants={fadeInUp}>
-              <Button
-                size="lg"
-                className="rounded-full bg-[#10b981] hover:bg-[#0ea271] text-white font-bold px-10 py-6 text-base transition-all duration-300 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-                onClick={() => window.open('https://www.skyveedrones.com', '_blank')}
+              <a
+                href="/municipal"
+                className="inline-flex items-center gap-2 text-white/60 hover:text-white text-base font-semibold transition-colors"
               >
-                Hire a Pilot
-              </Button>
+                Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
+              </a>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* SECTION 6: MUNICIPAL — moved to position #2 above */}
-
-      {/* Old Features Section - Removed */}
-      <section className="hidden py-16 relative">
-        <div className="absolute inset-0 topo-pattern" />
-        <div className="container relative z-10">
+      {/* ─── 3-CARD FEATURE GRID ─── */}
+      <section id="features" className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={staggerContainer}
-            className="text-center mb-16"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
           >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl md:text-4xl font-bold mb-4"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Powerful Drone Mapping Features
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-muted-foreground max-w-2xl mx-auto"
-            >
-              Everything you need to manage, visualize, and share your aerial
-              mapping projects
-            </motion.p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {features.map((feature) => (
-              <Link key={feature.title} href={feature.link}>
+            <div className="grid md:grid-cols-3 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+              {featureCards.map((card) => (
                 <motion.div
+                  key={card.headline}
                   variants={fadeInUp}
-                  className="glow-card overflow-hidden cursor-pointer group h-full transition-transform duration-300 hover:-translate-y-2"
-                  onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    e.currentTarget.style.setProperty("--mouse-x", `${x}%`);
-                    e.currentTarget.style.setProperty("--mouse-y", `${y}%`);
-                  }}
+                  className="group bg-[#0A0A0A] overflow-hidden"
                 >
-                  {/* Feature Image */}
-                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                  {/* Image */}
+                  <div className="h-48 overflow-hidden">
                     <img
-                      src={feature.image}
-                      alt={feature.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      src={card.image}
+                      alt={card.headline}
+                      className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-105"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
                       }}
                     />
                   </div>
-                  {/* Feature Content */}
-                  <div className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                        <feature.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3
-                          className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors"
-                          style={{ fontFamily: "var(--font-display)" }}
-                        >
-                          {feature.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
+                  {/* Text */}
+                  <div className="p-8">
+                    <h3 className="text-xl font-bold text-white mb-3 leading-tight">
+                      {card.headline}
+                    </h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{card.body}</p>
                   </div>
                 </motion.div>
-              </Link>
-            ))}
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
 
-      <CyberDivider />
-      {/* CTA Section */}
-      <section className="pt-12 md:pt-16 pb-12 relative overflow-hidden bg-white dark:bg-black transition-colors duration-300">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 dark:from-primary/10 dark:via-transparent dark:to-primary/10" />
-        <div className="absolute inset-0 grid-pattern dark:opacity-20" />
+      {/* ─── SINGLE CTA ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
+        {/* Subtle green ambient glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
+        </div>
 
-        <div className="container relative z-10">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="max-w-3xl mx-auto text-center"
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="relative z-10 max-w-3xl mx-auto text-center"
+        >
+          <motion.h2
+            variants={fadeInUp}
+            className="text-5xl sm:text-6xl font-bold tracking-tight mb-12"
           >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 transition-colors duration-300"
-              style={{ fontFamily: "var(--font-display)" }}
+            The map is waiting.
+          </motion.h2>
+
+          <motion.div variants={fadeInUp}>
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
+              onClick={() => setLocation("/welcome")}
             >
-              Ready to Map Your Projects?
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-slate-600 dark:text-gray-400 mb-8 transition-colors duration-300"
-            >
-              Start organizing and visualizing your drone footage today
-            </motion.p>
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-[#10b981] hover:bg-[#0ea271] text-slate-950 font-bold text-lg px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-                onClick={() => {
-                  setShowContactModal(true);
-                }}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                Request a Briefing
-              </Button>
-              <Button
-                size="lg"
-                className="bg-[#10b981] hover:bg-[#0ea271] text-slate-950 font-bold text-lg px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-                onClick={() => {
-                  trackEvent('demo_to_trial_click');
-                  setLocation('/welcome');
-                }}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                Start New Trial
-              </Button>
-            </motion.div>
+              Start for free
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
           </motion.div>
-        </div>
+
+          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
+            No credit card required &nbsp;·&nbsp; Works with any drone
+          </motion.p>
+        </motion.div>
       </section>
 
-      {/* CyberDivider before footer */}
-      <CyberDivider />
-
-      {/* Footer - Using new component */}
+      {/* ─── Footer ─── */}
       <Footer onContactClick={() => setShowContactModal(true)} />
 
-      {/* Download Dialog */}
-      {showDownloadDialog && (
-        <AppDownloadDialog
-          open={showDownloadDialog}
-          onOpenChange={setShowDownloadDialog}
-        />
-      )}
-      
       {/* Contact Modal */}
-      <ContactModal
-        open={showContactModal}
-        onOpenChange={setShowContactModal}
-      />
+      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
 }
