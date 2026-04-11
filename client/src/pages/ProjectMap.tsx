@@ -747,12 +747,15 @@ export default function ProjectMap() {
                       lineHeight: 1,
                     }}
                   >
-                    It's yours
+                    Engineering triumph
                   </p>
-                  <p className="text-gray-300 text-base leading-relaxed mb-8">
-                    Your digital twin of <span className="text-white font-semibold">{onboardingProjectName}</span> is live.
-                    <br />
-                    Claim your 14-day free trial to save your work.
+                  <p className="text-white/60 text-base leading-relaxed mb-8" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    You have officially conquered the complexity of{" "}
+                    <span className="text-white font-semibold">{onboardingProjectName}</span>. In one swift motion,
+                    you've transformed raw data into a high-precision digital twin—a feat that used to take teams weeks
+                    to engineer. You are in control now.
+                    <br /><br />
+                    Claim your 14-day free trial to secure your work.
                   </p>
                   {/* Underline email input */}
                   <input
