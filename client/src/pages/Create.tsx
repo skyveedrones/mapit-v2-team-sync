@@ -3,6 +3,11 @@
  * Extracts GPS coordinates from dropped files via exifr,
  * calls onboarding.initProject to create a real DB project,
  * then transitions to /project/[id] for the production map.
+ *
+ * GPS extraction priority:
+ *  1. exifr.gps() — works for JPEG/TIFF/HEIC drone images
+ *  2. exifr.parse() full parse — fallback for non-standard EXIF
+ *  3. No GPS → quiet toast + world-view fallback
  */
 
 import { useCallback, useState, useEffect } from "react";
@@ -11,22 +16,46 @@ import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
 
-/** Try to extract GPS from the first file that has it. */
+/**
+ * Robust GPS extraction — tries multiple exifr strategies.
+ * Returns { lat, lng } in decimal degrees, or null.
+ */
 async function extractGPS(
   files: File[]
 ): Promise<{ lat: number; lng: number } | null> {
   for (const file of files) {
+    // Skip video files — exifr can't read MP4 EXIF reliably
+    if (file.type.startsWith("video/")) continue;
+
     try {
+      // Strategy 1: dedicated GPS parse (fastest)
       const gps = await exifr.gps(file);
       if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
         return { lat: gps.latitude, lng: gps.longitude };
       }
-    } catch {
-      // file has no EXIF or unsupported format — try next
-    }
+    } catch { /* unsupported format — try next strategy */ }
+
+    try {
+      // Strategy 2: full EXIF parse — catches non-standard GPS blocks
+      const exif = await exifr.parse(file, {
+        gps: true,
+        tiff: true,
+        exif: true,
+        translateKeys: true,
+        translateValues: true,
+      });
+      if (exif) {
+        const lat = exif.latitude ?? exif.GPSLatitude;
+        const lng = exif.longitude ?? exif.GPSLongitude;
+        if (typeof lat === "number" && typeof lng === "number") {
+          return { lat, lng };
+        }
+      }
+    } catch { /* ignore */ }
   }
   return null;
 }
@@ -45,10 +74,7 @@ export default function Create() {
     setProgress(0);
     const interval = setInterval(() => {
       setProgress((p) => {
-        if (p >= 95) {
-          clearInterval(interval);
-          return 95; // Hold at 95 until project is created
-        }
+        if (p >= 95) { clearInterval(interval); return 95; }
         const increment = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
         return Math.min(p + increment, 95);
       });
@@ -60,7 +86,7 @@ export default function Create() {
     setDropState("analyzing");
     setStatusText("Analyzing...");
 
-    // Extract GPS in parallel with progress animation
+    // Extract GPS — must complete before initProject call
     const coords = await extractGPS(files);
 
     if (coords) {
@@ -72,6 +98,17 @@ export default function Create() {
       setDropState("locating");
     } else {
       sessionStorage.removeItem("mapit_fly_coords");
+      // Quiet Jobsian toast — no GPS found
+      toast("No location found in file. Defaulting to world view.", {
+        duration: 3500,
+        style: {
+          background: "#111",
+          color: "rgba(255,255,255,0.6)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          fontSize: "13px",
+          fontFamily: "Inter, sans-serif",
+        },
+      });
     }
 
     // Get project name from Act 1
@@ -97,7 +134,6 @@ export default function Create() {
       setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
     } catch (err) {
       console.error("[Create] Failed to create project:", err);
-      // Fallback: navigate to map without a project ID
       setProgress(100);
       setTimeout(() => setLocation("/map"), 400);
     }

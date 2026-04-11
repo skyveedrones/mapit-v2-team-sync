@@ -133,6 +133,44 @@ export default function ProjectMap() {
     });
   }, [geotaggedMedia]);
 
+  // ── Coordinate priority chain ────────────────────────────────────────
+  // Tier 1: sessionStorage (immediate post-drop)
+  // Tier 2: project.location string from DB ("lat, lng")
+  // Tier 3: centroid of loaded media GPS points
+  // Tier 4: Dallas default
+  const parseLocation = (str: string | null | undefined): [number, number] | null => {
+    if (!str) return null;
+    const parts = str.split(',').map((s) => parseFloat(s.trim()));
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return [parts[1], parts[0]]; // [lng, lat] for Mapbox
+    }
+    return null;
+  };
+
+  const getInitialCenter = useCallback((): { center: [number, number]; zoom: number } => {
+    // Tier 1: sessionStorage
+    const stored = sessionStorage.getItem('mapit_fly_coords');
+    if (stored) {
+      try {
+        const { lat, lng } = JSON.parse(stored);
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          return { center: [lng, lat], zoom: 1.5 }; // start high for cinematic fly-in
+        }
+      } catch { /* ignore */ }
+    }
+    // Tier 2: project.location from DB
+    const dbCoords = parseLocation((project as any)?.location);
+    if (dbCoords) return { center: dbCoords, zoom: 1.5 };
+    // Tier 3: centroid of loaded media
+    if (geotaggedMedia.length > 0) {
+      const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+      const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+      return { center: [avgLng, avgLat], zoom: 15 };
+    }
+    // Tier 4: world default
+    return { center: [-96.4719, 32.7479], zoom: 2 };
+  }, [geotaggedMedia, project]);
+
   const getMapCenter = useCallback((): [number, number] => {
     if (geotaggedMedia.length === 0) return [-96.4719, 32.7479];
     const avgLat = geotaggedMedia.reduce((sum, m) => sum + m.latitude, 0) / geotaggedMedia.length;
@@ -154,11 +192,14 @@ export default function ProjectMap() {
     if (!token) return;
     mapboxgl.accessToken = token;
 
+    const { center: initialCenter, zoom: initialZoom } = getInitialCenter();
+    const hasCinematicFly = initialZoom === 1.5; // Tier 1 or Tier 2 — start high
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: styleMap[mapStyle],
-      center: getMapCenter(),
-      zoom: geotaggedMedia.length > 0 ? 15 : 12,
+      center: hasCinematicFly ? [0, 20] : initialCenter, // world view start for cinematic
+      zoom: hasCinematicFly ? 1.5 : initialZoom,
       pitchWithRotate: false,
     });
 
@@ -167,6 +208,23 @@ export default function ProjectMap() {
 
     map.on("load", () => {
       mapRef.current = map;
+
+      if (hasCinematicFly) {
+        // Cinematic fly-in from world altitude to site
+        setTimeout(() => {
+          map.flyTo({
+            center: initialCenter,
+            zoom: 16,
+            pitch: 45,
+            bearing: 0,
+            duration: 3800,
+            essential: true,
+          });
+          // Clear sessionStorage fly coords after use
+          sessionStorage.removeItem('mapit_fly_coords');
+        }, 400);
+      }
+
       setMapReady(true);
     });
 
