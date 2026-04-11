@@ -35,26 +35,12 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden"
-      style={{
-        backgroundImage: `url(${BG_URL})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0A]"
     >
-      {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/60 to-emerald-950/70 z-0" />
-
-      {/* Subtle grid texture */}
-      <div
-        className="absolute inset-0 z-0 opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(16,185,129,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.3) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
+      {/* Subtle ambient glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[600px] h-[600px] rounded-full bg-emerald-950/30 blur-[120px]" />
+      </div>
 
       {/* Top-left branding */}
       <div className="absolute top-6 left-8 z-10 flex items-center gap-2">
@@ -87,11 +73,11 @@ export default function Login() {
         className="relative z-10 w-full max-w-md mx-4"
       >
         <div
-          className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
+          className="rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
           style={{
-            background: "rgba(10, 20, 25, 0.72)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(32px)",
+            WebkitBackdropFilter: "blur(32px)",
           }}
         >
           {/* Card header accent bar */}
