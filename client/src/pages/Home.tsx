@@ -82,12 +82,13 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/VideoProject_e838c8e5.mp4"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
             type="video/mp4"
           />
         </video>
-        {/* Gradient overlay — dark at top for nav, fades to #0A0A0A at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#0A0A0A]" />
+        {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
 
         {/* Hero content — headline + single CTA, nothing else */}
         <motion.div
