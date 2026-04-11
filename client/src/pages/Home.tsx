@@ -100,16 +100,16 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           variants={stagger}
-          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
+          className="relative z-20 max-w-3xl mx-auto px-6 text-center"
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8"
+            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8 text-white"
+            style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            Your job site.{" "}
-            <span className="text-[#00C853]">From above.</span>
-            <br />
-            In minutes.
+            <span className="block">Your job site.</span>
+            <span className="block">From above.</span>
+            <span className="block">In minutes.</span>
           </motion.h1>
 
           <motion.p
@@ -148,18 +148,14 @@ export default function Home() {
               Three steps. Zero complexity.
             </motion.h2>
 
-            <div className="grid md:grid-cols-3 gap-0 border border-white/5 rounded-2xl overflow-hidden">
-              {workflowSteps.map((step, i) => (
+            <div className="grid md:grid-cols-3 gap-16">
+              {workflowSteps.map((step) => (
                 <motion.div
                   key={step.label}
                   variants={fadeInUp}
-                  className={`p-10 bg-[#0A0A0A] ${
-                    i < workflowSteps.length - 1
-                      ? "border-b md:border-b-0 md:border-r border-white/5"
-                      : ""
-                  }`}
+                  className="text-center"
                 >
-                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/70 mb-4">
+                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">
                     {step.number}
                   </p>
                   <h3 className="text-3xl font-bold text-white mb-4">{step.label}</h3>

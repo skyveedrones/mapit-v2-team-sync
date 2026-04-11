@@ -44,7 +44,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Orbitron', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
   
   /* Aurora color palette custom properties */
   --color-spearmint: oklch(0.507 0.093 173.06);
@@ -156,9 +156,9 @@
     @apply cursor-pointer;
   }
   
-  /* Display font for headings */
+  /* Headings use the same clean Inter sans-serif */
   h1, h2, h3 {
-    font-family: var(--font-display);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
