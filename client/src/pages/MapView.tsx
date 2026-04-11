@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Layers, Ruler, Share2, ArrowLeft, X } from "lucide-react";
+import MapLayerTree from "@/components/MapLayerTree";
 
 // ─── Map style: dark satellite with no labels for maximum contrast ───────────
 const DARK_SATELLITE = "mapbox://styles/mapbox/satellite-v9";
@@ -202,7 +203,7 @@ export default function MapView() {
               </button>
             </div>
 
-            {activeHud === "layers" && <LayersPanel map={mapRef.current} />}
+            {activeHud === "layers" && <MapLayerTree map={mapRef.current} />}
             {activeHud === "measure" && <MeasurePanel />}
             {activeHud === "share" && <SharePanel />}
           </motion.div>
@@ -262,28 +263,7 @@ function HudButton({
   );
 }
 
-// ─── Layers Panel ─────────────────────────────────────────────────────────────
-function LayersPanel({ map }: { map: mapboxgl.Map | null }) {
-  const styles: { label: string; id: string }[] = [
-    { label: "Dark Satellite", id: "mapbox://styles/mapbox/satellite-v9" },
-    { label: "Satellite Streets", id: "mapbox://styles/mapbox/satellite-streets-v12" },
-    { label: "Dark", id: "mapbox://styles/mapbox/dark-v11" },
-  ];
 
-  return (
-    <div className="space-y-2">
-      {styles.map((s) => (
-        <button
-          key={s.id}
-          onClick={() => map?.setStyle(s.id)}
-          className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-white/8"
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // ─── Measure Panel ────────────────────────────────────────────────────────────
 function MeasurePanel() {
