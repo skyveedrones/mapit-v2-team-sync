@@ -34,6 +34,7 @@ import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
 import Create from "./pages/Create";
+import MapView from "./pages/MapView";
 import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
@@ -172,6 +173,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/welcome" component={Welcome} />
       <Route path="/create" component={Create} />
+      <Route path="/map" component={MapView} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />

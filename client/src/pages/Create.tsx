@@ -20,11 +20,11 @@ export default function Create() {
   useEffect(() => {
     if (dropState !== "analyzing") return;
     setProgress(0);
-    const interval = setInterval(() => {
+        const interval = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) {
           clearInterval(interval);
-          setTimeout(() => setLocation("/dashboard"), 200);
+          setTimeout(() => setLocation("/map"), 200);
           return 100;
         }
         // Accelerate toward 80% quickly, then slow down
