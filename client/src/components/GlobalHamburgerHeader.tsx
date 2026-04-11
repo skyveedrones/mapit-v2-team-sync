@@ -67,8 +67,8 @@ export const GlobalHamburgerHeader = () => {
       <header
         className={`fixed top-0 left-0 w-full z-[100] transition-all duration-300 ${
           scrolled
-            ? "bg-slate-950/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20"
-            : "bg-slate-950/60 backdrop-blur-xl border-b border-white/10"
+            ? "bg-[#0A0A0A]/95 backdrop-blur-xl shadow-lg shadow-black/20"
+            : "bg-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">

@@ -197,20 +197,13 @@ export default function Municipal() {
 
       {/* ─── THE PAIN ─── */}
       <section className="py-32 px-6 bg-[#0A0A0A]">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
-            <motion.p
-              variants={fadeInUp}
-              className="text-sm font-semibold tracking-[0.25em] uppercase text-white/30 mb-8"
-            >
-              The Problem
-            </motion.p>
-
             <motion.h2
               variants={fadeInUp}
               className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-12"
@@ -220,20 +213,13 @@ export default function Municipal() {
               <span className="text-white/40">You're managing them with a PDF from 2009.</span>
             </motion.h2>
 
-            <motion.div variants={fadeInUp} className="border-t border-white/10 pt-12 grid md:grid-cols-2 gap-12">
-              <div>
-                <p className="text-lg text-white/60 leading-relaxed">
-                  When a crew hits an unmarked utility line, it costs $50,000 and two weeks. Every time. Most
-                  municipalities rely on fragmented data and aging paper plans — and nobody in City Hall knows it until
-                  something goes wrong.
-                </p>
-              </div>
-              <div>
-                <p className="text-lg text-white/60 leading-relaxed">
-                  MAPIT is a live aerial map of your active projects, overlaid with your utility drawings, accessible
-                  by every department. Updated after every flight. No consultants. No delays. No excuses.
-                </p>
-              </div>
+            <motion.div variants={fadeInUp} className="border-t border-white/10 pt-12">
+              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
+                When a crew hits an unmarked utility line, it costs $50,000 and two weeks. Every time. Most
+                municipalities rely on fragmented data and aging paper plans — and nobody in City Hall knows it until
+                something goes wrong. MAPIT is a live aerial map of your active projects, overlaid with your utility
+                drawings, accessible by every department. Updated after every flight. No consultants. No delays. No excuses.
+              </p>
             </motion.div>
           </motion.div>
         </div>
