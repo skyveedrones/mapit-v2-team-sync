@@ -33,6 +33,7 @@ import Account from "./pages/Account";
 import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
 import Welcome from "./pages/Welcome";
+import Create from "./pages/Create";
 import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
@@ -170,6 +171,7 @@ function Router() {
       <Switch>
       <Route path="/" component={Home} />
       <Route path="/welcome" component={Welcome} />
+      <Route path="/create" component={Create} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />

@@ -46,11 +46,7 @@ export default function Welcome() {
   const [showContactModal, setShowContactModal] = useState(false);
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
-      setLocation("/dashboard");
-    } else {
-      window.location.href = getLoginUrl();
-    }
+    setLocation("/create");
   };
 
   return (
