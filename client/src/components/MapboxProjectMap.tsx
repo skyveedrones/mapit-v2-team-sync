@@ -664,29 +664,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const deck = deckOverlayRef.current;
       if (!deck || !mapLoaded) return;
       if (lidarEnabled && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0) {
-        // Elevation ramp: deep blue (low) → cyan → green → yellow → red (high)
-        const elevationColor = (z: number, zMin: number, zRange: number): [number, number, number, number] => {
-          const t = zRange > 0 ? Math.max(0, Math.min(1, (z - zMin) / zRange)) : 0.5;
-          // 5-stop gradient: blue → cyan → green → yellow → red
-          if (t < 0.25) {
-            const s = t / 0.25;
-            return [Math.round(s * 0), Math.round(s * 220), Math.round(255 - s * 55), 220];
-          } else if (t < 0.5) {
-            const s = (t - 0.25) / 0.25;
-            return [Math.round(s * 0), Math.round(220 + s * 35), Math.round(200 - s * 200), 220];
-          } else if (t < 0.75) {
-            const s = (t - 0.5) / 0.25;
-            return [Math.round(s * 255), 255, 0, 220];
-          } else {
-            const s = (t - 0.75) / 0.25;
-            return [255, Math.round(255 - s * 255), 0, 220];
-          }
-        };
-
-        // Track elevation range across loaded tiles so the ramp stays consistent
-        let zMin = Infinity;
-        let zMax = -Infinity;
-
         const tile3d = new Tile3DLayer({
           id: "lidar-point-cloud",
           data: `https://assets.cesium.com/${CESIUM_ASSET_ID}/tileset.json`,
@@ -697,19 +674,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           },
           pointSize: 1,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          getColor: (point: any): [number, number, number, number] => {
-            // Use per-point RGB if the tileset provides it
-            if (point.color && (point.color[0] !== 0 || point.color[1] !== 0 || point.color[2] !== 0)) {
-              return [point.color[0], point.color[1], point.color[2], 220];
-            }
-            // Fall back to elevation-based ramp using the point position Z
-            const z = point.position?.[2] ?? 0;
-            if (z < zMin) zMin = z;
-            if (z > zMax) zMax = z;
-            return elevationColor(z, zMin, zMax - zMin);
-          },
+          pointSizeUnits: "pixels" as any,
+          getColor: [0, 255, 0, 255] as [number, number, number, number],
           onTilesetLoad: (tileset) => {
-            // Fly to the tileset bounds on first load
             const map = mapRef.current;
             if (map && tileset.cartographicCenter) {
               const [lng, lat] = tileset.cartographicCenter;
