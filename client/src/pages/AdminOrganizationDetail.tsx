@@ -1,210 +1,160 @@
-import { useAuth } from '@/_core/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { trpc } from '@/lib/trpc';
-import { ArrowLeft, Building2, Users, FolderOpen } from 'lucide-react';
-import { useLocation } from 'wouter';
-import { Loader2 } from 'lucide-react';
+/**
+ * Organization Management — Civic Tier Preview
+ * Dark glassmorphic layout matching the map HUD aesthetic.
+ */
 
-export default function AdminOrganizationDetail({ id }: { id: string }) {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+import { ArrowLeft, Building2, Users, FolderOpen, Receipt, Lock } from "lucide-react";
+import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 
-  // Check if user is webmaster or org admin for their own organization
-  const orgId = parseInt(id);
-  const isWebmaster = user?.role === 'webmaster';
-  const isOrgAdmin = user?.orgRole === 'ORG_ADMIN' && user?.organizationId === orgId;
-  
-  if (!isWebmaster && !isOrgAdmin) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Only webmasters can access the admin dashboard.
-            </p>
-            <Button onClick={() => setLocation('/account')} className="w-full">
-              Back to Account
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+const FEATURES = [
+  {
+    icon: Users,
+    title: "Team Roles",
+    description:
+      "Assign pilots, analysts, and viewers with granular permission controls. Every team member sees exactly what they need — nothing more.",
+  },
+  {
+    icon: FolderOpen,
+    title: "Shared Assets",
+    description:
+      "One central library for all company drone data. Projects, overlays, and exports — organized, versioned, and accessible to your entire fleet.",
+  },
+  {
+    icon: Receipt,
+    title: "Enterprise Billing",
+    description:
+      "Unified invoicing for your entire organization. One invoice, one line item, zero friction — built for finance teams and procurement workflows.",
+  },
+];
 
-  // Fetch organization details
-  const { data: org, isLoading } = trpc.admin.getOrganizationDetails.useQuery({
-    organizationId: parseInt(id),
-  });
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!org) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Organization Not Found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              The organization you're looking for doesn't exist.
-            </p>
-            <Button onClick={() => setLocation('/admin')} className="w-full">
-              Back to Admin Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+export default function AdminOrganizationDetail({ id: _id }: { id?: string }) {
+  const [, navigate] = useLocation();
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation('/admin')}
-          className="mb-4"
+    <div
+      className="min-h-screen text-white flex flex-col"
+      style={{
+        background: "linear-gradient(135deg, #0a0a0a 0%, #0f1a14 50%, #0a0a0a 100%)",
+        fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      <nav className="flex items-center px-8 py-5 border-b border-white/5">
+        <button
+          onClick={() => navigate("/account")}
+          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors duration-200 text-sm font-medium"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Admin Dashboard
-        </Button>
-        <h1 className="text-3xl font-bold">{org.name}</h1>
-        <p className="text-muted-foreground mt-2">
-          Organization details and members
-        </p>
-      </div>
+          <ArrowLeft className="w-4 h-4" />
+          Back to Account
+        </button>
+      </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-500" />
-              Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{org.userCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-emerald-500" />
-              Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{org.projectCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-emerald-500" />
-              Type
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-medium capitalize">{org.type}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Users Section */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Members ({org.users?.length || 0})</CardTitle>
-          <CardDescription>
-            Users in this organization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-semibold">Name</th>
-                  <th className="text-left py-3 px-4 font-semibold">Email</th>
-                  <th className="text-left py-3 px-4 font-semibold">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {org.users && org.users.length > 0 ? (
-                  org.users.map((user) => (
-                    <tr key={user.id} className="border-b border-border hover:bg-accent/50">
-                      <td className="py-3 px-4">{user.name}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
-                      <td className="py-3 px-4">
-                        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-600 capitalize">
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="py-6 text-center text-muted-foreground">
-                      No users found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55 }}
+          className="w-full max-w-3xl"
+        >
+          <div className="flex items-center gap-4 mb-6">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: "rgba(16,185,129,0.10)",
+                border: "1px solid rgba(16,185,129,0.25)",
+              }}
+            >
+              <Building2 className="w-7 h-7 text-emerald-400" />
+            </div>
+            <span
+              className="px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase"
+              style={{
+                background: "rgba(234,179,8,0.12)",
+                border: "1px solid rgba(234,179,8,0.30)",
+                color: "#fbbf24",
+              }}
+            >
+              Coming Soon
+            </span>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Projects Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Projects ({org.projects?.length || 0})</CardTitle>
-          <CardDescription>
-            Projects in this organization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {org.projects && org.projects.length > 0 ? (
-              org.projects.map((project) => (
+          <h1
+            className="font-bold text-white mb-3"
+            style={{
+              fontSize: "clamp(1.8rem, 4vw, 2.6rem)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+            }}
+          >
+            Organization Management
+          </h1>
+          <p className="text-white/45 text-base leading-relaxed mb-12 max-w-xl">
+            The Civic tier transforms MAPIT into a command center for your entire
+            organization — from the flight deck to the boardroom.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-3 mb-12">
+            {FEATURES.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.1 + i * 0.1 }}
+                className="relative flex flex-col gap-3 p-5 rounded-2xl"
+                style={{
+                  background: "rgba(255,255,255,0.028)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(16px)",
+                }}
+              >
                 <div
-                  key={project.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.06)" }}
                 >
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{project.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {project.mediaCount} media files
-                    </p>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    Created {new Date(project.createdAt).toLocaleDateString()}
-                  </div>
+                  <Lock className="w-3 h-3 text-white/30" />
                 </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-center py-4">No projects found</p>
-            )}
+
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: "rgba(16,185,129,0.08)",
+                    border: "1px solid rgba(16,185,129,0.18)",
+                  }}
+                >
+                  <feature.icon className="text-emerald-400" style={{ width: "1.1rem", height: "1.1rem" }} />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm mb-1">{feature.title}</p>
+                  <p className="text-white/40 text-xs leading-relaxed">{feature.description}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button
+              onClick={() => {
+                window.location.href =
+                  "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Tier%20Inquiry&body=Hi%2C%20I%27m%20interested%20in%20learning%20more%20about%20the%20Civic%20tier%20for%20my%20organization.";
+              }}
+              className="px-8 py-3.5 rounded-xl font-semibold text-sm text-black transition-all duration-200 active:scale-[0.98] hover:opacity-90"
+              style={{ background: "#ffffff" }}
+            >
+              Inquire About Civic Tier
+            </button>
+            <button
+              onClick={() => navigate("/pricing")}
+              className="px-8 py-3.5 rounded-xl font-semibold text-sm text-white/60 hover:text-white transition-colors duration-200"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              View All Plans
+            </button>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
