@@ -236,6 +236,59 @@ export default function ProjectMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Reactive fly-in: fires once project data arrives after map init ──────
+  // The initialization useEffect runs before project data loads, so we need
+  // a separate effect that triggers the fly-in once we have real coordinates.
+  const hasFiredFlyIn = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || hasFiredFlyIn.current) return;
+
+    // Check if we have real coordinates from any tier
+    const stored = sessionStorage.getItem('mapit_fly_coords');
+    let center: [number, number] | null = null;
+
+    if (stored) {
+      try {
+        const { lat, lng } = JSON.parse(stored);
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          center = [lng, lat];
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (!center) {
+      const loc = (project as any)?.location;
+      if (loc) {
+        const parts = loc.split(',').map((s: string) => parseFloat(s.trim()));
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          center = [parts[1], parts[0]]; // [lng, lat]
+        }
+      }
+    }
+
+    if (!center && geotaggedMedia.length > 0) {
+      const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+      const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+      center = [avgLng, avgLat];
+    }
+
+    if (!center) return; // No coordinates yet — wait for next render
+
+    hasFiredFlyIn.current = true;
+    sessionStorage.removeItem('mapit_fly_coords');
+
+    // Cinematic fly-in from current world view to site
+    map.flyTo({
+      center,
+      zoom: 16,
+      pitch: 45,
+      bearing: 0,
+      duration: 3800,
+      essential: true,
+    });
+  }, [mapReady, project, geotaggedMedia]);
+
   // Change map style
   useEffect(() => {
     const map = mapRef.current;
