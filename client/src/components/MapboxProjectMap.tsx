@@ -214,6 +214,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── LiDAR / Cesium ion state ─────────────────────────────────────────────
     const [lidarEnabled, setLidarEnabled] = useState(false);
+    const [lidarPointSize, setLidarPointSize] = useState(2);
     const deckOverlayRef = useRef<MapboxOverlay | null>(null);
 
     // ── Selected overlay for alignment tools ────────────────────────────────
@@ -672,10 +673,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           loadOptions: {
             "cesium-ion": { accessToken: CESIUM_ION_TOKEN },
           },
-          pointSize: 1,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pointSizeUnits: "pixels" as any,
-          getColor: [0, 255, 0, 255] as [number, number, number, number],
+          _subLayerProps: {
+            pointcloud: {
+              pointSize: lidarPointSize,
+              pointSizeUnits: "pixels",
+              getColor: [0, 255, 0, 255],
+            },
+          } as any,
           onTilesetLoad: (tileset) => {
             const map = mapRef.current;
             if (map && tileset.cartographicCenter) {
@@ -688,7 +693,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       } else {
         deck.setProps({ layers: [] });
       }
-    }, [lidarEnabled, mapLoaded]);
+    }, [lidarEnabled, lidarPointSize, mapLoaded]);
 
     // ── Render overlay image sources ────────────────────────────────────────
     useEffect(() => {
@@ -1670,18 +1675,41 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                         {/* LiDAR Point Cloud */}
                         {CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0 && (
-                          <button
-                            onClick={() => setLidarEnabled((v) => !v)}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                              lidarEnabled ? "bg-violet-600/20 border border-violet-500/30" : "bg-slate-800 hover:bg-slate-700"
-                            }`}
-                          >
-                            <Layers size={16} className={lidarEnabled ? "text-violet-400" : "text-slate-400"} />
-                            <div className="text-left">
-                              <span className="text-sm font-medium block">{lidarEnabled ? "Hide LiDAR" : "Show LiDAR"}</span>
-                              <span className="text-[10px] text-slate-400">3D point cloud stream</span>
-                            </div>
-                          </button>
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setLidarEnabled((v) => !v)}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                                lidarEnabled ? "bg-violet-600/20 border border-violet-500/30" : "bg-slate-800 hover:bg-slate-700"
+                              }`}
+                            >
+                              <Layers size={16} className={lidarEnabled ? "text-violet-400" : "text-slate-400"} />
+                              <div className="text-left">
+                                <span className="text-sm font-medium block">{lidarEnabled ? "Hide LiDAR" : "Show LiDAR"}</span>
+                                <span className="text-[10px] text-slate-400">3D point cloud stream</span>
+                              </div>
+                            </button>
+                            {lidarEnabled && (
+                              <div className="px-4 py-2 bg-slate-800/60 rounded-xl">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-[11px] text-slate-400">Point Size</span>
+                                  <span className="text-[11px] font-mono text-violet-300">{lidarPointSize}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={1}
+                                  max={8}
+                                  step={1}
+                                  value={lidarPointSize}
+                                  onChange={(e) => setLidarPointSize(Number(e.target.value))}
+                                  className="w-full h-1.5 rounded-full accent-violet-500 cursor-pointer"
+                                />
+                                <div className="flex justify-between mt-0.5">
+                                  <span className="text-[9px] text-slate-500">1</span>
+                                  <span className="text-[9px] text-slate-500">8</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
 
                         {/* Measure */}
