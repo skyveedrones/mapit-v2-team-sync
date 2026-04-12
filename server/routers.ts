@@ -1169,6 +1169,27 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Get a signed preview URL for a document stored in S3
+    getDocumentPreviewUrl: protectedProcedure
+      .input(z.object({ documentId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        const doc = await db.select().from(projectDocuments).where(eq(projectDocuments.id, input.documentId)).limit(1);
+        if (!doc[0]) throw new TRPCError({ code: 'NOT_FOUND', message: 'Document not found' });
+
+        // Verify access
+        const ownedProject = await db.select().from(projects).where(and(eq(projects.id, doc[0].projectId), eq(projects.userId, ctx.user.id))).limit(1);
+        const sharedProject = await db.select().from(projectCollaborators).where(and(eq(projectCollaborators.projectId, doc[0].projectId), eq(projectCollaborators.userId, ctx.user.id))).limit(1);
+        if (!ownedProject[0] && !sharedProject[0] && ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this document' });
+        }
+
+        const { url } = await storageGet(doc[0].fileKey);
+        return { url, fileName: doc[0].fileName, fileType: doc[0].fileType };
+      }),
+
     // Convert document to PNG and save as map overlay using the existing overlay pipeline
     convertDocumentToPng: protectedProcedure
       .input(z.object({ fileKey: z.string(), fileName: z.string(), projectId: z.number(), colorCode: z.string().optional(), overlayLabel: z.string().optional() }))

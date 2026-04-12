@@ -52,6 +52,45 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Download, Trash2, FileText, Upload, MapPin, Eye, ChevronDown, Search, X, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useState as useStateAlias } from "react";
+
+// Separate component so the tRPC query only fires when a doc is actually being previewed
+function DocumentPreviewDialog({ doc, onClose }: { doc: { id: number; fileName: string; fileType: string }; onClose: () => void }) {
+  const { data, isLoading, error } = trpc.project.getDocumentPreviewUrl.useQuery(
+    { documentId: doc.id },
+    { retry: false }
+  );
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-4 pb-2">
+          <DialogTitle>{doc.fileName}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden" style={{ minHeight: 600 }}>
+          {isLoading && (
+            <div className="flex items-center justify-center h-[600px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center justify-center h-[600px] text-destructive">
+              Failed to load preview: {error.message}
+            </div>
+          )}
+          {data?.url && (
+            <iframe
+              src={data.url}
+              width="100%"
+              height="600px"
+              className="border-0"
+              title={doc.fileName}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface ProjectDocumentsProps {
   projectId: number;
@@ -183,12 +222,6 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
   const isPdfOrImage = (fileType: string) => {
     const t = (fileType || "").toLowerCase();
     return t === "pdf" || t === "png" || t === "jpg" || t === "jpeg";
-  };
-
-  const generateDocumentUrl = (fileKey: string) => {
-    // Generate a signed/public URL for the document from S3
-    // This assumes the storage system provides a way to get URLs from fileKeys
-    return `/api/documents/view?key=${encodeURIComponent(fileKey)}`;
   };
 
   const handlePreviewClick = (doc: DocumentRecord) => {
@@ -483,24 +516,12 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
       </Dialog>
 
       {/* PDF Preview Modal */}
-      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-4 pb-2">
-            <DialogTitle>{previewDoc?.fileName}</DialogTitle>
-          </DialogHeader>
-          {previewDoc && (
-            <div className="flex-1 overflow-hidden">
-              <iframe
-                src={generateDocumentUrl(previewDoc.fileKey)}
-                width="100%"
-                height="600px"
-                className="border-0"
-                title={previewDoc.fileName}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {previewDoc && (
+        <DocumentPreviewDialog
+          doc={previewDoc}
+          onClose={() => setPreviewDoc(null)}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteConfirmDoc} onOpenChange={(open) => !open && setDeleteConfirmDoc(null)}>
