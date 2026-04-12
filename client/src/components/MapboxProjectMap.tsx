@@ -26,11 +26,11 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
 import { CesiumIonLoader } from "@loaders.gl/3d-tiles";
 
-// ── Cesium ion credentials — replace with your real values ───────────────────
-// Get your token at https://cesium.com/ion/tokens
-const CESIUM_ION_TOKEN = "YOUR_CESIUM_ION_TOKEN_HERE";
-// The asset ID of your uploaded LiDAR tileset in Cesium ion
-const CESIUM_ASSET_ID = 0; // e.g. 2275207
+// ── Cesium ion credentials ───────────────────────────────────────────────────
+// Token is injected via VITE_CESIUM_ION_TOKEN environment variable
+const CESIUM_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN as string ?? "";
+// Asset ID of the uploaded LiDAR tileset in Cesium ion
+const CESIUM_ASSET_ID = 4618315;
 
 import {
   Check,
@@ -663,7 +663,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     useEffect(() => {
       const deck = deckOverlayRef.current;
       if (!deck || !mapLoaded) return;
-      if (lidarEnabled && CESIUM_ION_TOKEN !== "YOUR_CESIUM_ION_TOKEN_HERE" && CESIUM_ASSET_ID !== 0) {
+      if (lidarEnabled && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0) {
         const tile3d = new Tile3DLayer({
           id: "lidar-point-cloud",
           data: `https://assets.cesium.com/${CESIUM_ASSET_ID}/tileset.json`,
@@ -1667,7 +1667,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                         )}
 
                         {/* LiDAR Point Cloud */}
-                        {CESIUM_ION_TOKEN !== "YOUR_CESIUM_ION_TOKEN_HERE" && CESIUM_ASSET_ID !== 0 && (
+                        {CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0 && (
                           <button
                             onClick={() => setLidarEnabled((v) => !v)}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
