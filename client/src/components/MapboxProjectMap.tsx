@@ -474,15 +474,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         </svg>
       `;
 
-      const img = new Image(32, 42);
-      img.onload = () => {
-        if (!map.hasImage('skyvee-pin')) {
-          map.addImage('skyvee-pin', img);
-        }
-      };
-      img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
-
-      // ── Create GeoJSON Source for Media Points ──
+      // ── Build GeoJSON once (used both in onload and in the already-loaded branch) ──
       const mediaGeoJSON = {
         type: 'FeatureCollection' as const,
         features: sortedMedia.map((media) => ({
@@ -504,26 +496,44 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         })),
       };
 
-      // ── Add or Update Media Source and Symbol Layer ──
-      if (map.getSource('media-source')) {
-        (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
-      } else {
-        map.addSource('media-source', {
-          type: 'geojson',
-          data: mediaGeoJSON,
-        });
+      const addSourceAndLayer = () => {
+        if (!map) return;
+        // ── Add or Update Media Source and Symbol Layer ──
+        if (map.getSource('media-source')) {
+          (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
+        } else {
+          map.addSource('media-source', {
+            type: 'geojson',
+            data: mediaGeoJSON,
+          });
 
-        map.addLayer({
-          id: 'media-pins',
-          type: 'symbol',
-          source: 'media-source',
-          layout: {
-            'icon-image': 'skyvee-pin',
-            'icon-size': 0.45,           // Scaled down to be slim and needle-like
-            'icon-anchor': 'bottom',     // Pointy end on the coordinate
-            'icon-allow-overlap': true,
-          },
-        });
+          map.addLayer({
+            id: 'media-pins',
+            type: 'symbol',
+            source: 'media-source',
+            layout: {
+              'icon-image': 'skyvee-pin',
+              'icon-size': 0.45,
+              'icon-anchor': 'bottom',
+              'icon-allow-overlap': true,
+            },
+          });
+        }
+      };
+
+      const img = new Image(32, 42);
+      img.onload = () => {
+        if (!map.hasImage('skyvee-pin')) {
+          map.addImage('skyvee-pin', img);
+        }
+        // Add source/layer only after the image sprite is registered
+        addSourceAndLayer();
+      };
+      // If the image was already loaded in a previous render, skip straight to addSourceAndLayer
+      if (map.hasImage('skyvee-pin')) {
+        addSourceAndLayer();
+      } else {
+        img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
       }
 
       // ── Click Handler for Media Pins ──
@@ -629,7 +639,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           duration: 1200,
         });
       }
-    }, [sortedMedia, mapLoaded, setSelectedMedia]);
+    }, [sortedMedia, mapLoaded]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
     useEffect(() => {
