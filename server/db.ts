@@ -135,6 +135,20 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.lastSignedIn = new Date().toISOString();
     }
 
+    // Initialize 14-day trial for new users
+    if (isNewUser) {
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const toMysqlTs = (d: Date) =>
+        d.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      values.subscriptionTier = 'starter';
+      values.subscriptionStatus = 'trialing';
+      values.billingPeriod = 'monthly';
+      values.cancelAtPeriodEnd = 'no';
+      values.currentPeriodStart = toMysqlTs(now);
+      values.currentPeriodEnd = toMysqlTs(trialEnd);
+    }
+
     if (Object.keys(updateSet).length === 0) {
       updateSet.lastSignedIn = new Date().toISOString();
     }

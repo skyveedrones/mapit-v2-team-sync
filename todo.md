@@ -2679,3 +2679,12 @@
 
 ## Pricing Subheader Three-Line Stack
 - [x] Reformatted subheader into three lines: text-white/70 for lines 1-2, text-white/35 for line 3, space-y-1 stack, center-aligned
+
+## Trial Logic & Schema Mapping
+- [ ] On first login: set subscriptionTier=experience, subscriptionStatus=trialing, currentPeriodStart=now, currentPeriodEnd=now+14d, billingPeriod=monthly, cancelAtPeriodEnd=no
+- [ ] Add trial-expiry guard in App.tsx: if trialing and expired, redirect to /pricing?expired=1
+- [ ] Pass billing period from pricing page toggle through OAuth redirect so backend can read it on first login
+
+## Trial Expiry Guard & Final Pricing Verify
+- [ ] Add trial-expiry redirect guard in App.tsx: trialing + expired → /pricing?expired=1
+- [ ] Verify pricing page: 3-line subheader, aligned cards, all CTAs → getLoginUrl()

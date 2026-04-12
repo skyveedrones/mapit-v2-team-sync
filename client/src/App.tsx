@@ -110,6 +110,19 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
     }
   }, [loading, isAuthenticated, user, location, setLocation]);
 
+  // Trial expiry guard: if trialing and past currentPeriodEnd, redirect to /pricing?expired=1
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const isTrialing = user.subscriptionStatus === 'trialing';
+      const periodEnd = user.currentPeriodEnd ? new Date(user.currentPeriodEnd).getTime() : null;
+      const isExpired = periodEnd !== null && Date.now() > periodEnd;
+      const isAlreadyOnPricing = location.startsWith('/pricing');
+      if (isTrialing && isExpired && !isAlreadyOnPricing) {
+        setLocation('/pricing?expired=1');
+      }
+    }
+  }, [loading, isAuthenticated, user, location, setLocation]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

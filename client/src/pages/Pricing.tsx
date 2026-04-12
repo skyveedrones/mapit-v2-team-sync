@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowLeft } from "lucide-react";
+import { Check, ArrowLeft, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
@@ -116,11 +116,23 @@ export default function Pricing() {
     }
   };
 
+  const isExpired = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('expired') === '1';
+
   return (
     <div
       className="min-h-screen text-white flex flex-col"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
+      {/* ── Trial Expired Banner ── */}
+      {isExpired && (
+        <div
+          className="flex items-center justify-center gap-3 px-6 py-3 text-sm font-medium"
+          style={{ background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}
+        >
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          Your complimentary experience has concluded. Upgrade to Precision to keep your projects.
+        </div>
+      )}
       {/* ── Nav ── */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
         <button
