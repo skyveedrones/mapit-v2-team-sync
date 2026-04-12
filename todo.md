@@ -2592,3 +2592,11 @@
 - [ ] Add startEditingOverlay(id) to MapboxProjectMapHandle so parent can trigger alignment mode
 - [ ] On conversion success: inject new overlay into local state + auto-trigger alignment editing
 - [ ] Ensure both project_documents and project_overlays records are saved
+
+## Fix Black Screen on /project/[id]/map (Session 15)
+- [x] Swap broken custom mapboxgl init in ProjectMap.tsx with production MapboxProjectMap component
+- [x] Keep all HUD JSX: Prestige modal, CityParkTour, FlybyController, project info panel
+- [x] Wire mapRef for FlybyController via polling MapboxProjectMapHandle.getMap()
+- [x] Wire mapReady state via polling MapboxProjectMapHandle.isMapLoaded()
+- [x] Pass overlays from project data to MapboxProjectMap
+- [x] TypeScript compiles with 0 errors
