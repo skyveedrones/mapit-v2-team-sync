@@ -288,6 +288,12 @@ function Router() {
       </Route>
       
       {/* Organization management */}
+      <Route path="/organization">
+        {() => {
+          const AdminOrganizationDetail = lazy(() => import('./pages/AdminOrganizationDetail'));
+          return <ProtectedRoute component={() => <AdminOrganizationDetail />} />;
+        }}
+      </Route>
       <Route path="/organization/:id">
         {(params) => {
           const AdminOrganizationDetail = lazy(() => import('./pages/AdminOrganizationDetail'));
