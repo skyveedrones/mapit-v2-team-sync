@@ -2600,3 +2600,9 @@
 - [x] Wire mapReady state via polling MapboxProjectMapHandle.isMapLoaded()
 - [x] Pass overlays from project data to MapboxProjectMap
 - [x] TypeScript compiles with 0 errors
+
+## Final Refinements (Session 15 cont.)
+- [x] Fix GPS overlay: hide 'No GPS Data Available' when project.location exists or sessionStorage has coords
+- [x] Pass project.location coordinates to MapboxProjectMap so map centers correctly via flyTo on mapReady
+- [x] Perfect Prestige modal text to exact Jobsian copy (no period on hook, exact body text)
+- [x] Rewrite /pricing with Experience/Precision/Dominance hooks and reactivate free trial plan

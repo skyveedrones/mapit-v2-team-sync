@@ -1,8 +1,7 @@
 /**
  * Project Map Page — Full-screen production Mapbox map
  * Uses the production MapboxProjectMap component for all mapping logic.
- * Keeps: Prestige modal, trial badge, CityParkTour, FlybyController,
- *        selected media preview, enlarged image viewer, project info panel.
+ * Keeps: Prestige modal, CityParkTour, FlybyController, project info panel.
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -15,7 +14,6 @@ import { MapboxProjectMap, MapboxProjectMapHandle } from "@/components/MapboxPro
 import {
   ArrowLeft,
   MapPin,
-  X,
   Image,
   FolderOpen,
 } from "lucide-react";
@@ -23,6 +21,27 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc as trpcClient } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
+
+// ── Coordinate helpers ────────────────────────────────────────────────────────
+// DB stores "lat, lng"; Mapbox needs [lng, lat]
+function parseLocation(str: string | null | undefined): [number, number] | null {
+  if (!str) return null;
+  const parts = str.split(",").map((s) => parseFloat(s.trim()));
+  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return [parts[1], parts[0]]; // [lng, lat]
+  }
+  return null;
+}
+
+function getSessionCoords(): [number, number] | null {
+  try {
+    const stored = sessionStorage.getItem("mapit_fly_coords");
+    if (!stored) return null;
+    const { lat, lng } = JSON.parse(stored);
+    if (typeof lat === "number" && typeof lng === "number") return [lng, lat];
+  } catch { /* ignore */ }
+  return null;
+}
 
 export default function ProjectMap() {
   const { id, flightId: flightIdParam } = useParams<{ id: string; flightId?: string }>();
@@ -33,7 +52,7 @@ export default function ProjectMap() {
 
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
-  const mapRef = useRef<any>(null); // passed to FlybyController
+  const mapRef = useRef<any>(null);
 
   // Keep mapRef in sync with MapboxProjectMap's internal map
   useEffect(() => {
@@ -47,19 +66,22 @@ export default function ProjectMap() {
   }, []);
 
   const [mapReady, setMapReady] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Demo tour state — only shown for the City Park demo project
+  // Demo tour state
   const [showTour, setShowTour] = useState(isDemoProject);
 
   // ── Prestige modal (onboarding funnel) ───────────────────────────────
-  const isOnboardingProject = !isDemoProject && !!sessionStorage.getItem("mapit_project_id") && sessionStorage.getItem("mapit_project_id") === String(projectId);
+  const isOnboardingProject =
+    !isDemoProject &&
+    !!sessionStorage.getItem("mapit_project_id") &&
+    sessionStorage.getItem("mapit_project_id") === String(projectId);
   const [showPrestige, setShowPrestige] = useState(false);
   const [prestigeEmail, setPrestigeEmail] = useState("");
   const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
   const [prestigeClaimed, setPrestigeClaimed] = useState(false);
   const claimProject = trpcClient.onboarding.claimProject.useMutation();
-  const onboardingProjectName = sessionStorage.getItem("mapit_project_name") || "your project";
+  const onboardingProjectName =
+    sessionStorage.getItem("mapit_project_name") || "your project";
 
   // Fire Prestige modal 5 seconds after map is ready (onboarding flow only)
   useEffect(() => {
@@ -85,7 +107,6 @@ export default function ProjectMap() {
     try {
       await claimProject.mutateAsync({ projectId, email: prestigeEmail.trim() });
       setPrestigeClaimed(true);
-      // Clear onboarding session markers
       sessionStorage.removeItem("mapit_project_id");
       sessionStorage.removeItem("mapit_project_name");
       sessionStorage.removeItem("mapit_trial_expires");
@@ -119,18 +140,52 @@ export default function ProjectMap() {
       }));
   }, [mediaItems]);
 
-  // Overlays from project data
   const overlays = useMemo(() => {
     const p = project as any;
     return (p?.overlays || []).filter((o: any) => o.isActive);
   }, [project]);
 
+  // ── Fly-in: once map is ready, fly to the best available coordinates ──────
+  // Priority: sessionStorage → project.location DB → media centroid
+  const hasFiredFlyIn = useRef(false);
+  useEffect(() => {
+    if (!mapReady || hasFiredFlyIn.current) return;
+    const map = mapCompRef.current?.getMap();
+    if (!map) return;
+
+    // Tier 1: sessionStorage
+    let center = getSessionCoords();
+    if (center) sessionStorage.removeItem("mapit_fly_coords");
+
+    // Tier 2: project.location from DB
+    if (!center) center = parseLocation((project as any)?.location);
+
+    // Tier 3: media centroid
+    if (!center && geotaggedMedia.length > 0) {
+      const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+      const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+      center = [avgLng, avgLat];
+    }
+
+    if (!center) return; // No coords yet — wait
+
+    hasFiredFlyIn.current = true;
+    map.resize();
+    map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 3800, essential: true });
+  }, [mapReady, project, geotaggedMedia]);
+
+  // ── Determine if we have any coordinates to show the map ─────────────────
+  const hasCoordinates =
+    geotaggedMedia.length > 0 ||
+    !!(project as any)?.location ||
+    !!getSessionCoords();
+
   if (projectLoading || mediaLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading map...</p>
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/40 text-sm">Loading map...</p>
         </div>
       </div>
     );
@@ -138,9 +193,9 @@ export default function ProjectMap() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
+          <h1 className="text-2xl font-bold text-white mb-4">Project Not Found</h1>
           <BackToDashboard variant="default" />
         </div>
       </div>
@@ -165,19 +220,44 @@ export default function ProjectMap() {
         />
       </div>
 
+      {/* ── No GPS fallback — only show when truly no coordinates exist ── */}
+      {!hasCoordinates && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0A0A0A]">
+          <div className="text-center p-8">
+            <MapPin className="h-16 w-16 text-white/20 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">No GPS Data Available</h2>
+            <p className="text-white/40 mb-6">
+              Upload drone photos with GPS metadata to see them on the map.
+            </p>
+            <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-full px-8">
+                Upload Media
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ── Project Info Panel — Top Left ── */}
       <div className="absolute top-4 left-4 z-10">
         <div className="bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
           <div className="flex items-start gap-3">
             <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
-              <Button variant="ghost" size="sm" className="flex-shrink-0 h-8 px-2 gap-1.5 text-white hover:bg-white/10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-shrink-0 h-8 px-2 gap-1.5 text-white hover:bg-white/10"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 <span className="text-xs">Return to {flightId ? "Flight" : "Project"}</span>
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold truncate text-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-                {flightId ? `Flight Map` : project.name}
+              <h1
+                className="text-base font-semibold truncate text-white"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                {flightId ? "Flight Map" : project.name}
               </h1>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/50 mt-1">
                 <span className="flex items-center gap-1">
@@ -188,10 +268,10 @@ export default function ProjectMap() {
                   <Image className="h-3 w-3" />
                   {mediaItems?.length || 0} total
                 </span>
-                {project.location && (
+                {(project as any).location && (
                   <span className="flex items-center gap-1">
                     <FolderOpen className="h-3 w-3" />
-                    {project.location}
+                    {(project as any).location}
                   </span>
                 )}
               </div>
@@ -200,7 +280,7 @@ export default function ProjectMap() {
         </div>
       </div>
 
-      {/* ── Cinematic Flyby Controller — Bottom Right ── */}
+      {/* ── Cinematic Flyby Controller ── */}
       {geotaggedMedia.length > 0 && (
         <FlybyController ref={flybyRef} mapRef={mapRef} mapLoaded={mapReady} />
       )}
@@ -247,26 +327,29 @@ export default function ProjectMap() {
             >
               {!prestigeClaimed ? (
                 <>
-                  {/* Massive metallic hook */}
+                  {/* Massive metallic hook — no period */}
                   <p
-                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-4"
+                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-6"
                     style={{
-                      fontSize: "clamp(3.5rem,12vw,5.5rem)",
+                      fontSize: "clamp(3rem,11vw,5rem)",
                       backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #6b7280 100%)",
                       lineHeight: 1,
                     }}
                   >
                     Engineering triumph
                   </p>
-                  <p className="text-white/60 text-base leading-relaxed mb-8" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                  <p
+                    className="text-white/60 text-base leading-relaxed mb-8"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
                     You have officially conquered the complexity of{" "}
-                    <span className="text-white font-semibold">{onboardingProjectName}</span>. In one swift motion,
-                    you've transformed raw data into a high-precision digital twin—a feat that used to take teams weeks
-                    to engineer. You are in control now.
+                    <span className="text-white font-semibold">{onboardingProjectName}</span>.
+                    {" "}In one swift motion, you've transformed raw data into a high-precision
+                    digital twin—a feat that used to take teams weeks to engineer. You are in
+                    control now.
                     <br /><br />
                     Claim your 14-day free trial to secure your work.
                   </p>
-                  {/* Underline email input */}
                   <input
                     type="email"
                     value={prestigeEmail}
