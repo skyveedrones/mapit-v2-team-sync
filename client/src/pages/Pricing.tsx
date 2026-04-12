@@ -151,11 +151,11 @@ export default function Pricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.14 }}
-          className="text-white/45 text-base max-w-lg mx-auto leading-relaxed"
+          className="text-center max-w-lg mx-auto space-y-1"
         >
-          Experience the complete platform. Your first 14 days are complimentary.
-          <br />
-          <span className="text-white/30">No credit card required</span>
+          <p className="text-white/70 text-base leading-relaxed">Experience the complete platform.</p>
+          <p className="text-white/70 text-base leading-relaxed">Your first 14 days are complimentary.</p>
+          <p className="text-white/35 text-sm leading-relaxed tracking-wide">No credit card required</p>
         </motion.p>
 
         {/* Monthly / Annual Toggle */}

@@ -2676,3 +2676,6 @@
 - [x] Removed trialTag pill from Experience card (trialTag: false, rendering block removed)
 - [x] Vertical alignment: all four cards use identical padding: 2rem 1.6rem 1.8rem; MOST POPULAR badge is absolute/pointer-events-none
 - [x] Horizon alignment: uniform padding-top on all four cards so hook text starts at same Y; MOST POPULAR badge stays absolute outside card
+
+## Pricing Subheader Three-Line Stack
+- [x] Reformatted subheader into three lines: text-white/70 for lines 1-2, text-white/35 for line 3, space-y-1 stack, center-aligned
