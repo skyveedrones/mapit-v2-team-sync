@@ -215,6 +215,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // ── LiDAR / Cesium ion state ─────────────────────────────────────────────
     const [lidarEnabled, setLidarEnabled] = useState(false);
     const [lidarPointSize, setLidarPointSize] = useState(2);
+    const [is3D, setIs3D] = useState(false);
     const deckOverlayRef = useRef<MapboxOverlay | null>(null);
 
     // ── Selected overlay for alignment tools ────────────────────────────────
@@ -670,10 +671,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const map = mapRef.current;
       if (!deck || !map || !mapLoaded) return;
 
-      // Tilt into 3D view when LiDAR is toggled on; restore flat view when off
+      // Tilt into 3D view when LiDAR is toggled on; restore to current 3D state when off
       if (lidarEnabled) {
         map.easeTo({ pitch: 45, duration: 800 });
-      } else {
+        setIs3D(true);
+      } else if (!is3D) {
         map.easeTo({ pitch: 0, duration: 600 });
       }
       if (lidarEnabled && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0) {
@@ -718,7 +720,18 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       } else {
         deck.setProps({ layers: [] });
       }
-    }, [lidarEnabled, lidarPointSize, mapLoaded]);
+    }, [lidarEnabled, lidarPointSize, is3D, mapLoaded]);
+
+    // ── 2D/3D toggle: ease camera pitch when is3D changes ───────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+      if (is3D) {
+        map.easeTo({ pitch: 45, bearing: 0, duration: 700 });
+      } else {
+        map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+      }
+    }, [is3D, mapLoaded]);
 
     // ── Render overlay image sources ────────────────────────────────────────
     useEffect(() => {
@@ -1736,6 +1749,42 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                             )}
                           </div>
                         )}
+
+                        {/* 2D / 3D View Toggle */}
+                        <button
+                          onClick={() => setIs3D((v) => !v)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                            is3D ? "bg-sky-600/20 border border-sky-500/30" : "bg-slate-800 hover:bg-slate-700"
+                          }`}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" strokeWidth="2"
+                            strokeLinecap="round" strokeLinejoin="round"
+                            className={is3D ? "text-sky-400" : "text-slate-400"}
+                          >
+                            {is3D ? (
+                              // cube icon for 3D active
+                              <>
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                              </>
+                            ) : (
+                              // map/flat icon for 2D active
+                              <>
+                                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                                <line x1="9" y1="3" x2="9" y2="18" />
+                                <line x1="15" y1="6" x2="15" y2="21" />
+                              </>
+                            )}
+                          </svg>
+                          <div className="text-left">
+                            <span className="text-sm font-medium block">{is3D ? "Switch to 2D" : "Switch to 3D"}</span>
+                            <span className="text-[10px] text-slate-400">{is3D ? "Flat top-down view" : "Tilted perspective view"}</span>
+                          </div>
+                        </button>
 
                         {/* Measure */}
                         <button

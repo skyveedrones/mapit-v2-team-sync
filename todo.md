@@ -2707,3 +2707,9 @@
 - [x] Toggle button only visible when real credentials are set
 - [x] flyTo tileset cartographicCenter on first load
 - [x] Zero TypeScript errors
+
+## 2D/3D Map View Toggle
+- [x] Add is3D state (default false)
+- [x] Add 2D/3D toggle button to map HUD/sidebar
+- [x] easeTo pitch:45 bearing:0 on 3D, pitch:0 bearing:0 on 2D
+- [x] Sync LiDAR auto-tilt to respect is3D state
