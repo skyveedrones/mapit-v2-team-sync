@@ -693,6 +693,19 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               getColor: [0, 190, 255, 255],
             },
           } as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onTileLoad: (tile: any) => {
+            // Intercept and destroy the empty baked-in color buffers so
+            // deck.gl falls back to our static getColor instead of black.
+            const attributes =
+              tile.content?.attributes ||
+              tile.content?.pointCloud?.attributes;
+            if (attributes) {
+              delete attributes.colors;
+              delete attributes.getColor;
+              delete attributes.COLOR_0;
+            }
+          },
           onTilesetLoad: (tileset) => {
             const map = mapRef.current;
             if (map && tileset.cartographicCenter) {
