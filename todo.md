@@ -2652,3 +2652,6 @@
 
 ## Jobsian Pricing Overhaul
 - [x] Rewrite Pricing.tsx: pure black bg, three glassmorphic monoliths, Experience/Precision/Dominance, metallic gradient headers, no periods, Complimentary label, trial CTA wired to /name flow
+
+## Pricing $49 Precision Update
+- [x] Updated Precision tier price to $49/mo; hero bold weight 800 at 2.75rem; Experience/Dominance use standard sizing

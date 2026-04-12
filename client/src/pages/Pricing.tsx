@@ -31,7 +31,7 @@ const tiers = [
   },
   {
     hook: "Precision",
-    price: "$149",
+    price: "$49",
     priceNote: "per month",
     description:
       "For the dedicated engineer. Unlimited projects, advanced APWA utility overlays, and high-frequency data processing.",
@@ -206,8 +206,18 @@ export default function Pricing() {
               {/* Price */}
               <div className="mt-4 mb-5">
                 <span
-                  className="text-white font-semibold"
-                  style={{ fontSize: tier.price === "Complimentary" ? "1.25rem" : "2rem", letterSpacing: "-0.02em" }}
+                  className="text-white"
+                  style={{
+                    fontSize:
+                      tier.price === "Complimentary"
+                        ? "1.25rem"
+                        : tier.highlighted
+                        ? "2.75rem"
+                        : "2rem",
+                    fontWeight: tier.highlighted ? 800 : 600,
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1,
+                  }}
                 >
                   {tier.price}
                 </span>
