@@ -215,8 +215,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: "starter",
-    name: "Starter",
-    description: "Perfect for individual drone pilots and freelancers",
+    name: "Experience",
+    description: "Full access to the MAPIT engine. Create your first digital twin and master the terrain.",
     monthlyPriceId: "price_1T6Xu3GEMT6mikKwPibBZGCg",
     annualPriceId: "price_1T6Xu4GEMT6mikKwqmc0MCVL",
     monthlyPrice: 49,
@@ -225,8 +225,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: "professional",
-    name: "Professional",
-    description: "For professional drone service providers",
+    name: "Precision",
+    description: "For the dedicated engineer. Unlimited projects, advanced APWA utility overlays.",
     monthlyPriceId: "price_1T6Xu4GEMT6mikKwINYKHcuI",
     annualPriceId: "price_1T6Xu4GEMT6mikKwqgE63wB7",
     monthlyPrice: 149,
@@ -235,8 +235,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: "business",
-    name: "Business",
-    description: "For growing companies and teams",
+    name: "Scale",
+    description: "Global scale. Unlimited stakeholder viewing, API access, and priority processing.",
     monthlyPriceId: "price_1T6Xu5GEMT6mikKwaxgTw2dy",
     annualPriceId: "price_1T6Xu5GEMT6mikKwCUBCrmlB",
     monthlyPrice: 349,
@@ -245,8 +245,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: "enterprise",
-    name: "Enterprise",
-    description: "For large organizations with custom needs",
+    name: "Civic",
+    description: "White-label city portals, on-site training, and dedicated infrastructure.",
     monthlyPriceId: null, // Enterprise is custom pricing
     annualPriceId: null,
     monthlyPrice: 0,

@@ -1,5 +1,6 @@
 /**
  * Plan limits for different subscription tiers
+ * Internal IDs: free | starter (Experience) | professional (Precision) | business (Scale) | enterprise (Civic)
  */
 
 export type SubscriptionTier = "free" | "starter" | "professional" | "business" | "enterprise";
