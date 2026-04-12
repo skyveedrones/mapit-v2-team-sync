@@ -721,8 +721,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               delete pcAttrs.colors;
               delete pcAttrs.COLOR_0;
             }
-            // Mark tile loaded so deck.gl re-evaluates styling
-            tile.isLoaded = true;
+            // Note: do NOT set tile.isLoaded — the tile object is frozen by deck.gl
           },
           onTilesetLoad: (tileset) => {
             const map = mapRef.current;
