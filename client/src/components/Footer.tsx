@@ -45,8 +45,8 @@ const Footer = ({ onContactClick }: FooterProps) => {
             <ul className="space-y-4 text-sm text-gray-400">
               <li><a href="https://www.skyveedrones.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ff88] transition-colors">About SkyVee</a></li>
               <li><a href="#" className="hover:text-[#00ff88] transition-colors">Success Stories</a></li>
-              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-[#00ff88] transition-colors">Terms of Service</a></li>
+              <li><a href="/privacy" className="hover:text-[#00ff88] transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-[#00ff88] transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 

@@ -41,6 +41,8 @@ import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -342,6 +344,8 @@ function Router() {
       <Route path="/client-invite/:token" component={ClientInviteAccept} />
       
       <Route path="/auth-error" component={AuthError} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
