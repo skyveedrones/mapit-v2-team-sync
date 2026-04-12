@@ -74,15 +74,26 @@ export async function getVersionInfo(): Promise<{
     const response = await fetch('/version.json', { cache: 'no-store' });
     if (response.ok) {
       const data = await response.json();
+      // version.json may use 'commit' or 'fullCommit' or 'hash'
+      const commit = data.commit || data.fullCommit || data.hash || 'unknown';
       return {
         version: data.version || 'unknown',
-        commit: data.commit || 'unknown'
+        commit: commit.substring(0, 8),
       };
     }
   } catch (error) {
     console.warn('[buildVersion] Error fetching version info:', error);
   }
-  return null;
+  // Fallback to shared/version.ts constants
+  try {
+    const { APP_VERSION } = await import('@shared/version');
+    return {
+      version: APP_VERSION.version,
+      commit: APP_VERSION.commit.substring(0, 8),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
