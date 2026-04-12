@@ -2688,3 +2688,6 @@
 ## Trial Expiry Guard & Final Pricing Verify
 - [ ] Add trial-expiry redirect guard in App.tsx: trialing + expired → /pricing?expired=1
 - [ ] Verify pricing page: 3-line subheader, aligned cards, all CTAs → getLoginUrl()
+
+## Tier 3 & 4 Strategic Rename
+- [x] Renamed Tier 3 Dominance → Scale, Tier 4 Authority → Civic in Pricing.tsx

@@ -58,8 +58,8 @@ const TIERS = [
     action: "trial",
   },
   {
-    id: "dominance",
-    hook: "Dominance",
+    id: "scale",
+    hook: "Scale",
     monthlyPrice: 349,
     annualMonthly: 296.65,
     annualTotal: 3559.80,
@@ -80,8 +80,8 @@ const TIERS = [
     action: "trial",
   },
   {
-    id: "authority",
-    hook: "Authority",
+    id: "civic",
+    hook: "Civic",
     monthlyPrice: null,
     annualMonthly: null,
     annualTotal: null,
