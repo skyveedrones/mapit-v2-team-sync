@@ -20,7 +20,7 @@ const TIERS = [
     annualMonthly: 41.65,
     annualTotal: 499.80,
     priceLabel: null,
-    trialTag: true,
+    trialTag: false,
     badge: null,
     description:
       "Full access to the MAPIT engine for 14 days. Create your first digital twin and master the terrain without limits.",
@@ -153,7 +153,9 @@ export default function Pricing() {
           transition={{ duration: 0.5, delay: 0.14 }}
           className="text-white/45 text-base max-w-lg mx-auto leading-relaxed"
         >
-          Every plan ships with a complimentary 14-day trial at full resolution. No credit card required
+          Experience the complete platform. Your first 14 days are complimentary.
+          <br />
+          <span className="text-white/30">No credit card required</span>
         </motion.p>
 
         {/* Monthly / Annual Toggle */}
@@ -207,10 +209,10 @@ export default function Pricing() {
                 padding: "2rem 1.6rem 1.8rem",
               }}
             >
-              {/* MOST POPULAR badge */}
+              {/* MOST POPULAR badge — absolute, outside content flow so it never pushes hook text down */}
               {tier.badge && (
                 <div
-                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold tracking-widest whitespace-nowrap"
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold tracking-widest whitespace-nowrap pointer-events-none"
                   style={{
                     background: "linear-gradient(90deg, #10b981 0%, #059669 100%)",
                     color: "#fff",
@@ -221,23 +223,7 @@ export default function Pricing() {
                 </div>
               )}
 
-              {/* Trial tag */}
-              {tier.trialTag && (
-                <div className="mb-3">
-                  <span
-                    className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                    style={{
-                      background: "rgba(16,185,129,0.12)",
-                      border: "1px solid rgba(16,185,129,0.25)",
-                      color: "#10b981",
-                    }}
-                  >
-                    Includes 14-Day Free Trial
-                  </span>
-                </div>
-              )}
-
-              {/* Hook — metallic gradient, no period */}
+              {/* Hook — metallic gradient, no period. All four cards start here at the same Y. */}
               <p
                 className="font-bold bg-clip-text text-transparent"
                 style={{

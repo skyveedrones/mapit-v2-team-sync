@@ -2670,3 +2670,9 @@
 - [x] Changed Precision CTA to "Start Your Trial"
 - [x] Changed Dominance CTA to "Start Your Trial"
 - [x] Rewired all three trial CTAs to getLoginUrl() — OAuth signup, user lands in /projects dashboard after auth
+
+## Pricing Final Polish
+- [x] Rewrite subheader: "Experience the complete platform. Your first 14 days are complimentary. / No credit card required."
+- [x] Removed trialTag pill from Experience card (trialTag: false, rendering block removed)
+- [x] Vertical alignment: all four cards use identical padding: 2rem 1.6rem 1.8rem; MOST POPULAR badge is absolute/pointer-events-none
+- [x] Horizon alignment: uniform padding-top on all four cards so hook text starts at same Y; MOST POPULAR badge stays absolute outside card
