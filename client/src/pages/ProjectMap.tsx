@@ -465,7 +465,9 @@ export default function ProjectMap() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <div className="flex-1 relative">
-        {geotaggedMedia.length > 0 ? (
+        {/* Show map if project has a location OR if geotagged media is present.
+             Never block the map just because media hasn't been uploaded yet. */}
+        {(geotaggedMedia.length > 0 || !!(project as any)?.location || sessionStorage.getItem('mapit_fly_coords')) ? (
           <div ref={mapContainerRef} className="w-full h-full" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
