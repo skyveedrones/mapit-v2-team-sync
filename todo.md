@@ -2694,3 +2694,6 @@
 
 ## Discovery Hint Repositioning
 - [x] Moved Discovery Hint from top-center (left-1/2 -translate-x-1/2) to top-right (right-8) in ProjectMap.tsx
+
+## Discovery Hint Precision Placement
+- [x] Moved Discovery Hint from right-8 to right-[420px] — sits 20px left of Overlay Manager sidebar edge
