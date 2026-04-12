@@ -278,10 +278,14 @@ export default function ProjectMap() {
     hasFiredFlyIn.current = true;
     sessionStorage.removeItem('mapit_fly_coords');
 
+    // Force Mapbox to recalculate container size before flying
+    map.resize();
+
     // Cinematic fly-in from current world view to site
+    // zoom 18 = ground-level tiles; ensures satellite imagery is visible
     map.flyTo({
       center,
-      zoom: 16,
+      zoom: 18,
       pitch: 45,
       bearing: 0,
       duration: 3800,
@@ -516,12 +520,12 @@ export default function ProjectMap() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <div className="flex-1 relative">
+    <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+      <div className="flex-1 relative" style={{ minHeight: 0 }}>
         {/* Show map if project has a location OR if geotagged media is present.
              Never block the map just because media hasn't been uploaded yet. */}
         {(geotaggedMedia.length > 0 || !!(project as any)?.location || sessionStorage.getItem('mapit_fly_coords')) ? (
-          <div ref={mapContainerRef} className="w-full h-full" />
+          <div ref={mapContainerRef} className="absolute inset-0" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/20">
             <div className="text-center p-8">
