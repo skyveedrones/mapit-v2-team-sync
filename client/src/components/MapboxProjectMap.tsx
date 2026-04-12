@@ -614,13 +614,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       map.on('mouseenter', 'media-pins', handleMediaPinMouseEnter);
       map.on('mouseleave', 'media-pins', handleMediaPinMouseLeave);
 
-      // Fit bounds to all markers
+      // Fit bounds to all markers, or flyTo for a single point
       if (sortedMedia.length > 1) {
         const bounds = new mapboxgl.LngLatBounds();
         sortedMedia.forEach((m) => {
           bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
         });
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
+      } else if (sortedMedia.length === 1) {
+        const m = sortedMedia[0];
+        map.flyTo({
+          center: [parseFloat(m.longitude!), parseFloat(m.latitude!)],
+          zoom: 16,
+          duration: 1200,
+        });
       }
     }, [sortedMedia, mapLoaded, setSelectedMedia]);
 
@@ -654,6 +661,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([lng, lat])
         .addTo(map);
+
+      // Fly to the project location so the marker is visible
+      map.flyTo({ center: [lng, lat], zoom: 14, duration: 1200 });
     }, [mapLoaded, projectLocation, mediaWithGPS.length]);
 
     // ── Toggle flight path visibility ───────────────────────────────────────
