@@ -246,7 +246,7 @@ export default function Billing() {
                     >
                       {currentPlan === key && (
                         <div className="absolute top-4 right-4">
-                          <Badge>Current Plan</Badge>
+                          <Badge className="bg-emerald-500 text-white border-0">Your Current Plan</Badge>
                         </div>
                       )}
                       <CardHeader>
@@ -268,11 +268,15 @@ export default function Billing() {
                           ))}
                         </ul>
                         <Button
-                          className="w-full"
+                          className={`w-full ${
+                            currentPlan === key
+                              ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
+                              : ""
+                          }`}
                           disabled={currentPlan === key || isUpgrading}
-                          onClick={() => handleUpgrade(key)}
+                          onClick={() => currentPlan !== key && handleUpgrade(key)}
                         >
-                          {currentPlan === key ? "Current Plan" : "Start Your Trial"}
+                          {currentPlan === key ? "Current Plan" : isUpgrading ? "Loading…" : "Upgrade Plan"}
                         </Button>
                       </CardContent>
                     </Card>
