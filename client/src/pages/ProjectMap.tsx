@@ -325,6 +325,16 @@ export default function ProjectMap() {
               </div>
             </div>
           </div>
+          {/* Start Your Trial — bottom of HUD, onboarding only */}
+          {isOnboardingProject && (
+            <button
+              onClick={() => { window.location.href = getLoginUrl(); }}
+              className="mt-3 w-full bg-white text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 hover:bg-gray-100 select-none"
+              style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
+            >
+              Start Your Trial
+            </button>
+          )}
         </div>
       </div>
 
@@ -475,34 +485,6 @@ export default function ProjectMap() {
                 </motion.div>
               )}
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Start Your Trial Badge ── */}
-      <AnimatePresence>
-        {mapReady && isOnboardingProject && (
-          <motion.div
-            key="trial-badge"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
-            className="fixed top-[280px] left-8 z-[9990] pointer-events-auto"
-          >
-            <button
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="flex items-center gap-2 px-6 py-2 rounded-full transition-all duration-200 hover:bg-white/20 select-none"
-              style={{
-                background: "rgba(255,255,255,0.10)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.20)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              <span className="text-white text-sm" style={{ fontWeight: 500 }}>Start Your Trial</span>
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
