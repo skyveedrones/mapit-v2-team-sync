@@ -464,7 +464,7 @@ export default function ProjectMap() {
       </AnimatePresence>
 
       {/* ── Discovery Hint Card ── */}
-      {/* Square glassmorphic card, top-center, 24px below header HUD */}
+      {/* Square glassmorphic card, top-right, 24px below header HUD */}
       <AnimatePresence>
         {showDiscoveryHint && (
           <motion.div
@@ -473,7 +473,7 @@ export default function ProjectMap() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -8 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed top-[96px] left-1/2 -translate-x-1/2 z-[9990] pointer-events-auto"
+            className="fixed top-[96px] right-8 z-[9990] pointer-events-auto"
           >
             <button
               onClick={dismissDiscoveryHint}

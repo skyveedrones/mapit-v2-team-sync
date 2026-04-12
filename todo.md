@@ -2691,3 +2691,6 @@
 
 ## Tier 3 & 4 Strategic Rename
 - [x] Renamed Tier 3 Dominance → Scale, Tier 4 Authority → Civic in Pricing.tsx
+
+## Discovery Hint Repositioning
+- [x] Moved Discovery Hint from top-center (left-1/2 -translate-x-1/2) to top-right (right-8) in ProjectMap.tsx
