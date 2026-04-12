@@ -77,9 +77,11 @@ export default function ProjectMap() {
     sessionStorage.getItem("mapit_project_id") === String(projectId);
   const [showPrestige, setShowPrestige] = useState(false);
   const [prestigeEmail, setPrestigeEmail] = useState("");
+  const [prestigeEmailTouched, setPrestigeEmailTouched] = useState(false);
   const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
   const [prestigeClaimed, setPrestigeClaimed] = useState(false);
   const claimProject = trpcClient.onboarding.claimProject.useMutation();
+  const isPrestigeEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(prestigeEmail.trim());
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
 
@@ -364,16 +366,25 @@ export default function ProjectMap() {
                   <input
                     type="email"
                     value={prestigeEmail}
-                    onChange={(e) => setPrestigeEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handlePrestigeClaim()}
-                    placeholder="Email address"
-                    className="w-full bg-transparent border-0 border-b border-white/30 focus:border-white/80 outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 mb-8"
-                    style={{ caretColor: "#10b981" }}
+                    onChange={(e) => { setPrestigeEmail(e.target.value); setPrestigeEmailTouched(true); }}
+                    onBlur={() => setPrestigeEmailTouched(true)}
+                    onKeyDown={(e) => e.key === "Enter" && isPrestigeEmailValid && handlePrestigeClaim()}
+                    placeholder="your@email.com"
+                    className={`w-full bg-transparent border-0 border-b outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 ${
+                      prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0
+                        ? 'border-red-400/70 focus:border-red-400'
+                        : 'border-white/30 focus:border-white/80'
+                    }`}
+                    style={{ caretColor: "#10b981", marginBottom: prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 ? '0.5rem' : '2rem' }}
                     disabled={prestigeSubmitting}
+                    autoComplete="email"
                   />
+                  {prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 && (
+                    <p className="text-red-400/80 text-xs text-center mb-6 mt-1">Enter a valid email address</p>
+                  )}
                   <button
                     onClick={handlePrestigeClaim}
-                    disabled={!prestigeEmail.trim() || prestigeSubmitting}
+                    disabled={!isPrestigeEmailValid || prestigeSubmitting}
                     className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {prestigeSubmitting ? "Claiming..." : "Claim Project"}

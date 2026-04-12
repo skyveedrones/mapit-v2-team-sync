@@ -2630,3 +2630,6 @@
 - [x] Fix Engineering triumph layout: wider modal (560px), 160deg gradient, -0.04em tracking, 4rem padding
 - [x] Add primary project marker (white pin, emerald core) in MapboxProjectMap when projectLocation exists but no media GPS
 - [x] Verified /pricing page has Experience/Precision/Dominance/Command tiers
+
+## Fix claimProject Email Validation Error
+- [x] Fix invalid email validation in Prestige modal — root cause was user submitting partial email ("clay"); added client-side regex guard, inline error hint, Enter key guard, and disabled button until valid email is entered
