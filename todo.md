@@ -2697,3 +2697,13 @@
 
 ## Discovery Hint Precision Placement
 - [x] Moved Discovery Hint from right-8 to right-[420px] — sits 20px left of Overlay Manager sidebar edge
+
+## LiDAR Point Cloud Rendering
+- [x] Install @deck.gl/core, @deck.gl/mapbox, @deck.gl/geo-layers, @loaders.gl/3d-tiles
+- [x] Add MapboxOverlay (interleaved) to MapboxProjectMap on map load
+- [x] Add Tile3DLayer with CesiumIonLoader and placeholder credentials
+- [x] Add CESIUM_ION_TOKEN and CESIUM_ASSET_ID placeholder constants at top of file
+- [x] Add lidarEnabled state + Show/Hide LiDAR toggle button in sidebar
+- [x] Toggle button only visible when real credentials are set
+- [x] flyTo tileset cartographicCenter on first load
+- [x] Zero TypeScript errors

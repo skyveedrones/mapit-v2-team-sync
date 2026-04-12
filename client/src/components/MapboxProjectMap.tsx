@@ -20,6 +20,18 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+
+// ── Deck.gl / Cesium ion LiDAR integration ───────────────────────────────────
+import { MapboxOverlay } from "@deck.gl/mapbox";
+import { Tile3DLayer } from "@deck.gl/geo-layers";
+import { CesiumIonLoader } from "@loaders.gl/3d-tiles";
+
+// ── Cesium ion credentials — replace with your real values ───────────────────
+// Get your token at https://cesium.com/ion/tokens
+const CESIUM_ION_TOKEN = "YOUR_CESIUM_ION_TOKEN_HERE";
+// The asset ID of your uploaded LiDAR tileset in Cesium ion
+const CESIUM_ASSET_ID = 0; // e.g. 2275207
+
 import {
   Check,
   ChevronRight,
@@ -200,6 +212,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // PDF Converter state
     const [showPdfConverter, setShowPdfConverter] = useState(false);
 
+    // ── LiDAR / Cesium ion state ─────────────────────────────────────────────
+    const [lidarEnabled, setLidarEnabled] = useState(false);
+    const deckOverlayRef = useRef<MapboxOverlay | null>(null);
+
     // ── Selected overlay for alignment tools ────────────────────────────────
     const [selectedOverlayId, setSelectedOverlayId] = useState<number | null>(null);
 
@@ -327,6 +343,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         });
 
         map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+        // ── Deck.gl MapboxOverlay (interleaved) ─────────────────────────────
+        // Create the overlay once and attach it to the map so it shares the
+        // same WebGL context and stays perfectly anchored to GPS coordinates.
+        const deckOverlay = new MapboxOverlay({ interleaved: true, layers: [] });
+        map.addControl(deckOverlay as unknown as mapboxgl.IControl);
+        deckOverlayRef.current = deckOverlay;
 
         // Force one final resize after the first frame to ensure canvas fills container
         map.on("load", () => {
@@ -635,6 +658,35 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         map.setPaintProperty("flight-path", "line-opacity", flightPathVisible ? 0.8 : 0);
       }
     }, [flightPathVisible, mapLoaded]);
+
+    // ── LiDAR: update Deck.gl Tile3DLayer when lidarEnabled toggles ──────────
+    useEffect(() => {
+      const deck = deckOverlayRef.current;
+      if (!deck || !mapLoaded) return;
+      if (lidarEnabled && CESIUM_ION_TOKEN !== "YOUR_CESIUM_ION_TOKEN_HERE" && CESIUM_ASSET_ID !== 0) {
+        const tile3d = new Tile3DLayer({
+          id: "lidar-point-cloud",
+          data: `https://assets.cesium.com/${CESIUM_ASSET_ID}/tileset.json`,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          loader: CesiumIonLoader as any,
+          loadOptions: {
+            "cesium-ion": { accessToken: CESIUM_ION_TOKEN },
+          },
+          pointSize: 2,
+          onTilesetLoad: (tileset) => {
+            // Fly to the tileset bounds on first load
+            const map = mapRef.current;
+            if (map && tileset.cartographicCenter) {
+              const [lng, lat] = tileset.cartographicCenter;
+              map.flyTo({ center: [lng, lat], zoom: 16, duration: 1500 });
+            }
+          },
+        });
+        deck.setProps({ layers: [tile3d] });
+      } else {
+        deck.setProps({ layers: [] });
+      }
+    }, [lidarEnabled, mapLoaded]);
 
     // ── Render overlay image sources ────────────────────────────────────────
     useEffect(() => {
@@ -1611,6 +1663,22 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           >
                             <Route size={16} className={flightPathVisible ? "text-emerald-400" : "text-slate-400"} />
                             <span className="text-sm font-medium">{flightPathVisible ? "Hide Flight Path" : "Show Flight Path"}</span>
+                          </button>
+                        )}
+
+                        {/* LiDAR Point Cloud */}
+                        {CESIUM_ION_TOKEN !== "YOUR_CESIUM_ION_TOKEN_HERE" && CESIUM_ASSET_ID !== 0 && (
+                          <button
+                            onClick={() => setLidarEnabled((v) => !v)}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                              lidarEnabled ? "bg-violet-600/20 border border-violet-500/30" : "bg-slate-800 hover:bg-slate-700"
+                            }`}
+                          >
+                            <Layers size={16} className={lidarEnabled ? "text-violet-400" : "text-slate-400"} />
+                            <div className="text-left">
+                              <span className="text-sm font-medium block">{lidarEnabled ? "Hide LiDAR" : "Show LiDAR"}</span>
+                              <span className="text-[10px] text-slate-400">3D point cloud stream</span>
+                            </div>
                           </button>
                         )}
 
