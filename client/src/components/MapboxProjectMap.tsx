@@ -686,6 +686,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           loader: CesiumIonLoader as any,
           loadOptions: {
             "cesium-ion": { accessToken: CESIUM_ION_TOKEN },
+            "3d-tiles": {
+              decodeQuantizedPositions: true,
+            },
+            pointcloud: {
+              attributeNameMapping: {
+                color: null,
+                COLOR_0: null,
+              },
+            },
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           _subLayerProps: {
