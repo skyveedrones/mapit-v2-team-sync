@@ -10,7 +10,7 @@
  *  3. No GPS → quiet toast + world-view fallback
  */
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,22 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
+
+const ACCEPTED_MIME = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/tiff",
+  "video/mp4",
+  "video/quicktime", // .mov
+]);
+const ACCEPTED_EXT = new Set([".jpg", ".jpeg", ".png", ".tiff", ".tif", ".mp4", ".mov"]);
+
+function isAcceptedFile(file: File): boolean {
+  if (ACCEPTED_MIME.has(file.type)) return true;
+  const ext = "." + file.name.split(".").pop()?.toLowerCase();
+  return ACCEPTED_EXT.has(ext);
+}
 
 /**
  * Robust GPS extraction — tries multiple exifr strategies.
@@ -65,6 +81,8 @@ export default function Create() {
   const [dropState, setDropState] = useState<DropState>("idle");
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing...");
+  const [shake, setShake] = useState(false);
+  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
@@ -83,7 +101,35 @@ export default function Create() {
     return () => clearInterval(interval);
   }, [dropState]);
 
+  const triggerShake = useCallback(() => {
+    setShake(true);
+    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    shakeTimeoutRef.current = setTimeout(() => setShake(false), 600);
+    toast("Format not supported. Use drone imagery or video.", {
+      duration: 3500,
+      position: "bottom-center",
+      style: {
+        background: "rgba(10,10,10,0.92)",
+        color: "rgba(255,255,255,0.75)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        borderRadius: "14px",
+        fontSize: "13px",
+        fontFamily: "Inter, sans-serif",
+        backdropFilter: "blur(20px)",
+        padding: "12px 20px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+      },
+    });
+  }, []);
+
   const processFiles = useCallback(async (files: File[]) => {
+    // Validate all files before processing
+    const invalid = files.filter((f) => !isAcceptedFile(f));
+    if (invalid.length > 0) {
+      triggerShake();
+      return;
+    }
+
     setDropState("analyzing");
     setStatusText("Analyzing...");
 
@@ -159,7 +205,7 @@ export default function Create() {
       setProgress(100);
       setTimeout(() => setLocation("/map"), 400);
     }
-  }, [initProject, setLocation]);
+  }, [initProject, uploadMedia, setLocation, triggerShake]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -231,14 +277,25 @@ export default function Create() {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            x: shake
+              ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0]
+              : 0,
+          }}
+          transition={shake
+            ? { duration: 0.5, ease: "easeInOut" }
+            : { duration: 0.4 }
+          }
           className={`
             relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
             border rounded-3xl select-none transition-all duration-300
             ${isProcessing ? "cursor-default" : "cursor-pointer"}
             ${isDragging
               ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
+              : shake
+              ? "border-red-500/40"
               : "border-white/5 bg-transparent hover:border-white/10"
             }
           `}
@@ -282,25 +339,25 @@ export default function Create() {
                 exit={{ opacity: 0 }}
                 className="text-center pointer-events-none"
               >
-                <p className="text-white/40 text-base leading-relaxed">
+                <p className="text-white/90 text-2xl leading-relaxed font-medium">
                   Drag your drone imagery or .mp4 files here to begin.
                 </p>
-                <p className="mt-4 text-white/15 text-xs tracking-widest uppercase">
+                <p className="mt-5 text-white/40 text-sm tracking-widest uppercase font-semibold">
                   or click to browse
                 </p>
-                <p className="mt-3 text-white/15 text-[11px] tracking-wide">
+                <p className="mt-3 text-white/60 text-sm tracking-wide">
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Invisible file input */}
+          {/* Invisible file input — strict accept */}
           <input
             id="file-input"
             type="file"
             multiple
-            accept="image/*,video/mp4,.mp4,.mov,.avi,.jpg,.jpeg,.png,.tiff,.tif"
+            accept=".jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov"
             className="sr-only"
             onChange={handleFileInput}
             disabled={isProcessing}

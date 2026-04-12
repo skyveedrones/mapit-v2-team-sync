@@ -2633,3 +2633,12 @@
 
 ## Fix claimProject Email Validation Error
 - [x] Fix invalid email validation in Prestige modal — root cause was user submitting partial email ("clay"); added client-side regex guard, inline error hint, Enter key guard, and disabled button until valid email is entered
+
+## Final UX Polish — 30-Second Victory Lap
+- [x] Create.tsx: drop zone text upgraded to text-2xl, text-white/90
+- [x] Create.tsx: "OR CLICK TO BROWSE" uppercase, tracking-widest, font-semibold
+- [x] Create.tsx: file formats text-white/60 for readability
+- [x] Create.tsx: accept restricted to .jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov
+- [x] Create.tsx: 0.5s shake animation + glassmorphic bottom-center toast on unsupported file
+- [x] ProjectMap.tsx: 30s delay confirmed, 560px modal confirmed, primary-project-marker confirmed
+- [x] Pricing.tsx: Experience/Precision/Dominance/Command hooks confirmed, Complimentary 14-day trial confirmed
