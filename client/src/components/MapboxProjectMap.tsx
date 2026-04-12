@@ -535,9 +535,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         } as any);
 
         const thumbnailUrl = props.thumbnailUrl;
+        const fullUrl = props.url || thumbnailUrl;
         const popupHtml = `
           <div style="max-width:220px;font-family:system-ui,sans-serif">
-            <img src="${thumbnailUrl}" style="width:100%;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" />
+            <img
+              src="${thumbnailUrl}"
+              data-fullurl="${fullUrl}"
+              data-filename="${props.filename}"
+              data-lat="${props.latitude}"
+              data-lng="${props.longitude}"
+              style="width:100%;border-radius:6px;margin-bottom:8px;cursor:zoom-in"
+              title="Click to enlarge"
+              onerror="this.style.display='none'"
+            />
+            <div style="font-size:10px;color:#64748b;margin-bottom:6px;text-align:center">Click image to enlarge</div>
             <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff">${props.filename}</div>
             <div style="font-size:11px;color:#94a3b8">${parseFloat(props.latitude).toFixed(6)}, ${parseFloat(props.longitude).toFixed(6)}</div>
             ${props.altitude ? `<div style="font-size:11px;color:#94a3b8">Alt: ${parseFloat(props.altitude).toFixed(1)}m</div>` : ''}
@@ -1331,6 +1342,21 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           {/* Map wrapper — always rendered so mapContainerRef is never null */}
           <div
             ref={mapWrapperRef}
+            onClick={(e) => {
+              // Delegated handler: intercept clicks on popup thumbnail images
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'IMG' && target.dataset.fullurl) {
+                e.stopPropagation();
+                // Build a minimal Media-like object so the existing lightbox can render it
+                setEnlargedMedia({
+                  url: target.dataset.fullurl,
+                  filename: target.dataset.filename || 'Image',
+                  latitude: target.dataset.lat || '0',
+                  longitude: target.dataset.lng || '0',
+                  mediaType: 'photo',
+                } as any);
+              }
+            }}
             className={`relative rounded-lg overflow-hidden border border-slate-800 ${isFullscreen ? "!fixed !inset-0 !z-[9999] !rounded-none !border-0 !w-screen !h-screen" : ""}`}
             style={isFullscreen ? { background: "#000" } : undefined}
           >
