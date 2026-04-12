@@ -678,7 +678,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             pointcloud: {
               pointSize: lidarPointSize,
               pointSizeUnits: "pixels",
-              getColor: [0, 255, 0, 255],
+              getColor: [0, 190, 255, 255],
             },
           } as any,
           onTilesetLoad: (tileset) => {
