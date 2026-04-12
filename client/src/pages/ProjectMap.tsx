@@ -83,10 +83,10 @@ export default function ProjectMap() {
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
 
-  // Fire Prestige modal 5 seconds after map is ready (onboarding flow only)
+  // Fire Prestige modal 10 seconds after map is ready (onboarding flow only)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
-    const timer = setTimeout(() => setShowPrestige(true), 5000);
+    const timer = setTimeout(() => setShowPrestige(true), 10000);
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
@@ -175,12 +175,17 @@ export default function ProjectMap() {
   }, [mapReady, project, geotaggedMedia]);
 
   // ── Determine if we have any coordinates to show the map ─────────────────
+  // Rule: if project.location exists OR sessionStorage has coords, the map is
+  // the hero — never block it with the No GPS overlay.
+  const projectLocation = (project as any)?.location;
   const hasCoordinates =
-    geotaggedMedia.length > 0 ||
-    !!(project as any)?.location ||
-    !!getSessionCoords();
+    !!projectLocation ||
+    !!getSessionCoords() ||
+    geotaggedMedia.length > 0;
 
-  if (projectLoading || mediaLoading) {
+  // Only block on projectLoading — media can load in the background.
+  // hasCoordinates uses project.location so the map shows immediately.
+  if (projectLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -327,13 +332,16 @@ export default function ProjectMap() {
             >
               {!prestigeClaimed ? (
                 <>
-                  {/* Massive metallic hook — no period */}
+                  {/* Massive metallic hook — no period, no overflow clipping */}
                   <p
-                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-6"
+                    className="font-bold bg-clip-text text-transparent mb-6 whitespace-nowrap"
                     style={{
-                      fontSize: "clamp(3rem,11vw,5rem)",
+                      fontSize: "clamp(2rem,7vw,3.5rem)",
+                      letterSpacing: "-0.03em",
                       backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #6b7280 100%)",
-                      lineHeight: 1,
+                      lineHeight: 1.05,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
                     }}
                   >
                     Engineering triumph

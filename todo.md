@@ -2606,3 +2606,9 @@
 - [x] Pass project.location coordinates to MapboxProjectMap so map centers correctly via flyTo on mapReady
 - [x] Perfect Prestige modal text to exact Jobsian copy (no period on hook, exact body text)
 - [x] Rewrite /pricing with Experience/Precision/Dominance hooks and reactivate free trial plan
+
+## ProjectMap Timing & Overlay Fixes (Session 15 cont. 2)
+- [x] Fix GPS overlay still blocking when project.location exists — removed mediaLoading from early return; hasCoordinates now prioritizes projectLocation first
+- [x] Change Prestige modal setTimeout from 5000ms to 10000ms
+- [x] Fix hook text clipping — whitespace-nowrap, clamp font size, explicit WebkitBackgroundClip
+- [x] flyTo verified: fires from project.location via parseLocation() on mapReady
