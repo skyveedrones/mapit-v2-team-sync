@@ -67,6 +67,7 @@ export default function Create() {
   const [statusText, setStatusText] = useState("Analyzing...");
 
   const initProject = trpc.onboarding.initProject.useMutation();
+  const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
 
   // Progress bar animation
   useEffect(() => {
@@ -128,6 +129,27 @@ export default function Create() {
       sessionStorage.setItem("mapit_project_id", String(result.projectId));
       sessionStorage.setItem("mapit_project_name", projectName);
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
+
+      // Upload each file as a media record (fire-and-forget for speed,
+      // but await at least the first one so the map has a pin on arrival)
+      setStatusText("Uploading...");
+      for (const file of files) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
+          await uploadMedia.mutateAsync({
+            projectId: result.projectId,
+            filename: file.name,
+            mimeType: file.type || 'image/jpeg',
+            fileData: base64,
+          });
+        } catch (uploadErr) {
+          console.error('[Create] Failed to upload media:', file.name, uploadErr);
+          // Non-blocking — project still created, just no media pin
+        }
+      }
 
       // Complete progress bar and navigate
       setProgress(100);

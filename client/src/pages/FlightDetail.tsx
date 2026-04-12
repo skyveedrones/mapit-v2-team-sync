@@ -498,6 +498,7 @@ export default function FlightDetail() {
                   projectId={projectId}
                   projectName={flight.name}
                   flightId={flightId}
+                  projectLocation={(project as any)?.location}
                 />
               </LazyMapWrapper>
             </motion.div>

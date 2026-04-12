@@ -222,6 +222,7 @@ export default function ProjectMap() {
           onOverlayButtonClick={() => {}}
           heightClass="h-screen"
           showFullScreenLink={false}
+          projectLocation={(project as any)?.location}
         />
       </div>
 

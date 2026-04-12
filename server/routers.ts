@@ -5134,6 +5134,82 @@ export const appRouter = router({
       }),
 
     /**
+     * Upload media during onboarding (public, no auth).
+     * Mirrors the existing media.upload flow: S3 upload + EXIF extraction + createMedia.
+     * This ensures the media record has latitude/longitude so MapboxProjectMap renders pins.
+     */
+    uploadMedia: publicProcedure
+      .input(
+        z.object({
+          projectId: z.number(),
+          filename: z.string(),
+          mimeType: z.string(),
+          fileData: z.string(), // Base64 encoded
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+
+        // Decode base64
+        const buffer = Buffer.from(input.fileData, 'base64');
+        const fileSize = buffer.length;
+
+        // Extract EXIF GPS from images
+        let exifData = {
+          latitude: null as number | null,
+          longitude: null as number | null,
+          altitude: null as number | null,
+          capturedAt: null as string | null,
+          cameraMake: null as string | null,
+          cameraModel: null as string | null,
+        };
+        if (input.mimeType.startsWith('image/')) {
+          exifData = await extractExifData(buffer);
+        }
+
+        // Upload to S3
+        const uniqueId = nanoid(12);
+        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const result = await storagePut(fileKey, buffer, input.mimeType);
+        const url = result.url;
+
+        // Generate thumbnail for images
+        let thumbnailUrl: string | null = null;
+        if (input.mimeType.startsWith('image/')) {
+          try {
+            const thumbBuffer = await generateThumbnail(buffer, 250);
+            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbBuffer, 'image/jpeg');
+            thumbnailUrl = thumbResult.url;
+          } catch {
+            thumbnailUrl = url;
+          }
+        }
+
+        // Create media record with GPS coordinates
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ownerUser.id,
+          filename: input.filename,
+          fileKey,
+          url,
+          mimeType: input.mimeType,
+          fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: (exifData.latitude && !isNaN(exifData.latitude)) ? exifData.latitude.toString() : null,
+          longitude: (exifData.longitude && !isNaN(exifData.longitude)) ? exifData.longitude.toString() : null,
+          altitude: (exifData.altitude && !isNaN(exifData.altitude)) ? exifData.altitude.toString() : null,
+          capturedAt: exifData.capturedAt ? String(exifData.capturedAt) : null,
+          cameraMake: exifData.cameraMake,
+          cameraModel: exifData.cameraModel,
+          thumbnailUrl,
+        });
+
+        return { mediaId: mediaItem.id, url, latitude: exifData.latitude, longitude: exifData.longitude };
+      }),
+
+    /**
      * Act 3 Prestige Modal: Associate an email with the trial project.
      * Creates a new user row if the email is new, then transfers project ownership.
      */

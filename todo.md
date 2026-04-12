@@ -2612,3 +2612,15 @@
 - [x] Change Prestige modal setTimeout from 5000ms to 10000ms
 - [x] Fix hook text clipping — whitespace-nowrap, clamp font size, explicit WebkitBackgroundClip
 - [x] flyTo verified: fires from project.location via parseLocation() on mapReady
+
+## Critical Map Fixes (Session 15 cont. 3)
+- [ ] Render primary project marker at project.location coords in MapboxProjectMap (don't wait for media)
+- [ ] Kill No GPS overlay when project.location exists — make condition absolutely strict
+- [ ] Fix Engineering triumph text clipping — give headline more room
+
+## Fix Onboarding Upload GPS Extraction (Session 15 cont. 4)
+- [x] Trace onboarding upload pipeline — found Create.tsx never uploads files as media records after initProject
+- [x] Added onboarding.uploadMedia public mutation (mirrors media.upload: S3 + EXIF + createMedia)
+- [x] Updated Create.tsx to call uploadMedia after initProject so media records get GPS lat/lng
+- [x] Added projectLocation prop to MapboxProjectMap to suppress internal No GPS overlay
+- [x] Passed projectLocation from ProjectMap.tsx, ProjectDetail.tsx, and FlightDetail.tsx

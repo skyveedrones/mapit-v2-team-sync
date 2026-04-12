@@ -95,6 +95,8 @@ interface MapboxProjectMapProps {
   onOverlayButtonClick?: () => void;
   heightClass?: string;
   showFullScreenLink?: boolean;
+  /** Raw "lat, lng" string from project.location — used to suppress No GPS overlay and place primary marker */
+  projectLocation?: string | null;
 }
 
 // ── Corner labels & colors ──────────────────────────────────────────────────
@@ -142,6 +144,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       onOverlayButtonClick,
       heightClass = "h-[600px]",
       showFullScreenLink = true,
+      projectLocation,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -1309,8 +1312,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               </div>
             )}
 
-            {/* No GPS overlay — shown only when truly empty and not loading */}
-            {!isLoading && mediaWithGPS.length === 0 && activeOverlays.length === 0 && (
+            {/* No GPS overlay — shown only when truly empty and not loading AND no project.location */}
+            {!isLoading && mediaWithGPS.length === 0 && activeOverlays.length === 0 && !projectLocation && (
               <div className="absolute inset-0 z-[10] flex flex-col items-center justify-center text-muted-foreground bg-muted/50 rounded-lg">
                 <Navigation className="h-12 w-12 mb-3 opacity-50" />
                 <p className="font-medium">No GPS Data Available</p>

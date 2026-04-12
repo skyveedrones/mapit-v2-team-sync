@@ -540,6 +540,7 @@ export default function ProjectDetail() {
                     }
                   }}
                   onOverlayButtonClick={handleOverlayClick}
+                  projectLocation={(project as any)?.location}
                 />
               </LazyMapWrapper>
             </motion.div>
