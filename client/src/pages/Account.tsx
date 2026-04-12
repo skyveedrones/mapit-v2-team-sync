@@ -285,7 +285,7 @@ export default function Account() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {(user.role === 'webmaster' || user.orgRole === 'ORG_ADMIN') && (
-              <Link to="/organization/list">
+              <Link to="/organization">
                 <Button variant="outline" className="gap-2">
                   <Building2 className="h-4 w-4" />
                   Organization
