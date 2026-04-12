@@ -1,7 +1,11 @@
 {
-  "version": "2.4.3",
-  "commit": "edc19a79",
-  "fullCommit": "edc19a79",
-  "buildDate": "2026-04-12T14:43:00.000Z",
-  "timestamp": 1744468980000
+  "version": "2.4.1",
+  "commit": "02d12cc",
+  "fullCommit": "02d12cca91143232a7213bf8181e0aff308755cb",
+  "hash": "02d12cc",
+  "fullHash": "02d12cca91143232a7213bf8181e0aff308755cb",
+  "branch": "main",
+  "buildDate": "2026-04-12T15:09:53.081Z",
+  "timestamp": 1776006593081,
+  "buildTime": "4/12/2026, 11:09:53 AM"
 }

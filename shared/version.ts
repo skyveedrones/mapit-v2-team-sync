@@ -1,50 +1,26 @@
 /**
  * Application version information
- * 
- * AUTOMATICALLY UPDATED - Do not edit manually
- * Updated by: scripts/update-version.mjs
- * Last updated: 2026-03-30T15:49:33.515Z
- * 
- * This file is automatically updated during build with:
- * - Latest version number from package.json
- * - Current git commit hash
- * - Build timestamp
- * - Git branch information
+ *
+ * AUTOMATICALLY UPDATED — do not edit manually.
+ * Updated by: scripts/generate-version.mjs
+ * Last updated: 2026-04-12T15:09:53.081Z
  */
 
 export const APP_VERSION = {
-  version: '2.4.3',
-  commit: 'edc19a79',
+  version: '2.4.1',
+  commit: '02d12cc',
   branch: 'main',
   buildDate: new Date().toISOString(),
-  buildTimestamp: 1744468980000,
+  buildTimestamp: 1776006593081,
 };
 
-/**
- * Get human-readable version string
- * Format: v1.0.8 (b781421) - Feb 10, 2026
- */
+/** Format: v2.4.3 (edc19a79) - Apr 12, 2026 */
 export function getVersionString(): string {
   const date = new Date(APP_VERSION.buildDate);
-  const formattedDate = date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-  
-  const time = date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-  });
-  
-  return `v${APP_VERSION.version} (${APP_VERSION.commit.substring(0, 7)}) - ${formattedDate}`;
+  const formatted = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return `v${APP_VERSION.version} (${APP_VERSION.commit}) - ${formatted}`;
 }
 
-/**
- * Get version for API/backend communication
- */
 export function getVersionInfo() {
   return {
     version: APP_VERSION.version,
