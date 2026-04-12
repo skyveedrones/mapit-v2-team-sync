@@ -6,12 +6,29 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowLeft, AlertCircle } from "lucide-react";
+import { Check, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+
+// Tier id → Stripe price IDs (mirrors server/products.ts)
+const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
+  experience: { monthly: "price_1T6Xu3GEMT6mikKwPibBZGCg", annual: "price_1T6Xu4GEMT6mikKwqmc0MCVL" },
+  precision:  { monthly: "price_1T6Xu4GEMT6mikKwINYKHcuI", annual: "price_1T6Xu4GEMT6mikKwqgE63wB7" },
+  scale:      { monthly: "price_1T6Xu5GEMT6mikKwaxgTw2dy", annual: "price_1T6Xu5GEMT6mikKwCUBCrmlB" },
+  civic:      null,
+};
+
+// Map subscriptionTier DB key → pricing page tier id
+const TIER_KEY_MAP: Record<string, string> = {
+  starter: "experience",
+  professional: "precision",
+  business: "scale",
+  enterprise: "civic",
+  free: "free",
+};
 
 const METALLIC = "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #9ca3af 100%)";
 
@@ -108,32 +125,50 @@ const TIERS = [
 
 export default function Pricing() {
   const [annual, setAnnual] = useState(false);
+  const [loadingTierId, setLoadingTierId] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [portalLoading, setPortalLoading] = useState(false);
   const createPortalSession = trpc.payment.createPortalSession.useMutation();
+  const createCheckoutSession = trpc.payment.createCheckoutSession.useMutation();
+
+  // Determine the user's current plan tier id on this page
+  const currentTierId = user ? (TIER_KEY_MAP[(user as any).subscriptionTier] ?? "free") : null;
+  const hasActiveSubscription = !!(user && (user as any).stripeSubscriptionId);
 
   const handleCTA = async (tier: (typeof TIERS)[0]) => {
     if (tier.action === "contact") {
       window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Inquiry";
       return;
     }
-    if (user) {
-      // Signed-in user → Stripe Customer Portal to upgrade/manage
-      setPortalLoading(true);
-      try {
-        const result = await createPortalSession.mutateAsync();
-        if (result.portalUrl) {
-          window.open(result.portalUrl, "_blank");
-        }
-      } catch {
-        toast.error("Failed to open billing portal. Please try again.");
-      } finally {
-        setPortalLoading(false);
-      }
-    } else {
+    if (!user) {
       // Anonymous visitor → OAuth signup
       window.location.href = getLoginUrl();
+      return;
+    }
+    // Current plan — no-op
+    if (tier.id === currentTierId) return;
+
+    setLoadingTierId(tier.id);
+    try {
+      if (hasActiveSubscription) {
+        // Active subscriber → Stripe Customer Portal to change plan
+        const result = await createPortalSession.mutateAsync();
+        if (result.portalUrl) window.open(result.portalUrl, "_blank");
+      } else {
+        // No subscription → Stripe Checkout to start a plan
+        const priceIds = TIER_PRICE_IDS[tier.id];
+        if (!priceIds) {
+          toast.error("No price configured for this plan.");
+          return;
+        }
+        const priceId = annual ? priceIds.annual : priceIds.monthly;
+        const result = await createCheckoutSession.mutateAsync({ priceId, planId: tier.id });
+        if (result.checkoutUrl) window.open(result.checkoutUrl, "_blank");
+      }
+    } catch {
+      toast.error("No active subscription found. Please select a plan to get started.");
+    } finally {
+      setLoadingTierId(null);
     }
   };
 
@@ -352,36 +387,43 @@ export default function Pricing() {
                   }
                 }}
               >
-                  {portalLoading && tier.action !== "contact"
-                  ? "Opening portal…"
-                  : user && tier.action !== "contact"
-                  ? "Manage Plan"
-                  : tier.cta}
+                  {loadingTierId === tier.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Opening…
+                    </span>
+                  ) : tier.id === currentTierId ? (
+                    "Current Plan"
+                  ) : user && tier.action !== "contact" ? (
+                    hasActiveSubscription ? "Upgrade Plan" : "Start Your Trial"
+                  ) : (
+                    tier.cta
+                  )}
               </button>
             </motion.div>
           ))}
         </div>
       </div>
 
-      {/* Manage Billing footer link for signed-in users */}
-      {user && (
+      {/* Manage Billing footer link for signed-in users with active subscription */}
+      {user && hasActiveSubscription && (
         <div className="text-center pb-12">
           <button
             onClick={async () => {
-              setPortalLoading(true);
+              setLoadingTierId("portal");
               try {
                 const result = await createPortalSession.mutateAsync();
                 if (result.portalUrl) window.open(result.portalUrl, "_blank");
               } catch {
                 toast.error("Failed to open billing portal.");
               } finally {
-                setPortalLoading(false);
+                setLoadingTierId(null);
               }
             }}
-            disabled={portalLoading}
+            disabled={loadingTierId === "portal"}
             className="text-sm text-white/30 hover:text-white/70 underline underline-offset-4 transition-colors"
           >
-            {portalLoading ? "Opening Stripe portal…" : "Manage Billing & Payment History →"}
+            {loadingTierId === "portal" ? "Opening Stripe portal…" : "Manage Billing & Payment History →"}
           </button>
         </div>
       )}
