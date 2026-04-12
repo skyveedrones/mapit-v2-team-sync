@@ -375,18 +375,35 @@ export default function ProjectMap() {
                   >
                     Engineering triumph
                   </p>
-                  <p
-                    className="text-white/60 text-base leading-relaxed mb-8"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                  >
-                    You have officially conquered the complexity of{" "}
-                    <span className="text-white font-semibold">{onboardingProjectName}</span>.
-                    {" "}In one swift motion, you've transformed raw data into a high-precision
-                    digital twin—a feat that used to take teams weeks to engineer. You are in
-                    control now.
-                    <br /><br />
-                    Claim your 14-day free trial to secure your work.
-                  </p>
+                  {/* Sequential fade-in body lines */}
+                  <div className="mb-8 space-y-3" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      className="text-white text-lg font-medium"
+                    >
+                      Simply extraordinary
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.65, duration: 0.5 }}
+                      className="text-white/60 text-base leading-relaxed"
+                    >
+                      You've just turned{" "}
+                      <span className="text-white font-semibold">{onboardingProjectName}</span>{" "}
+                      into a living digital record. What used to take weeks, you've done in a single motion.
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.0, duration: 0.5 }}
+                      className="text-white/80 text-sm font-medium tracking-wide"
+                    >
+                      The magic is yours. You are in control
+                    </motion.p>
+                  </div>
                   <input
                     type="email"
                     value={prestigeEmail}
@@ -446,31 +463,36 @@ export default function ProjectMap() {
         )}
       </AnimatePresence>
 
-      {/* ── Discovery Hint Pill ── */}
-      {/* Fades in 3s after map ready (onboarding only), dismissed on marker click or Prestige modal */}
+      {/* ── Discovery Hint Card ── */}
+      {/* Square glassmorphic card, top-center, 24px below header HUD */}
       <AnimatePresence>
         {showDiscoveryHint && (
           <motion.div
             key="discovery-hint"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9990] pointer-events-auto"
+            initial={{ opacity: 0, scale: 0.92, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: -8 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="fixed top-[96px] left-1/2 -translate-x-1/2 z-[9990] pointer-events-auto"
           >
             <button
               onClick={dismissDiscoveryHint}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/80 hover:text-white transition-colors duration-200 select-none"
+              className="flex flex-col items-center justify-center gap-3 px-6 py-6 rounded-2xl text-center transition-all duration-200 hover:border-white/25 select-none"
               style={{
-                background: "rgba(0,0,0,0.40)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.10)",
+                width: "192px",
+                background: "rgba(0,0,0,0.60)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                border: "1px solid rgba(255,255,255,0.20)",
+                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.6)",
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
               }}
             >
-              <MapPin className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-              The magic is in the coordinates. Click the marker to reveal the image
+              <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <p className="text-white/80 text-xs leading-relaxed">
+                The magic is in the coordinates.<br />
+                <span className="text-white/50">Click the marker to reveal the image</span>
+              </p>
             </button>
           </motion.div>
         )}

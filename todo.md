@@ -2655,3 +2655,7 @@
 
 ## Pricing $49 Precision Update
 - [x] Updated Precision tier price to $49/mo; hero bold weight 800 at 2.75rem; Experience/Dominance use standard sizing
+
+## Discovery Hint & Prestige Modal Refinements
+- [x] Discovery Hint: 192px square rounded-2xl card, top-center at top-[96px], scale-in + fade-in, backdrop-blur-24px, shadow-white/5
+- [x] Prestige modal: body updated to "Simply extraordinary" / project name sentence / "The magic is yours" with staggered 0.3/0.65/1.0s fade-in-up
