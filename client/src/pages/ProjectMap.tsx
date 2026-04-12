@@ -77,8 +77,15 @@ export default function ProjectMap() {
     !!sessionStorage.getItem("mapit_project_id") &&
     sessionStorage.getItem("mapit_project_id") === String(projectId);
   const [showPrestige, setShowPrestige] = useState(false);
-  const [prestigeEmail, setPrestigeEmail] = useState("");
+  const [prestigeEmail, setPrestigeEmail] = useState(user?.email ?? "");
   const [prestigeEmailTouched, setPrestigeEmailTouched] = useState(false);
+
+  // Keep email in sync if user loads after component mounts
+  useEffect(() => {
+    if (user?.email && !prestigeEmail) {
+      setPrestigeEmail(user.email);
+    }
+  }, [user?.email]);
   const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
   const [prestigeClaimed, setPrestigeClaimed] = useState(false);
   const claimProject = trpcClient.onboarding.claimProject.useMutation();
@@ -430,6 +437,11 @@ export default function ProjectMap() {
                       The magic is yours. You are in control
                     </motion.p>
                   </div>
+                  {user?.email && (
+                    <p className="text-white/40 text-xs text-center mb-2 -mt-1">
+                      Signed in as {user.email}
+                    </p>
+                  )}
                   <input
                     type="email"
                     value={prestigeEmail}
