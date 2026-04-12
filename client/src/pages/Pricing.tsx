@@ -1,91 +1,114 @@
 /**
- * MAPIT Pricing — The Jobsian Invitation to Power
- * Three floating glassmorphic monoliths on pure black.
- * No clutter. No periods. No compromise.
+ * MAPIT Pricing — 4-Tier Jobsian Invitation to Power
+ * Experience / Precision / Dominance / Authority
+ * Pure black, glassmorphic monoliths, monthly/annual toggle.
  */
 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
 
-const METALLIC = "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #6b7280 100%)";
+const METALLIC = "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #9ca3af 100%)";
 
-const tiers = [
+const TIERS = [
   {
+    id: "experience",
     hook: "Experience",
-    price: "Complimentary",
-    priceNote: "14-day free trial",
+    monthlyPrice: 49,
+    annualMonthly: 41.65,
+    annualTotal: 499.80,
+    priceLabel: null,
+    trialTag: true,
+    badge: null,
     description:
       "Full access to the MAPIT engine for 14 days. Create your first digital twin and master the terrain without limits.",
-    cta: "Start Mapping",
-    ctaStyle: "solid",
-    features: [
-      "Unlimited GPS marker rendering",
-      "Flight path visualization",
-      "KML · CSV · GeoJSON export",
-      "PDF map overlay",
-      "Install as PWA",
+    specs: [
+      "100 GB Storage",
+      "10 Projects",
+      "CAD Overlay Basics",
+      "Email Support",
+      "14-Day Free Trial",
     ],
-    highlighted: false,
-    trialFlow: true,
+    cta: "Start Your Trial",
+    ctaStyle: "solid" as const,
+    action: "trial",
   },
   {
+    id: "precision",
     hook: "Precision",
-    price: "$49",
-    priceNote: "per month",
+    monthlyPrice: 149,
+    annualMonthly: 126.65,
+    annualTotal: 1519.80,
+    priceLabel: null,
+    trialTag: false,
+    badge: "MOST POPULAR",
     description:
       "For the dedicated engineer. Unlimited projects, advanced APWA utility overlays, and high-frequency data processing.",
-    cta: "Get Started",
-    ctaStyle: "solid",
-    features: [
-      "Everything in Experience",
-      "Unlimited projects",
-      "APWA utility overlays",
-      "High-frequency data processing",
-      "Priority rendering queue",
-      "Team collaboration (up to 5)",
+    specs: [
+      "500 GB Storage",
+      "Unlimited Projects",
+      "5 Stakeholder Seats",
+      "Sub-Surface Verification Docs",
+      "Priority Email Support",
     ],
-    highlighted: true,
-    trialFlow: false,
+    cta: "Get Started",
+    ctaStyle: "solid" as const,
+    action: "trial",
   },
   {
+    id: "dominance",
     hook: "Dominance",
-    price: "Custom",
-    priceNote: "enterprise pricing",
+    monthlyPrice: 349,
+    annualMonthly: 296.65,
+    annualTotal: 3559.80,
+    priceLabel: null,
+    trialTag: false,
+    badge: null,
     description:
-      "Global scale. Custom integrations, white-label reporting, and dedicated infrastructure for organizations that shape the world.",
-    cta: "Contact Us",
-    ctaStyle: "ghost",
-    features: [
-      "Everything in Precision",
-      "White-label reporting",
-      "Custom integrations & API",
-      "Dedicated infrastructure",
-      "SLA & uptime guarantee",
-      "Unlimited team members",
+      "Global scale. Unlimited stakeholder viewing, API access, and priority processing for organizations that shape the world.",
+    specs: [
+      "1.5 TB Storage",
+      "Unlimited Stakeholder Viewing",
+      "API Access",
+      "Priority Processing",
+      "Dedicated Account Manager",
     ],
-    highlighted: false,
-    trialFlow: false,
+    cta: "Elevate Now",
+    ctaStyle: "solid" as const,
+    action: "trial",
+  },
+  {
+    id: "authority",
+    hook: "Authority",
+    monthlyPrice: null,
+    annualMonthly: null,
+    annualTotal: null,
+    priceLabel: "Custom",
+    trialTag: false,
+    badge: null,
+    description:
+      "White-label city portals, on-site training, and dedicated infrastructure for organizations that define the standard.",
+    specs: [
+      "White-Label City Portals",
+      "On-Site Training",
+      "SLA Guarantee",
+      "Dedicated Success Manager",
+      "Custom Integrations",
+    ],
+    cta: "Contact Sales",
+    ctaStyle: "ghost" as const,
+    action: "contact",
   },
 ];
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 32 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, delay: i * 0.12 },
-  }),
-};
-
 export default function Pricing() {
+  const [annual, setAnnual] = useState(false);
   const [, setLocation] = useLocation();
 
-  const handleCTA = (tier: (typeof tiers)[0]) => {
-    if (tier.trialFlow) {
-      setLocation("/name");
-    } else if (tier.ctaStyle === "ghost") {
-      window.location.href = "mailto:hello@skyveedrones.com?subject=MAPIT%20Dominance%20Inquiry";
+  const handleCTA = (tier: (typeof TIERS)[0]) => {
+    if (tier.action === "contact") {
+      window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Authority%20Inquiry";
     } else {
       setLocation("/name");
     }
@@ -97,7 +120,7 @@ export default function Pricing() {
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
       {/* ── Nav ── */}
-      <nav className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
         <button
           onClick={() => setLocation("/")}
           className="flex items-center gap-2 text-white/40 hover:text-white transition-colors duration-200 text-sm font-medium"
@@ -105,136 +128,173 @@ export default function Pricing() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        <span
-          className="text-white text-lg font-bold tracking-widest"
-          style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
-        >
+        <span className="text-white text-lg font-bold tracking-tight">
           MAP<span className="text-emerald-400">i</span>T
         </span>
-        <div className="w-16" /> {/* spacer */}
+        <div className="w-16" />
       </nav>
 
       {/* ── Hero ── */}
-      <div className="text-center pt-20 pb-16 px-6">
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-white/30 text-sm tracking-[0.25em] uppercase mb-6"
-        >
-          Choose your level of control
-        </motion.p>
+      <div className="text-center pt-16 pb-10 px-6">
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.08 }}
-          className="font-bold bg-clip-text text-transparent"
-          style={{
-            fontSize: "clamp(2.8rem, 7vw, 5rem)",
-            letterSpacing: "-0.04em",
-            lineHeight: 1.0,
-            backgroundImage: METALLIC,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
+          transition={{ duration: 0.55 }}
+          className="font-bold text-white mb-4"
+          style={{ fontSize: "clamp(1.9rem, 4.5vw, 2.8rem)", letterSpacing: "-0.03em", lineHeight: 1.1 }}
         >
-          Precision mapping<br />for every scale
+          Precision mapping for every scale
         </motion.h1>
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-6 text-white/40 text-base max-w-md mx-auto leading-relaxed"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.14 }}
+          className="text-white/45 text-base max-w-lg mx-auto leading-relaxed"
         >
-          Every plan ships with a complimentary 14-day trial at full resolution. No credit card required.
+          Every plan ships with a complimentary 14-day trial at full resolution. No credit card required
         </motion.p>
+
+        {/* Monthly / Annual Toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.26 }}
+          className="flex items-center justify-center gap-4 mt-9"
+        >
+          <span className={`text-sm font-medium transition-colors ${!annual ? "text-white" : "text-white/35"}`}>
+            Monthly
+          </span>
+          <button
+            onClick={() => setAnnual((v) => !v)}
+            className="relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            style={{ background: annual ? "#10b981" : "rgba(255,255,255,0.15)" }}
+            aria-label="Toggle billing period"
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300"
+              style={{ transform: annual ? "translateX(24px)" : "translateX(0)" }}
+            />
+          </button>
+          <span className={`text-sm font-medium transition-colors ${annual ? "text-white" : "text-white/35"}`}>
+            Annual{" "}
+            <span className="text-emerald-400 text-xs font-bold ml-1">Save 15%</span>
+          </span>
+        </motion.div>
       </div>
 
-      {/* ── Three Monoliths ── */}
-      <div className="flex-1 flex items-start justify-center px-6 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
-          {tiers.map((tier, i) => (
+      {/* ── Four Monoliths ── */}
+      <div className="flex-1 flex items-start justify-center px-4 pb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full max-w-6xl">
+          {TIERS.map((tier, i) => (
             <motion.div
-              key={tier.hook}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
+              key={tier.id}
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.08 + i * 0.09 }}
               className="relative flex flex-col"
               style={{
-                background: tier.highlighted
-                  ? "rgba(255,255,255,0.06)"
-                  : "rgba(255,255,255,0.025)",
-                border: tier.highlighted
-                  ? "1px solid rgba(255,255,255,0.18)"
+                background: tier.badge
+                  ? "rgba(16,185,129,0.055)"
+                  : "rgba(255,255,255,0.028)",
+                border: tier.badge
+                  ? "1px solid rgba(16,185,129,0.28)"
                   : "1px solid rgba(255,255,255,0.10)",
                 borderRadius: "20px",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                padding: "2.5rem 2rem",
+                padding: "2rem 1.6rem 1.8rem",
               }}
             >
-              {/* Highlighted badge */}
-              {tier.highlighted && (
+              {/* MOST POPULAR badge */}
+              {tier.badge && (
                 <div
-                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold tracking-widest uppercase"
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold tracking-widest whitespace-nowrap"
                   style={{
-                    background: "rgba(16,185,129,0.15)",
-                    border: "1px solid rgba(16,185,129,0.35)",
-                    color: "#10b981",
+                    background: "linear-gradient(90deg, #10b981 0%, #059669 100%)",
+                    color: "#fff",
+                    letterSpacing: "0.12em",
                   }}
                 >
-                  Most Popular
+                  {tier.badge}
+                </div>
+              )}
+
+              {/* Trial tag */}
+              {tier.trialTag && (
+                <div className="mb-3">
+                  <span
+                    className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{
+                      background: "rgba(16,185,129,0.12)",
+                      border: "1px solid rgba(16,185,129,0.25)",
+                      color: "#10b981",
+                    }}
+                  >
+                    Includes 14-Day Free Trial
+                  </span>
                 </div>
               )}
 
               {/* Hook — metallic gradient, no period */}
               <p
-                className="font-bold bg-clip-text text-transparent mb-1"
+                className="font-bold bg-clip-text text-transparent"
                 style={{
-                  fontSize: "clamp(2rem, 4.5vw, 2.75rem)",
+                  fontSize: "clamp(1.55rem, 3vw, 1.9rem)",
                   letterSpacing: "-0.03em",
-                  lineHeight: 1.0,
                   backgroundImage: METALLIC,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
+                  lineHeight: 1.1,
                 }}
               >
                 {tier.hook}
               </p>
 
               {/* Price */}
-              <div className="mt-4 mb-5">
-                <span
-                  className="text-white"
-                  style={{
-                    fontSize:
-                      tier.price === "Complimentary"
-                        ? "1.25rem"
-                        : tier.highlighted
-                        ? "2.75rem"
-                        : "2rem",
-                    fontWeight: tier.highlighted ? 800 : 600,
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1,
-                  }}
-                >
-                  {tier.price}
-                </span>
-                <span className="text-white/30 text-sm ml-2">{tier.priceNote}</span>
+              <div className="mt-3 mb-4 min-h-[3.5rem] flex flex-col justify-center">
+                {tier.priceLabel ? (
+                  <p
+                    className="text-white font-bold"
+                    style={{ fontSize: "2rem", letterSpacing: "-0.03em", lineHeight: 1 }}
+                  >
+                    {tier.priceLabel}
+                  </p>
+                ) : (
+                  <>
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={annual ? "annual" : "monthly"}
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        transition={{ duration: 0.18 }}
+                        className="text-white font-extrabold"
+                        style={{ fontSize: "2.1rem", letterSpacing: "-0.04em", lineHeight: 1 }}
+                      >
+                        ${annual ? tier.annualMonthly!.toFixed(2) : tier.monthlyPrice}
+                        <span className="text-white/35 text-sm font-normal ml-1">/mo</span>
+                      </motion.p>
+                    </AnimatePresence>
+                    {annual && tier.annualTotal && (
+                      <p className="text-white/30 text-xs mt-1">
+                        Billed ${tier.annualTotal.toFixed(2)}/yr
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Description */}
-              <p className="text-white/55 text-sm leading-relaxed mb-7">
+              <p className="text-white/42 text-sm leading-relaxed mb-5">
                 {tier.description}
               </p>
 
-              {/* Feature list */}
-              <ul className="space-y-2.5 mb-8 flex-1">
-                {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
-                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                    {f}
+              {/* Specs */}
+              <ul className="flex-1 space-y-2.5 mb-7">
+                {tier.specs.map((spec) => (
+                  <li key={spec} className="flex items-start gap-2.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/62 text-sm">{spec}</span>
                   </li>
                 ))}
               </ul>
@@ -242,13 +302,10 @@ export default function Pricing() {
               {/* CTA */}
               <button
                 onClick={() => handleCTA(tier)}
-                className="w-full py-3.5 rounded-full font-semibold text-sm tracking-wide transition-all duration-200"
+                className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-[0.98]"
                 style={
                   tier.ctaStyle === "solid"
-                    ? {
-                        background: "#ffffff",
-                        color: "#0A0A0A",
-                      }
+                    ? { background: "#ffffff", color: "#0A0A0A" }
                     : {
                         background: "transparent",
                         color: "rgba(255,255,255,0.70)",
@@ -256,19 +313,21 @@ export default function Pricing() {
                       }
                 }
                 onMouseEnter={(e) => {
+                  const el = e.currentTarget;
                   if (tier.ctaStyle === "solid") {
-                    (e.currentTarget as HTMLButtonElement).style.background = "#e5e7eb";
+                    el.style.background = "#e5e7eb";
                   } else {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.50)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
+                    el.style.borderColor = "rgba(255,255,255,0.45)";
+                    el.style.color = "#ffffff";
                   }
                 }}
                 onMouseLeave={(e) => {
+                  const el = e.currentTarget;
                   if (tier.ctaStyle === "solid") {
-                    (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
+                    el.style.background = "#ffffff";
                   } else {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.20)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.70)";
+                    el.style.borderColor = "rgba(255,255,255,0.20)";
+                    el.style.color = "rgba(255,255,255,0.70)";
                   }
                 }}
               >
@@ -280,8 +339,8 @@ export default function Pricing() {
       </div>
 
       {/* ── Footer note ── */}
-      <div className="text-center pb-12 text-white/20 text-xs tracking-wide">
-        All plans include SSL, 99.9% uptime, and MAPIT's full GPS rendering engine
+      <div className="text-center pb-12 text-white/18 text-xs tracking-wide px-6">
+        All plans include SSL encryption, 99.9% uptime SLA, and GDPR-compliant data handling
       </div>
     </div>
   );
