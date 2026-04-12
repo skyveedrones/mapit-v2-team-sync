@@ -76,20 +76,17 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
-    // Use service worker to skip cache and reload with fresh assets
+    // Preserve the #version hash so Settings returns to the Version tab after reload
+    const base = window.location.pathname + window.location.search;
+    const target = base + '#version';
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          registration.unregister();
-        });
+        registrations.forEach(registration => registration.unregister());
       }).then(() => {
-        // After unregistering service worker, do a hard refresh
-        // This bypasses all caches and fetches fresh assets
-        window.location.href = window.location.href;
+        window.location.href = target;
       });
     } else {
-      // Fallback: hard reload with cache busting
-      window.location.href = window.location.href + '?t=' + Date.now();
+      window.location.href = target;
     }
   };
 

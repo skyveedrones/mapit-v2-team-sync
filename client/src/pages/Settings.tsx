@@ -318,6 +318,17 @@ export default function Settings() {
   const [laancAuth, setLaancAuth] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Persist active tab in URL hash so Refresh Now returns to the same tab
+  const validTabs = ["organization", "pilot", "templates", "theme", "version"];
+  const hashTab = window.location.hash.replace("#", "");
+  const [activeTab, setActiveTab] = useState(
+    validTabs.includes(hashTab) ? hashTab : "organization"
+  );
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.location.hash = value;
+  };
+
   const { data: pilotSettings, isLoading } = trpc.pilotSettings.get.useQuery();
   const updateSettings = trpc.pilotSettings.update.useMutation({
     onSuccess: () => {
@@ -362,7 +373,7 @@ export default function Settings() {
           </p>
         </div>
 
-        <Tabs defaultValue="organization" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList>
             <TabsTrigger value="organization">
               <Building2 className="mr-2 h-4 w-4" />
