@@ -2649,3 +2649,6 @@
 - [x] Removed Orbitron fallback from Login.tsx; PDF report Arial overrides are intentional (print context)
 - [x] Added Discovery Hint pill in ProjectMap.tsx: fades in 3s after mapReady (onboarding only), dismissed by click or Prestige modal
 - [x] Confirmed 30s modal delay at line 91 of ProjectMap.tsx
+
+## Jobsian Pricing Overhaul
+- [x] Rewrite Pricing.tsx: pure black bg, three glassmorphic monoliths, Experience/Precision/Dominance, metallic gradient headers, no periods, Complimentary label, trial CTA wired to /name flow
