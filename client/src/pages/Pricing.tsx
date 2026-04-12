@@ -8,6 +8,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 
 const METALLIC = "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #9ca3af 100%)";
 
@@ -52,7 +53,7 @@ const TIERS = [
       "Sub-Surface Verification Docs",
       "Priority Email Support",
     ],
-    cta: "Get Started",
+    cta: "Start Your Trial",
     ctaStyle: "solid" as const,
     action: "trial",
   },
@@ -74,7 +75,7 @@ const TIERS = [
       "Priority Processing",
       "Dedicated Account Manager",
     ],
-    cta: "Elevate Now",
+    cta: "Start Your Trial",
     ctaStyle: "solid" as const,
     action: "trial",
   },
@@ -110,7 +111,8 @@ export default function Pricing() {
     if (tier.action === "contact") {
       window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Authority%20Inquiry";
     } else {
-      setLocation("/name");
+      // Redirect to Manus OAuth signup — after auth, user lands in /projects (dashboard)
+      window.location.href = getLoginUrl();
     }
   };
 

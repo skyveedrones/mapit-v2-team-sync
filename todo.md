@@ -2665,3 +2665,8 @@
 
 ## Pricing Footer Cleanup
 - [x] Removed footer note div ("All plans include SSL...") from Pricing.tsx — page now ends cleanly with the four cards
+
+## Uniform Trial CTA Alignment
+- [x] Changed Precision CTA to "Start Your Trial"
+- [x] Changed Dominance CTA to "Start Your Trial"
+- [x] Rewired all three trial CTAs to getLoginUrl() — OAuth signup, user lands in /projects dashboard after auth
