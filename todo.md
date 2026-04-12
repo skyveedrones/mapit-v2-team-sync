@@ -2662,3 +2662,6 @@
 
 ## 4-Tier Jobsian Pricing Rewrite
 - [x] Rewrite Pricing.tsx: 4-tier Experience/Precision/Dominance/Authority, monthly/annual toggle, exact prices/specs, no FAQ, Complimentary trial tag on Experience, MOST POPULAR badge on Precision
+
+## Pricing Footer Cleanup
+- [x] Removed footer note div ("All plans include SSL...") from Pricing.tsx — page now ends cleanly with the four cards

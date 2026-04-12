@@ -337,11 +337,6 @@ export default function Pricing() {
           ))}
         </div>
       </div>
-
-      {/* ── Footer note ── */}
-      <div className="text-center pb-12 text-white/18 text-xs tracking-wide px-6">
-        All plans include SSL encryption, 99.9% uptime SLA, and GDPR-compliant data handling
-      </div>
     </div>
   );
 }
