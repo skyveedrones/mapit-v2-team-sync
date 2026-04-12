@@ -81,6 +81,9 @@ export default function Dashboard() {
 
   // Fetch projects
   const { data: projects, isLoading: projectsLoading } = trpc.project.list.useQuery();
+
+  // Trial countdown
+  const { data: trialInfo } = trpc.auth.trialInfo.useQuery();
   
   // Fetch shared projects
   const { data: sharedProjects } = trpc.sharing.getSharedWithMe.useQuery();
@@ -268,6 +271,31 @@ export default function Dashboard() {
         variants={staggerContainer}
         className="space-y-6"
       >
+        {/* Trial Expiry Banner */}
+        {trialInfo && trialInfo.daysLeft <= 14 && (
+          <motion.div variants={fadeInUp}>
+            <div className="flex items-center justify-between gap-3 rounded-xl px-5 py-3 text-sm font-medium"
+              style={{
+                background: trialInfo.daysLeft <= 3
+                  ? 'linear-gradient(90deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)'
+                  : 'linear-gradient(90deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)',
+                border: `1px solid ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'}`,
+              }}
+            >
+              <span className={trialInfo.daysLeft <= 3 ? 'text-red-400' : 'text-emerald-400'}>
+                {trialInfo.daysLeft === 0
+                  ? 'Your free trial has expired.'
+                  : `Your free trial expires in ${trialInfo.daysLeft} day${trialInfo.daysLeft === 1 ? '' : 's'}.`}
+              </span>
+              <Link href="/pricing">
+                <Button size="sm" className="bg-white text-black hover:bg-gray-100 text-xs font-semibold px-4 h-7 rounded-full">
+                  Upgrade Now
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
         {/* Welcome Section with Action Dropdown */}
         <motion.div variants={fadeInUp}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

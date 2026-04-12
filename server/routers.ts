@@ -571,6 +571,15 @@ export const appRouter = router({
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    trialInfo: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      const [row] = await db!.select({ trialEndsAt: users.trialEndsAt, subscriptionStatus: users.subscriptionStatus })
+        .from(users).where(eq(users.id, ctx.user!.id)).limit(1);
+      if (!row?.trialEndsAt || row.subscriptionStatus !== 'trialing') return null;
+      const msLeft = new Date(row.trialEndsAt).getTime() - Date.now();
+      const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
+      return { daysLeft, trialEndsAt: row.trialEndsAt };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

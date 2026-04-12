@@ -147,6 +147,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.cancelAtPeriodEnd = 'no';
       values.currentPeriodStart = toMysqlTs(now);
       values.currentPeriodEnd = toMysqlTs(trialEnd);
+      values.trialEndsAt = toMysqlTs(trialEnd);
     }
 
     if (Object.keys(updateSet).length === 0) {
