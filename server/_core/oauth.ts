@@ -1,7 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
-import { EmailConflictError, resetPool } from "../db";
+import { EmailConflictError } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -29,35 +29,13 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
-      // Retry once on ECONNRESET — TiDB drops idle connections and the pool
-      // may hand out a stale socket before keepalive recycles it.
-      const upsertWithRetry = async () => {
-        try {
-          await db.upsertUser({
-            openId: userInfo.openId,
-            name: userInfo.name || null,
-            email: userInfo.email ?? null,
-            loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-            lastSignedIn: new Date().toISOString(),
-          });
-        } catch (err: any) {
-          const isReset = err?.cause?.code === 'ECONNRESET' || err?.message?.includes('ECONNRESET');
-          if (isReset) {
-            console.warn('[OAuth] ECONNRESET on upsertUser — resetting pool and retrying');
-            await resetPool();
-            await db.upsertUser({
-              openId: userInfo.openId,
-              name: userInfo.name || null,
-              email: userInfo.email ?? null,
-              loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-              lastSignedIn: new Date().toISOString(),
-            });
-          } else {
-            throw err;
-          }
-        }
-      };
-      await upsertWithRetry();
+      await db.upsertUser({
+        openId: userInfo.openId,
+        name: userInfo.name || null,
+        email: userInfo.email ?? null,
+        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+        lastSignedIn: new Date().toISOString(),
+      });
 
       // Fetch the user record to determine role for redirect
       const dbUser = await db.getUserByOpenId(userInfo.openId);

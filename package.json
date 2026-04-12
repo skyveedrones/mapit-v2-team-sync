@@ -1,6 +1,6 @@
 {
   "name": "dronemapp-v2",
-  "version": "2.4.8",
+  "version": "2.4.1",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -23,12 +23,7 @@
     "@capacitor/filesystem": "^8.1.0",
     "@capacitor/geolocation": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
-    "@deck.gl/core": "^9.2.11",
-    "@deck.gl/geo-layers": "^9.2.11",
-    "@deck.gl/mapbox": "^9.2.11",
     "@hookform/resolvers": "^5.2.2",
-    "@loaders.gl/3d-tiles": "^4.3.4",
-    "@loaders.gl/core": "^4.3.4",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.7",

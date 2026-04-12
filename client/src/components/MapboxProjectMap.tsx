@@ -20,18 +20,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-
-// ── Deck.gl / Cesium ion LiDAR integration ───────────────────────────────────
-import { MapboxOverlay } from "@deck.gl/mapbox";
-import { Tile3DLayer } from "@deck.gl/geo-layers";
-import { CesiumIonLoader } from "@loaders.gl/3d-tiles";
-
-// ── Cesium ion credentials ───────────────────────────────────────────────────
-// Token is injected via VITE_CESIUM_ION_TOKEN environment variable
-const CESIUM_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN as string ?? "";
-// Asset ID of the uploaded LiDAR tileset in Cesium ion
-const CESIUM_ASSET_ID = 4618315;
-
 import {
   Check,
   ChevronRight,
@@ -212,12 +200,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // PDF Converter state
     const [showPdfConverter, setShowPdfConverter] = useState(false);
 
-    // ── LiDAR / Cesium ion state ─────────────────────────────────────────────
-    const [lidarEnabled, setLidarEnabled] = useState(false);
-    const [lidarPointSize, setLidarPointSize] = useState(2);
-    const [is3D, setIs3D] = useState(false);
-    const deckOverlayRef = useRef<MapboxOverlay | null>(null);
-
     // ── Selected overlay for alignment tools ────────────────────────────────
     const [selectedOverlayId, setSelectedOverlayId] = useState<number | null>(null);
 
@@ -340,22 +322,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           style: "mapbox://styles/mapbox/satellite-streets-v12",
           center: [-96.797, 32.7767], // Default center; data watcher will flyTo markers
           zoom: 12,
-          pitch: 0,
-          maxPitch: 85,
-          dragRotate: true,
-          touchZoomRotate: true,
-          pitchWithRotate: true,
+          pitchWithRotate: false,
           trackResize: true,
         });
 
         map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
-
-        // ── Deck.gl MapboxOverlay (interleaved) ─────────────────────────────
-        // Create the overlay once and attach it to the map so it shares the
-        // same WebGL context and stays perfectly anchored to GPS coordinates.
-        const deckOverlay = new MapboxOverlay({ interleaved: true, layers: [] });
-        map.addControl(deckOverlay as unknown as mapboxgl.IControl);
-        deckOverlayRef.current = deckOverlay;
 
         // Force one final resize after the first frame to ensure canvas fills container
         map.on("load", () => {
@@ -474,7 +445,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         </svg>
       `;
 
-      // ── Build GeoJSON once (used both in onload and in the already-loaded branch) ──
+      const img = new Image(32, 42);
+      img.onload = () => {
+        if (!map.hasImage('skyvee-pin')) {
+          map.addImage('skyvee-pin', img);
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
+
+      // ── Create GeoJSON Source for Media Points ──
       const mediaGeoJSON = {
         type: 'FeatureCollection' as const,
         features: sortedMedia.map((media) => ({
@@ -496,44 +475,26 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         })),
       };
 
-      const addSourceAndLayer = () => {
-        if (!map) return;
-        // ── Add or Update Media Source and Symbol Layer ──
-        if (map.getSource('media-source')) {
-          (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
-        } else {
-          map.addSource('media-source', {
-            type: 'geojson',
-            data: mediaGeoJSON,
-          });
-
-          map.addLayer({
-            id: 'media-pins',
-            type: 'symbol',
-            source: 'media-source',
-            layout: {
-              'icon-image': 'skyvee-pin',
-              'icon-size': 0.45,
-              'icon-anchor': 'bottom',
-              'icon-allow-overlap': true,
-            },
-          });
-        }
-      };
-
-      const img = new Image(32, 42);
-      img.onload = () => {
-        if (!map.hasImage('skyvee-pin')) {
-          map.addImage('skyvee-pin', img);
-        }
-        // Add source/layer only after the image sprite is registered
-        addSourceAndLayer();
-      };
-      // If the image was already loaded in a previous render, skip straight to addSourceAndLayer
-      if (map.hasImage('skyvee-pin')) {
-        addSourceAndLayer();
+      // ── Add or Update Media Source and Symbol Layer ──
+      if (map.getSource('media-source')) {
+        (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
       } else {
-        img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
+        map.addSource('media-source', {
+          type: 'geojson',
+          data: mediaGeoJSON,
+        });
+
+        map.addLayer({
+          id: 'media-pins',
+          type: 'symbol',
+          source: 'media-source',
+          layout: {
+            'icon-image': 'skyvee-pin',
+            'icon-size': 0.45,           // Scaled down to be slim and needle-like
+            'icon-anchor': 'bottom',     // Pointy end on the coordinate
+            'icon-allow-overlap': true,
+          },
+        });
       }
 
       // ── Click Handler for Media Pins ──
@@ -624,22 +585,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       map.on('mouseenter', 'media-pins', handleMediaPinMouseEnter);
       map.on('mouseleave', 'media-pins', handleMediaPinMouseLeave);
 
-      // Fit bounds to all markers, or flyTo for a single point
+      // Fit bounds to all markers
       if (sortedMedia.length > 1) {
         const bounds = new mapboxgl.LngLatBounds();
         sortedMedia.forEach((m) => {
           bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
         });
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
-      } else if (sortedMedia.length === 1) {
-        const m = sortedMedia[0];
-        map.flyTo({
-          center: [parseFloat(m.longitude!), parseFloat(m.latitude!)],
-          zoom: 16,
-          duration: 1200,
-        });
       }
-    }, [sortedMedia, mapLoaded]);
+    }, [sortedMedia, mapLoaded, setSelectedMedia]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
     useEffect(() => {
@@ -671,9 +625,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([lng, lat])
         .addTo(map);
-
-      // Fly to the project location so the marker is visible
-      map.flyTo({ center: [lng, lat], zoom: 14, duration: 1200 });
     }, [mapLoaded, projectLocation, mediaWithGPS.length]);
 
     // ── Toggle flight path visibility ───────────────────────────────────────
@@ -684,89 +635,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         map.setPaintProperty("flight-path", "line-opacity", flightPathVisible ? 0.8 : 0);
       }
     }, [flightPathVisible, mapLoaded]);
-
-    // ── LiDAR: update Deck.gl Tile3DLayer when lidarEnabled toggles ──────────
-    useEffect(() => {
-      const deck = deckOverlayRef.current;
-      const map = mapRef.current;
-      if (!deck || !map || !mapLoaded) return;
-
-      // Tilt into 3D view when LiDAR is toggled on; restore to current 3D state when off
-      if (lidarEnabled) {
-        map.easeTo({ pitch: 45, duration: 800 });
-        setIs3D(true);
-      } else if (!is3D) {
-        map.easeTo({ pitch: 0, duration: 600 });
-      }
-      if (lidarEnabled && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0) {
-        const tile3d = new Tile3DLayer({
-          id: "lidar-point-cloud",
-          data: `https://assets.cesium.com/${CESIUM_ASSET_ID}/tileset.json`,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          loader: CesiumIonLoader as any,
-          loadOptions: {
-            "cesium-ion": { accessToken: CESIUM_ION_TOKEN },
-            "3d-tiles": {
-              decodeQuantizedPositions: true,
-            },
-            pointcloud: {
-              attributeNameMapping: {
-                color: null,
-                COLOR_0: null,
-              },
-            },
-          },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          _subLayerProps: {
-            pointcloud: {
-              pointSize: lidarPointSize,
-              pointSizeUnits: "pixels",
-              getColor: [0, 190, 255, 255],
-              // Disable default lighting so it doesn't override our solid cyan
-              material: false,
-            },
-          } as any,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onTileLoad: (tile: any) => {
-            // Explicitly nullify binary color buffers so the GPU cannot
-            // prioritise them over our static getColor accessor.
-            const content = tile.content;
-            if (content && content.attributes) {
-              delete content.attributes.colors;
-              delete content.attributes.COLOR_0;
-            }
-            // Also scrub the legacy pointCloud path used by some tilesets
-            const pcAttrs = content?.pointCloud?.attributes;
-            if (pcAttrs) {
-              delete pcAttrs.colors;
-              delete pcAttrs.COLOR_0;
-            }
-            // Note: do NOT set tile.isLoaded — the tile object is frozen by deck.gl
-          },
-          onTilesetLoad: (tileset) => {
-            const map = mapRef.current;
-            if (map && tileset.cartographicCenter) {
-              const [lng, lat] = tileset.cartographicCenter;
-              map.flyTo({ center: [lng, lat], zoom: 16, duration: 1500 });
-            }
-          },
-        });
-        deck.setProps({ layers: [tile3d] });
-      } else {
-        deck.setProps({ layers: [] });
-      }
-    }, [lidarEnabled, lidarPointSize, is3D, mapLoaded]);
-
-    // ── 2D/3D toggle: ease camera pitch when is3D changes ───────────────────
-    useEffect(() => {
-      const map = mapRef.current;
-      if (!map || !mapLoaded) return;
-      if (is3D) {
-        map.easeTo({ pitch: 45, bearing: 0, duration: 700 });
-      } else {
-        map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
-      }
-    }, [is3D, mapLoaded]);
 
     // ── Render overlay image sources ────────────────────────────────────────
     useEffect(() => {
@@ -1745,81 +1613,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                             <span className="text-sm font-medium">{flightPathVisible ? "Hide Flight Path" : "Show Flight Path"}</span>
                           </button>
                         )}
-
-                        {/* LiDAR Point Cloud — hidden until color rendering is resolved */}
-                        {false && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0 && (
-                          <div className="space-y-1">
-                            <button
-                              onClick={() => setLidarEnabled((v) => !v)}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                                lidarEnabled ? "bg-violet-600/20 border border-violet-500/30" : "bg-slate-800 hover:bg-slate-700"
-                              }`}
-                            >
-                              <Layers size={16} className={lidarEnabled ? "text-violet-400" : "text-slate-400"} />
-                              <div className="text-left">
-                                <span className="text-sm font-medium block">{lidarEnabled ? "Hide LiDAR" : "Show LiDAR"}</span>
-                                <span className="text-[10px] text-slate-400">3D point cloud stream</span>
-                              </div>
-                            </button>
-                            {lidarEnabled && (
-                              <div className="px-4 py-2 bg-slate-800/60 rounded-xl">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-[11px] text-slate-400">Point Size</span>
-                                  <span className="text-[11px] font-mono text-violet-300">{lidarPointSize}px</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min={1}
-                                  max={8}
-                                  step={1}
-                                  value={lidarPointSize}
-                                  onChange={(e) => setLidarPointSize(Number(e.target.value))}
-                                  className="w-full h-1.5 rounded-full accent-violet-500 cursor-pointer"
-                                />
-                                <div className="flex justify-between mt-0.5">
-                                  <span className="text-[9px] text-slate-500">1</span>
-                                  <span className="text-[9px] text-slate-500">8</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* 2D / 3D View Toggle */}
-                        <button
-                          onClick={() => setIs3D((v) => !v)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                            is3D ? "bg-sky-600/20 border border-sky-500/30" : "bg-slate-800 hover:bg-slate-700"
-                          }`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" strokeWidth="2"
-                            strokeLinecap="round" strokeLinejoin="round"
-                            className={is3D ? "text-sky-400" : "text-slate-400"}
-                          >
-                            {is3D ? (
-                              // cube icon for 3D active
-                              <>
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                                <line x1="12" y1="22.08" x2="12" y2="12" />
-                              </>
-                            ) : (
-                              // map/flat icon for 2D active
-                              <>
-                                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                                <line x1="9" y1="3" x2="9" y2="18" />
-                                <line x1="15" y1="6" x2="15" y2="21" />
-                              </>
-                            )}
-                          </svg>
-                          <div className="text-left">
-                            <span className="text-sm font-medium block">{is3D ? "Switch to 2D" : "Switch to 3D"}</span>
-                            <span className="text-[10px] text-slate-400">{is3D ? "Flat top-down view" : "Tilted perspective view"}</span>
-                          </div>
-                        </button>
 
                         {/* Measure */}
                         <button
