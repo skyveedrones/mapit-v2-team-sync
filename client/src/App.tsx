@@ -145,7 +145,10 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
 
   // While onboarding redirect is pending, render nothing to avoid flash
   // Skip this gate on localhost for local development
-  if (!isLocalDev && user && !user.organizationId && user.role !== 'client' && location !== '/onboarding/pilot') {
+  // Also skip for /organization so the Civic preview always renders immediately
+  const ONBOARDING_BYPASS_PATHS = ['/onboarding/pilot', '/organization', '/pricing', '/billing'];
+  const isOnboardingBypass = ONBOARDING_BYPASS_PATHS.some(p => location === p || location.startsWith(p + '/'));
+  if (!isLocalDev && user && !user.organizationId && user.role !== 'client' && !isOnboardingBypass) {
     return null;
   }
 
