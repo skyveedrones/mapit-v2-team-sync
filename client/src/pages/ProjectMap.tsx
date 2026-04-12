@@ -473,7 +473,7 @@ export default function ProjectMap() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -8 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed top-8 left-[340px] z-[9990] pointer-events-auto"
+            className="fixed top-[180px] left-8 z-[9990] pointer-events-auto"
           >
             <button
               onClick={dismissDiscoveryHint}
@@ -488,7 +488,7 @@ export default function ProjectMap() {
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
               }}
             >
-              <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0 animate-pulse" />
               <p className="text-white/80 text-xs leading-relaxed">
                 The magic is in the coordinates.<br />
                 <span className="text-white/50">Click the marker to reveal the image</span>
