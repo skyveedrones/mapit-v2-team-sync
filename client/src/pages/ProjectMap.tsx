@@ -92,6 +92,30 @@ export default function ProjectMap() {
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
+  // ── Discovery Hint (onboarding flow) ─────────────────────────────────────
+  // Fades in 3s after mapReady, dismissed by marker click or Prestige modal.
+  const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
+  const discoveryDismissed = useRef(false);
+
+  const dismissDiscoveryHint = () => {
+    discoveryDismissed.current = true;
+    setShowDiscoveryHint(false);
+  };
+
+  // Show hint 3s after map is ready (onboarding only)
+  useEffect(() => {
+    if (!isOnboardingProject || !mapReady) return;
+    const timer = setTimeout(() => {
+      if (!discoveryDismissed.current) setShowDiscoveryHint(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isOnboardingProject, mapReady]);
+
+  // Dismiss hint when Prestige modal fires
+  useEffect(() => {
+    if (showPrestige) dismissDiscoveryHint();
+  }, [showPrestige]);
+
   // Poll for map readiness from the production component
   useEffect(() => {
     const interval = setInterval(() => {
@@ -418,6 +442,36 @@ export default function ProjectMap() {
                 </motion.div>
               )}
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Discovery Hint Pill ── */}
+      {/* Fades in 3s after map ready (onboarding only), dismissed on marker click or Prestige modal */}
+      <AnimatePresence>
+        {showDiscoveryHint && (
+          <motion.div
+            key="discovery-hint"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9990] pointer-events-auto"
+          >
+            <button
+              onClick={dismissDiscoveryHint}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/80 hover:text-white transition-colors duration-200 select-none"
+              style={{
+                background: "rgba(0,0,0,0.40)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              <MapPin className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              The magic is in the coordinates. Click the marker to reveal the image
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

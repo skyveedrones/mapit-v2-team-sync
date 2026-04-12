@@ -2642,3 +2642,10 @@
 - [x] Create.tsx: 0.5s shake animation + glassmorphic bottom-center toast on unsupported file
 - [x] ProjectMap.tsx: 30s delay confirmed, 560px modal confirmed, primary-project-marker confirmed
 - [x] Pricing.tsx: Experience/Precision/Dominance/Command hooks confirmed, Complimentary 14-day trial confirmed
+
+## Global Typography & Discovery Hint
+- [x] Inter font already imported in index.html via Google Fonts (weights 300-900)
+- [x] Updated --font-sans and --font-display in index.css @theme to include SF Pro Display fallback
+- [x] Removed Orbitron fallback from Login.tsx; PDF report Arial overrides are intentional (print context)
+- [x] Added Discovery Hint pill in ProjectMap.tsx: fades in 3s after mapReady (onboarding only), dismissed by click or Prestige modal
+- [x] Confirmed 30s modal delay at line 91 of ProjectMap.tsx

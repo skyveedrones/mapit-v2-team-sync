@@ -59,7 +59,7 @@ export default function Login() {
         />
         <span
           className="text-white text-xl font-bold tracking-widest"
-          style={{ fontFamily: "var(--font-display, 'Orbitron', sans-serif)" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           MAP<span className="text-emerald-400">i</span>T
         </span>
@@ -91,7 +91,7 @@ export default function Login() {
               </div>
               <h1
                 className="text-2xl font-bold text-white tracking-wide"
-                style={{ fontFamily: "var(--font-display, 'Orbitron', sans-serif)" }}
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 Welcome Back
               </h1>
