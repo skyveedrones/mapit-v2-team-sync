@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, ClipboardList, Download, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
+import { Building2, ClipboardList, Download, FolderPlus, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
+import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { PWAInstallModal } from "./PWAInstallModal";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import { Button } from "./ui/button";
 const allMenuItems = [
   { icon: Plane, label: "Hire a Pilot", path: "https://www.skyveedrones.com", external: true },
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: FolderPlus, label: "New Project", path: "__new_project__", action: true, roles: ["admin", "webmaster", "user"] },
   { icon: UsersIcon, label: "Users", path: "/users", roles: ["admin", "webmaster"] },
   { icon: Building2, label: "Clients", path: "/clients", roles: ["admin", "webmaster"] },
   { icon: Trash2, label: "Trash", path: "/trash", roles: ["admin", "webmaster"] },
@@ -107,6 +109,7 @@ function DashboardLayoutContent({
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const { canInstall, isInstalled, platform, isTablet, triggerInstall, showIOSModal, setShowIOSModal } = usePWAInstall();
 
   const handleInstallClick = async () => {
@@ -223,11 +226,14 @@ function DashboardLayoutContent({
                   const Icon = item.icon;
                   const isActive = location === item.path;
                   const isExternal = (item as any).external;
+                  const isAction = (item as any).action;
                   return (
                     <DropdownMenuItem
                       key={item.path}
                       onClick={() => {
-                        if (isExternal) {
+                        if (isAction && item.path === '__new_project__') {
+                          setCreateProjectOpen(true);
+                        } else if (isExternal) {
                           window.open(item.path, '_blank');
                         } else {
                           setLocation(item.path);
@@ -235,6 +241,8 @@ function DashboardLayoutContent({
                       }}
                       className={`cursor-pointer gap-2 ${
                         isActive ? "bg-primary/10 text-primary" : ""
+                      } ${
+                        isAction ? "text-emerald-600 dark:text-emerald-400 focus:text-emerald-600 dark:focus:text-emerald-400 focus:bg-emerald-500/10" : ""
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -271,6 +279,12 @@ function DashboardLayoutContent({
         open={showIOSModal}
         onOpenChange={setShowIOSModal}
         isTablet={isTablet}
+      />
+
+      {/* New Project dialog — triggered from nav */}
+      <CreateProjectDialog
+        open={createProjectOpen}
+        onOpenChange={setCreateProjectOpen}
       />
     </div>
   );

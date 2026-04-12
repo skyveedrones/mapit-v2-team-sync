@@ -23,15 +23,21 @@ export function useClientAccess(projectId?: number) {
     { enabled: !projectId && !!user }
   );
 
-  // If no projectId provided, check if user is client-only across all projects
+  // If no projectId provided, check if user is client-only across all projects.
+  // A user with ZERO projects is NOT client-only — they are a new owner who hasn't
+  // created anything yet. isClientOnly should only be true when ownedProjects has
+  // loaded (not undefined/null) AND the count is still zero AND the user has the
+  // 'client' role. Regular users with no projects should always be able to create.
   if (!projectId) {
-    const hasOwnedProjects = ownedProjects && ownedProjects.length > 0;
+    const isPlatformAdmin = user?.role === 'admin' || user?.role === 'webmaster';
+    const isClientRole = user?.role === 'client';
+    // Only treat as client-only if the user explicitly has the 'client' role
     return {
-      isClientOnly: !hasOwnedProjects,
-      isOwner: false,
+      isClientOnly: isClientRole && !isPlatformAdmin,
+      isOwner: !isClientRole || isPlatformAdmin,
       isCollaborator: false,
-      canEdit: false,
-      canDelete: false,
+      canEdit: !isClientRole || isPlatformAdmin,
+      canDelete: !isClientRole || isPlatformAdmin,
       canView: true,
     };
   }

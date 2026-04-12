@@ -439,11 +439,18 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            /* Empty State */
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center">
+            /* Empty State — entire card is clickable for non-client users */
+            <Card
+              className={`border-dashed transition-colors ${
+                !isClientOnly
+                  ? 'cursor-pointer hover:border-primary/60 hover:bg-accent/30'
+                  : ''
+              }`}
+              onClick={!isClientOnly ? () => setCreateDialogOpen(true) : undefined}
+            >
+              <CardContent className="py-16 text-center">
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                  <FolderPlus className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
                 <p className="text-muted-foreground mb-4 max-w-md mx-auto">
@@ -452,7 +459,7 @@ export default function Dashboard() {
                 {!isClientOnly && (
                   <Button
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={() => setCreateDialogOpen(true)}
+                    onClick={(e) => { e.stopPropagation(); setCreateDialogOpen(true); }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Project
