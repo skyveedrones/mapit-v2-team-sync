@@ -584,6 +584,38 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
     }, [sortedMedia, mapLoaded, setSelectedMedia]);
 
+    // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded || !projectLocation) return;
+      if (mediaWithGPS.length > 0) return; // media markers take over
+
+      // Parse "lat, lng" string
+      const parts = projectLocation.split(',').map((s) => parseFloat(s.trim()));
+      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+      const [lat, lng] = parts;
+
+      // Remove existing primary marker if any
+      const existing = document.getElementById('primary-project-marker');
+      if (existing) existing.remove();
+
+      // Create bold white pin element
+      const el = document.createElement('div');
+      el.id = 'primary-project-marker';
+      el.style.cssText = [
+        'width:36px', 'height:48px', 'cursor:default',
+        'background:none', 'border:none', 'padding:0',
+      ].join(';');
+      el.innerHTML = `<svg width="36" height="48" viewBox="0 0 36 48" fill="none" xmlns="http://www.w3.org/2000/svg">`
+        + `<path d="M18 48C18 48 36 30.2426 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 30.2426 18 48 18 48Z" fill="white"/>`
+        + `<circle cx="18" cy="18" r="7" fill="#10b981"/>`
+        + `</svg>`;
+
+      new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(map);
+    }, [mapLoaded, projectLocation, mediaWithGPS.length]);
+
     // ── Toggle flight path visibility ───────────────────────────────────────
     useEffect(() => {
       const map = mapRef.current;

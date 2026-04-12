@@ -2624,3 +2624,9 @@
 - [x] Updated Create.tsx to call uploadMedia after initProject so media records get GPS lat/lng
 - [x] Added projectLocation prop to MapboxProjectMap to suppress internal No GPS overlay
 - [x] Passed projectLocation from ProjectMap.tsx, ProjectDetail.tsx, and FlightDetail.tsx
+
+## Launch Finalization (Session 15 cont. 5)
+- [x] Change Prestige modal setTimeout to 30000ms (30 seconds)
+- [x] Fix Engineering triumph layout: wider modal (560px), 160deg gradient, -0.04em tracking, 4rem padding
+- [x] Add primary project marker (white pin, emerald core) in MapboxProjectMap when projectLocation exists but no media GPS
+- [x] Verified /pricing page has Experience/Precision/Dominance/Command tiers

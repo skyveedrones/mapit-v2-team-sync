@@ -83,10 +83,10 @@ export default function ProjectMap() {
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
 
-  // Fire Prestige modal 10 seconds after map is ready (onboarding flow only)
+  // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
-    const timer = setTimeout(() => setShowPrestige(true), 10000);
+    const timer = setTimeout(() => setShowPrestige(true), 30000);
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
@@ -322,27 +322,29 @@ export default function ProjectMap() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 20 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="relative max-w-md w-full mx-6 text-center"
+              className="relative w-full mx-6 text-center"
               style={{
+                maxWidth: "560px",
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.10)",
-                borderRadius: "24px",
-                padding: "3rem 2.5rem",
+                borderRadius: "28px",
+                padding: "4rem 3.5rem",
                 backdropFilter: "blur(32px)",
               }}
             >
               {!prestigeClaimed ? (
                 <>
-                  {/* Massive metallic hook — no period, no overflow clipping */}
+                  {/* Award-grade hook — no period, metallic gradient, full width */}
                   <p
-                    className="font-bold bg-clip-text text-transparent mb-6 whitespace-nowrap"
+                    className="font-bold bg-clip-text text-transparent mb-8"
                     style={{
-                      fontSize: "clamp(2rem,7vw,3.5rem)",
-                      letterSpacing: "-0.03em",
-                      backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #6b7280 100%)",
-                      lineHeight: 1.05,
+                      fontSize: "clamp(2.4rem,5.5vw,3.75rem)",
+                      letterSpacing: "-0.04em",
+                      backgroundImage: "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #6b7280 100%)",
+                      lineHeight: 1.0,
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
+                      display: "block",
                     }}
                   >
                     Engineering triumph
