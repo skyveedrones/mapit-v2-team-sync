@@ -339,7 +339,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           style: "mapbox://styles/mapbox/satellite-streets-v12",
           center: [-96.797, 32.7767], // Default center; data watcher will flyTo markers
           zoom: 12,
-          pitchWithRotate: false,
+          pitch: 0,
+          maxPitch: 85,
+          dragRotate: true,
+          touchZoomRotate: true,
+          pitchWithRotate: true,
           trackResize: true,
         });
 
@@ -663,7 +667,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // ── LiDAR: update Deck.gl Tile3DLayer when lidarEnabled toggles ──────────
     useEffect(() => {
       const deck = deckOverlayRef.current;
-      if (!deck || !mapLoaded) return;
+      const map = mapRef.current;
+      if (!deck || !map || !mapLoaded) return;
+
+      // Tilt into 3D view when LiDAR is toggled on; restore flat view when off
+      if (lidarEnabled) {
+        map.easeTo({ pitch: 45, duration: 800 });
+      } else {
+        map.easeTo({ pitch: 0, duration: 600 });
+      }
       if (lidarEnabled && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0) {
         const tile3d = new Tile3DLayer({
           id: "lidar-point-cloud",
