@@ -13,11 +13,11 @@
  */
 
 export const APP_VERSION = {
-  version: '2.4.1',
-  commit: 'ac542705b6b48fcbfdb6ed14b4c9c39ffeeee3ef',
+  version: '2.4.3',
+  commit: 'edc19a79',
   branch: 'main',
   buildDate: new Date().toISOString(),
-  buildTimestamp: 1774885773515,
+  buildTimestamp: 1744468980000,
 };
 
 /**
