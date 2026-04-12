@@ -155,7 +155,7 @@ export default function Pricing() {
         >
           <p className="text-white/70 text-base leading-relaxed">Experience the complete platform.</p>
           <p className="text-white/70 text-base leading-relaxed">Your first 14 days are complimentary.</p>
-          <p className="text-white/35 text-sm leading-relaxed tracking-wide">No credit card required</p>
+          <p className="text-white/70 text-base leading-relaxed">No credit card required</p>
         </motion.div>
 
         {/* Monthly / Annual Toggle */}
