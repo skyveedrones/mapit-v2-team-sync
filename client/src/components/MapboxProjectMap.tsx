@@ -1727,8 +1727,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           </button>
                         )}
 
-                        {/* LiDAR Point Cloud */}
-                        {CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0 && (
+                        {/* LiDAR Point Cloud — hidden until color rendering is resolved */}
+                        {false && CESIUM_ION_TOKEN && CESIUM_ION_TOKEN.length > 0 && (
                           <div className="space-y-1">
                             <button
                               onClick={() => setLidarEnabled((v) => !v)}
