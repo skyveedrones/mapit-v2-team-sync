@@ -21,6 +21,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc as trpcClient } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
+import { getLoginUrl } from "@/const";
 
 // ── Coordinate helpers ────────────────────────────────────────────────────────
 // DB stores "lat, lng"; Mapbox needs [lng, lat]
@@ -92,6 +93,15 @@ export default function ProjectMap() {
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
+  // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
+  const [showConversionModal, setShowConversionModal] = useState(false);
+  const conversionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const startConversionTimer = () => {
+    if (conversionTimerRef.current) clearTimeout(conversionTimerRef.current);
+    conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 60000);
+  };
+
   // ── Discovery Hint (onboarding flow) ─────────────────────────────────────
   // Fades in 3s after mapReady, dismissed by marker click or Prestige modal.
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
@@ -126,6 +136,12 @@ export default function ProjectMap() {
     }, 500);
     return () => clearInterval(interval);
   }, []);
+
+  // Dismiss Prestige and start 60s conversion timer
+  const handlePrestigeDismiss = () => {
+    setShowPrestige(false);
+    startConversionTimer();
+  };
 
   const handlePrestigeClaim = async () => {
     if (!prestigeEmail.trim() || prestigeSubmitting) return;
@@ -431,7 +447,7 @@ export default function ProjectMap() {
                     {prestigeSubmitting ? "Claiming..." : "Claim Project"}
                   </button>
                   <button
-                    onClick={() => setShowPrestige(false)}
+                    onClick={handlePrestigeDismiss}
                     className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
                   >
                     Continue exploring →
@@ -458,6 +474,76 @@ export default function ProjectMap() {
                   </p>
                 </motion.div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Conversion Modal (60s after Prestige dismiss) ── */}
+      <AnimatePresence>
+        {showConversionModal && (
+          <motion.div
+            key="conversion-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.80)", backdropFilter: "blur(24px)" }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative w-full mx-6 text-center"
+              style={{
+                maxWidth: "560px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "28px",
+                padding: "4rem 3.5rem",
+                backdropFilter: "blur(32px)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Metallic headline */}
+              <p
+                className="font-bold bg-clip-text text-transparent mb-8"
+                style={{
+                  fontSize: "clamp(2.2rem,5vw,3.4rem)",
+                  letterSpacing: "-0.04em",
+                  backgroundImage: "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #6b7280 100%)",
+                  lineHeight: 1.05,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  display: "block",
+                }}
+              >
+                The world is yours to map
+              </p>
+              {/* Body */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="text-white/65 text-base leading-relaxed mb-10"
+              >
+                Now that you've explored our vision, it's time to build yours. Start your complimentary 14-day trial to preserve your data and unlock the complete platform.
+              </motion.p>
+              {/* CTA */}
+              <button
+                onClick={() => { window.location.href = getLoginUrl(); }}
+                className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
+              >
+                Start Your Trial
+              </button>
+              <button
+                onClick={() => setShowConversionModal(false)}
+                className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+              >
+                Maybe later
+              </button>
             </motion.div>
           </motion.div>
         )}

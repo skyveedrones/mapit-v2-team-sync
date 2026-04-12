@@ -1,6 +1,6 @@
 /**
  * MAPIT Pricing — 4-Tier Jobsian Invitation to Power
- * Experience / Precision / Dominance / Authority
+ * Experience / Precision / Scale / Civic
  * Pure black, glassmorphic monoliths, monthly/annual toggle.
  */
 
@@ -165,9 +165,9 @@ export default function Pricing() {
           transition={{ duration: 0.5, delay: 0.14 }}
           className="text-center max-w-lg mx-auto space-y-1"
         >
-          <p className="text-white/70 text-base leading-relaxed">Experience the complete platform.</p>
-          <p className="text-white/70 text-base leading-relaxed">Your first 14 days are complimentary.</p>
-          <p className="text-white/70 text-base leading-relaxed">No credit card required</p>
+          <p className="text-white text-base leading-relaxed">Experience the complete platform.</p>
+          <p className="text-white text-base leading-relaxed">Your first 14 days are complimentary.</p>
+          <p className="text-white text-base leading-relaxed">No credit card required.</p>
         </motion.div>
 
         {/* Monthly / Annual Toggle */}
