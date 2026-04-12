@@ -1361,7 +1361,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               {/* Fullscreen toggle button (top-right) */}
               <button
                 onClick={toggleFullscreen}
-                className="absolute top-3 right-3 z-[20] bg-white rounded shadow-md p-1.5 hover:bg-gray-100 transition-colors"
+                className="absolute top-3 right-14 z-[20] bg-white rounded shadow-md p-1.5 hover:bg-gray-100 transition-colors"
                 title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               >
                 {isFullscreen ? <Minimize size={18} className="text-gray-700" /> : <Maximize size={18} className="text-gray-700" />}

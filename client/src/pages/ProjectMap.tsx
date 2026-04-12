@@ -488,7 +488,7 @@ export default function ProjectMap() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
-            className="fixed top-8 right-[100px] z-[9990] pointer-events-auto"
+            className="fixed top-[280px] left-8 z-[9990] pointer-events-auto"
           >
             <button
               onClick={() => { window.location.href = getLoginUrl(); }}
