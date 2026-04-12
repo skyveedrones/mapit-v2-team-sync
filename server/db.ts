@@ -36,6 +36,8 @@ async function createPool() {
       connectionLimit: 5,
       queueLimit: 0,
       enableKeepAlive: true,
+      keepAliveInitialDelay: 10000, // Send keepalive after 10s idle to prevent ECONNRESET
+      connectTimeout: 20000,
       decimalNumbers: true,
     });
     
@@ -44,6 +46,18 @@ async function createPool() {
   } catch (error) {
     console.error("[Database] Failed to create pool:", error);
     return null;
+  }
+}
+
+// Reset the pool and drizzle instance so the next getDb() call creates a fresh connection.
+export async function resetPool() {
+  try {
+    if (_pool) {
+      await _pool.end().catch(() => {});
+    }
+  } finally {
+    _pool = null;
+    _db = null;
   }
 }
 
