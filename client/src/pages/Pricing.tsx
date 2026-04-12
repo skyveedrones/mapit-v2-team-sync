@@ -9,6 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowLeft, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const METALLIC = "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #9ca3af 100%)";
 
@@ -106,12 +109,30 @@ const TIERS = [
 export default function Pricing() {
   const [annual, setAnnual] = useState(false);
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const createPortalSession = trpc.payment.createPortalSession.useMutation();
 
-  const handleCTA = (tier: (typeof TIERS)[0]) => {
+  const handleCTA = async (tier: (typeof TIERS)[0]) => {
     if (tier.action === "contact") {
-      window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Authority%20Inquiry";
+      window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Inquiry";
+      return;
+    }
+    if (user) {
+      // Signed-in user → Stripe Customer Portal to upgrade/manage
+      setPortalLoading(true);
+      try {
+        const result = await createPortalSession.mutateAsync();
+        if (result.portalUrl) {
+          window.open(result.portalUrl, "_blank");
+        }
+      } catch {
+        toast.error("Failed to open billing portal. Please try again.");
+      } finally {
+        setPortalLoading(false);
+      }
     } else {
-      // Redirect to Manus OAuth signup — after auth, user lands in /projects (dashboard)
+      // Anonymous visitor → OAuth signup
       window.location.href = getLoginUrl();
     }
   };
@@ -331,12 +352,39 @@ export default function Pricing() {
                   }
                 }}
               >
-                {tier.cta}
+                  {portalLoading && tier.action !== "contact"
+                  ? "Opening portal…"
+                  : user && tier.action !== "contact"
+                  ? "Manage Plan"
+                  : tier.cta}
               </button>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Manage Billing footer link for signed-in users */}
+      {user && (
+        <div className="text-center pb-12">
+          <button
+            onClick={async () => {
+              setPortalLoading(true);
+              try {
+                const result = await createPortalSession.mutateAsync();
+                if (result.portalUrl) window.open(result.portalUrl, "_blank");
+              } catch {
+                toast.error("Failed to open billing portal.");
+              } finally {
+                setPortalLoading(false);
+              }
+            }}
+            disabled={portalLoading}
+            className="text-sm text-white/30 hover:text-white/70 underline underline-offset-4 transition-colors"
+          >
+            {portalLoading ? "Opening Stripe portal…" : "Manage Billing & Payment History →"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

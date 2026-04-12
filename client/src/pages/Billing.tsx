@@ -21,41 +21,39 @@ const PLAN_FEATURES = {
     ],
   },
   starter: {
-    name: "Starter",
+    name: "Experience",
     price: "$49",
     period: "/month",
     features: [
-      "Up to 25 projects",
-      "Up to 1,000 media files",
-      "Advanced GPS export (KML, CSV, GeoJSON, GPX)",
-      "Project Map Overlay",
-      "Email support",
+      "100 GB Storage",
+      "10 Projects",
+      "CAD Overlay Basics",
+      "Email Support",
+      "14-Day Free Trial",
     ],
   },
   professional: {
-    name: "Professional",
+    name: "Precision",
     price: "$149",
     period: "/month",
     features: [
-      "Unlimited projects",
-      "Up to 10,000 media files",
-      "All Starter features",
-      "Team collaboration (up to 5 members)",
-      "Priority email support",
-      "Custom watermarks",
+      "500 GB Storage",
+      "Unlimited Projects",
+      "5 Stakeholder Seats",
+      "Sub-Surface Verification Docs",
+      "Priority Email Support",
     ],
   },
   business: {
-    name: "Business",
+    name: "Scale",
     price: "$349",
     period: "/month",
     features: [
-      "Unlimited everything",
-      "Team collaboration (unlimited members)",
-      "Dedicated support",
-      "API access",
-      "Custom integrations",
-      "Advanced analytics",
+      "1.5 TB Storage",
+      "Unlimited Stakeholder Viewing",
+      "API Access",
+      "Priority Processing",
+      "Dedicated Account Manager",
     ],
   },
 };
@@ -64,6 +62,24 @@ export default function Billing() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+
+  const createPortalSession = trpc.payment.createPortalSession.useMutation();
+
+  const handleManageBilling = async () => {
+    setIsPortalLoading(true);
+    try {
+      const result = await createPortalSession.mutateAsync();
+      if (result.portalUrl) {
+        window.open(result.portalUrl, "_blank");
+      }
+    } catch (error) {
+      console.error("Portal error:", error);
+      toast.error("Failed to open billing portal. Please try again.");
+    } finally {
+      setIsPortalLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -92,7 +108,7 @@ export default function Billing() {
     try {
       const period = billingPeriod === "annual" ? "annual" : "monthly";
       const priceId = getPriceId(plan, period);
-      
+
       if (!priceId) {
         toast.error("Plan not available");
         return;
@@ -200,9 +216,14 @@ export default function Billing() {
                 </div>
 
                 {currentPlan !== "free" && (
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleManageBilling}
+                    disabled={isPortalLoading}
+                  >
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Manage Payment Method
+                    {isPortalLoading ? "Opening portal..." : "Manage Payment Method"}
                   </Button>
                 )}
               </CardContent>
@@ -251,11 +272,46 @@ export default function Billing() {
                           disabled={currentPlan === key || isUpgrading}
                           onClick={() => handleUpgrade(key)}
                         >
-                          {currentPlan === key ? "Current Plan" : "Upgrade"}
+                          {currentPlan === key ? "Current Plan" : "Start Your Trial"}
                         </Button>
                       </CardContent>
                     </Card>
                   ))}
+
+                {/* Civic / Custom tier */}
+                <Card className="relative md:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Civic</CardTitle>
+                    <CardDescription>
+                      <span className="text-2xl font-bold text-foreground">Custom</span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <ul className="grid grid-cols-2 gap-2">
+                      {[
+                        "White-Label City Portals",
+                        "On-Site Training",
+                        "SLA Guarantee",
+                        "Dedicated Success Manager",
+                        "Custom Integrations",
+                      ].map((feature, index) => (
+                        <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary mt-0.5">✓</span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Inquiry";
+                      }}
+                    >
+                      Contact Sales
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
@@ -285,14 +341,32 @@ export default function Billing() {
                           {nextBillingDate && format(nextBillingDate, "MMMM d, yyyy")}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Download
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleManageBilling}
+                        disabled={isPortalLoading}
+                      >
+                        {isPortalLoading ? "Opening..." : "View in Portal"}
                       </Button>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Manage Billing footer link */}
+            {currentPlan !== "free" && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={handleManageBilling}
+                  disabled={isPortalLoading}
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                >
+                  {isPortalLoading ? "Opening Stripe portal..." : "Manage Billing & Payment History →"}
+                </button>
+              </div>
+            )}
 
             {/* Help Section */}
             <Card>
@@ -301,10 +375,13 @@ export default function Billing() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Have questions about your subscription? Check out our <a href="#" className="text-primary hover:underline">FAQ</a> or <a href="#" className="text-primary hover:underline">contact support</a>.
+                  Have questions about your subscription?{" "}
+                  <a href="mailto:clay@skyveedrones.com" className="text-primary hover:underline">
+                    Contact support
+                  </a>.
                 </p>
                 <p>
-                  You can cancel your subscription anytime from your account settings. No questions asked.
+                  You can cancel your subscription anytime from the Stripe billing portal. No questions asked.
                 </p>
               </CardContent>
             </Card>
