@@ -693,20 +693,27 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               pointSize: lidarPointSize,
               pointSizeUnits: "pixels",
               getColor: [0, 190, 255, 255],
+              // Disable default lighting so it doesn't override our solid cyan
+              material: false,
             },
           } as any,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onTileLoad: (tile: any) => {
-            // Intercept and destroy the empty baked-in color buffers so
-            // deck.gl falls back to our static getColor instead of black.
-            const attributes =
-              tile.content?.attributes ||
-              tile.content?.pointCloud?.attributes;
-            if (attributes) {
-              delete attributes.colors;
-              delete attributes.getColor;
-              delete attributes.COLOR_0;
+            // Explicitly nullify binary color buffers so the GPU cannot
+            // prioritise them over our static getColor accessor.
+            const content = tile.content;
+            if (content && content.attributes) {
+              delete content.attributes.colors;
+              delete content.attributes.COLOR_0;
             }
+            // Also scrub the legacy pointCloud path used by some tilesets
+            const pcAttrs = content?.pointCloud?.attributes;
+            if (pcAttrs) {
+              delete pcAttrs.colors;
+              delete pcAttrs.COLOR_0;
+            }
+            // Mark tile loaded so deck.gl re-evaluates styling
+            tile.isLoaded = true;
           },
           onTilesetLoad: (tileset) => {
             const map = mapRef.current;
