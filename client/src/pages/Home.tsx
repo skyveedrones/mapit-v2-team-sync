@@ -311,17 +311,17 @@ export default function Home() {
                 {
                   quote: "MAPIT turned a 3-day survey into a 3-hour project. The centimetre-level precision is unmatched for our city infrastructure projects.",
                   name: "Director of Public Works",
-                  org: "Arlington, TX",
+                  org: "",
                 },
                 {
                   quote: "Sharing 3D models with stakeholders is now instant. It's completely revolutionized our municipal planning meetings and public comment process.",
-                  name: "Urban Planner",
-                  org: "City of Seattle, WA",
+                  name: "Urban Planning Lead",
+                  org: "",
                 },
                 {
                   quote: "We needed data immediately after the storm. MAPIT delivered actionable map data in hours, not weeks, giving our emergency team the exact coordinates they needed.",
-                  name: "GIS Specialist",
-                  org: "County Emergency Management",
+                  name: "Emergency Management Coordinator",
+                  org: "",
                 },
               ].map((t, i) => (
                 <motion.div
@@ -339,7 +339,7 @@ export default function Home() {
                   <p className="text-white/70 text-sm leading-relaxed flex-1">{t.quote}</p>
                   <div>
                     <p className="text-white font-semibold text-sm">{t.name}</p>
-                    <p className="text-white/35 text-xs mt-0.5">{t.org}</p>
+                    {t.org && <p className="text-white/35 text-xs mt-0.5">{t.org}</p>}
                   </div>
                 </motion.div>
               ))}
