@@ -264,7 +264,7 @@ export default function Pricing() {
                 borderRadius: "20px",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                padding: "2rem 1.6rem 1.8rem",
+                padding: "2rem 1.6rem 2.4rem",
               }}
             >
               {/* MOST POPULAR badge — absolute, outside content flow so it never pushes hook text down */}
@@ -336,7 +336,7 @@ export default function Pricing() {
               </p>
 
               {/* Specs */}
-              <ul className="flex-1 space-y-2.5 mb-7">
+              <ul className="flex-1 space-y-2.5 mb-10">
                 {tier.specs.map((spec) => (
                   <li key={spec} className="flex items-start gap-2.5">
                     <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
