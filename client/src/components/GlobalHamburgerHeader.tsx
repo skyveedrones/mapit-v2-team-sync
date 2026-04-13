@@ -47,16 +47,16 @@ export const GlobalHamburgerHeader = () => {
 
   return (
     <header className="sticky top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-border/30">
-      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        {/* LOGO — small and crisp */}
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* LOGO — 40px height with proper padding */}
         <div
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer py-1"
           onClick={() => setLocation("/")}
         >
           <img
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
-            className="h-8 w-auto object-contain select-none"
+            className="h-10 w-auto object-contain select-none transition-opacity hover:opacity-80"
             draggable={false}
           />
         </div>

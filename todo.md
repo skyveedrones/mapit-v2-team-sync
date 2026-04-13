@@ -2741,3 +2741,10 @@
 ## Follow-up: Fix MapboxProjectMap TypeScript Errors
 - [x] Fix isLoading scope error at line 1383 in MapboxProjectMap.tsx
 - [x] Fix isLoading scope error at line 1390 in MapboxProjectMap.tsx
+## Update MAPIT Logo Size in Header
+- [x] Increase logo height to 40px (h-10) in GlobalHamburgerHeader
+- [x] Increase header height to h-16 for proper padding
+- [x] Add py-1 padding to logo container for vertical centering
+- [x] Add object-contain for crisp rendering
+- [x] Add hover opacity transition for interactivity
+- [x] Test logo display on dev server
