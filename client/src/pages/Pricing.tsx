@@ -12,6 +12,7 @@ import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
 const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
@@ -179,6 +180,7 @@ export default function Pricing() {
       className="min-h-screen text-white flex flex-col"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
+      <GlobalHamburgerHeader />
       {/* ── Trial Expired Banner ── */}
       {isExpired && (
         <div

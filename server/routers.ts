@@ -6069,7 +6069,46 @@ async function getOrCreateGuestUser(ownerOpenId: string) {
   const ownerRow = await getByOpenId(ownerOpenId);
   if (ownerRow) return ownerRow;
 
-  throw new Error("Owner user not found — cannot create guest project");
+  // Fallback 1: Find first admin user
+  const adminUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.role, 'admin'))
+    .limit(1);
+  
+  if (adminUser.length > 0) {
+    console.warn(`[Onboarding] Owner user ${ownerOpenId} not found, using admin fallback: ${adminUser[0].id}`);
+    return adminUser[0];
+  }
+
+  // Fallback 2: Create a system user to hold trial projects
+  const now = new Date().toISOString();
+  await db
+    .insert(users)
+    .values({
+      openId: 'system-trial-holder',
+      name: 'System Trial Holder',
+      email: 'system@mapit.local',
+      loginMethod: 'system',
+      role: 'admin',
+      createdAt: now,
+      updatedAt: now,
+      lastSignedIn: now,
+    });
+  
+  // Query back the created user
+  const createdSystemUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, 'system-trial-holder'))
+    .limit(1);
+  
+  if (createdSystemUser.length > 0) {
+    console.warn(`[Onboarding] Created system user to hold trial projects: ${createdSystemUser[0].id}`);
+    return createdSystemUser[0];
+  }
+
+  throw new Error("Owner user not found and cannot create system fallback — database error");
 }
 
 /** Build the branded referral email HTML */

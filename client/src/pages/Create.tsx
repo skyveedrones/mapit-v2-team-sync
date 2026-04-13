@@ -86,6 +86,7 @@ export default function Create() {
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
+  const utils = trpc.useUtils();
 
   // Progress bar animation
   useEffect(() => {
@@ -196,6 +197,9 @@ export default function Create() {
           // Non-blocking — project still created, just no media pin
         }
       }
+
+      // Invalidate media.list cache so the map fetches fresh data on arrival
+      await utils.media.list.invalidate({ projectId: result.projectId });
 
       // Complete progress bar and navigate
       setProgress(100);

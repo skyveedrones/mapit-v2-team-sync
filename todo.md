@@ -2712,3 +2712,13 @@
 - [x] Suppress "Back online" status banner on marketing pages (homepage, pricing, municipal)
 - [x] Fix contact email in footer (show real email with mailto: link)
 - [x] Add favicon (32x32) and og:image (1200x630px) meta tags to <head>
+
+## Global Navigation Bar Update (Task #06)
+- [x] Unhide navigation on homepage
+- [x] Add navigation to Pricing page
+- [x] Add navigation to Municipal page
+- [x] Apply Jobsian muted style (text-muted-foreground, font-medium, backdrop-blur-md bg-white/70)
+- [x] Make header sticky
+- [x] Add navigation items: How It Works (anchor), Municipal, Pricing
+- [x] Style Sign In button as muted outline/ghost (not primary green)
+- [x] Premium refinements: no dividers, generous spacing (gap-12), small logo (h-8), subtle active state (2px dot)
