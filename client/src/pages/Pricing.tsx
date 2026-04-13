@@ -6,13 +6,12 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, AlertCircle, Loader2 } from "lucide-react";
+import { Check, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { ContactModal } from "@/components/ContactModal";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
@@ -182,7 +181,20 @@ export default function Pricing() {
       className="min-h-screen text-white flex flex-col"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
-      <GlobalHamburgerHeader />
+      {/* ── Nav ── */}
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
+        <button
+          onClick={() => setLocation("/")}
+          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors duration-200 text-sm font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+        <span className="text-white text-lg font-bold tracking-tight">
+          MAP<span className="text-emerald-400">i</span>T
+        </span>
+        <div className="w-16" />
+      </nav>
       {/* ── Trial Expired Banner ── */}
       {isExpired && (
         <div
