@@ -2748,3 +2748,10 @@
 - [x] Add object-contain for crisp rendering
 - [x] Add hover opacity transition for interactivity
 - [x] Test logo display on dev server
+## Refine Header Styling
+- [x] Increase MAPIT logo height to 48px (h-12)
+- [x] Adjust header height if needed to keep logo centered
+- [x] Change button text to 'Sign In' for all users (remove Dashboard option)
+- [x] Apply ghost/outline button styling to Sign In button
+- [x] Ensure Sign In button does not compete with Start Mapping Free CTA
+- [x] Test header on dev server

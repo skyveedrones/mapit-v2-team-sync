@@ -47,16 +47,16 @@ export const GlobalHamburgerHeader = () => {
 
   return (
     <header className="sticky top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-border/30">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* LOGO — 40px height with proper padding */}
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        {/* LOGO — 48px height with proper padding */}
         <div
-          className="flex items-center cursor-pointer py-1"
+          className="flex items-center cursor-pointer py-2"
           onClick={() => setLocation("/")}
         >
           <img
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
-            className="h-10 w-auto object-contain select-none transition-opacity hover:opacity-80"
+            className="h-12 w-auto object-contain select-none transition-opacity hover:opacity-80"
             draggable={false}
           />
         </div>
@@ -82,24 +82,15 @@ export const GlobalHamburgerHeader = () => {
           />
         </nav>
 
-        {/* RIGHT: Sign In / Dashboard — muted outline style */}
+        {/* RIGHT: Sign In — ghost/outline style */}
         <div>
           {!loading && (
-            isAuthenticated ? (
-              <button
-                onClick={handleDashboard}
-                className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <button
-                onClick={handleSignIn}
-                className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
-              >
-                Sign In
-              </button>
-            )
+            <button
+              onClick={handleSignIn}
+              className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200 px-3 py-1.5 rounded-md hover:bg-muted/50"
+            >
+              Sign In
+            </button>
           )}
         </div>
       </div>
