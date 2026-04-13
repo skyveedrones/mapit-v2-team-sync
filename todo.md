@@ -2803,3 +2803,4 @@
 - [x] Refine auth guard to silently redirect authenticated users from onboarding routes
 - [x] Remove 'Back Online' popup from entire application
 - [x] Test combined push: auto-map feature, email links, auth guard, no 'Back Online' popup
+- [x] Upgrade 'Welcome back' toast to high-end Jobsian transition (larger, slower, centered, glass-morphism)

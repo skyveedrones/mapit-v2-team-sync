@@ -16,6 +16,7 @@ import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 
 type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
@@ -78,6 +79,7 @@ async function extractGPS(
 
 export default function Create() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [dropState, setDropState] = useState<DropState>("idle");
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing...");
@@ -231,32 +233,35 @@ export default function Create() {
       const isForbidden = errorMsg.includes('FORBIDDEN') || errorMsg.includes('Authenticated users cannot');
       
       if (isForbidden) {
-        // Suppress error modal and show polished toast instead
+        // Suppress error modal and show high-end Jobsian toast
         console.log("[Create] Authenticated user attempted trial project creation, redirecting to dashboard");
-        toast("Welcome back! Redirecting to your projects...", {
-          duration: 2500,
-          position: "bottom-center",
+        const userName = user?.name?.split(' ')[0] || 'there';
+        toast(`Welcome back, ${userName}! We've saved your spot. Redirecting to your MAPIT dashboard...`, {
+          duration: 6000,
+          position: "top-center",
           style: {
-            background: "rgba(10,10,10,0.92)",
-            color: "rgba(255,255,255,0.75)",
-            border: "1px solid rgba(255,255,255,0.10)",
-            borderRadius: "14px",
-            fontSize: "13px",
+            background: "rgba(255, 255, 255, 0.95)",
+            color: "rgba(10, 10, 10, 0.9)",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: "16px",
+            fontSize: "16px",
+            fontWeight: "500",
             fontFamily: "Inter, sans-serif",
-            backdropFilter: "blur(20px)",
-            padding: "12px 20px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-          },
+            backdropFilter: "blur(30px)",
+            padding: "20px 28px",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1)",
+            letterSpacing: "-0.3px",
+          } as React.CSSProperties,
         });
-        // Redirect to authenticated user dashboard
-        setTimeout(() => setLocation("/dashboard"), 1200);
+        // Redirect to authenticated user dashboard after toast is visible
+        setTimeout(() => setLocation("/dashboard"), 2000);
       } else {
         console.error("[Create] Failed to create project:", err);
         setProgress(100);
         setTimeout(() => setLocation("/dashboard"), 400);
       }
     }
-  }, [initProject, uploadMedia, setLocation, triggerShake]);
+  }, [initProject, uploadMedia, setLocation, triggerShake, user]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -313,110 +318,86 @@ export default function Create() {
       </AnimatePresence>
 
       {/* ─── Back arrow ─── */}
-      <div className="absolute top-8 left-8 z-20">
+      <div className="absolute top-4 left-4 z-40">
         <button
-          onClick={() => setLocation("/name")}
-          className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
+          onClick={() => setLocation("/")}
+          className="p-2 rounded-lg hover:bg-white/5 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back
+          <ArrowLeft className="w-5 h-5 text-white/60 hover:text-white" />
         </button>
       </div>
 
-      {/* ─── Drop Zone ─── */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <motion.label
-          htmlFor="file-input"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            x: shake
-              ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0]
-              : 0,
-          }}
-          transition={shake
-            ? { duration: 0.5, ease: "easeInOut" }
-            : { duration: 0.4 }
-          }
-          className={`
-            relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
-            border rounded-3xl select-none transition-all duration-300
-            ${isProcessing ? "cursor-default" : "cursor-pointer"}
-            ${isDragging
-              ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
-              : shake
-              ? "border-red-500/40"
-              : "border-white/5 bg-transparent hover:border-white/10"
-            }
-          `}
-        >
-          {/* Metallic hook */}
-          <AnimatePresence mode="wait">
-            {isProcessing ? (
-              <motion.p
-                key="processing"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="text-[clamp(3rem,9vw,6rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent animate-pulse"
-                style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
-              >
-                {statusText}
-              </motion.p>
-            ) : (
-              <motion.p
-                key="drop"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0, scale: isDragging ? 1.05 : 1 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="text-[clamp(5rem,14vw,9rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent pointer-events-none"
-                style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
-              >
-                Drop.
-              </motion.p>
-            )}
-          </AnimatePresence>
-
-          {/* Instruction */}
-          <AnimatePresence>
-            {!isProcessing && (
-              <motion.div
-                key="instructions"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center pointer-events-none"
-              >
-                <p className="text-white/90 text-2xl leading-relaxed font-medium">
-                  Drag your drone imagery or .mp4 files here to begin.
-                </p>
-                <p className="mt-5 text-white/40 text-sm tracking-widest uppercase font-semibold">
-                  or click to browse
-                </p>
-                <p className="mt-3 text-white/60 text-sm tracking-wide">
-                  JPG · PNG · TIFF · MP4 · MOV
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Invisible file input — strict accept */}
-          <input
-            id="file-input"
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov"
-            className="sr-only"
-            onChange={handleFileInput}
-            disabled={isProcessing}
-          />
-        </motion.label>
+      {/* ─── Main drop zone ─── */}
+      <div
+        className={`flex-1 flex items-center justify-center px-4 transition-all ${
+          isDragging ? "bg-white/5" : ""
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <AnimatePresence mode="wait">
+          {isProcessing ? (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full border-2 border-[#00C853]/30 border-t-[#00C853] animate-spin mx-auto mb-6" />
+              <p className="text-xl font-medium text-white mb-2">{statusText}</p>
+              <p className="text-sm text-white/40">
+                {uploadPhase === "processing" ? "Extracting GPS and generating map..." : ""}
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`text-center transition-all ${shake ? "animate-pulse" : ""}`}
+            >
+              <div className="mb-8">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#00C853]/20 to-[#00C853]/5 flex items-center justify-center mx-auto mb-6 border border-[#00C853]/20">
+                  <svg
+                    className="w-10 h-10 text-[#00C853]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-3">Drop your drone photos</h1>
+              <p className="text-white/60 mb-8 max-w-md mx-auto">
+                We'll extract GPS coordinates, generate an interactive map, and organize everything for you.
+              </p>
+              <label className="inline-block">
+                <input
+                  type="file"
+                  multiple
+                  accept={Array.from(ACCEPTED_EXT).join(",")}
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+                <span className="inline-block px-8 py-3 bg-[#00C853] text-black font-semibold rounded-full hover:bg-[#00C853]/90 transition-colors cursor-pointer">
+                  Select Files
+                </span>
+              </label>
+              <p className="text-xs text-white/40 mt-6">
+                Supports JPEG, PNG, TIFF, MP4, MOV
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
