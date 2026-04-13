@@ -207,9 +207,10 @@ export default function ProjectMap() {
 
   const { data: mediaItems, isLoading: mediaLoading } = isDemoProject
     ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
-    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 });
+    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0, refetchInterval: isOnboardingProject ? 2000 : undefined });
 
   const geotaggedMedia = useMemo(() => {
+    if (!mediaItems) return [];
     return (mediaItems || [])
       .filter((m) => m.latitude !== null && m.longitude !== null)
       .map((m) => ({
@@ -230,11 +231,33 @@ export default function ProjectMap() {
     return (p?.overlays || []).filter((o: any) => o.isActive);
   }, [project]);
 
+  // ── Auto-map for trials: auto-flyto first coordinate with smooth animation ──
+  const autoMapFired = useRef(false);
+  useEffect(() => {
+    if (!isOnboardingProject || !mapReady || autoMapFired.current) return;
+    if (!geotaggedMedia || geotaggedMedia.length === 0) return;
+    
+    autoMapFired.current = true;
+    const map = mapCompRef.current?.getMap();
+    if (!map) return;
+    
+    // Auto-flyto first coordinate with smooth easing
+    const firstMedia = geotaggedMedia[0];
+    if (firstMedia?.latitude && firstMedia?.longitude) {
+      map.flyTo({
+        center: [firstMedia.longitude, firstMedia.latitude],
+        zoom: 16,
+        duration: 1200,
+        easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+      });
+    }
+  }, [isOnboardingProject, mapReady, geotaggedMedia]);
+
   // ── Fly-in: once map is ready, fly to the best available coordinates ──────
   // Priority: sessionStorage → project.location DB → media centroid
   const hasFiredFlyIn = useRef(false);
   useEffect(() => {
-    if (!mapReady || hasFiredFlyIn.current) return;
+    if (!mapReady || hasFiredFlyIn.current || isOnboardingProject) return; // Skip for trials (auto-map handles it)
     const map = mapCompRef.current?.getMap();
     if (!map) return;
 

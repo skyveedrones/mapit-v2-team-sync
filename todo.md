@@ -2787,3 +2787,19 @@
 - [x] Update redirect destination from /projects to / (main dashboard)
 - [x] Use polished toast notification instead of error modal
 - [x] Test error handling UX on dev server
+- [ ] Fix GPS marker rendering: return full metadata for trial projects in media.list
+- [ ] Fix email link in EngineeringTriumphEmail.tsx to authenticated project route
+- [ ] Refine auth guard to allow email project links without redirect toast
+- [ ] Remove 'Back Online' popup from entire application
+- [ ] Test incognito user sees map pins, authenticated user lands on project
+- [ ] Add auto-map useEffect for trials with polling (refetchInterval: 2000) and auto-flyto
+- [ ] Fix Engineering Triumph Email link to authenticated project route
+- [ ] Refine auth guard to silently redirect authenticated users from onboarding routes
+- [ ] Remove 'Back Online' popup from entire application
+- [ ] Test: incognito user sees pins auto-drop, authenticated user lands on project
+- [x] Add auto-map useEffect for trials with polling (refetchInterval: 2000) and auto-flyto
+- [x] Fix GPS marker rendering by returning full metadata for trial projects in media.list
+- [x] Fix Engineering Triumph Email link to authenticated project route (/project/${projectId})
+- [x] Refine auth guard to silently redirect authenticated users from onboarding routes
+- [x] Remove 'Back Online' popup from entire application
+- [x] Test combined push: auto-map feature, email links, auth guard, no 'Back Online' popup

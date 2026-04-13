@@ -12,7 +12,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { GlobalBackground } from "./components/GlobalBackground";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
-import { OfflineIndicator } from "./components/OfflineIndicator";
+
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import InviteAccept from "./pages/InviteAccept";
@@ -377,14 +377,7 @@ function ContinuousVersionCheckWrapper() {
   return null;
 }
 
-function OfflineIndicatorWrapper() {
-  const [location] = useLocation();
-  // Marketing pages where the "Back online" banner should not appear
-  const marketingPages = ['/', '/pricing', '/municipal', '/login', '/signup'];
-  const isAuthenticatedRoute = !marketingPages.includes(location);
-  
-  return <OfflineIndicator isAuthenticatedRoute={isAuthenticatedRoute} />;
-}
+
 
 function App() {
   return (
@@ -393,7 +386,7 @@ function App() {
         <TooltipProvider>
           <GlobalBackground />
           <Toaster />
-          <OfflineIndicatorWrapper />
+
           <VersionCheckOnLoginWrapper />
           <ContinuousVersionCheckWrapper />
 
