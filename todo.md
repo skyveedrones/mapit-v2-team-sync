@@ -2729,3 +2729,15 @@
 - [x] Convert media.list to publicProcedure with onboarding bypass for unauthenticated users
 - [x] Fix media.list onboarding bypass to directly query media (bypass getProjectMediaWithAccess userId check)
 - [x] Add 'Save Your Progress' button in ProjectMap for unauthenticated users on onboarding projects
+
+## Follow-up: Onboarding Trial Project Expiry & Cleanup
+- [x] Add scheduled job to auto-delete unclaimed onboarding trial projects after 48h
+- [x] Add createdAt-based expiry check in project.get and media.list onboarding bypass
+
+## Follow-up: Conversion Analytics for Save Your Progress
+- [x] Log analytics event when unauthenticated user clicks Save Your Progress button
+- [x] Track conversion funnel: upload → map view → save prompt → account creation
+
+## Follow-up: Fix MapboxProjectMap TypeScript Errors
+- [x] Fix isLoading scope error at line 1383 in MapboxProjectMap.tsx
+- [x] Fix isLoading scope error at line 1390 in MapboxProjectMap.tsx

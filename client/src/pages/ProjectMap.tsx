@@ -89,6 +89,7 @@ export default function ProjectMap() {
   const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
   const [prestigeClaimed, setPrestigeClaimed] = useState(false);
   const claimProject = trpcClient.onboarding.claimProject.useMutation();
+  const trackFunnelEvent = trpcClient.onboarding.trackEvent.useMutation();
   const isPrestigeEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(prestigeEmail.trim());
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
@@ -98,6 +99,14 @@ export default function ProjectMap() {
     if (!isOnboardingProject || !mapReady) return;
     const timer = setTimeout(() => setShowPrestige(true), 30000);
     return () => clearTimeout(timer);
+  }, [isOnboardingProject, mapReady]);
+
+  // Track map_viewed event once when the onboarding map is ready
+  const mapViewedTracked = useRef(false);
+  useEffect(() => {
+    if (!isOnboardingProject || !mapReady || mapViewedTracked.current) return;
+    mapViewedTracked.current = true;
+    trackFunnelEvent.mutate({ event: 'map_viewed', projectId });
   }, [isOnboardingProject, mapReady]);
 
   // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
@@ -336,7 +345,10 @@ export default function ProjectMap() {
           {/* Save Your Progress — for unauthenticated users on onboarding projects */}
           {isOnboardingProject && !isAuthenticated && (
             <button
-              onClick={() => { window.location.href = getLoginUrl(); }}
+              onClick={() => {
+                trackFunnelEvent.mutate({ event: 'save_progress_clicked', projectId });
+                window.location.href = getLoginUrl();
+              }}
               className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 select-none"
               style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
             >

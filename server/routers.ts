@@ -5355,6 +5355,39 @@ export const appRouter = router({
 
         return { success: true, userId: claimUser.id };
       }),
+
+    /**
+     * Track a conversion funnel event for unauthenticated onboarding users.
+     * Events: 'map_viewed' | 'save_progress_clicked' | 'account_created'
+     * Logs to console for server-side audit and notifies owner on high-value events.
+     */
+    trackEvent: publicProcedure
+      .input(
+        z.object({
+          event: z.enum(['map_viewed', 'save_progress_clicked', 'account_created']),
+          projectId: z.number().optional(),
+          meta: z.record(z.string(), z.string()).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const timestamp = new Date().toISOString();
+        console.log(`[OnboardingFunnel] event=${input.event} projectId=${input.projectId ?? 'n/a'} ts=${timestamp}`, input.meta ?? '');
+
+        // Notify owner when a user clicks Save Your Progress (high-value conversion signal)
+        if (input.event === 'save_progress_clicked') {
+          try {
+            const { notifyOwner } = await import('./_core/notification');
+            await notifyOwner({
+              title: '[Funnel] Trial user clicked Save Your Progress',
+              content: `Project ID: ${input.projectId ?? 'unknown'}\nTimestamp: ${timestamp}`,
+            });
+          } catch (e) {
+            // Non-fatal
+          }
+        }
+
+        return { ok: true };
+      }),
   }),
 
   // ─── Municipal Lead Capture ───
