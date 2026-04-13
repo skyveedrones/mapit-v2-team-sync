@@ -205,7 +205,7 @@ export default function ProjectMap() {
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
     : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
 
-  const { data: mediaItems, isLoading: mediaLoading } = isDemoProject
+  const { data: mediaItems = [], isLoading: mediaLoading } = isDemoProject
     ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
     : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0, refetchInterval: isOnboardingProject ? 2000 : undefined });
 

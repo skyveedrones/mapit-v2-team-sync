@@ -5178,12 +5178,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // Security guard: block authenticated users from creating trial projects
+        // Security guard: block authenticated users who already have projects from creating trial projects
         if (ctx.user) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'Authenticated users cannot create trial projects. Please use your dashboard to start a new project.',
-          });
+          const existingProjects = await getUserProjects(ctx.user.id);
+          if (existingProjects.length > 0) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'Authenticated users cannot create trial projects. Please use your dashboard to start a new project.',
+            });
+          }
         }
         const { ENV } = await import('./_core/env');
         const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);

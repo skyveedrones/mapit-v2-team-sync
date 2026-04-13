@@ -177,6 +177,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [mapLoaded, setMapLoaded] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
     const [enlargedMedia, setEnlargedMedia] = useState<Media | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Overlay state
     const [editMode, setEditMode] = useState(false);
@@ -224,15 +225,17 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: !initialMedia })
       : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !initialMedia });
 
-    // isLoading: false immediately when initialMedia is provided; otherwise wait for tRPC
-    const isLoading = !initialMedia && mediaList === undefined;
+    // Update isLoading state: false immediately when initialMedia is provided; otherwise wait for tRPC
+    useEffect(() => {
+      setIsLoading(!initialMedia && mediaList === undefined);
+    }, [initialMedia, mediaList]);
 
     const mediaWithGPS = useMemo(() => {
       if (initialMedia && initialMedia.length > 0) {
         return initialMedia.filter((m) => m.latitude && m.longitude);
       }
       return mediaList?.filter((m) => m.latitude && m.longitude) || [];
-    }, [initialMedia, mediaList]);
+    }, [initialMedia, mediaList, isLoading]);
 
     const sortedMedia = useMemo(() => {
       return [...mediaWithGPS].sort((a, b) => {
