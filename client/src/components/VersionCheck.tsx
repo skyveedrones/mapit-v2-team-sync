@@ -76,17 +76,19 @@ export default function VersionCheck() {
   };
 
   const handleRefresh = () => {
-    // Preserve the #version hash so Settings returns to the Version tab after reload
-    const base = window.location.pathname + window.location.search;
-    const target = base + '#version';
+    // Unregister service workers first, then force a hard reload with cache-busting
+    const reload = () => {
+      // Add a cache-busting query param so the browser fetches fresh assets
+      const sep = window.location.search ? '&' : '?';
+      window.location.href =
+        window.location.pathname + window.location.search + sep + '_v=' + Date.now() + '#version';
+    };
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => registration.unregister());
-      }).then(() => {
-        window.location.href = target;
-      });
+        registrations.forEach(r => r.unregister());
+      }).finally(reload);
     } else {
-      window.location.href = target;
+      reload();
     }
   };
 
