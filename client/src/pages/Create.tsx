@@ -82,7 +82,9 @@ export default function Create() {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing...");
   const [shake, setShake] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"uploading" | "processing">("uploading");
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uploadPhaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
@@ -180,6 +182,15 @@ export default function Create() {
       // Upload each file as a media record (fire-and-forget for speed,
       // but await at least the first one so the map has a pin on arrival)
       setStatusText("Uploading...");
+      setUploadPhase("uploading");
+      
+      // Start 3-second timer to transition from Uploading to Processing
+      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
+      uploadPhaseTimerRef.current = setTimeout(() => {
+        setUploadPhase("processing");
+        setStatusText("Processing...");
+      }, 3000);
+      
       for (const file of files) {
         try {
           const arrayBuffer = await file.arrayBuffer();
@@ -233,6 +244,9 @@ export default function Create() {
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files ?? []);
+      // Reset upload phase on new file selection
+      setUploadPhase("uploading");
+      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
       if (files.length > 0) processFiles(files);
     },
     [processFiles]

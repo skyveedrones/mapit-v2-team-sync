@@ -2762,3 +2762,9 @@
 - [x] Apply white/10 hover background to Sign In button
 - [x] Keep nav links muted slate (text-muted-foreground) for visual hierarchy
 - [x] Test finalized header on dev server
+## Upload Screen UX Refinement
+- [x] Add upload status state (Uploading vs Processing)
+- [x] Implement 3-second setTimeout to transition from Uploading to Processing
+- [x] Keep text in muted slate style (font-medium)
+- [x] Reset status state on new file selection
+- [x] Test perceived performance UX on dev server
