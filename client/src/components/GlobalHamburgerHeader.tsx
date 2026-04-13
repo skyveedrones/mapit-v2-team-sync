@@ -48,7 +48,7 @@ export const GlobalHamburgerHeader = () => {
   return (
     <header className="sticky top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-border/30">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* LOGO — 48px height with proper padding */}
+        {/* LOGO — 64px height with 8px vertical margin */}
         <div
           className="flex items-center cursor-pointer py-2"
           onClick={() => setLocation("/")}
@@ -56,7 +56,7 @@ export const GlobalHamburgerHeader = () => {
           <img
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
-            className="h-12 w-auto object-contain select-none transition-opacity hover:opacity-80"
+            className="h-16 w-auto object-contain select-none transition-opacity hover:opacity-80"
             draggable={false}
           />
         </div>
@@ -82,12 +82,12 @@ export const GlobalHamburgerHeader = () => {
           />
         </nav>
 
-        {/* RIGHT: Sign In — ghost/outline style */}
+        {/* RIGHT: Sign In — white text, ghost/outline style */}
         <div>
           {!loading && (
             <button
               onClick={handleSignIn}
-              className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200 px-3 py-1.5 rounded-md hover:bg-muted/50"
+              className="text-white hover:text-white/80 font-medium text-sm transition-colors duration-200 px-3 py-1.5 rounded-md hover:bg-white/10"
             >
               Sign In
             </button>

@@ -2755,3 +2755,10 @@
 - [x] Apply ghost/outline button styling to Sign In button
 - [x] Ensure Sign In button does not compete with Start Mapping Free CTA
 - [x] Test header on dev server
+## Finalize Header Styling
+- [x] Increase logo to h-16 (64px) matching footer branding guidelines
+- [x] Maintain header height at h-20 (80px)
+- [x] Change Sign In button to text-white for primary anchor visibility
+- [x] Apply white/10 hover background to Sign In button
+- [x] Keep nav links muted slate (text-muted-foreground) for visual hierarchy
+- [x] Test finalized header on dev server
