@@ -86,7 +86,17 @@ export default function Create() {
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadPhaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const initProject = trpc.onboarding.initProject.useMutation();
+  const initProject = trpc.onboarding.initProject.useMutation({
+    onError: (error) => {
+      // Suppress FORBIDDEN errors from being logged globally
+      // These are expected for authenticated users and handled locally
+      const errorMsg = error.message || String(error);
+      if (errorMsg.includes('FORBIDDEN') || errorMsg.includes('Authenticated users cannot')) {
+        // Mark error as handled so global handler doesn't process it
+        (error as any).__handled = true;
+      }
+    },
+  });
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const utils = trpc.useUtils();
 
