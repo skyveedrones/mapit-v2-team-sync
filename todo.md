@@ -2783,3 +2783,7 @@
 - [x] Add auth guard to onboarding.initProject to block authenticated users
 - [x] Add error handling in Create.tsx to redirect authenticated users to /projects
 - [x] Test security guard on dev server
+- [x] Fix error modal suppression in Create.tsx FORBIDDEN error handling
+- [x] Update redirect destination from /projects to / (main dashboard)
+- [x] Use polished toast notification instead of error modal
+- [x] Test error handling UX on dev server

@@ -216,25 +216,32 @@ export default function Create() {
       setProgress(100);
       setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
     } catch (err) {
-      console.error("[Create] Failed to create project:", err);
-      
       // Check if error is FORBIDDEN (authenticated user trying to create trial project)
       const errorMsg = err instanceof Error ? err.message : String(err);
       const isForbidden = errorMsg.includes('FORBIDDEN') || errorMsg.includes('Authenticated users cannot');
       
       if (isForbidden) {
-        toast("You're already signed in! Taking you to your dashboard...", {
-          duration: 3500,
+        // Suppress error modal and show polished toast instead
+        console.log("[Create] Authenticated user attempted trial project creation, redirecting to dashboard");
+        toast("Welcome back! Redirecting to your projects...", {
+          duration: 2500,
+          position: "bottom-center",
           style: {
-            background: "#111",
-            color: "rgba(255,255,255,0.8)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(10,10,10,0.92)",
+            color: "rgba(255,255,255,0.75)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            borderRadius: "14px",
             fontSize: "13px",
             fontFamily: "Inter, sans-serif",
+            backdropFilter: "blur(20px)",
+            padding: "12px 20px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
           },
         });
-        setTimeout(() => setLocation("/projects"), 1500);
+        // Redirect to main dashboard instead of /projects
+        setTimeout(() => setLocation("/"), 1200);
       } else {
+        console.error("[Create] Failed to create project:", err);
         setProgress(100);
         setTimeout(() => setLocation("/map"), 400);
       }
