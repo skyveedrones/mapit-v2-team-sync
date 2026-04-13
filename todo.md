@@ -2768,3 +2768,15 @@
 - [x] Keep text in muted slate style (font-medium)
 - [x] Reset status state on new file selection
 - [x] Test perceived performance UX on dev server
+## Sequenced Onboarding Magic Flow
+- [ ] Add state management for Magic flow stages (stage1Visible, stage2Visible)
+- [ ] Implement Stage 1: Marker Tooltip with 5-second fade-out timer
+- [ ] Implement Stage 2: Sidebar Magic Popup after Stage 1 fades
+- [ ] Add guard logic to only show for unauthenticated trial projects
+- [ ] Use Jobsian glass effect styling (bg-white/80, backdrop-blur-md, text-muted-foreground)
+- [ ] Ensure smooth transitions with CSS opacity or Framer Motion
+- [ ] Test sequencing on dev server
+- [x] Implement sequenced Magic flow Stage 1: Marker Tooltip with 5s fade-out
+- [x] Implement sequenced Magic flow Stage 2: Sidebar Magic Popup
+- [x] Add guard logic to only show Magic flow for unauthenticated trial projects
+- [x] Test Magic flow sequencing on dev server

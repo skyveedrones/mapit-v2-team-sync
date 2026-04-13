@@ -118,6 +118,12 @@ export default function ProjectMap() {
     conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 60000);
   };
 
+  // ── Magic Flow (sequenced onboarding) ──────────────────────────────────────
+  // Stage 1: Marker Tooltip (5s fade-out) → Stage 2: Sidebar Magic Popup
+  const [stage1Visible, setStage1Visible] = useState(false);
+  const [stage2Visible, setStage2Visible] = useState(false);
+  const magicFlowStarted = useRef(false);
+
   // ── Discovery Hint (onboarding flow) ─────────────────────────────────────
   // Fades in 3s after mapReady, dismissed by marker click or Prestige modal.
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
@@ -126,7 +132,22 @@ export default function ProjectMap() {
   const dismissDiscoveryHint = () => {
     discoveryDismissed.current = true;
     setShowDiscoveryHint(false);
+    setStage1Visible(false);
+    setStage2Visible(false);
   };
+
+  // Magic Flow: Stage 1 (Marker Tooltip) shows immediately, fades after 5s
+  useEffect(() => {
+    if (!isOnboardingProject || !mapReady || magicFlowStarted.current) return;
+    magicFlowStarted.current = true;
+    setStage1Visible(true);
+    const stage1Timer = setTimeout(() => setStage1Visible(false), 5000);
+    const stage2Timer = setTimeout(() => setStage2Visible(true), 5500);
+    return () => {
+      clearTimeout(stage1Timer);
+      clearTimeout(stage2Timer);
+    };
+  }, [isOnboardingProject, mapReady]);
 
   // Show hint 3s after map is ready (onboarding only)
   useEffect(() => {
@@ -137,9 +158,13 @@ export default function ProjectMap() {
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
-  // Dismiss hint when Prestige modal fires
+  // Dismiss Magic flow and hint when Prestige modal fires
   useEffect(() => {
-    if (showPrestige) dismissDiscoveryHint();
+    if (showPrestige) {
+      dismissDiscoveryHint();
+      setStage1Visible(false);
+      setStage2Visible(false);
+    }
   }, [showPrestige]);
 
   // Poll for map readiness from the production component
@@ -156,6 +181,8 @@ export default function ProjectMap() {
   // Dismiss Prestige and start 60s conversion timer
   const handlePrestigeDismiss = () => {
     setShowPrestige(false);
+    setStage1Visible(false);
+    setStage2Visible(false);
     startConversionTimer();
   };
 
@@ -580,6 +607,71 @@ export default function ProjectMap() {
                 Maybe later
               </button>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Magic Flow Stage 1: Marker Tooltip (5s fade-out) ── */}
+      <AnimatePresence>
+        {stage1Visible && isOnboardingProject && !isAuthenticated && (
+          <motion.div
+            key="magic-stage1"
+            initial={{ opacity: 0, scale: 0.92, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: -8 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="fixed top-[180px] left-8 z-[9990] pointer-events-auto"
+          >
+            <div
+              className="flex flex-col items-center justify-center gap-3 px-6 py-6 rounded-2xl text-center select-none"
+              style={{
+                width: "192px",
+                background: "rgba(255,255,255,0.80)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.2)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              <MapPin className="w-5 h-5 text-emerald-500 flex-shrink-0 animate-pulse" />
+              <p className="text-slate-600 text-xs font-medium leading-relaxed">
+                The magic is in the coordinates.<br />
+                <span className="text-slate-500">Click the marker to reveal the image</span>
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Magic Flow Stage 2: Sidebar Magic Popup (after Stage 1 fades) ── */}
+      <AnimatePresence>
+        {stage2Visible && isOnboardingProject && !isAuthenticated && (
+          <motion.div
+            key="magic-stage2"
+            initial={{ opacity: 0, scale: 0.92, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: -8 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="fixed bottom-8 right-8 z-[9990] pointer-events-auto"
+          >
+            <div
+              className="flex flex-col items-start justify-start gap-3 px-6 py-6 rounded-2xl text-left select-none"
+              style={{
+                width: "240px",
+                background: "rgba(255,255,255,0.80)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.2)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              <p className="text-slate-600 text-xs font-medium leading-relaxed">
+                Open the side bar for more magic — add overlays and measure area.
+              </p>
+              <p className="text-slate-400 text-xs">Look for the toggle on the right →</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
