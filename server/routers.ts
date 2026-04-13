@@ -448,6 +448,41 @@ function hasRequiredRole(userRole: string | null, requiredRole: string): boolean
 export const appRouter = router({
   system: systemRouter,
   admin: adminRouter,
+
+  contact: router({
+    send: publicProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100),
+        email: z.string().email(),
+        message: z.string().min(1).max(5000),
+      }))
+      .mutation(async ({ input }) => {
+        const { sendEmail } = await import('./_core/email');
+        const html = `
+          <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+            <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: #0A0A0A;">New message from ${input.name}</h2>
+            <p style="margin: 0 0 24px 0; font-size: 14px; color: #6b7280;">via MAPIT Contact Form</p>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+              <tr><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #6b7280; width: 80px;">From</td><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #0A0A0A;">${input.name}</td></tr>
+              <tr><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #6b7280;">Email</td><td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #0A0A0A;"><a href="mailto:${input.email}" style="color: #10b981; text-decoration: none;">${input.email}</a></td></tr>
+            </table>
+            <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+              <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #374151; white-space: pre-wrap;">${input.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #9ca3af;">Sent via MAPIT · mapit.skyveedrones.com</p>
+          </div>
+        `;
+        const sent = await sendEmail({
+          to: 'clay@skyveedrones.com',
+          subject: `[MAPIT Support] New Message from ${input.name}`,
+          html,
+        });
+        if (!sent) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to send message. Please try again.' });
+        }
+        return { success: true };
+      }),
+  }),
   
   users: router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {

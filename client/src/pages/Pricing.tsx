@@ -13,6 +13,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import { ContactModal } from "@/components/ContactModal";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
 const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
@@ -127,6 +128,7 @@ const TIERS = [
 export default function Pricing() {
   const [annual, setAnnual] = useState(false);
   const [loadingTierId, setLoadingTierId] = useState<string | null>(null);
+  const [contactOpen, setContactOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const createPortalSession = trpc.payment.createPortalSession.useMutation();
@@ -138,7 +140,7 @@ export default function Pricing() {
 
   const handleCTA = async (tier: (typeof TIERS)[0]) => {
     if (tier.action === "contact") {
-      window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Inquiry";
+      setContactOpen(true);
       return;
     }
     if (!user) {
@@ -415,6 +417,9 @@ export default function Pricing() {
           </button>
         </div>
       )}
+
+      {/* Contact Modal */}
+      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} dark />
     </div>
   );
 }

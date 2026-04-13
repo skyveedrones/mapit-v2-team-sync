@@ -2815,3 +2815,9 @@
 - [x] Update shared/planLimits.ts with new tier names
 - [ ] Run database migration to convert existing 'business' users to 'scale' (no users currently on business tier)
 - [ ] Test pricing page and admin dashboard with new tier names
+
+## Contact Modal (Resend Integration)
+- [x] Add tRPC contact.send procedure using Resend to send to clay@skyveedrones.com
+- [x] Build Jobsian ContactModal component (Name, Email, Message fields)
+- [x] Wire Contact Modal to footer 'Contact Support' link and Civic tier CTA
+- [x] Add success state with personalized message and loading state

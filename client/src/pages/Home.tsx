@@ -298,7 +298,7 @@ export default function Home() {
       <Footer onContactClick={() => setShowContactModal(true)} />
 
       {/* Contact Modal */}
-      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
+      <ContactModal open={showContactModal} onClose={() => setShowContactModal(false)} />
     </div>
   );
 }
