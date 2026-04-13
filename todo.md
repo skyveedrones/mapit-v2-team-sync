@@ -2701,3 +2701,14 @@
 ## Start Mapping Free Flow Bug
 - [ ] Investigate why flow does not use original project mapping tree
 - [ ] Investigate why GPS marker points are not being created
+
+## Map Sidebar Reset View Button
+- [ ] Add Reset View button to map sidebar
+- [ ] Button triggers fitBounds or flyTo to re-center on project markers
+- [ ] Button appears above or below existing sidebar controls
+
+## Quick Fixes (No-Code / ~2-3 hrs)
+- [x] Remove or hide all dead footer links (replace # with real URLs or remove)
+- [x] Suppress "Back online" status banner on marketing pages (homepage, pricing, municipal)
+- [x] Fix contact email in footer (show real email with mailto: link)
+- [x] Add favicon (32x32) and og:image (1200x630px) meta tags to <head>

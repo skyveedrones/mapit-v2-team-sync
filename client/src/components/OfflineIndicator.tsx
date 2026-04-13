@@ -5,19 +5,25 @@ import { useEffect, useState } from "react";
 /**
  * Displays an indicator when the user is offline
  * Shows a toast-style notification at the top of the screen
+ * Suppressed on marketing pages (home, pricing, municipal) to avoid implying downtime
  */
-export function OfflineIndicator() {
+export function OfflineIndicator({ isAuthenticatedRoute = true }: { isAuthenticatedRoute?: boolean }) {
   const isOnline = useOnlineStatus();
   const [showOnlineToast, setShowOnlineToast] = useState(false);
 
   useEffect(() => {
-    // Show a brief "Back online" message when connection is restored
-    if (isOnline && !showOnlineToast) {
+    // Show a brief "Back online" message when connection is restored (app routes only)
+    if (isOnline && !showOnlineToast && isAuthenticatedRoute) {
       setShowOnlineToast(true);
       const timer = setTimeout(() => setShowOnlineToast(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [isOnline]);
+  }, [isOnline, isAuthenticatedRoute]);
+
+  // Don't show on marketing pages
+  if (!isAuthenticatedRoute) {
+    return null;
+  }
 
   // Don't show anything when online (unless showing the "back online" toast)
   if (isOnline && !showOnlineToast) {

@@ -377,6 +377,15 @@ function ContinuousVersionCheckWrapper() {
   return null;
 }
 
+function OfflineIndicatorWrapper() {
+  const [location] = useLocation();
+  // Marketing pages where the "Back online" banner should not appear
+  const marketingPages = ['/', '/pricing', '/municipal', '/login', '/signup'];
+  const isAuthenticatedRoute = !marketingPages.includes(location);
+  
+  return <OfflineIndicator isAuthenticatedRoute={isAuthenticatedRoute} />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -384,7 +393,7 @@ function App() {
         <TooltipProvider>
           <GlobalBackground />
           <Toaster />
-          <OfflineIndicator />
+          <OfflineIndicatorWrapper />
           <VersionCheckOnLoginWrapper />
           <ContinuousVersionCheckWrapper />
 
