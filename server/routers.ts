@@ -858,7 +858,8 @@ export const appRouter = router({
     }),
 
     // Get a single project by ID (owner or collaborator)
-    get: protectedProcedure
+    // Uses publicProcedure to allow unauthenticated access to onboarding trial projects
+    get: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
         // Helper: fetch overlays for a project
@@ -1436,17 +1437,20 @@ export const appRouter = router({
         return mediaList || [];
       }),
     // List all media for a project (owner or collaborator)
-    list: protectedProcedure
+    // Uses publicProcedure to allow unauthenticated access to onboarding trial projects
+    list: publicProcedure
       .input(z.object({ projectId: z.number(), flightId: z.number().optional(), includeFlightMedia: z.boolean().optional() }))
       .query(async ({ ctx, input }) => {
         // Allow public access to demo project (ID: 1)
         let hasAccess = input.projectId === 1;
         
         // Allow public access to onboarding funnel projects (unauthenticated users)
+        let isOnboardingBypass = false;
         if (!hasAccess && !ctx.user) {
           const onboardingProject = await getProjectById(input.projectId);
           if (onboardingProject?.description === 'Created via onboarding funnel — trial project') {
             hasAccess = true;
+            isOnboardingBypass = true;
           }
         }
         
@@ -1463,13 +1467,20 @@ export const appRouter = router({
           });
         }
         
-        // Use the access-aware function to get media
-        // For onboarding projects with no user, pass 0 (will match public access logic)
-        const userId = ctx.user?.id || 0;
-        const media = await getProjectMediaWithAccess(input.projectId, userId);
+        // For onboarding bypass (unauthenticated), query media directly by projectId
+        // getProjectMediaWithAccess requires a valid userId so we bypass it here
+        let mediaResult;
+        if (isOnboardingBypass) {
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+          mediaResult = await db.select().from(media).where(and(eq(media.projectId, input.projectId), isNull(media.deletedAt))).orderBy(desc(media.createdAt));
+        } else {
+          const userId = ctx.user?.id || 0;
+          mediaResult = await getProjectMediaWithAccess(input.projectId, userId);
+        }
         
         // Normalize GPS coordinates from strings to numbers
-        const normalizedMedia = normalizeMediaArrayGPS(media);
+        const normalizedMedia = normalizeMediaArrayGPS(mediaResult);
         
         // Filter by flight if flightId provided
         if (input.flightId !== undefined) {

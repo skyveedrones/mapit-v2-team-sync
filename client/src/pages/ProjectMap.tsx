@@ -49,7 +49,7 @@ export default function ProjectMap() {
   const projectId = parseInt(id || "0", 10);
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const isDemoProject = projectId === 1;
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
@@ -333,14 +333,14 @@ export default function ProjectMap() {
               </div>
             </div>
           </div>
-          {/* Start Your Trial — bottom of HUD, onboarding only */}
-          {isOnboardingProject && (
+          {/* Save Your Progress — for unauthenticated users on onboarding projects */}
+          {isOnboardingProject && !isAuthenticated && (
             <button
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="mt-3 w-full bg-white text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 hover:bg-gray-100 select-none"
+              className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 select-none"
               style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
             >
-              Start Your Trial
+              Save Your Progress
             </button>
           )}
         </div>

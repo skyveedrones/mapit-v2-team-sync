@@ -2722,3 +2722,10 @@
 - [x] Add navigation items: How It Works (anchor), Municipal, Pricing
 - [x] Style Sign In button as muted outline/ghost (not primary green)
 - [x] Premium refinements: no dividers, generous spacing (gap-12), small logo (h-8), subtle active state (2px dot)
+
+## Fix Start Mapping Free Flow (Unauthenticated Onboarding)
+- [x] Fix upload redirect: redirect to /project/[id]/map instead of /sign-in after file upload
+- [x] Convert project.get to publicProcedure to allow unauthenticated access to onboarding projects
+- [x] Convert media.list to publicProcedure with onboarding bypass for unauthenticated users
+- [x] Fix media.list onboarding bypass to directly query media (bypass getProjectMediaWithAccess userId check)
+- [x] Add 'Save Your Progress' button in ProjectMap for unauthenticated users on onboarding projects
