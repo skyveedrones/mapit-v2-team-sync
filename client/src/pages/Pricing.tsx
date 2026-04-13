@@ -26,7 +26,7 @@ const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null>
 const TIER_KEY_MAP: Record<string, string> = {
   starter: "experience",
   professional: "precision",
-  business: "scale",
+  scale: "scale",
   enterprise: "civic",
   free: "free",
 };

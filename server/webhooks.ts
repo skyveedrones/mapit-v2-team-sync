@@ -35,13 +35,13 @@ export async function handleCheckoutSessionCompleted(event: WebhookEvent) {
   const priceId = subscription.items.data[0]?.price.id;
 
   // Map price ID to plan tier
-  let planTier: "free" | "starter" | "professional" | "business" | "enterprise" = "free";
+  let planTier: "free" | "starter" | "professional" | "scale" | "enterprise" = "free";
   if (priceId?.includes("starter")) {
     planTier = "starter";
   } else if (priceId?.includes("professional")) {
     planTier = "professional";
-  } else if (priceId?.includes("business")) {
-    planTier = "business";
+  } else if (priceId?.includes("business") || priceId?.includes("scale")) {
+    planTier = "scale";
   }
 
   const db = await getDb();
@@ -82,13 +82,13 @@ export async function handleSubscriptionUpdated(event: WebhookEvent) {
   const priceId = subscription.items.data[0]?.price.id;
 
   // Map price ID to plan tier
-  let planTier: "free" | "starter" | "professional" | "business" | "enterprise" = "free";
+  let planTier: "free" | "starter" | "professional" | "scale" | "enterprise" = "free";
   if (priceId?.includes("starter")) {
     planTier = "starter";
   } else if (priceId?.includes("professional")) {
     planTier = "professional";
-  } else if (priceId?.includes("business")) {
-    planTier = "business";
+  } else if (priceId?.includes("business") || priceId?.includes("scale")) {
+    planTier = "scale";
   }
 
   const db = await getDb();

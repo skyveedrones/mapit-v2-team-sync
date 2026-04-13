@@ -59,7 +59,7 @@ const TIER_DISPLAY: Record<string, { label: string; color: string; icon: typeof 
   free: { label: "Free Trial", color: "bg-slate-600", icon: Clock },
   starter: { label: "Starter", color: "bg-blue-600", icon: CheckCircle2 },
   professional: { label: "Professional", color: "bg-emerald-600", icon: Crown },
-  business: { label: "Business", color: "bg-amber-600", icon: Crown },
+  scale: { label: "Scale", color: "bg-amber-600", icon: Crown },
   enterprise: { label: "Enterprise", color: "bg-purple-600", icon: Shield },
 };
 

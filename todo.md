@@ -2804,3 +2804,14 @@
 - [x] Remove 'Back Online' popup from entire application
 - [x] Test combined push: auto-map feature, email links, auth guard, no 'Back Online' popup
 - [x] Upgrade 'Welcome back' toast to high-end Jobsian transition (larger, slower, centered, glass-morphism)
+
+## Subscription Tier Rename (business → scale)
+- [x] Update Drizzle schema to replace 'business' with 'scale' in subscriptionTier enum
+- [x] Update TypeScript types and Zod schemas for subscriptionTier
+- [x] Search codebase for 'business' tier references and update conditional logic
+- [x] Update Pricing.tsx to display new tier names (Free, Starter, Professional, Scale, Enterprise)
+- [x] Update Account.tsx and Billing.tsx with new tier display names
+- [x] Update server/products.ts, server/webhooks.ts, server/stripe-webhook.ts
+- [x] Update shared/planLimits.ts with new tier names
+- [ ] Run database migration to convert existing 'business' users to 'scale' (no users currently on business tier)
+- [ ] Test pricing page and admin dashboard with new tier names

@@ -44,7 +44,7 @@ const PLAN_FEATURES = {
       "Priority Email Support",
     ],
   },
-  business: {
+  scale: {
     name: "Scale",
     price: "$349",
     period: "/month",

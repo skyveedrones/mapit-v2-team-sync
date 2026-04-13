@@ -9,16 +9,16 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 /**
  * Map Stripe price IDs to subscription tiers
  */
-const PRICE_TO_TIER: Record<string, "starter" | "professional" | "business"> = {
+const PRICE_TO_TIER: Record<string, "starter" | "professional" | "scale"> = {
   // Experience tier (internal: starter)
   "price_1T6Xu3GEMT6mikKwPibBZGCg": "starter",  // monthly
   "price_1T6Xu4GEMT6mikKwqmc0MCVL": "starter",  // annual
   // Precision tier (internal: professional)
   "price_1T6Xu4GEMT6mikKwINYKHcuI": "professional",  // monthly
   "price_1T6Xu4GEMT6mikKwqgE63wB7": "professional",  // annual
-  // Scale tier (internal: business)
-  "price_1T6Xu5GEMT6mikKwaxgTw2dy": "business",  // monthly
-  "price_1T6Xu5GEMT6mikKwCUBCrmlB": "business",  // annual
+  // Scale tier (internal: scale)
+  "price_1T6Xu5GEMT6mikKwaxgTw2dy": "scale",  // monthly
+  "price_1T6Xu5GEMT6mikKwCUBCrmlB": "scale",  // annual
   // Civic (enterprise) uses custom pricing — no price IDs
 };
 
@@ -42,7 +42,7 @@ function extractBillingPeriod(
  */
 function extractSubscriptionTier(
   subscription: Stripe.Subscription
-): "starter" | "professional" | "business" | "free" {
+): "starter" | "professional" | "scale" | "free" {
   if (!subscription.items.data[0]) return "free";
 
   const priceId = subscription.items.data[0].price.id;
