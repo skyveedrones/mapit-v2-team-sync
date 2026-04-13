@@ -272,6 +272,7 @@ export default function ProjectMap() {
           heightClass="h-screen"
           showFullScreenLink={false}
           projectLocation={(project as any)?.location}
+          initialMedia={geotaggedMedia.length > 0 ? geotaggedMedia : undefined}
         />
       </div>
 

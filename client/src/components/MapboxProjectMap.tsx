@@ -97,6 +97,18 @@ interface MapboxProjectMapProps {
   showFullScreenLink?: boolean;
   /** Raw "lat, lng" string from project.location — used to suppress No GPS overlay and place primary marker */
   projectLocation?: string | null;
+  /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
+  initialMedia?: Array<{
+    id: number;
+    filename: string;
+    url: string;
+    thumbnailUrl?: string | null;
+    mediaType: string;
+    latitude: number | string;
+    longitude: number | string;
+    altitude?: number | string | null;
+    capturedAt?: string | null;
+  }>;
 }
 
 // ── Corner labels & colors ──────────────────────────────────────────────────
@@ -145,6 +157,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       heightClass = "h-[600px]",
       showFullScreenLink = true,
       projectLocation,
+      initialMedia,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -206,14 +219,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
     const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
 
-    // ── Fetch media ─────────────────────────────────────────────────────────
-    const { data: mediaList, isLoading } = isDemoProject
-      ? trpc.media.listDemo.useQuery({ projectId, flightId })
-      : trpc.media.list.useQuery({ projectId, flightId });
+    // ── Fetch media (skipped when initialMedia is provided) ─────────────────
+    const { data: mediaList } = isDemoProject
+      ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: !initialMedia })
+      : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !initialMedia });
+
+    // isLoading: false immediately when initialMedia is provided; otherwise wait for tRPC
+    const isLoading = !initialMedia && mediaList === undefined;
 
     const mediaWithGPS = useMemo(() => {
+      if (initialMedia && initialMedia.length > 0) {
+        return initialMedia.filter((m) => m.latitude && m.longitude);
+      }
       return mediaList?.filter((m) => m.latitude && m.longitude) || [];
-    }, [mediaList]);
+    }, [initialMedia, mediaList]);
 
     const sortedMedia = useMemo(() => {
       return [...mediaWithGPS].sort((a, b) => {
@@ -1315,7 +1334,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
        // ── Loading state ───────────────────────────────────────────────
     // NOTE: We do NOT early-return on isLoading here.
     // The map container must always be in the DOM so the useEffect can attach Mapbox to it.
-    // We show a skeleton overlay on top of the map container while loading.    }
+    // We show a skeleton overlay on top of the map container while loading.
 
     // ── Render ──────────────────────────────────────────────────────────────
     return (
