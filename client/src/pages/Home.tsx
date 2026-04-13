@@ -10,8 +10,8 @@ import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ChevronRight, Pause, Play } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 
 const fadeInUp = {
@@ -62,6 +62,20 @@ const workflowSteps = [
 export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleVideo = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "MAPIT — Your job site. From above. In minutes.";
@@ -75,6 +89,7 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Full-bleed video */}
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
@@ -86,6 +101,25 @@ export default function Home() {
             type="video/mp4"
           />
         </video>
+
+        {/* WCAG: Pause/Play control — bottom-right, semi-transparent */}
+        <button
+          onClick={toggleVideo}
+          aria-label={isPlaying ? "Pause background video" : "Play background video"}
+          className="absolute bottom-6 right-6 z-30 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
+          style={{
+            background: "rgba(255,255,255,0.10)",
+            border: "1px solid rgba(255,255,255,0.18)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.20)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.10)"; }}
+        >
+          {isPlaying
+            ? <Pause className="w-4 h-4 text-white" strokeWidth={1.5} />
+            : <Play className="w-4 h-4 text-white" strokeWidth={1.5} />}
+        </button>
         {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
         <div className="absolute inset-0 bg-black/55" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
@@ -251,6 +285,64 @@ export default function Home() {
                   <p className="text-gray-400 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Align them with two points.</p>
                 </div>
               </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-center text-xs font-bold tracking-[0.2em] uppercase text-white/30 mb-16"
+            >
+              What Our Partners Are Saying
+            </motion.p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  quote: "MAPIT turned a 3-day survey into a 3-hour project. The centimetre-level precision is unmatched for our city infrastructure projects.",
+                  name: "Director of Public Works",
+                  org: "Arlington, TX",
+                },
+                {
+                  quote: "Sharing 3D models with stakeholders is now instant. It's completely revolutionized our municipal planning meetings and public comment process.",
+                  name: "Urban Planner",
+                  org: "City of Seattle, WA",
+                },
+                {
+                  quote: "We needed data immediately after the storm. MAPIT delivered actionable map data in hours, not weeks, giving our emergency team the exact coordinates they needed.",
+                  name: "GIS Specialist",
+                  org: "County Emergency Management",
+                },
+              ].map((t, i) => (
+                <motion.div
+                  key={i}
+                  variants={fadeInUp}
+                  className="flex flex-col gap-6 p-8"
+                  style={{
+                    background: "rgba(255,255,255,0.025)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: "16px",
+                  }}
+                >
+                  {/* Opening quote mark */}
+                  <span className="text-4xl leading-none text-white/15 font-serif select-none">&ldquo;</span>
+                  <p className="text-white/70 text-sm leading-relaxed flex-1">{t.quote}</p>
+                  <div>
+                    <p className="text-white font-semibold text-sm">{t.name}</p>
+                    <p className="text-white/35 text-xs mt-0.5">{t.org}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         </div>

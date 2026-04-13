@@ -2821,3 +2821,7 @@
 - [x] Build Jobsian ContactModal component (Name, Email, Message fields)
 - [x] Wire Contact Modal to footer 'Contact Support' link and Civic tier CTA
 - [x] Add success state with personalized message and loading state
+
+## WCAG Hero Video Control & Testimonials
+- [x] Add pause/play button overlay on hero background video (bottom-right, semi-transparent, aria-label)
+- [x] Add testimonials section with 3 placeholder quotes above the homepage CTA
