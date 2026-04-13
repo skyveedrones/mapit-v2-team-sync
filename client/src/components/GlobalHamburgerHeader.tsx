@@ -24,6 +24,9 @@ export const GlobalHamburgerHeader = () => {
   // Determine if we should show the navigation (hide on app routes like /dashboard, /project, etc.)
   const isAppRoute = location.startsWith("/dashboard") || location.startsWith("/project");
 
+  // Dark pages use black background; light pages use white frosted glass
+  const isDarkPage = location === "/pricing" || location === "/municipal";
+
   // Check which nav item is active
   const isHowItWorksActive = location === "/" && false; // Only active when user scrolls to section
   const isMunicipalActive = location === "/municipal";
@@ -36,19 +39,30 @@ export const GlobalHamburgerHeader = () => {
   const NavLink = ({ label, onClick, isActive }: { label: string; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
-      className="relative text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200 group"
+      className="relative font-medium text-sm transition-colors duration-200 group"
+      style={{ color: isDarkPage ? "rgba(255,255,255,0.55)" : undefined }}
     >
       {label}
       {isActive && (
-        <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-foreground rounded-full mt-1" />
+        <span
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full mt-1"
+          style={{ background: isDarkPage ? "#10b981" : "currentColor" }}
+        />
       )}
     </button>
   );
 
   return (
-    <header className="sticky top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-border/30">
+    <header
+      className="sticky top-0 left-0 w-full z-50 backdrop-blur-md border-b"
+      style={
+        isDarkPage
+          ? { background: "rgba(10,10,10,0.85)", borderColor: "rgba(255,255,255,0.07)" }
+          : { background: "rgba(255,255,255,0.70)", borderColor: "rgba(0,0,0,0.08)" }
+      }
+    >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* LOGO — 64px height with 8px vertical margin */}
+        {/* LOGO — 64px height */}
         <div
           className="flex items-center cursor-pointer py-2"
           onClick={() => setLocation("/")}
@@ -61,7 +75,7 @@ export const GlobalHamburgerHeader = () => {
           />
         </div>
 
-        {/* CENTER: Navigation Items — generous spacing, no dividers */}
+        {/* CENTER: Navigation Items */}
         <nav className="hidden md:flex items-center gap-12">
           {location === "/" && (
             <NavLink
@@ -82,15 +96,34 @@ export const GlobalHamburgerHeader = () => {
           />
         </nav>
 
-        {/* RIGHT: Sign In — white text, ghost/outline style */}
+        {/* RIGHT: Sign In / Dashboard — high-contrast button adapts to page theme */}
         <div>
           {!loading && (
-            <button
-              onClick={handleSignIn}
-              className="text-white hover:text-white/80 font-medium text-sm transition-colors duration-200 px-3 py-1.5 rounded-md hover:bg-white/10"
-            >
-              Sign In
-            </button>
+            isAuthenticated ? (
+              <button
+                onClick={handleDashboard}
+                className="font-semibold text-sm transition-all duration-200 px-5 py-2.5 rounded-lg active:scale-[0.97]"
+                style={
+                  isDarkPage
+                    ? { background: "#ffffff", color: "#0A0A0A" }
+                    : { background: "#0A0A0A", color: "#ffffff" }
+                }
+              >
+                Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                className="font-semibold text-sm transition-all duration-200 px-5 py-2.5 rounded-lg active:scale-[0.97]"
+                style={
+                  isDarkPage
+                    ? { background: "#ffffff", color: "#0A0A0A" }
+                    : { background: "#0A0A0A", color: "#ffffff" }
+                }
+              >
+                Sign In
+              </button>
+            )
           )}
         </div>
       </div>

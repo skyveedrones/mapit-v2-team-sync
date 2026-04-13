@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -191,20 +191,6 @@ export default function Pricing() {
           Your complimentary experience has concluded. Upgrade to Precision to keep your projects.
         </div>
       )}
-      {/* ── Nav ── */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
-        <button
-          onClick={() => setLocation("/")}
-          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors duration-200 text-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-        <span className="text-white text-lg font-bold tracking-tight">
-          MAP<span className="text-emerald-400">i</span>T
-        </span>
-        <div className="w-16" />
-      </nav>
 
       {/* ── Hero ── */}
       <div className="text-center pt-16 pb-10 px-6">
