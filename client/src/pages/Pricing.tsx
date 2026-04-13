@@ -89,7 +89,7 @@ const TIERS = [
     trialTag: false,
     badge: null,
     description:
-      "Global scale. Unlimited stakeholder viewing, API access, and priority processing for organizations that shape the world.",
+      "Global scale. Unlimited stakeholder views, API access, and priority processing for world-shaping organizations.",
     specs: [
       "1.5 TB Storage",
       "Unlimited Stakeholder Viewing",
@@ -330,8 +330,8 @@ export default function Pricing() {
                 )}
               </div>
 
-              {/* Description */}
-              <p className="text-white/42 text-sm leading-relaxed mb-5">
+              {/* Description — fixed height so CTA buttons stay level across all cards */}
+              <p className="text-white/42 text-sm leading-relaxed mb-5" style={{ minHeight: "4.5rem" }}>
                 {tier.description}
               </p>
 
