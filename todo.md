@@ -2780,3 +2780,6 @@
 - [x] Implement sequenced Magic flow Stage 2: Sidebar Magic Popup
 - [x] Add guard logic to only show Magic flow for unauthenticated trial projects
 - [x] Test Magic flow sequencing on dev server
+- [x] Add auth guard to onboarding.initProject to block authenticated users
+- [x] Add error handling in Create.tsx to redirect authenticated users to /projects
+- [x] Test security guard on dev server

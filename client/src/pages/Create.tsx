@@ -217,8 +217,27 @@ export default function Create() {
       setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
     } catch (err) {
       console.error("[Create] Failed to create project:", err);
-      setProgress(100);
-      setTimeout(() => setLocation("/map"), 400);
+      
+      // Check if error is FORBIDDEN (authenticated user trying to create trial project)
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const isForbidden = errorMsg.includes('FORBIDDEN') || errorMsg.includes('Authenticated users cannot');
+      
+      if (isForbidden) {
+        toast("You're already signed in! Taking you to your dashboard...", {
+          duration: 3500,
+          style: {
+            background: "#111",
+            color: "rgba(255,255,255,0.8)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            fontSize: "13px",
+            fontFamily: "Inter, sans-serif",
+          },
+        });
+        setTimeout(() => setLocation("/projects"), 1500);
+      } else {
+        setProgress(100);
+        setTimeout(() => setLocation("/map"), 400);
+      }
     }
   }, [initProject, uploadMedia, setLocation, triggerShake]);
 
