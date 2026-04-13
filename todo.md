@@ -2697,3 +2697,7 @@
 
 ## Discovery Hint Precision Placement
 - [x] Moved Discovery Hint from right-8 to right-[420px] — sits 20px left of Overlay Manager sidebar edge
+
+## Start Mapping Free Flow Bug
+- [ ] Investigate why flow does not use original project mapping tree
+- [ ] Investigate why GPS marker points are not being created

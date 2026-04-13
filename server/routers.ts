@@ -877,10 +877,23 @@ export const appRouter = router({
             return { ...demoProject, logoUrl, overlays, accessRole: 'demo' as const, isDemoProject: true };
           }
         }
+
+        // Allow public (unauthenticated) access to onboarding funnel projects.
+        // These are created under the owner account and are intentionally public.
+        const project = await getProjectById(input.id);
+        const isOnboardingProject = project?.description === 'Created via onboarding funnel — trial project';
+        
+        if (isOnboardingProject) {
+          const overlays = await fetchOverlays(project!.id);
+          return { ...project!, overlays, accessRole: 'demo' as const };
+        }
+        
+        if (!ctx.user) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Please login (10001)' });
+        }
         
         // WEBMASTER GLOBAL ACCESS: Allow webmaster to view all projects
         if (ctx.user.role === 'webmaster') {
-          const project = await getProjectById(input.id);
           if (project) {
             const overlays = await fetchOverlays(project.id);
             return { ...project, logoUrl: project.logoUrl, overlays, accessRole: 'webmaster' as const };
@@ -1429,11 +1442,19 @@ export const appRouter = router({
         // Allow public access to demo project (ID: 1)
         let hasAccess = input.projectId === 1;
         
+        // Allow public access to onboarding funnel projects (unauthenticated users)
+        if (!hasAccess && !ctx.user) {
+          const onboardingProject = await getProjectById(input.projectId);
+          if (onboardingProject?.description === 'Created via onboarding funnel — trial project') {
+            hasAccess = true;
+          }
+        }
+        
         // Check if user has access (owner, collaborator, or client user)
-        if (!hasAccess) {
+        if (!hasAccess && ctx.user) {
           hasAccess = await userHasProjectAccess(input.projectId, ctx.user.id);
         }
-        const hasClientAccess = await userHasClientProjectAccess(ctx.user.id, input.projectId);
+        const hasClientAccess = ctx.user ? await userHasClientProjectAccess(ctx.user.id, input.projectId) : false;
         
         if (!hasAccess && !hasClientAccess) {
           throw new TRPCError({
@@ -1443,7 +1464,9 @@ export const appRouter = router({
         }
         
         // Use the access-aware function to get media
-        const media = await getProjectMediaWithAccess(input.projectId, ctx.user.id);
+        // For onboarding projects with no user, pass 0 (will match public access logic)
+        const userId = ctx.user?.id || 0;
+        const media = await getProjectMediaWithAccess(input.projectId, userId);
         
         // Normalize GPS coordinates from strings to numbers
         const normalizedMedia = normalizeMediaArrayGPS(media);
