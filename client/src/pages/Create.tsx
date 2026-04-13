@@ -248,12 +248,12 @@ export default function Create() {
             boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
           },
         });
-        // Redirect to main dashboard instead of /projects
-        setTimeout(() => setLocation("/"), 1200);
+        // Redirect to authenticated user dashboard
+        setTimeout(() => setLocation("/dashboard"), 1200);
       } else {
         console.error("[Create] Failed to create project:", err);
         setProgress(100);
-        setTimeout(() => setLocation("/map"), 400);
+        setTimeout(() => setLocation("/dashboard"), 400);
       }
     }
   }, [initProject, uploadMedia, setLocation, triggerShake]);
