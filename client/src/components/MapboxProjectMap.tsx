@@ -97,6 +97,8 @@ interface MapboxProjectMapProps {
   showFullScreenLink?: boolean;
   /** Raw "lat, lng" string from project.location — used to suppress No GPS overlay and place primary marker */
   projectLocation?: string | null;
+  /** Called when the sidebar is opened — used by parent to dismiss onboarding guides */
+  onSidebarOpen?: () => void;
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -158,6 +160,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       showFullScreenLink = true,
       projectLocation,
       initialMedia,
+      onSidebarOpen,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -1575,7 +1578,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 <>
                   {!sidebarOpen && !snapMode && !measureMode && (
                     <button
-                      onClick={() => setSidebarOpen(true)}
+                      onClick={() => { setSidebarOpen(true); onSidebarOpen?.(); }}
                       className="absolute right-0 top-14 z-[100] bg-slate-900/90 backdrop-blur-md text-white p-2 rounded-l-md border-l border-t border-b border-slate-700 hover:bg-slate-800 transition-colors"
                       title="Open Overlay Manager"
                     >

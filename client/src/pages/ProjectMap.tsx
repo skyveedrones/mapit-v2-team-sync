@@ -93,10 +93,16 @@ export default function ProjectMap() {
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
 
+  // Track whether Triumph has ever fired (to show persistent Start Trial pill)
+  const [triumphHasFired, setTriumphHasFired] = useState(false);
+
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
-    const timer = setTimeout(() => setShowPrestige(true), 30000);
+    const timer = setTimeout(() => {
+      setShowPrestige(true);
+      setTriumphHasFired(true);
+    }, 30000);
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
@@ -131,7 +137,11 @@ export default function ProjectMap() {
         const autoTimer = setTimeout(() => {
           setShowDiscoveryHint(false);
           // Wait for fade-out transition (~500ms) before showing Window #2
-          setTimeout(() => setShowSidebarHint(true), 600);
+          setTimeout(() => {
+            setShowSidebarHint(true);
+            // Auto-dismiss Window #2 after 5s
+            setTimeout(() => setShowSidebarHint(false), 5000);
+          }, 600);
         }, 10000);
         return () => clearTimeout(autoTimer);
       }
@@ -287,6 +297,7 @@ export default function ProjectMap() {
           showFullScreenLink={false}
           projectLocation={(project as any)?.location}
           initialMedia={geotaggedMedia.length > 0 ? geotaggedMedia : undefined}
+          onSidebarOpen={() => setShowSidebarHint(false)}
         />
       </div>
 
@@ -347,8 +358,18 @@ export default function ProjectMap() {
               </div>
             </div>
           </div>
-          {/* Save Your Progress — for unauthenticated users on onboarding projects */}
-          {isOnboardingProject && !isAuthenticated && (
+          {/* Start Trial pill — appears after Triumph fires, for unauthenticated onboarding users */}
+          {isOnboardingProject && !isAuthenticated && triumphHasFired && !prestigeClaimed && (
+            <button
+              onClick={() => setShowPrestige(true)}
+              className="mt-3 w-full bg-white hover:bg-gray-100 text-black text-sm font-bold py-2.5 rounded-full transition-all duration-200 select-none"
+              style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
+            >
+              Start Trial
+            </button>
+          )}
+          {/* Save Your Progress — for unauthenticated users on onboarding projects (pre-Triumph) */}
+          {isOnboardingProject && !isAuthenticated && !triumphHasFired && (
             <button
               onClick={() => { window.location.href = getLoginUrl(); }}
               className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 select-none"
@@ -625,12 +646,12 @@ export default function ProjectMap() {
         {showSidebarHint && (
           <motion.div
             key="sidebar-hint"
-            initial={{ opacity: 0, x: 20, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: -12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.96 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="fixed z-[9990] pointer-events-auto"
-            style={{ top: "56px", right: "56px" }}
+            style={{ top: "16px", left: "50%", transform: "translateX(-50%)" }}
           >
             {/* Arrow pointing right toward the sidebar toggle */}
             <div className="relative">
@@ -653,29 +674,9 @@ export default function ProjectMap() {
                   Professional Grade.
                 </p>
                 <p className="text-white/55 text-xs leading-relaxed">
-                  The Sidebar holds your measurements, layers, and exports. Control the site with precision.
+                  Click the icon with the triangle shapes to open the sidebar. This is where you access measurements, layers, and professional exports.
                 </p>
-                {/* Pointer arrow toward sidebar toggle (right side) */}
-                <div
-                  className="absolute top-1/2 -right-[9px] -translate-y-1/2"
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderTop: "8px solid transparent",
-                    borderBottom: "8px solid transparent",
-                    borderLeft: "9px solid rgba(255,255,255,0.18)",
-                  }}
-                />
-                <div
-                  className="absolute top-1/2 -right-[8px] -translate-y-1/2"
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderTop: "7px solid transparent",
-                    borderBottom: "7px solid transparent",
-                    borderLeft: "8px solid rgba(0,0,0,0.72)",
-                  }}
-                />
+
               </div>
               {/* Dismiss button */}
               <button
