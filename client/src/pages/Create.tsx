@@ -85,6 +85,8 @@ export default function Create() {
   const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const mapInitialized = useRef(false);
+  const isMountedRef = useRef(true);
+  const markerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initProject = trpc.onboarding.initProject.useMutation({
     onError: (error) => {
@@ -155,8 +157,9 @@ export default function Create() {
               essential: true,
             });
 
-            // Drop emerald marker after fly lands
-            setTimeout(() => {
+            // Drop emerald marker after fly lands — guarded so it never fires after navigation
+            markerTimerRef.current = setTimeout(() => {
+              if (!isMountedRef.current || !mapRef.current) return;
               if (markerRef.current) markerRef.current.remove();
               const el = document.createElement("div");
               el.style.cssText = `
@@ -168,7 +171,7 @@ export default function Create() {
               `;
               markerRef.current = new mapboxgl.Marker({ element: el })
                 .setLngLat([lng, lat])
-                .addTo(map);
+                .addTo(mapRef.current);
             }, 4200);
           }
         } catch { /* ignore */ }
@@ -180,6 +183,9 @@ export default function Create() {
     });
 
     return () => {
+      isMountedRef.current = false;
+      if (markerTimerRef.current) clearTimeout(markerTimerRef.current);
+      if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
       map.remove();
       mapRef.current = null;
       mapInitialized.current = false;
