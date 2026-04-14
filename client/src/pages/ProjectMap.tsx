@@ -338,8 +338,8 @@ export default function ProjectMap() {
       <div className="absolute top-4 left-4 z-10" ref={projectCardRef}>
         <div className="bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
           <div className="flex items-start gap-3">
-            {/* Hide 'Return to Project' for unauthenticated onboarding users — no project page to go back to */}
-            {(!isOnboardingProject || isAuthenticated) && (
+            {/* Hide 'Return to Project' for all unauthenticated users — no project page to go back to */}
+            {isAuthenticated && (
               <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
                 <Button
                   variant="ghost"
@@ -376,34 +376,18 @@ export default function ProjectMap() {
               </div>
             </div>
           </div>
-          {/* Save Your Progress — for unauthenticated users on onboarding projects (pre-Triumph) */}
-          {isOnboardingProject && !isAuthenticated && !triumphHasFired && (
+          {/* Claim Your Project pill — visible for unauthenticated onboarding users until claimed */}
+          {isOnboardingProject && !isAuthenticated && !prestigeClaimed && (
             <button
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 select-none"
+              onClick={() => setShowPrestige(true)}
+              className="mt-3 w-full bg-white hover:bg-gray-100 text-black text-sm font-bold py-2.5 rounded-full shadow-lg transition-all duration-200 select-none"
               style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
             >
-              Save Your Progress
+              Claim Your Project
             </button>
           )}
         </div>
       </div>
-
-      {/* ── Persistent Start Trial Pill — z-[100], independent of modal state ── */}
-      {isOnboardingProject && !isAuthenticated && triumphHasFired && !prestigeClaimed && (
-        <div
-          className="absolute z-[100]"
-          style={{ top: `${cardBottom + 8}px`, left: "16px" }}
-        >
-          <button
-            onClick={() => setShowPrestige(true)}
-            className="bg-white hover:bg-gray-100 text-black text-sm font-bold px-6 py-2.5 rounded-full shadow-lg transition-all duration-200 select-none whitespace-nowrap"
-            style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
-          >
-            Start Trial
-          </button>
-        </div>
-      )}
 
       {/* ── Cinematic Flyby Controller ── */}
       {geotaggedMedia.length > 0 && (
