@@ -530,43 +530,73 @@ export default function ProjectMap() {
                       The magic is yours. You are in control
                     </motion.p>
                   </div>
-                  {user?.email && (
-                    <p className="text-white/40 text-xs text-center mb-2 -mt-1">
-                      Signed in as {user.email}
-                    </p>
+                  {/* ── LOGIC GATE: Existing user → Jobsian sign-in. New user → 14-day trial form ── */}
+                  {isAuthenticated ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                      className="text-center"
+                    >
+                      <p
+                        className="text-white/80 text-base leading-relaxed mb-8"
+                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                      >
+                        The map is yours — it always was.
+                        <br />
+                        <span className="text-white/50 text-sm mt-2 block">
+                          Sign in to your account to access it.
+                        </span>
+                      </p>
+                      <button
+                        onClick={() => { setShowPrestige(false); navigate("/dashboard"); }}
+                        className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
+                      >
+                        Go to Dashboard
+                      </button>
+                      <button
+                        onClick={handlePrestigeDismiss}
+                        className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+                      >
+                        Keep exploring →
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <input
+                        type="email"
+                        value={prestigeEmail}
+                        onChange={(e) => { setPrestigeEmail(e.target.value); setPrestigeEmailTouched(true); }}
+                        onBlur={() => setPrestigeEmailTouched(true)}
+                        onKeyDown={(e) => e.key === "Enter" && isPrestigeEmailValid && handlePrestigeClaim()}
+                        placeholder="your@email.com"
+                        className={`w-full bg-transparent border-0 border-b outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 ${
+                          prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0
+                            ? 'border-red-400/70 focus:border-red-400'
+                            : 'border-white/30 focus:border-white/80'
+                        }`}
+                        style={{ caretColor: "#10b981", marginBottom: prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 ? '0.5rem' : '2rem' }}
+                        disabled={prestigeSubmitting}
+                        autoComplete="email"
+                      />
+                      {prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 && (
+                        <p className="text-red-400/80 text-xs text-center mb-6 mt-1">Enter a valid email address</p>
+                      )}
+                      <button
+                        onClick={handlePrestigeClaim}
+                        disabled={!isPrestigeEmailValid || prestigeSubmitting}
+                        className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {prestigeSubmitting ? "Claiming..." : "Claim Project — Start 14-Day Trial"}
+                      </button>
+                      <button
+                        onClick={handlePrestigeDismiss}
+                        className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+                      >
+                        Continue exploring →
+                      </button>
+                    </>
                   )}
-                  <input
-                    type="email"
-                    value={prestigeEmail}
-                    onChange={(e) => { setPrestigeEmail(e.target.value); setPrestigeEmailTouched(true); }}
-                    onBlur={() => setPrestigeEmailTouched(true)}
-                    onKeyDown={(e) => e.key === "Enter" && isPrestigeEmailValid && handlePrestigeClaim()}
-                    placeholder="your@email.com"
-                    className={`w-full bg-transparent border-0 border-b outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 ${
-                      prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0
-                        ? 'border-red-400/70 focus:border-red-400'
-                        : 'border-white/30 focus:border-white/80'
-                    }`}
-                    style={{ caretColor: "#10b981", marginBottom: prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 ? '0.5rem' : '2rem' }}
-                    disabled={prestigeSubmitting}
-                    autoComplete="email"
-                  />
-                  {prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 && (
-                    <p className="text-red-400/80 text-xs text-center mb-6 mt-1">Enter a valid email address</p>
-                  )}
-                  <button
-                    onClick={handlePrestigeClaim}
-                    disabled={!isPrestigeEmailValid || prestigeSubmitting}
-                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {prestigeSubmitting ? "Claiming..." : "Claim Project"}
-                  </button>
-                  <button
-                    onClick={handlePrestigeDismiss}
-                    className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
-                  >
-                    Continue exploring →
-                  </button>
                 </>
               ) : (
                 <motion.div

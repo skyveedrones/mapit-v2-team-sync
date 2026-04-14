@@ -1,34 +1,45 @@
 /**
- * MAPIT — /create  (3-Stage Magic Upload Flow)
+ * MAPIT — /create  (7-Step Jobsian Real-Map Flow)
  *
- * Stage 1  DROP       — dashed box, cloud icon, "Drop photos here"
- * Stage 2  UPLOADING  — thin progress bar, "Uploading..." → "Processing..." after 3 s
- * Stage 3  PROCESSING — pulsing bar, "Processing...", map.flyTo fires on first coord
+ * Step 1  ENTRY       — Home CTA → /welcome → /name (project name stored in sessionStorage)
+ * Step 2  DROP        — Gradient "DROP" hero, dashed execution ring, hero video behind
+ * Step 3  UPLOADING   — Gradient "UPLOADING" text, thin pulsed dashed execution line
+ * Step 4  PROCESSING  — Gradient "PROCESSING" text (3s after drop), real Mapbox mounts behind
+ * Step 5  REAL REVEAL — Uploader fades to opacity-0, map.flyTo fires to GPS coords
+ * Step 6  MAGIC A     — Frosted-glass Marker Tooltip (handled in ProjectMap.tsx)
+ * Step 7  MAGIC B     — Frosted-glass Sidebar guide (handled in ProjectMap.tsx)
+ *
+ * NO AUTH GUARDS on this page. The only redirect is at the Triumph modal (Step 7).
  */
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, CloudUpload } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-type Stage = "drop" | "active";          // "active" covers both uploading + processing
-type ActiveLabel = "Uploading..." | "Processing...";
+// ── Types ─────────────────────────────────────────────────────────────────────
+type Stage = "drop" | "uploading" | "processing" | "reveal";
 
+// ── Constants ─────────────────────────────────────────────────────────────────
 const ACCEPTED_MIME = new Set([
   "image/jpeg", "image/jpg", "image/png", "image/tiff",
   "video/mp4", "video/quicktime",
 ]);
 const ACCEPTED_EXT = new Set([".jpg", ".jpeg", ".png", ".tiff", ".tif", ".mp4", ".mov"]);
 
-function isAcceptedFile(f: File): boolean {
-  if (ACCEPTED_MIME.has(f.type)) return true;
-  const ext = "." + f.name.split(".").pop()?.toLowerCase();
-  return ACCEPTED_EXT.has(ext);
-}
+const GRADIENT_STYLE: React.CSSProperties = {
+  backgroundImage: "linear-gradient(to bottom, #ffffff, #cbd5e1, #94a3b8)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+};
 
+// ── GPS extraction ────────────────────────────────────────────────────────────
 async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } | null> {
   for (const file of files) {
     if (file.type.startsWith("video/")) continue;
@@ -52,19 +63,30 @@ async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } |
   return null;
 }
 
+function isAcceptedFile(f: File): boolean {
+  if (ACCEPTED_MIME.has(f.type)) return true;
+  const ext = "." + f.name.split(".").pop()?.toLowerCase();
+  return ACCEPTED_EXT.has(ext);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function Create() {
   const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
 
-  const [stage, setStage]           = useState<Stage>("drop");
-  const [label, setLabel]           = useState<ActiveLabel>("Uploading...");
+  const [stage, setStage] = useState<Stage>("drop");
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadPct, setUploadPct]   = useState(0);
+  const [uploadPct, setUploadPct] = useState(0);
+  const [uploaderOpacity, setUploaderOpacity] = useState(1);
 
-  const flipTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mapInitialized = useRef(false);
 
-  const initProject  = trpc.onboarding.initProject.useMutation({
+  const initProject = trpc.onboarding.initProject.useMutation({
     onError: (error) => {
       const msg = error.message || "";
       if (msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot"))
@@ -72,24 +94,112 @@ export default function Create() {
     },
   });
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
-  const utils       = trpc.useUtils();
+  const utils = trpc.useUtils();
 
-  // Animate progress bar while in "active" stage
+  // ── Progress bar animation ────────────────────────────────────────────────
   useEffect(() => {
-    if (stage !== "active") {
+    if (stage !== "uploading" && stage !== "processing") {
       if (progressInterval.current) clearInterval(progressInterval.current);
       return;
     }
-    setUploadPct(0);
-    progressInterval.current = setInterval(() => {
-      setUploadPct((p) => {
-        if (p >= 95) { clearInterval(progressInterval.current!); return 95; }
-        return Math.min(p + (p < 60 ? 3 : p < 80 ? 1.5 : 0.5), 95);
-      });
-    }, 40);
+    if (stage === "uploading") {
+      setUploadPct(0);
+      progressInterval.current = setInterval(() => {
+        setUploadPct((p) => {
+          if (p >= 95) { clearInterval(progressInterval.current!); return 95; }
+          return Math.min(p + (p < 60 ? 3 : p < 80 ? 1.5 : 0.5), 95);
+        });
+      }, 40);
+    }
     return () => { if (progressInterval.current) clearInterval(progressInterval.current); };
   }, [stage]);
 
+  // ── Initialize Mapbox when processing starts ──────────────────────────────
+  useEffect(() => {
+    if (stage !== "processing" || mapInitialized.current || !mapContainerRef.current) return;
+    mapInitialized.current = true;
+
+    const token = (import.meta as any).env?.VITE_MAPBOX_TOKEN;
+    if (token) mapboxgl.accessToken = token;
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      center: [-98.5795, 39.8283], // US center default
+      zoom: 3,
+      pitch: 0,
+      bearing: 0,
+      attributionControl: false,
+      logoPosition: "bottom-left",
+    });
+
+    mapRef.current = map;
+
+    map.on("load", () => {
+      // Try to fly to stored GPS coords
+      const stored = sessionStorage.getItem("mapit_fly_coords");
+      if (stored) {
+        try {
+          const { lat, lng } = JSON.parse(stored);
+          if (typeof lat === "number" && typeof lng === "number") {
+            // Fade uploader out, reveal map
+            setUploaderOpacity(0);
+            setTimeout(() => setStage("reveal"), 700);
+
+            map.flyTo({
+              center: [lng, lat],
+              zoom: 17,
+              pitch: 50,
+              bearing: -10,
+              duration: 4000,
+              essential: true,
+            });
+
+            // Drop emerald marker after fly lands
+            setTimeout(() => {
+              if (markerRef.current) markerRef.current.remove();
+              const el = document.createElement("div");
+              el.style.cssText = `
+                width: 14px; height: 14px;
+                background: #10b981;
+                border: 2px solid #fff;
+                border-radius: 50%;
+                box-shadow: 0 0 0 4px rgba(16,185,129,0.3), 0 2px 8px rgba(0,0,0,0.4);
+              `;
+              markerRef.current = new mapboxgl.Marker({ element: el })
+                .setLngLat([lng, lat])
+                .addTo(map);
+            }, 4200);
+          }
+        } catch { /* ignore */ }
+      } else {
+        // No GPS — fade uploader, show world view
+        setUploaderOpacity(0);
+        setTimeout(() => setStage("reveal"), 700);
+      }
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      mapInitialized.current = false;
+    };
+  }, [stage]);
+
+  // ── Navigate to real project map after reveal ─────────────────────────────
+  useEffect(() => {
+    if (stage !== "reveal") return;
+    // Wait for map animation, then navigate to the real project map
+    const timer = setTimeout(() => {
+      const projectId = sessionStorage.getItem("mapit_project_id");
+      if (projectId) {
+        setLocation(`/project/${projectId}/map`);
+      }
+    }, 5500); // 4s fly + 1.5s buffer for Magic Windows to initialize
+    return () => clearTimeout(timer);
+  }, [stage, setLocation]);
+
+  // ── Core file processor ───────────────────────────────────────────────────
   const processFiles = useCallback(async (files: File[]) => {
     const invalid = files.filter((f) => !isAcceptedFile(f));
     if (invalid.length > 0) {
@@ -105,21 +215,22 @@ export default function Create() {
       return;
     }
 
-    // ── Enter active stage ──
-    setStage("active");
-    setLabel("Uploading...");
+    // Step 3: UPLOADING
+    setStage("uploading");
 
-    // 3-second flip to "Processing..."
+    // Extract GPS immediately in background
+    const coordsPromise = extractGPS(files);
+
+    // Step 4: PROCESSING after 3 seconds
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
-    flipTimerRef.current = setTimeout(() => setLabel("Processing..."), 3000);
+    flipTimerRef.current = setTimeout(() => setStage("processing"), 3000);
 
-    // Extract GPS in background
-    const coords = await extractGPS(files);
+    const coords = await coordsPromise;
     if (coords) {
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
     } else {
       sessionStorage.removeItem("mapit_fly_coords");
-      toast("No location found in file. Defaulting to world view.", {
+      toast("No GPS found in files. Showing world view.", {
         duration: 3000,
         style: {
           background: "#111", color: "rgba(255,255,255,0.6)",
@@ -142,10 +253,7 @@ export default function Create() {
       sessionStorage.setItem("mapit_project_name", projectName);
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
-      // Ensure we're showing "Processing..." once project is created
-      setLabel("Processing...");
-
-      // Upload files
+      // Upload files in background
       for (const file of files) {
         try {
           const arrayBuffer = await file.arrayBuffer();
@@ -163,27 +271,31 @@ export default function Create() {
         }
       }
 
-      await utils.media.list.invalidate({ projectId: result.projectId });
       setUploadPct(100);
-      setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
+      await utils.media.list.invalidate({ projectId: result.projectId });
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const isForbidden = msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot");
 
       if (isForbidden) {
+        // Authenticated user — show Jobsian message, redirect to sign in
+        // Still show the map reveal first, then redirect
         const firstName = user?.name?.split(" ")[0] || "there";
-        toast(`Welcome back, ${firstName}! We've saved your spot. Redirecting to your MAPIT dashboard...`, {
-          duration: 6000, position: "top-center",
-          style: {
-            background: "rgba(255,255,255,0.95)", color: "rgba(10,10,10,0.9)",
-            border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px",
-            fontSize: "16px", fontWeight: "500", fontFamily: "Inter, sans-serif",
-            backdropFilter: "blur(30px)", padding: "20px 28px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3)", letterSpacing: "-0.01em",
-          },
-        });
-        setTimeout(() => setLocation("/dashboard"), 2000);
+        // Let the processing/reveal continue visually, then show toast + redirect
+        setTimeout(() => {
+          toast(`Thanks for trying the mapping demo, ${firstName}. Please sign in to your account.`, {
+            duration: 7000, position: "top-center",
+            style: {
+              background: "rgba(255,255,255,0.95)", color: "rgba(10,10,10,0.9)",
+              border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px",
+              fontSize: "16px", fontWeight: "500", fontFamily: "Inter, sans-serif",
+              backdropFilter: "blur(30px)", padding: "20px 28px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)", letterSpacing: "-0.01em",
+            },
+          });
+          setTimeout(() => setLocation("/dashboard"), 3000);
+        }, 4000); // Show after map reveal starts
       } else {
         toast("Something went wrong. Please try again.", {
           duration: 4000,
@@ -192,12 +304,13 @@ export default function Create() {
         setStage("drop");
       }
     }
-  // Founder Fix: isAuthenticated must be in dep array to prevent stale closure
+    // Founder Fix: isAuthenticated in dep array prevents stale closure
   }, [initProject, uploadMedia, utils, setLocation, user, isAuthenticated]);
 
-  const handleDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+  // ── Drag handlers ─────────────────────────────────────────────────────────
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
   const handleDragLeave = useCallback(() => setIsDragging(false), []);
-  const handleDrop      = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) processFiles(files);
@@ -207,143 +320,200 @@ export default function Create() {
     if (files.length > 0) processFiles(files);
   }, [processFiles]);
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative"
+      className="min-h-screen relative overflow-hidden"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', system-ui, sans-serif" }}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={stage === "drop" ? handleDragOver : undefined}
+      onDragLeave={stage === "drop" ? handleDragLeave : undefined}
+      onDrop={stage === "drop" ? handleDrop : undefined}
     >
-      {/* Back arrow */}
-      <button
-        onClick={() => setLocation("/")}
-        className="absolute top-5 left-5 p-2 rounded-lg transition-colors"
-        style={{ color: "rgba(255,255,255,0.28)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.70)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.28)")}
-        aria-label="Back to home"
+      {/* ── Hero loop video — always behind everything ── */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ opacity: stage === "reveal" ? 0 : 0.18, transition: "opacity 1.2s ease" }}
       >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
+        <source
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
+          type="video/mp4"
+        />
+      </video>
 
-      <AnimatePresence mode="wait">
+      {/* ── Mapbox container — mounts at processing stage ── */}
+      <div
+        ref={mapContainerRef}
+        className="absolute inset-0 w-full h-full"
+        style={{
+          opacity: stage === "processing" || stage === "reveal" ? 1 : 0,
+          transition: "opacity 1.4s ease",
+          zIndex: 1,
+        }}
+      />
 
-        {/* ── STAGE 1: DROP ── */}
-        {stage === "drop" && (
-          <motion.div
-            key="drop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <label
-              className="flex flex-col items-center justify-center cursor-pointer transition-all duration-200"
-              style={{
-                width: "clamp(260px, 40vw, 420px)",
-                height: "clamp(200px, 28vw, 320px)",
-                border: `2px dashed ${isDragging ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.14)"}`,
-                borderRadius: "22px",
-                background: isDragging ? "rgba(255,255,255,0.025)" : "transparent",
-              }}
+      {/* ── Uploader overlay — fades out during reveal ── */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center"
+        style={{
+          opacity: uploaderOpacity,
+          transition: "opacity 0.7s ease",
+          zIndex: 10,
+          pointerEvents: uploaderOpacity < 0.1 ? "none" : "auto",
+        }}
+      >
+        {/* Back arrow */}
+        <button
+          onClick={() => setLocation("/name")}
+          className="absolute top-5 left-5 p-2 rounded-lg transition-colors"
+          style={{ color: "rgba(255,255,255,0.28)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.70)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.28)")}
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <AnimatePresence mode="wait">
+
+          {/* ── STEP 2: DROP ── */}
+          {stage === "drop" && (
+            <motion.div
+              key="drop"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.35 }}
+              className="flex flex-col items-center"
             >
-              <input
-                type="file"
-                multiple
-                accept={Array.from(ACCEPTED_EXT).join(",")}
-                onChange={handleFileInput}
-                className="hidden"
-              />
-              <CloudUpload
-                className="mb-4"
-                style={{ width: 30, height: 30, color: "rgba(255,255,255,0.22)" }}
-                strokeWidth={1.5}
-              />
-              <span
+              {/* Gradient "DROP" hero */}
+              <h1
+                className="font-bold tracking-tighter leading-none mb-10 select-none"
                 style={{
-                  fontSize: "0.9375rem",
-                  fontWeight: 500,
-                  color: "rgba(255,255,255,0.28)",
-                  letterSpacing: "-0.01em",
+                  ...GRADIENT_STYLE,
+                  fontSize: "clamp(5rem, 18vw, 10rem)",
                 }}
               >
-                Drop photos here
-              </span>
-            </label>
-          </motion.div>
-        )}
+                DROP
+              </h1>
 
-        {/* ── STAGE 2 + 3: ACTIVE (uploading → processing) ── */}
-        {stage === "active" && (
-          <motion.div
-            key="active"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center"
-            style={{ width: "clamp(260px, 40vw, 420px)" }}
-          >
-            {/* Label — flips from "Uploading..." to "Processing..." at 3 s */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={label}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4 }}
-                transition={{ duration: 0.3 }}
-                className="mb-5 text-center font-medium"
+              {/* Dashed execution ring / drop zone */}
+              <label
+                className="flex flex-col items-center justify-center cursor-pointer transition-all duration-300"
                 style={{
-                  fontSize: "0.875rem",
-                  color: "rgba(255,255,255,0.38)",
-                  letterSpacing: "-0.01em",
+                  width: "clamp(240px, 36vw, 380px)",
+                  height: "clamp(160px, 22vw, 260px)",
+                  border: `1.5px dashed ${isDragging ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"}`,
+                  borderRadius: "20px",
+                  background: isDragging ? "rgba(255,255,255,0.03)" : "transparent",
+                  boxShadow: isDragging ? "0 0 40px rgba(255,255,255,0.04) inset" : "none",
                 }}
               >
-                {label}
-              </motion.p>
-            </AnimatePresence>
+                <input
+                  type="file"
+                  multiple
+                  accept={Array.from(ACCEPTED_EXT).join(",")}
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+                <span
+                  style={{
+                    fontSize: "0.875rem",
+                    fontWeight: 400,
+                    color: "rgba(255,255,255,0.22)",
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {isDragging ? "Release to map" : "Drop drone photos here"}
+                </span>
+              </label>
+            </motion.div>
+          )}
 
-            {/* Progress bar — solid fill while uploading, pulsing glow while processing */}
-            <div
-              style={{
-                width: "100%",
-                height: "1px",
-                background: "rgba(255,255,255,0.07)",
-                borderRadius: "1px",
-                overflow: "visible",
-                position: "relative",
-              }}
+          {/* ── STEP 3: UPLOADING ── */}
+          {stage === "uploading" && (
+            <motion.div
+              key="uploading"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.35 }}
+              className="flex flex-col items-center"
+              style={{ width: "clamp(260px, 40vw, 420px)" }}
             >
-              {label === "Uploading..." ? (
+              <h1
+                className="font-bold tracking-tighter leading-none mb-10 select-none"
+                style={{
+                  ...GRADIENT_STYLE,
+                  fontSize: "clamp(3.5rem, 12vw, 7rem)",
+                }}
+              >
+                UPLOADING
+              </h1>
+              {/* Thin progress bar */}
+              <div
+                style={{
+                  width: "100%",
+                  height: "1px",
+                  background: "rgba(255,255,255,0.07)",
+                  borderRadius: "1px",
+                  overflow: "hidden",
+                }}
+              >
                 <motion.div
                   style={{
                     height: "1px",
-                    background: "rgba(255,255,255,0.60)",
+                    background: "rgba(255,255,255,0.55)",
                     borderRadius: "1px",
                     width: `${uploadPct}%`,
                   }}
                   transition={{ ease: "linear" }}
                 />
-              ) : (
-                <motion.div
-                  style={{
-                    height: "1px",
-                    width: "100%",
-                    borderRadius: "1px",
-                    background: "rgba(255,255,255,0.50)",
-                    boxShadow: "0 0 6px 2px rgba(255,255,255,0.16)",
-                  }}
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
+              </div>
+            </motion.div>
+          )}
 
-      </AnimatePresence>
+          {/* ── STEP 4: PROCESSING ── */}
+          {(stage === "processing" || stage === "reveal") && (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: stage === "reveal" ? 0 : 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: stage === "reveal" ? 0.7 : 0.35 }}
+              className="flex flex-col items-center"
+              style={{ width: "clamp(260px, 40vw, 420px)" }}
+            >
+              <h1
+                className="font-bold tracking-tighter leading-none mb-10 select-none"
+                style={{
+                  ...GRADIENT_STYLE,
+                  fontSize: "clamp(3rem, 11vw, 6.5rem)",
+                }}
+              >
+                PROCESSING
+              </h1>
+              {/* Pulsing execution line */}
+              <motion.div
+                style={{
+                  width: "100%",
+                  height: "1px",
+                  borderRadius: "1px",
+                  background: "rgba(255,255,255,0.45)",
+                  boxShadow: "0 0 8px 2px rgba(255,255,255,0.12)",
+                }}
+                animate={{ opacity: [0.25, 1, 0.25] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
