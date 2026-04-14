@@ -1,16 +1,20 @@
 /**
- * MAPIT — /create Drop Zone (Act 2)
- * Extracts GPS coordinates from dropped files via exifr,
- * calls onboarding.initProject to create a real DB project,
- * then transitions to /project/[id] for the production map.
+ * MAPIT — /create Drop Zone
  *
- * GPS extraction priority:
- *  1. exifr.gps() — works for JPEG/TIFF/HEIC drone images
- *  2. exifr.parse() full parse — fallback for non-standard EXIF
- *  3. No GPS → quiet toast + world-view fallback
+ * Three states visible to the user:
+ *   1. "Drop."          — idle, waiting for files
+ *   2. "Uploading..."   — immediately on file drop
+ *   3. "Processing..."  — after 3 000 ms
+ *
+ * Demo Mode (authenticated users):
+ *   Full 3-stage sequence runs client-side. No DB write.
+ *   After 5 s total, "Return to Dashboard" pill fades in.
+ *
+ * Real Mode (unauthenticated users):
+ *   Calls onboarding.initProject, uploads media, navigates to /project/:id/map.
  */
 
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,15 +23,13 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
-
 const ACCEPTED_MIME = new Set([
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/tiff",
   "video/mp4",
-  "video/quicktime", // .mov
+  "video/quicktime",
 ]);
 const ACCEPTED_EXT = new Set([".jpg", ".jpeg", ".png", ".tiff", ".tif", ".mp4", ".mov"]);
 
@@ -37,34 +39,17 @@ function isAcceptedFile(file: File): boolean {
   return ACCEPTED_EXT.has(ext);
 }
 
-/**
- * Robust GPS extraction — tries multiple exifr strategies.
- * Returns { lat, lng } in decimal degrees, or null.
- */
-async function extractGPS(
-  files: File[]
-): Promise<{ lat: number; lng: number } | null> {
+async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } | null> {
   for (const file of files) {
-    // Skip video files — exifr can't read MP4 EXIF reliably
     if (file.type.startsWith("video/")) continue;
-
     try {
-      // Strategy 1: dedicated GPS parse (fastest)
       const gps = await exifr.gps(file);
       if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
         return { lat: gps.latitude, lng: gps.longitude };
       }
-    } catch { /* unsupported format — try next strategy */ }
-
+    } catch { /* try next */ }
     try {
-      // Strategy 2: full EXIF parse — catches non-standard GPS blocks
-      const exif = await exifr.parse(file, {
-        gps: true,
-        tiff: true,
-        exif: true,
-        translateKeys: true,
-        translateValues: true,
-      });
+      const exif = await exifr.parse(file, { gps: true, tiff: true, exif: true });
       if (exif) {
         const lat = exif.latitude ?? exif.GPSLatitude;
         const lng = exif.longitude ?? exif.GPSLongitude;
@@ -80,37 +65,43 @@ async function extractGPS(
 export default function Create() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
-  const [dropState, setDropState] = useState<DropState>("idle");
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Uploading...");
+
+  // ─── UI state ───
+  const [phase, setPhase] = useState<"idle" | "uploading" | "processing" | "done">("idle");
+  const [isDragging, setIsDragging] = useState(false);
   const [shake, setShake] = useState(false);
-  const [uploadPhase, setUploadPhase] = useState<"uploading" | "processing">("uploading");
-  const [demoComplete, setDemoComplete] = useState(false);
-  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const uploadPhaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const utils = trpc.useUtils();
 
-  // Progress bar animation
-  useEffect(() => {
-    if (dropState !== "analyzing" && dropState !== "locating" && dropState !== "creating") return;
-    setProgress(0);
-    const interval = setInterval(() => {
+  // ─── Progress bar helpers ───
+  function startProgress(from: number) {
+    if (progressInterval.current) clearInterval(progressInterval.current);
+    setProgress(from);
+    progressInterval.current = setInterval(() => {
       setProgress((p) => {
-        if (p >= 95) { clearInterval(interval); return 95; }
-        const increment = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
-        return Math.min(p + increment, 95);
+        if (p >= 95) { clearInterval(progressInterval.current!); return 95; }
+        const inc = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
+        return Math.min(p + inc, 95);
       });
     }, 40);
-    return () => clearInterval(interval);
-  }, [dropState]);
+  }
 
+  function finishProgress() {
+    if (progressInterval.current) clearInterval(progressInterval.current);
+    setProgress(100);
+  }
+
+  // ─── Shake on bad file ───
   const triggerShake = useCallback(() => {
     setShake(true);
-    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
-    shakeTimeoutRef.current = setTimeout(() => setShake(false), 600);
+    if (shakeTimer.current) clearTimeout(shakeTimer.current);
+    shakeTimer.current = setTimeout(() => setShake(false), 600);
     toast("Format not supported. Use drone imagery or video.", {
       duration: 3500,
       position: "bottom-center",
@@ -128,153 +119,118 @@ export default function Create() {
     });
   }, []);
 
-  const processFiles = useCallback(async (files: File[]) => {
-    // Validate all files before processing
-    const invalid = files.filter((f) => !isAcceptedFile(f));
-    if (invalid.length > 0) {
-      triggerShake();
-      return;
-    }
+  // ─── Core file handler ───
+  const processFiles = useCallback(
+    async (files: File[]) => {
+      const invalid = files.filter((f) => !isAcceptedFile(f));
+      if (invalid.length > 0) { triggerShake(); return; }
 
-    setDropState("analyzing");
-    setStatusText("Uploading...");
-    setDemoComplete(false);
+      // ── Stage 1 → 2: show "Uploading..." immediately ──
+      setPhase("uploading");
+      startProgress(5);
 
-    // Extract GPS — must complete before initProject call
-    const coords = await extractGPS(files);
+      // Extract GPS client-side (non-blocking for the UI)
+      const coords = await extractGPS(files);
+      if (coords) {
+        sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
+      } else {
+        sessionStorage.removeItem("mapit_fly_coords");
+      }
 
-    if (coords) {
-      sessionStorage.setItem(
-        "mapit_fly_coords",
-        JSON.stringify({ lat: coords.lat, lng: coords.lng })
-      );
-      setDropState("locating");
-    } else {
-      sessionStorage.removeItem("mapit_fly_coords");
-      // Quiet Jobsian toast — no GPS found
-      toast("No location found in file. Defaulting to world view.", {
-        duration: 3500,
-        style: {
-          background: "#111",
-          color: "rgba(255,255,255,0.6)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
-        },
-      });
-    }
-
-    // ─── DEMO MODE: authenticated users get the full magic sequence client-side ───
-    // No DB write. GPS coords are stored in sessionStorage for the map reveal.
-    if (isAuthenticated) {
-      setDropState("creating");
-      setStatusText("Uploading...");
-      setProgress(20);
-      // Flip to Processing... after 3 seconds
-      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
-      uploadPhaseTimerRef.current = setTimeout(() => {
-        setStatusText("Processing...");
-        setProgress(80);
+      // ── Stage 2 → 3: flip to "Processing..." after 3 s ──
+      const processingTimer = setTimeout(() => {
+        setPhase("processing");
+        startProgress(60);
       }, 3000);
-      // After 5 seconds, mark demo complete — show 'Return to Dashboard' button
-      setTimeout(() => {
-        setProgress(100);
-        setDemoComplete(true);
-      }, 5000);
-      return;
-    }
 
-    // Get project name from Act 1
-    const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
+      // ══════════════════════════════════════════════
+      //  DEMO MODE — authenticated user, no DB write
+      // ══════════════════════════════════════════════
+      if (isAuthenticated) {
+        // After 5 s total → show "Return to Dashboard"
+        setTimeout(() => {
+          clearTimeout(processingTimer);
+          finishProgress();
+          setPhase("done");
+        }, 5000);
+        return;
+      }
 
-    setDropState("creating");
+      // ══════════════════════════════════════════════
+      //  REAL MODE — unauthenticated user
+      // ══════════════════════════════════════════════
+      const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
 
-    try {
-      const result = await initProject.mutateAsync({
-        name: projectName,
-        lat: coords?.lat,
-        lng: coords?.lng,
-      });
+      try {
+        const result = await initProject.mutateAsync({
+          name: projectName,
+          lat: coords?.lat,
+          lng: coords?.lng,
+        });
 
-      // Store trial info for the Prestige modal
-      sessionStorage.setItem("mapit_project_id", String(result.projectId));
-      sessionStorage.setItem("mapit_project_name", projectName);
-      sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
+        sessionStorage.setItem("mapit_project_id", String(result.projectId));
+        sessionStorage.setItem("mapit_project_name", projectName);
+        sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
-      // Upload each file as a media record (fire-and-forget for speed,
-      // but await at least the first one so the map has a pin on arrival)
-      // Start 3-second timer to transition from Uploading to Processing
-      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
-      uploadPhaseTimerRef.current = setTimeout(() => {
-        setUploadPhase("processing");
-        setStatusText("Processing...");
-      }, 3000);
-      
-      for (const file of files) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const base64 = btoa(
-            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
-          await uploadMedia.mutateAsync({
-            projectId: result.projectId,
-            filename: file.name,
-            mimeType: file.type || 'image/jpeg',
-            fileData: base64,
-          });
-        } catch (uploadErr) {
-          console.error('[Create] Failed to upload media:', file.name, uploadErr);
-          // Non-blocking — project still created, just no media pin
+        for (const file of files) {
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(arrayBuffer).reduce(
+                (data, byte) => data + String.fromCharCode(byte), ""
+              )
+            );
+            await uploadMedia.mutateAsync({
+              projectId: result.projectId,
+              filename: file.name,
+              mimeType: file.type || "image/jpeg",
+              fileData: base64,
+            });
+          } catch (uploadErr) {
+            console.error("[Create] Failed to upload media:", file.name, uploadErr);
+          }
+        }
+
+        await utils.media.list.invalidate({ projectId: result.projectId });
+        finishProgress();
+        setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
+      } catch (err) {
+        console.error("[Create] Failed to create project:", err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        if (errorMsg.includes("FORBIDDEN") || errorMsg.includes("Authenticated users cannot")) {
+          // Authenticated user hit the real endpoint — run demo sequence instead
+          setTimeout(() => { setPhase("processing"); startProgress(60); }, 3000);
+          setTimeout(() => {
+            clearTimeout(processingTimer);
+            finishProgress();
+            setPhase("done");
+          }, 5000);
+        } else {
+          finishProgress();
+          setTimeout(() => setLocation("/dashboard"), 400);
         }
       }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isAuthenticated, initProject, uploadMedia, setLocation, triggerShake]
+  );
 
-      // Invalidate media.list cache so the map fetches fresh data on arrival
-      await utils.media.list.invalidate({ projectId: result.projectId });
-
-      // Complete progress bar and navigate
-      setProgress(100);
-      setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
-    } catch (err) {
-      console.error("[Create] Failed to create project:", err);
-      setProgress(100);
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      if (errorMsg.includes("FORBIDDEN") || errorMsg.includes("Authenticated users cannot")) {
-        // Run the full magic sequence before redirecting
-        setStatusText("Uploading...");
-        setProgress(20);
-        // Flip to Processing... after 3 seconds
-        setTimeout(() => {
-          setStatusText("Processing...");
-          setProgress(80);
-        }, 3000);
-        // Show toast and redirect after 5 seconds total
-        setTimeout(() => {
-          setProgress(100);
-          toast("Welcome back! Redirecting to your MAPIT dashboard...", { duration: 4000, position: "top-center" });
-          setTimeout(() => setLocation("/dashboard"), 800);
-        }, 5000);
-      } else {
-        setProgress(100);
-        setTimeout(() => setLocation("/dashboard"), 400);
-      }
-    }
-  }, [initProject, uploadMedia, setLocation, triggerShake]);
-
+  // ─── Drag handlers ───
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (dropState === "idle") setDropState("dragging");
-  }, [dropState]);
+    if (phase === "idle") setIsDragging(true);
+  }, [phase]);
 
   const handleDragLeave = useCallback(() => {
-    setDropState((s) => (s === "dragging" ? "idle" : s));
+    setIsDragging(false);
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      setIsDragging(false);
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) processFiles(files);
-      else setDropState("idle");
     },
     [processFiles]
   );
@@ -282,22 +238,20 @@ export default function Create() {
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files ?? []);
-      // Reset upload phase on new file selection
-      setUploadPhase("uploading");
-      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
       if (files.length > 0) processFiles(files);
     },
     [processFiles]
   );
 
-  const isDragging = dropState === "dragging";
-  const isProcessing = dropState === "analyzing" || dropState === "locating" || dropState === "creating";
+  const isProcessing = phase === "uploading" || phase === "processing";
+  const statusText = phase === "processing" ? "Processing..." : "Uploading...";
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
+
       {/* ─── Top progress bar ─── */}
       <AnimatePresence>
-        {isProcessing && (
+        {(isProcessing || phase === "done") && (
           <motion.div
             key="progress-bar"
             initial={{ opacity: 0 }}
@@ -327,7 +281,7 @@ export default function Create() {
 
       {/* ─── Demo Complete: Return to Dashboard ─── */}
       <AnimatePresence>
-        {demoComplete && (
+        {phase === "done" && (
           <motion.div
             key="demo-complete"
             initial={{ opacity: 0, y: 20 }}
@@ -357,18 +311,13 @@ export default function Create() {
           animate={{
             opacity: 1,
             scale: 1,
-            x: shake
-              ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0]
-              : 0,
+            x: shake ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0] : 0,
           }}
-          transition={shake
-            ? { duration: 0.5, ease: "easeInOut" }
-            : { duration: 0.4 }
-          }
+          transition={shake ? { duration: 0.5, ease: "easeInOut" } : { duration: 0.4 }}
           className={`
             relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
             border rounded-3xl select-none transition-all duration-300
-            ${isProcessing ? "cursor-default" : "cursor-pointer"}
+            ${isProcessing || phase === "done" ? "cursor-default" : "cursor-pointer"}
             ${isDragging
               ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
               : shake
@@ -377,11 +326,11 @@ export default function Create() {
             }
           `}
         >
-          {/* Metallic hook */}
           <AnimatePresence mode="wait">
-            {isProcessing ? (
+            {/* ── Uploading / Processing text ── */}
+            {(isProcessing || phase === "done") ? (
               <motion.p
-                key="processing"
+                key="status"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -389,9 +338,10 @@ export default function Create() {
                 className="text-[clamp(3rem,9vw,6rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent animate-pulse"
                 style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
               >
-                {statusText}
+                {phase === "done" ? "Processing..." : statusText}
               </motion.p>
             ) : (
+              /* ── Drop. ── */
               <motion.p
                 key="drop"
                 initial={{ opacity: 0, y: 8 }}
@@ -406,9 +356,9 @@ export default function Create() {
             )}
           </AnimatePresence>
 
-          {/* Instruction */}
+          {/* ── Instruction text (idle only) ── */}
           <AnimatePresence>
-            {!isProcessing && (
+            {phase === "idle" && (
               <motion.div
                 key="instructions"
                 initial={{ opacity: 0 }}
@@ -429,7 +379,7 @@ export default function Create() {
             )}
           </AnimatePresence>
 
-          {/* Invisible file input — strict accept */}
+          {/* Invisible file input */}
           <input
             id="file-input"
             type="file"
@@ -437,7 +387,7 @@ export default function Create() {
             accept=".jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov"
             className="sr-only"
             onChange={handleFileInput}
-            disabled={isProcessing}
+            disabled={isProcessing || phase === "done"}
           />
         </motion.label>
       </div>
