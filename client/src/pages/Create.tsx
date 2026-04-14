@@ -69,9 +69,12 @@ export default function Create() {
   const [, setLocation] = useLocation();
   const [stage, setStage] = useState<Stage>("idle");
   const [shake, setShake] = useState(false);
+  const [processingLabel, setProcessingLabel] = useState(0);
   const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const labelTimer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const labelTimer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track whether the backend work is done AND the processing timer has elapsed
   const backendDoneRef = useRef(false);
@@ -82,12 +85,20 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const utils = trpc.useUtils();
 
+  const PROCESSING_LABELS = [
+    "Extracting GPS Telemetry & Metadata...",
+    "Generating High-Precision 3D Mesh...",
+    "Optimizing Georeferenced Digital Twin...",
+  ];
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
       if (uploadTimerRef.current) clearTimeout(uploadTimerRef.current);
       if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
+      if (labelTimer1Ref.current) clearTimeout(labelTimer1Ref.current);
+      if (labelTimer2Ref.current) clearTimeout(labelTimer2Ref.current);
     };
   }, []);
 
@@ -147,6 +158,11 @@ export default function Create() {
       console.log('[MAPIT Analytics] Demo_Started');
 
       // Processing must show for at least 5s
+      // Reset and cycle processing labels: 0s→label0, 4s→label1, 7s→label2
+      setProcessingLabel(0);
+      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 4000);
+      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 7000);
+
       processingTimerRef.current = setTimeout(() => {
         processingTimerDoneRef.current = true;
         tryNavigate();
@@ -303,15 +319,22 @@ export default function Create() {
               transition={{ duration: 0.4 }}
               className="flex flex-col items-center gap-8 select-none"
             >
-              <p
-                className="font-bold tracking-tighter leading-none bg-clip-text text-transparent"
-                style={{
-                  fontSize: "clamp(4rem,14vw,9rem)",
-                  backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
-                }}
-              >
-                Processing
-              </p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={processingLabel}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5 }}
+                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl"
+                  style={{
+                    fontSize: "clamp(1.5rem,4vw,2.5rem)",
+                    backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
+                  }}
+                >
+                  {PROCESSING_LABELS[processingLabel]}
+                </motion.p>
+              </AnimatePresence>
               {/* Pulsing dashed execution line */}
               <div className="w-64 flex items-center gap-1">
                 {Array.from({ length: 16 }).map((_, i) => (
