@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
 
@@ -78,11 +79,13 @@ async function extractGPS(
 
 export default function Create() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
   const [dropState, setDropState] = useState<DropState>("idle");
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Uploading...");
   const [shake, setShake] = useState(false);
   const [uploadPhase, setUploadPhase] = useState<"uploading" | "processing">("uploading");
+  const [demoComplete, setDemoComplete] = useState(false);
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadPhaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -135,6 +138,7 @@ export default function Create() {
 
     setDropState("analyzing");
     setStatusText("Uploading...");
+    setDemoComplete(false);
 
     // Extract GPS — must complete before initProject call
     const coords = await extractGPS(files);
@@ -158,6 +162,26 @@ export default function Create() {
           fontFamily: "Inter, sans-serif",
         },
       });
+    }
+
+    // ─── DEMO MODE: authenticated users get the full magic sequence client-side ───
+    // No DB write. GPS coords are stored in sessionStorage for the map reveal.
+    if (isAuthenticated) {
+      setDropState("creating");
+      setStatusText("Uploading...");
+      setProgress(20);
+      // Flip to Processing... after 3 seconds
+      if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
+      uploadPhaseTimerRef.current = setTimeout(() => {
+        setStatusText("Processing...");
+        setProgress(80);
+      }, 3000);
+      // After 5 seconds, mark demo complete — show 'Return to Dashboard' button
+      setTimeout(() => {
+        setProgress(100);
+        setDemoComplete(true);
+      }, 5000);
+      return;
     }
 
     // Get project name from Act 1
@@ -300,6 +324,27 @@ export default function Create() {
           Back
         </button>
       </div>
+
+      {/* ─── Demo Complete: Return to Dashboard ─── */}
+      <AnimatePresence>
+        {demoComplete && (
+          <motion.div
+            key="demo-complete"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
+          >
+            <button
+              onClick={() => setLocation("/dashboard")}
+              className="px-8 py-3 text-sm font-medium tracking-wide text-white/70 hover:text-white border border-white/10 hover:border-white/25 rounded-full transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-md"
+            >
+              Return to Dashboard
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Drop Zone ─── */}
       <div className="flex-1 flex items-center justify-center p-8">
