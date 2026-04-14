@@ -44,7 +44,7 @@ const TIERS = [
     trialTag: false,
     badge: null,
     description:
-      "Full access to the MAPIT engine for 14 days. Create your first digital twin and master the terrain without limits.",
+      "Full access to the MAPIT engine for 14 days. Build your first digital twin and master the terrain.",
     specs: [
       "100 GB Storage",
       "10 Projects",
@@ -66,7 +66,7 @@ const TIERS = [
     trialTag: false,
     badge: "MOST POPULAR",
     description:
-      "For the dedicated engineer. Unlimited projects, advanced APWA utility overlays, and high-frequency data processing.",
+      "For the dedicated engineer. Unlimited projects and advanced APWA overlays.",
     specs: [
       "500 GB Storage",
       "Unlimited Projects",
@@ -88,7 +88,7 @@ const TIERS = [
     trialTag: false,
     badge: null,
     description:
-      "Global scale. Unlimited stakeholder viewing, API access, and priority processing for organizations that shape the world.",
+      "Unlimited projects, API access, and priority processing for teams that operate at a global scale.",
     specs: [
       "1.5 TB Storage",
       "Unlimited Stakeholder Viewing",
@@ -110,7 +110,7 @@ const TIERS = [
     trialTag: false,
     badge: null,
     description:
-      "White-label city portals, on-site training, and dedicated infrastructure for organizations that define the standard.",
+      "White-label city portals, on-site training, and dedicated infrastructure for those who define the standard.",
     specs: [
       "White-Label City Portals",
       "On-Site Training",
@@ -341,7 +341,7 @@ export default function Pricing() {
               </div>
 
               {/* Description */}
-              <p className="text-white/42 text-sm leading-relaxed mb-5">
+              <p className={`text-sm leading-[1.5] mb-5 line-clamp-4 ${tier.badge ? 'text-white' : 'text-white/42'}`} style={{ minHeight: '6em' }}>
                 {tier.description}
               </p>
 
