@@ -141,7 +141,7 @@ export default function Create() {
     // Start GPS extraction in parallel
     const coordsPromise = extractGPS(files);
 
-    // After 3s → PROCESSING
+    // After 6s → PROCESSING
     uploadTimerRef.current = setTimeout(() => {
       setStage("processing");
       console.log('[MAPIT Analytics] Demo_Started');
@@ -151,7 +151,7 @@ export default function Create() {
         processingTimerDoneRef.current = true;
         tryNavigate();
       }, 5000);
-    }, 3000);
+    }, 6000);
 
     // ── Backend work (runs in parallel with timers) ────────────────────────
     const coords = await coordsPromise;

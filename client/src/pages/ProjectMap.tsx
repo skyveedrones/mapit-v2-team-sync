@@ -567,7 +567,7 @@ export default function ProjectMap() {
                     Your project has been secured. We are now processing your data into a high-precision workspace.
                   </p>
                   <button
-                    onClick={() => setLocation("/dashboard")}
+                    onClick={() => { window.location.href = '/dashboard'; }}
                     className="w-full bg-white hover:bg-gray-100 text-black font-bold text-base py-4 rounded-full transition-all duration-200"
                     style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
                   >
