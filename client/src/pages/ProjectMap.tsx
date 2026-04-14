@@ -20,8 +20,9 @@ import {
 import { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc as trpcClient } from "@/lib/trpc";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { toast } from "sonner";
 
 // ── Coordinate helpers ────────────────────────────────────────────────────────
 // DB stores "lat, lng"; Mapbox needs [lng, lat]
@@ -50,6 +51,7 @@ export default function ProjectMap() {
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const isDemoProject = projectId === 1;
   const { user, isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
 
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
@@ -137,17 +139,45 @@ export default function ProjectMap() {
   };
 
   // Magic Flow: Stage 1 (Marker Tooltip) shows immediately, fades after 5s
+  // Stage 2 (Sidebar Popup) appears at 5.5s
+  // Authorized Handshake: authenticated users see Welcome back toast then redirect to /dashboard
   useEffect(() => {
     if (!isOnboardingProject || !mapReady || magicFlowStarted.current) return;
     magicFlowStarted.current = true;
     setStage1Visible(true);
     const stage1Timer = setTimeout(() => setStage1Visible(false), 5000);
-    const stage2Timer = setTimeout(() => setStage2Visible(true), 5500);
+    const stage2Timer = setTimeout(() => {
+      setStage2Visible(true);
+      if (isAuthenticated) {
+        const handshakeTimer = setTimeout(() => {
+          const firstName = user?.name?.split(' ')[0] || 'there';
+          toast(`Welcome back, ${firstName}. Your projects are waiting.`, {
+            duration: 5000,
+            position: 'top-center',
+            style: {
+              background: 'rgba(255,255,255,0.95)',
+              color: 'rgba(10,10,10,0.9)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: '16px',
+              fontSize: '16px',
+              fontWeight: '500',
+              fontFamily: 'Inter, sans-serif',
+              backdropFilter: 'blur(30px)',
+              padding: '20px 28px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              letterSpacing: '-0.01em',
+            },
+          });
+          setTimeout(() => navigate('/dashboard'), 2000);
+        }, 2000);
+        return () => clearTimeout(handshakeTimer);
+      }
+    }, 5500);
     return () => {
       clearTimeout(stage1Timer);
       clearTimeout(stage2Timer);
     };
-  }, [isOnboardingProject, mapReady]);
+  }, [isOnboardingProject, mapReady, isAuthenticated, user, navigate]);
 
   // Show hint 3s after map is ready (onboarding only)
   useEffect(() => {
@@ -205,16 +235,9 @@ export default function ProjectMap() {
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
     : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
 
-  const { data: demoMediaData = [], isLoading: demoMediaLoading } = trpc.media.listDemo.useQuery(
-    { projectId, flightId, includeFlightMedia: false },
-    { enabled: projectId > 0 && isDemoProject }
-  );
-  const { data: realMediaData = [], isLoading: realMediaLoading } = trpc.media.list.useQuery(
-    { projectId, flightId, includeFlightMedia: false },
-    { enabled: projectId > 0 && !isDemoProject, refetchInterval: isOnboardingProject ? 2000 : undefined }
-  );
-  const mediaItems = isDemoProject ? demoMediaData : realMediaData;
-  const mediaLoading = isDemoProject ? demoMediaLoading : realMediaLoading;
+  const { data: mediaItems = [], isLoading: mediaLoading } = isDemoProject
+    ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
+    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0, refetchInterval: isOnboardingProject ? 2000 : undefined });
 
   const geotaggedMedia = useMemo(() => {
     if (!mediaItems) return [];
@@ -643,7 +666,7 @@ export default function ProjectMap() {
 
       {/* ── Magic Flow Stage 1: Marker Tooltip (5s fade-out) ── */}
       <AnimatePresence>
-        {stage1Visible && isOnboardingProject && !isAuthenticated && (
+        {stage1Visible && isOnboardingProject && (
           <motion.div
             key="magic-stage1"
             initial={{ opacity: 0, scale: 0.92, y: -8 }}
@@ -676,7 +699,7 @@ export default function ProjectMap() {
 
       {/* ── Magic Flow Stage 2: Sidebar Magic Popup (after Stage 1 fades) ── */}
       <AnimatePresence>
-        {stage2Visible && isOnboardingProject && !isAuthenticated && (
+        {stage2Visible && isOnboardingProject && (
           <motion.div
             key="magic-stage2"
             initial={{ opacity: 0, scale: 0.92, y: -8 }}
