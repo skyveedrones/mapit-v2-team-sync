@@ -177,6 +177,7 @@ export default function ProjectMap() {
     const interval = setInterval(() => {
       if (mapCompRef.current?.isMapLoaded()) {
         setMapReady(true);
+        console.log('[MAPIT Analytics] Map_Rendered');
         clearInterval(interval);
       }
     }, 500);
@@ -194,6 +195,7 @@ export default function ProjectMap() {
     setPrestigeSubmitting(true);
     try {
       await claimProject.mutateAsync({ projectId, email: prestigeEmail.trim() });
+      console.log('[MAPIT Analytics] Trial_Converted');
       setPrestigeClaimed(true);
       sessionStorage.removeItem("mapit_project_id");
       sessionStorage.removeItem("mapit_project_name");

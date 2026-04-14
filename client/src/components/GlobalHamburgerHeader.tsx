@@ -82,8 +82,8 @@ export const GlobalHamburgerHeader = () => {
           />
         </nav>
 
-        {/* RIGHT: Sign In / Dashboard — muted outline style */}
-        <div>
+        {/* RIGHT: Sign In / Dashboard + Get Started */}
+        <div className="flex items-center gap-3">
           {!loading && (
             isAuthenticated ? (
               <button
@@ -93,12 +93,20 @@ export const GlobalHamburgerHeader = () => {
                 Dashboard
               </button>
             ) : (
-              <button
-                onClick={handleSignIn}
-                className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
-              >
-                Sign In
-              </button>
+              <>
+                <button
+                  onClick={handleSignIn}
+                  className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setLocation("/pricing")}
+                  className="bg-black text-white font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
+                >
+                  Get Started
+                </button>
+              </>
             )
           )}
         </div>

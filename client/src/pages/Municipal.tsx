@@ -76,12 +76,7 @@ export default function Municipal() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Full-bleed aerial photo */}
-        <div className="absolute inset-0">
-          <img src={HERO_IMG} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-[#0A0A0A]" />
-        </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0A0A0A]">
 
         <motion.div
           initial="hidden"
@@ -121,6 +116,21 @@ export default function Municipal() {
               See Your City From Above
               <ChevronRight className="ml-2 h-5 w-5" />
             </a>
+          </motion.div>
+
+          {/* Passive flyby preview */}
+          <motion.div
+            variants={fadeInUp}
+            className="mt-16 mx-auto max-w-3xl w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60 aspect-video bg-[#0d0d0d] flex items-center justify-center"
+          >
+            <video
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/MunicipalHeroVideo_5da11711.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover rounded-xl"
+            />
           </motion.div>
         </motion.div>
       </section>

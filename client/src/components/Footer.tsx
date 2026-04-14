@@ -19,7 +19,7 @@ const Footer = ({ onContactClick }: FooterProps) => {
               draggable={false}
             />
             <p className="text-gray-400 text-sm leading-relaxed">
-              Precision drone mapping and geospatial intelligence. Elevating project visualization for professionals worldwide.
+              The ground truth. Delivered. High-precision site intelligence for the modern builder.
             </p>
           </div>
 

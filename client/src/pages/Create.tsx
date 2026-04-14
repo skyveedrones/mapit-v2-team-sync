@@ -144,6 +144,7 @@ export default function Create() {
     // After 3s → PROCESSING
     uploadTimerRef.current = setTimeout(() => {
       setStage("processing");
+      console.log('[MAPIT Analytics] Demo_Started');
 
       // Processing must show for at least 5s
       processingTimerRef.current = setTimeout(() => {
