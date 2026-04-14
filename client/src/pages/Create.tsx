@@ -109,7 +109,7 @@ export default function Create() {
       pendingNavRef.current = null;
       setStage("done");
       // 1s cross-fade then navigate
-      setTimeout(() => setLocation(dest), 1000);
+      setTimeout(() => { window.location.href = dest; }, 1000);
     }
   }, [setLocation]);
 

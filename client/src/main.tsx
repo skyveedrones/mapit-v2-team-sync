@@ -28,6 +28,9 @@ const queryClient = new QueryClient();
 const isDemoRoute = () => {
   if (typeof window === "undefined") return false;
   const path = window.location.pathname;
+  // Onboarding funnel pages — all unauthenticated, never redirect to OAuth
+  const onboardingFunnelPaths = ['/welcome', '/name', '/create', '/map', '/signup', '/login', '/pricing', '/municipal', '/referral'];
+  if (onboardingFunnelPaths.includes(path)) return true;
   // Check for demo routes: /demo, /demo/*, /project/1, /project/1/*
   const isDemoPath = path === '/demo' || 
                      path.startsWith('/demo/') || 
