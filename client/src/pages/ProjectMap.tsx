@@ -205,9 +205,16 @@ export default function ProjectMap() {
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
     : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
 
-  const { data: mediaItems = [], isLoading: mediaLoading } = isDemoProject
-    ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
-    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0, refetchInterval: isOnboardingProject ? 2000 : undefined });
+  const { data: demoMediaData = [], isLoading: demoMediaLoading } = trpc.media.listDemo.useQuery(
+    { projectId, flightId, includeFlightMedia: false },
+    { enabled: projectId > 0 && isDemoProject }
+  );
+  const { data: realMediaData = [], isLoading: realMediaLoading } = trpc.media.list.useQuery(
+    { projectId, flightId, includeFlightMedia: false },
+    { enabled: projectId > 0 && !isDemoProject, refetchInterval: isOnboardingProject ? 2000 : undefined }
+  );
+  const mediaItems = isDemoProject ? demoMediaData : realMediaData;
+  const mediaLoading = isDemoProject ? demoMediaLoading : realMediaLoading;
 
   const geotaggedMedia = useMemo(() => {
     if (!mediaItems) return [];

@@ -136,7 +136,9 @@ export default function Create() {
     const coords = flyCoords.current;
     if (!coords) return;
     flyFired.current = true;
-    mapRef.current?.flyTo({
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({
       center: [coords.lng, coords.lat],
       zoom: 17,
       pitch: 50,
@@ -144,6 +146,21 @@ export default function Create() {
       duration: 4000,
       essential: true,
     });
+    // Drop an emerald marker pin after the fly animation lands (~4.2s)
+    const markerTimer = setTimeout(() => {
+      if (!mapRef.current) return;
+      const el = document.createElement('div');
+      el.style.cssText = [
+        'width:18px', 'height:18px', 'border-radius:50%',
+        'background:#00C853', 'border:3px solid #fff',
+        'box-shadow:0 0 0 4px rgba(0,200,83,0.35),0 4px 12px rgba(0,0,0,0.6)',
+        'cursor:default',
+      ].join(';');
+      new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([coords.lng, coords.lat])
+        .addTo(mapRef.current);
+    }, 4200);
+    return () => clearTimeout(markerTimer);
   }, [mapLoaded]);
 
   // ─── Progress bar helpers ───
