@@ -242,6 +242,17 @@ export default function Create() {
 
     const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
 
+    // DEMO MODE: Authenticated users bypass initProject entirely
+    // They get the full visual sequence (Uploading -> Processing -> Map Reveal -> Magic Windows)
+    // but no DB write. The Triumph modal at 30s handles the sign-in gate.
+    if (isAuthenticated) {
+      sessionStorage.setItem("mapit_project_id", "1"); // Demo project - public, no auth required
+      sessionStorage.setItem("mapit_project_name", projectName);
+      setUploadPct(100);
+      return; // Timers above handle Processing -> Reveal automatically
+    }
+
+    // NEW USER: Create real trial project
     try {
       const result = await initProject.mutateAsync({
         name: projectName,
@@ -275,37 +286,14 @@ export default function Create() {
       await utils.media.list.invalidate({ projectId: result.projectId });
 
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const isForbidden = msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot");
-
-      if (isForbidden) {
-        // Authenticated user — show Jobsian message, redirect to sign in
-        // Still show the map reveal first, then redirect
-        const firstName = user?.name?.split(" ")[0] || "there";
-        // Let the processing/reveal continue visually, then show toast + redirect
-        setTimeout(() => {
-          toast(`Thanks for trying the mapping demo, ${firstName}. Please sign in to your account.`, {
-            duration: 7000, position: "top-center",
-            style: {
-              background: "rgba(255,255,255,0.95)", color: "rgba(10,10,10,0.9)",
-              border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px",
-              fontSize: "16px", fontWeight: "500", fontFamily: "Inter, sans-serif",
-              backdropFilter: "blur(30px)", padding: "20px 28px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.3)", letterSpacing: "-0.01em",
-            },
-          });
-          setTimeout(() => setLocation("/dashboard"), 3000);
-        }, 4000); // Show after map reveal starts
-      } else {
-        toast("Something went wrong. Please try again.", {
-          duration: 4000,
-          style: { background: "#111", color: "rgba(255,255,255,0.7)", fontSize: "13px" },
-        });
-        setStage("drop");
-      }
+      toast("Something went wrong. Please try again.", {
+        duration: 4000,
+        style: { background: "#111", color: "rgba(255,255,255,0.7)", fontSize: "13px" },
+      });
+      setStage("drop");
     }
     // Founder Fix: isAuthenticated in dep array prevents stale closure
-  }, [initProject, uploadMedia, utils, setLocation, user, isAuthenticated]);
+  }, [initProject, uploadMedia, utils, setLocation, isAuthenticated]);
 
   // ── Drag handlers ─────────────────────────────────────────────────────────
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
