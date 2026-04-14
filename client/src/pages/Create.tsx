@@ -3,11 +3,18 @@
  *
  * Step 1  ENTRY       — Home CTA → /welcome → /name (project name stored in sessionStorage)
  * Step 2  DROP        — Gradient "DROP" hero, dashed execution ring, hero video behind
- * Step 3  UPLOADING   — Gradient "UPLOADING" text, thin pulsed dashed execution line
- * Step 4  PROCESSING  — Gradient "PROCESSING" text (3s after drop), real Mapbox mounts behind
- * Step 5  REAL REVEAL — Uploader fades to opacity-0, map.flyTo fires to GPS coords
+ * Step 3  UPLOADING   — Gradient "UPLOADING" text, thin progress bar (5s timer)
+ * Step 4  PROCESSING  — Gradient "PROCESSING" text, Mapbox loading silently behind overlay
+ * Step 5  REAL REVEAL — map.on('load') fires → overlay fades out + flyTo starts simultaneously
  * Step 6  MAGIC A     — Frosted-glass Marker Tooltip (handled in ProjectMap.tsx)
  * Step 7  MAGIC B     — Frosted-glass Sidebar guide (handled in ProjectMap.tsx)
+ *
+ * CURTAIN LOGIC:
+ * - Mapbox container mounts at z-index 1, invisible (opacity 0) from the start
+ * - Map starts loading in background as soon as files are dropped (uploading stage)
+ * - Overlay stays at full opacity until map.on('load') fires
+ * - On load: overlay fades to opacity-0 (1s) AND flyTo starts simultaneously
+ * - Zero black frames between PROCESSING text and map reveal
  *
  * NO AUTH GUARDS on this page. The only redirect is at the Triumph modal (Step 7).
  */
@@ -72,12 +79,15 @@ function isAcceptedFile(f: File): boolean {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Create() {
   const [, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [stage, setStage] = useState<Stage>("drop");
   const [isDragging, setIsDragging] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
-  const [uploaderOpacity, setUploaderOpacity] = useState(1);
+  // Overlay opacity — starts at 1, fades to 0 only when map.on('load') fires
+  const [overlayOpacity, setOverlayOpacity] = useState(1);
+  // Map container opacity — always 1 once mounted, map renders behind overlay
+  const [mapVisible, setMapVisible] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -98,6 +108,20 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const utils = trpc.useUtils();
 
+  // ── Cleanup on unmount ────────────────────────────────────────────────────
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+      if (markerTimerRef.current) clearTimeout(markerTimerRef.current);
+      if (progressInterval.current) clearInterval(progressInterval.current);
+      if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+      mapInitialized.current = false;
+    };
+  }, []);
+
   // ── Progress bar animation ────────────────────────────────────────────────
   useEffect(() => {
     if (stage !== "uploading" && stage !== "processing") {
@@ -116,9 +140,9 @@ export default function Create() {
     return () => { if (progressInterval.current) clearInterval(progressInterval.current); };
   }, [stage]);
 
-  // ── Initialize Mapbox when processing starts ──────────────────────────────
+  // ── Initialize Mapbox when uploading starts (early load for seamless reveal) ──
   useEffect(() => {
-    if (stage !== "processing" || mapInitialized.current || !mapContainerRef.current) return;
+    if (stage !== "uploading" || mapInitialized.current || !mapContainerRef.current) return;
     mapInitialized.current = true;
 
     const token = (import.meta as any).env?.VITE_MAPBOX_TOKEN;
@@ -136,17 +160,25 @@ export default function Create() {
     });
 
     mapRef.current = map;
+    // Make container visible immediately — it's hidden behind the overlay
+    setMapVisible(true);
 
     map.on("load", () => {
+      if (!isMountedRef.current) return;
+
       // Try to fly to stored GPS coords
       const stored = sessionStorage.getItem("mapit_fly_coords");
+      let hasCoords = false;
+
       if (stored) {
         try {
           const { lat, lng } = JSON.parse(stored);
           if (typeof lat === "number" && typeof lng === "number") {
-            // Fade uploader out, reveal map
-            setUploaderOpacity(0);
-            setTimeout(() => setStage("reveal"), 700);
+            hasCoords = true;
+
+            // Simultaneously: fade overlay out AND start flyTo
+            setOverlayOpacity(0);
+            setTimeout(() => { if (isMountedRef.current) setStage("reveal"); }, 1000);
 
             map.flyTo({
               center: [lng, lat],
@@ -157,7 +189,7 @@ export default function Create() {
               essential: true,
             });
 
-            // Drop emerald marker after fly lands — guarded so it never fires after navigation
+            // Drop emerald marker after fly lands
             markerTimerRef.current = setTimeout(() => {
               if (!isMountedRef.current || !mapRef.current) return;
               if (markerRef.current) markerRef.current.remove();
@@ -175,28 +207,21 @@ export default function Create() {
             }, 4200);
           }
         } catch { /* ignore */ }
-      } else {
-        // No GPS — fade uploader, show world view
-        setUploaderOpacity(0);
-        setTimeout(() => setStage("reveal"), 700);
+      }
+
+      if (!hasCoords) {
+        // No GPS — fade overlay, show world view
+        setOverlayOpacity(0);
+        setTimeout(() => { if (isMountedRef.current) setStage("reveal"); }, 1000);
       }
     });
-
-    return () => {
-      isMountedRef.current = false;
-      if (markerTimerRef.current) clearTimeout(markerTimerRef.current);
-      if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
-      map.remove();
-      mapRef.current = null;
-      mapInitialized.current = false;
-    };
   }, [stage]);
 
   // ── Navigate to real project map after reveal ─────────────────────────────
   useEffect(() => {
     if (stage !== "reveal") return;
-    // Wait for map animation, then navigate to the real project map
     const timer = setTimeout(() => {
+      if (!isMountedRef.current) return;
       const projectId = sessionStorage.getItem("mapit_project_id");
       if (projectId) {
         setLocation(`/project/${projectId}/map`);
@@ -221,7 +246,7 @@ export default function Create() {
       return;
     }
 
-    // Step 3: UPLOADING
+    // Step 3: UPLOADING — Mapbox starts loading silently in background
     setStage("uploading");
 
     // Store real photo count so ProjectMap can display it in Magic Windows and Triumph modal
@@ -230,9 +255,11 @@ export default function Create() {
     // Extract GPS immediately in background
     const coordsPromise = extractGPS(files);
 
-    // Step 4: PROCESSING after 3 seconds
+    // Step 4: PROCESSING after 5 seconds (perceived performance of complex calculation)
     if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
-    flipTimerRef.current = setTimeout(() => setStage("processing"), 3000);
+    flipTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current) setStage("processing");
+    }, 5000);
 
     const coords = await coordsPromise;
     if (coords) {
@@ -258,9 +285,7 @@ export default function Create() {
     if (isAuthenticated) {
       sessionStorage.setItem("mapit_project_id", "1");
       sessionStorage.setItem("mapit_project_name", projectName);
-      // mapit_photo_count already written above
-      setUploadPct(100);
-      return; // Processing → Reveal handled by the useEffect timers
+      return; // Processing → Reveal handled by the map.on('load') event
     }
 
     // NEW USER: Create real trial project
@@ -343,25 +368,28 @@ export default function Create() {
         />
       </video>
 
-      {/* ── Mapbox container — mounts at processing stage ── */}
+      {/* ── Mapbox container — always rendered, visible once map starts loading ── */}
+      {/* Sits at z-index 1, behind the overlay (z-index 10). Tiles load silently. */}
       <div
         ref={mapContainerRef}
         className="absolute inset-0 w-full h-full"
         style={{
-          opacity: stage === "processing" || stage === "reveal" ? 1 : 0,
-          transition: "opacity 1.4s ease",
+          opacity: mapVisible ? 1 : 0,
+          transition: "opacity 0s", // instant — the overlay controls the visual transition
           zIndex: 1,
         }}
       />
 
-      {/* ── Uploader overlay — fades out during reveal ── */}
+      {/* ── Uploader overlay — full-screen curtain, fades out when map is ready ── */}
+      {/* z-index 10 ensures it stays above the map until map.on('load') fires */}
       <div
         className="absolute inset-0 flex flex-col items-center justify-center"
         style={{
-          opacity: uploaderOpacity,
-          transition: "opacity 0.7s ease",
+          background: "#0A0A0A",
+          opacity: overlayOpacity,
+          transition: "opacity 1s ease",
           zIndex: 10,
-          pointerEvents: uploaderOpacity < 0.1 ? "none" : "auto",
+          pointerEvents: overlayOpacity < 0.05 ? "none" : "auto",
         }}
       >
         {/* Back arrow */}
@@ -477,13 +505,14 @@ export default function Create() {
           )}
 
           {/* ── STEP 4: PROCESSING ── */}
+          {/* Stays visible until map.on('load') fires and overlayOpacity drops to 0 */}
           {(stage === "processing" || stage === "reveal") && (
             <motion.div
               key="processing"
               initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: stage === "reveal" ? 0 : 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: stage === "reveal" ? 0.7 : 0.35 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
               className="flex flex-col items-center"
               style={{ width: "clamp(260px, 40vw, 420px)" }}
             >
