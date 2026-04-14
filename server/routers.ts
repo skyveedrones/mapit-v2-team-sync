@@ -5341,7 +5341,7 @@ export const appRouter = router({
       <h1 style="font-size:clamp(2rem,8vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1;margin:0 0 24px;background:linear-gradient(to bottom,#ffffff,#6b7280);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Engineering triumph</h1>
       <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 32px">You have successfully claimed your digital twin for <strong style="color:#ffffff">${projectName}</strong>. Your 14-day free trial is now active, providing full access to all precision mapping tools.</p>
       <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 40px">Access your project anytime via the link below.</p>
-      <a href="${projectUrl}" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">View My Project</a>
+      <a href="https://mapit.skyveedrones.com/dashboard" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">Go to My Dashboard</a>
       <p style="margin:48px 0 0;font-size:12px;color:rgba(255,255,255,0.2)">MAPIT &nbsp;·&nbsp; Precision mapping for the modern job site</p>
     </td></tr>
   </table>

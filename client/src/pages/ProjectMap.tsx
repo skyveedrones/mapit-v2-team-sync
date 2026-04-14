@@ -54,6 +54,8 @@ export default function ProjectMap() {
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
   const mapRef = useRef<any>(null);
+  const projectCardRef = useRef<HTMLDivElement | null>(null);
+  const [cardBottom, setCardBottom] = useState(160);
 
   // Keep mapRef in sync with MapboxProjectMap's internal map
   useEffect(() => {
@@ -139,8 +141,8 @@ export default function ProjectMap() {
           // Wait for fade-out transition (~500ms) before showing Window #2
           setTimeout(() => {
             setShowSidebarHint(true);
-            // Auto-dismiss Window #2 after 5s
-            setTimeout(() => setShowSidebarHint(false), 5000);
+            // Auto-dismiss Window #2 after 15s
+            setTimeout(() => setShowSidebarHint(false), 15000);
           }, 600);
         }, 10000);
         return () => clearTimeout(autoTimer);
@@ -156,6 +158,19 @@ export default function ProjectMap() {
       setShowSidebarHint(false);
     }
   }, [showPrestige]);
+
+  // Measure project card bottom edge after render so pill positions correctly
+  useEffect(() => {
+    const measure = () => {
+      if (projectCardRef.current) {
+        const rect = projectCardRef.current.getBoundingClientRect();
+        setCardBottom(rect.bottom);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [triumphHasFired]);
 
   // Poll for map readiness from the production component
   useEffect(() => {
@@ -320,19 +335,22 @@ export default function ProjectMap() {
       )}
 
       {/* ── Project Info Panel — Top Left ── */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-4 left-4 z-10" ref={projectCardRef}>
         <div className="bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
           <div className="flex items-start gap-3">
-            <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-shrink-0 h-8 px-2 gap-1.5 text-white hover:bg-white/10"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-xs">Return to {flightId ? "Flight" : "Project"}</span>
-              </Button>
-            </Link>
+            {/* Hide 'Return to Project' for unauthenticated onboarding users — no project page to go back to */}
+            {(!isOnboardingProject || isAuthenticated) && (
+              <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 h-8 px-2 gap-1.5 text-white hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-xs">Return to {flightId ? "Flight" : "Project"}</span>
+                </Button>
+              </Link>
+            )}
             <div className="flex-1 min-w-0">
               <h1
                 className="text-base font-semibold truncate text-white"
@@ -358,16 +376,6 @@ export default function ProjectMap() {
               </div>
             </div>
           </div>
-          {/* Start Trial pill — appears after Triumph fires, for unauthenticated onboarding users */}
-          {isOnboardingProject && !isAuthenticated && triumphHasFired && !prestigeClaimed && (
-            <button
-              onClick={() => setShowPrestige(true)}
-              className="mt-3 w-full bg-white hover:bg-gray-100 text-black text-sm font-bold py-2.5 rounded-full transition-all duration-200 select-none"
-              style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
-            >
-              Start Trial
-            </button>
-          )}
           {/* Save Your Progress — for unauthenticated users on onboarding projects (pre-Triumph) */}
           {isOnboardingProject && !isAuthenticated && !triumphHasFired && (
             <button
@@ -381,9 +389,46 @@ export default function ProjectMap() {
         </div>
       </div>
 
+      {/* ── Persistent Start Trial Pill — z-[100], independent of modal state ── */}
+      {isOnboardingProject && !isAuthenticated && triumphHasFired && !prestigeClaimed && (
+        <div
+          className="absolute z-[100]"
+          style={{ top: `${cardBottom + 8}px`, left: "16px" }}
+        >
+          <button
+            onClick={() => setShowPrestige(true)}
+            className="bg-white hover:bg-gray-100 text-black text-sm font-bold px-6 py-2.5 rounded-full shadow-lg transition-all duration-200 select-none whitespace-nowrap"
+            style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
+          >
+            Start Trial
+          </button>
+        </div>
+      )}
+
       {/* ── Cinematic Flyby Controller ── */}
       {geotaggedMedia.length > 0 && (
-        <FlybyController ref={flybyRef} mapRef={mapRef} mapLoaded={mapReady} />
+        <FlybyController
+          ref={flybyRef}
+          mapRef={mapRef}
+          mapLoaded={mapReady}
+          onFlybyStop={() => {
+            // Recenter on GPS marker after flyby ends (1.8s smooth glide)
+            const map = mapCompRef.current?.getMap();
+            if (!map) return;
+            // Use same 3-tier GPS fallback as fly-in
+            let center: [number, number] | null = null;
+            const sessionCoords = getSessionCoords();
+            if (sessionCoords) center = sessionCoords;
+            if (!center && (project as any)?.location) center = parseLocation((project as any).location);
+            if (!center && geotaggedMedia.length > 0) {
+              const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+              const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+              center = [avgLng, avgLat];
+            }
+            if (!center) return;
+            map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 1800, essential: true });
+          }}
+        />
       )}
 
       {/* ── City Park Guided Tour ── */}
@@ -516,20 +561,32 @@ export default function ProjectMap() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4 }}
+                  className="text-center"
                 >
                   <p
-                    className="font-bold tracking-tighter bg-clip-text text-transparent mb-4"
+                    className="font-bold bg-clip-text text-transparent mb-6"
                     style={{
-                      fontSize: "clamp(2.5rem,10vw,4rem)",
-                      backgroundImage: "linear-gradient(to bottom, #10b981 0%, #059669 100%)",
-                      lineHeight: 1,
+                      fontSize: "clamp(2.2rem,6vw,3.5rem)",
+                      letterSpacing: "-0.04em",
+                      backgroundImage: "linear-gradient(160deg, #ffffff 0%, #d1d5db 45%, #6b7280 100%)",
+                      lineHeight: 1.0,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      display: "block",
                     }}
                   >
-                    Done.
+                    Achievement Saved.
                   </p>
-                  <p className="text-gray-300 text-base">
-                    Check your inbox to activate your trial.
+                  <p className="text-white/60 text-base leading-relaxed mb-10" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    Your project has been secured. We are now processing your data into a high-precision workspace.
                   </p>
+                  <button
+                    onClick={() => setLocation("/dashboard")}
+                    className="w-full bg-white hover:bg-gray-100 text-black font-bold text-base py-4 rounded-full transition-all duration-200"
+                    style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
+                  >
+                    Go to My Dashboard
+                  </button>
                 </motion.div>
               )}
             </motion.div>
@@ -674,7 +731,7 @@ export default function ProjectMap() {
                   Professional Grade.
                 </p>
                 <p className="text-white/55 text-xs leading-relaxed">
-                  Click the icon with the triangle shapes to open the sidebar. This is where you access measurements, layers, and professional exports.
+                  Click the icon with the diamond shapes on the right hand side to open the sidebar. This is where you access measurements, layers, and professional exports.
                 </p>
 
               </div>

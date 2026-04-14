@@ -209,8 +209,9 @@ function Router() {
       </Route>
       <Route path="/project/:id">
         {(params) => {
-          // Demo project (ID: 1) doesn't require authentication
-          if (params.id === '1') {
+          // Demo project (ID: 1) and onboarding trial projects don't require authentication
+          const onboardingId = (() => { try { return sessionStorage.getItem('mapit_project_id'); } catch { return null; } })();
+          if (params.id === '1' || (onboardingId && params.id === onboardingId)) {
             return <ProjectDetail />;
           }
           return <ProtectedRoute component={ProjectDetail} />;
@@ -227,8 +228,9 @@ function Router() {
       </Route>
       <Route path="/project/:id/flight/:flightId">
         {(params) => {
-          // Demo project (ID: 1) doesn't require authentication
-          if (params.id === '1') {
+          // Demo project (ID: 1) and onboarding trial projects don't require authentication
+          const onboardingId = (() => { try { return sessionStorage.getItem('mapit_project_id'); } catch { return null; } })();
+          if (params.id === '1' || (onboardingId && params.id === onboardingId)) {
             return <FlightDetail />;
           }
           return <ProtectedRoute component={FlightDetail} />;

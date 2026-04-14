@@ -48,11 +48,12 @@ export interface FlybyControllerHandle {
 interface FlybyControllerProps {
   mapRef: React.MutableRefObject<mapboxgl.Map | null>;
   mapLoaded: boolean;
+  onFlybyStop?: () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const FlybyController = forwardRef<FlybyControllerHandle, FlybyControllerProps>(
-  function FlybyController({ mapRef, mapLoaded }, ref) {
+  function FlybyController({ mapRef, mapLoaded, onFlybyStop }, ref) {
     const [isFlying, setIsFlying] = useState(false);
 
     // All mutable flyby state lives in refs so RAF callbacks are always fresh
@@ -93,6 +94,7 @@ export const FlybyController = forwardRef<FlybyControllerHandle, FlybyController
           stopRequestedRef.current = false;
           stopFrameRef.current = 0;
           setIsFlying(false);
+          onFlybyStop?.();
           return;
         }
 
