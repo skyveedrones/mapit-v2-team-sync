@@ -1,9 +1,9 @@
 /**
- * MAPIT — /create Drop Zone
- * 3-state Jobsian blueprint:
- *   1. DROP     — dashed box, cloud icon, "Drop photos here"
- *   2. UPLOADING — thin horizontal progress bar + "Uploading... XX%"
- *   3. PROCESSING — pulsing glow bar + "Building your map..."
+ * MAPIT — /create  (3-Stage Magic Upload Flow)
+ *
+ * Stage 1  DROP       — dashed box, cloud icon, "Drop photos here"
+ * Stage 2  UPLOADING  — thin progress bar, "Uploading..." → "Processing..." after 3 s
+ * Stage 3  PROCESSING — pulsing bar, "Processing...", map.flyTo fires on first coord
  */
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -14,21 +14,18 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 
-type Stage = "drop" | "uploading" | "processing";
+type Stage = "drop" | "active";          // "active" covers both uploading + processing
+type ActiveLabel = "Uploading..." | "Processing...";
 
 const ACCEPTED_MIME = new Set([
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/tiff",
-  "video/mp4",
-  "video/quicktime",
+  "image/jpeg", "image/jpg", "image/png", "image/tiff",
+  "video/mp4", "video/quicktime",
 ]);
 const ACCEPTED_EXT = new Set([".jpg", ".jpeg", ".png", ".tiff", ".tif", ".mp4", ".mov"]);
 
-function isAcceptedFile(file: File): boolean {
-  if (ACCEPTED_MIME.has(file.type)) return true;
-  const ext = "." + file.name.split(".").pop()?.toLowerCase();
+function isAcceptedFile(f: File): boolean {
+  if (ACCEPTED_MIME.has(f.type)) return true;
+  const ext = "." + f.name.split(".").pop()?.toLowerCase();
   return ACCEPTED_EXT.has(ext);
 }
 
@@ -37,9 +34,8 @@ async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } |
     if (file.type.startsWith("video/")) continue;
     try {
       const gps = await exifr.gps(file);
-      if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
+      if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number")
         return { lat: gps.latitude, lng: gps.longitude };
-      }
     } catch { /* try next */ }
     try {
       const exif = await exifr.parse(file, {
@@ -59,63 +55,65 @@ async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } |
 export default function Create() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [stage, setStage] = useState<Stage>("drop");
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadPct, setUploadPct] = useState(0);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const initProject = trpc.onboarding.initProject.useMutation({
+  const [stage, setStage]           = useState<Stage>("drop");
+  const [label, setLabel]           = useState<ActiveLabel>("Uploading...");
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadPct, setUploadPct]   = useState(0);
+
+  const flipTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const initProject  = trpc.onboarding.initProject.useMutation({
     onError: (error) => {
-      const msg = error.message || String(error);
-      if (msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot")) {
+      const msg = error.message || "";
+      if (msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot"))
         (error as any).__handled = true;
-      }
     },
   });
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
-  const utils = trpc.useUtils();
+  const utils       = trpc.useUtils();
 
-  // Animate upload percentage 0 → 95 while in uploading stage
+  // Animate progress bar while in "active" stage
   useEffect(() => {
-    if (stage !== "uploading") {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    if (stage !== "active") {
+      if (progressInterval.current) clearInterval(progressInterval.current);
       return;
     }
     setUploadPct(0);
-    progressIntervalRef.current = setInterval(() => {
+    progressInterval.current = setInterval(() => {
       setUploadPct((p) => {
-        if (p >= 95) { clearInterval(progressIntervalRef.current!); return 95; }
-        const inc = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
-        return Math.min(p + inc, 95);
+        if (p >= 95) { clearInterval(progressInterval.current!); return 95; }
+        return Math.min(p + (p < 60 ? 3 : p < 80 ? 1.5 : 0.5), 95);
       });
     }, 40);
-    return () => { if (progressIntervalRef.current) clearInterval(progressIntervalRef.current); };
+    return () => { if (progressInterval.current) clearInterval(progressInterval.current); };
   }, [stage]);
 
   const processFiles = useCallback(async (files: File[]) => {
     const invalid = files.filter((f) => !isAcceptedFile(f));
     if (invalid.length > 0) {
       toast("Format not supported. Use drone imagery or video.", {
-        duration: 3000,
-        position: "bottom-center",
+        duration: 3000, position: "bottom-center",
         style: {
-          background: "rgba(10,10,10,0.92)",
-          color: "rgba(255,255,255,0.75)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          borderRadius: "14px",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
-          backdropFilter: "blur(20px)",
-          padding: "12px 20px",
+          background: "rgba(10,10,10,0.92)", color: "rgba(255,255,255,0.75)",
+          border: "1px solid rgba(255,255,255,0.10)", borderRadius: "14px",
+          fontSize: "13px", fontFamily: "Inter, sans-serif",
+          backdropFilter: "blur(20px)", padding: "12px 20px",
         },
       });
       return;
     }
 
-    // Transition to UPLOADING
-    setStage("uploading");
+    // ── Enter active stage ──
+    setStage("active");
+    setLabel("Uploading...");
 
-    // Extract GPS while progress bar runs
+    // 3-second flip to "Processing..."
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    flipTimerRef.current = setTimeout(() => setLabel("Processing..."), 3000);
+
+    // Extract GPS in background
     const coords = await extractGPS(files);
     if (coords) {
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
@@ -124,11 +122,9 @@ export default function Create() {
       toast("No location found in file. Defaulting to world view.", {
         duration: 3000,
         style: {
-          background: "#111",
-          color: "rgba(255,255,255,0.6)",
+          background: "#111", color: "rgba(255,255,255,0.6)",
           border: "1px solid rgba(255,255,255,0.08)",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
+          fontSize: "13px", fontFamily: "Inter, sans-serif",
         },
       });
     }
@@ -146,15 +142,15 @@ export default function Create() {
       sessionStorage.setItem("mapit_project_name", projectName);
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
-      // Transition to PROCESSING
-      setStage("processing");
+      // Ensure we're showing "Processing..." once project is created
+      setLabel("Processing...");
 
       // Upload files
       for (const file of files) {
         try {
           const arrayBuffer = await file.arrayBuffer();
           const base64 = btoa(
-            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+            new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
           );
           await uploadMedia.mutateAsync({
             projectId: result.projectId,
@@ -162,35 +158,29 @@ export default function Create() {
             mimeType: file.type || "image/jpeg",
             fileData: base64,
           });
-        } catch (uploadErr) {
-          console.error("[Create] Failed to upload media:", file.name, uploadErr);
+        } catch (e) {
+          console.error("[Create] Upload failed:", file.name, e);
         }
       }
 
       await utils.media.list.invalidate({ projectId: result.projectId });
       setUploadPct(100);
       setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
+
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      const isForbidden = errorMsg.includes("FORBIDDEN") || errorMsg.includes("Authenticated users cannot");
+      const msg = err instanceof Error ? err.message : String(err);
+      const isForbidden = msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot");
 
       if (isForbidden) {
-        const userName = user?.name?.split(" ")[0] || "there";
-        toast(`Welcome back, ${userName}! We've saved your spot. Redirecting to your MAPIT dashboard...`, {
-          duration: 6000,
-          position: "top-center",
+        const firstName = user?.name?.split(" ")[0] || "there";
+        toast(`Welcome back, ${firstName}! We've saved your spot. Redirecting to your MAPIT dashboard...`, {
+          duration: 6000, position: "top-center",
           style: {
-            background: "rgba(255,255,255,0.95)",
-            color: "rgba(10,10,10,0.9)",
-            border: "1px solid rgba(0,0,0,0.08)",
-            borderRadius: "16px",
-            fontSize: "16px",
-            fontWeight: "500",
-            fontFamily: "Inter, sans-serif",
-            backdropFilter: "blur(30px)",
-            padding: "20px 28px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-            letterSpacing: "-0.01em",
+            background: "rgba(255,255,255,0.95)", color: "rgba(10,10,10,0.9)",
+            border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px",
+            fontSize: "16px", fontWeight: "500", fontFamily: "Inter, sans-serif",
+            backdropFilter: "blur(30px)", padding: "20px 28px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)", letterSpacing: "-0.01em",
           },
         });
         setTimeout(() => setLocation("/dashboard"), 2000);
@@ -204,27 +194,19 @@ export default function Create() {
     }
   }, [initProject, uploadMedia, utils, setLocation, user]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback(() => setIsDragging(false), []);
+  const handleDrop      = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) processFiles(files);
   }, [processFiles]);
-
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length > 0) processFiles(files);
   }, [processFiles]);
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative"
@@ -237,9 +219,9 @@ export default function Create() {
       <button
         onClick={() => setLocation("/")}
         className="absolute top-5 left-5 p-2 rounded-lg transition-colors"
-        style={{ color: "rgba(255,255,255,0.30)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.30)")}
+        style={{ color: "rgba(255,255,255,0.28)" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.70)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.28)")}
         aria-label="Back to home"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -247,7 +229,7 @@ export default function Create() {
 
       <AnimatePresence mode="wait">
 
-        {/* ── STATE 1: DROP ── */}
+        {/* ── STAGE 1: DROP ── */}
         {stage === "drop" && (
           <motion.div
             key="drop"
@@ -259,11 +241,11 @@ export default function Create() {
             <label
               className="flex flex-col items-center justify-center cursor-pointer transition-all duration-200"
               style={{
-                width: "clamp(260px, 40vw, 400px)",
-                height: "clamp(200px, 28vw, 300px)",
-                border: `2px dashed ${isDragging ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.15)"}`,
-                borderRadius: "20px",
-                background: isDragging ? "rgba(255,255,255,0.03)" : "transparent",
+                width: "clamp(260px, 40vw, 420px)",
+                height: "clamp(200px, 28vw, 320px)",
+                border: `2px dashed ${isDragging ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.14)"}`,
+                borderRadius: "22px",
+                background: isDragging ? "rgba(255,255,255,0.025)" : "transparent",
               }}
             >
               <input
@@ -275,14 +257,14 @@ export default function Create() {
               />
               <CloudUpload
                 className="mb-4"
-                style={{ width: 32, height: 32, color: "rgba(255,255,255,0.25)" }}
+                style={{ width: 30, height: 30, color: "rgba(255,255,255,0.22)" }}
                 strokeWidth={1.5}
               />
               <span
                 style={{
                   fontSize: "0.9375rem",
-                  fontWeight: 400,
-                  color: "rgba(255,255,255,0.30)",
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.28)",
                   letterSpacing: "-0.01em",
                 }}
               >
@@ -292,74 +274,70 @@ export default function Create() {
           </motion.div>
         )}
 
-        {/* ── STATE 2: UPLOADING ── */}
-        {stage === "uploading" && (
+        {/* ── STAGE 2 + 3: ACTIVE (uploading → processing) ── */}
+        {stage === "active" && (
           <motion.div
-            key="uploading"
+            key="active"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="flex flex-col items-center"
-            style={{ width: "clamp(260px, 40vw, 400px)" }}
+            style={{ width: "clamp(260px, 40vw, 420px)" }}
           >
-            <p
-              className="mb-4 text-center tabular-nums"
-              style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.40)", letterSpacing: "-0.01em" }}
-            >
-              Uploading... {Math.round(uploadPct)}%
-            </p>
+            {/* Label — flips from "Uploading..." to "Processing..." at 3 s */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={label}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.3 }}
+                className="mb-5 text-center font-medium"
+                style={{
+                  fontSize: "0.875rem",
+                  color: "rgba(255,255,255,0.38)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {label}
+              </motion.p>
+            </AnimatePresence>
+
+            {/* Progress bar — solid fill while uploading, pulsing glow while processing */}
             <div
               style={{
                 width: "100%",
                 height: "1px",
-                background: "rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.07)",
                 borderRadius: "1px",
-                overflow: "hidden",
+                overflow: "visible",
+                position: "relative",
               }}
             >
-              <motion.div
-                style={{
-                  height: "100%",
-                  background: "rgba(255,255,255,0.65)",
-                  borderRadius: "1px",
-                  width: `${uploadPct}%`,
-                }}
-                transition={{ ease: "linear" }}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── STATE 3: PROCESSING ── */}
-        {stage === "processing" && (
-          <motion.div
-            key="processing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center"
-            style={{ width: "clamp(260px, 40vw, 400px)" }}
-          >
-            <p
-              className="mb-4 text-center"
-              style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.40)", letterSpacing: "-0.01em" }}
-            >
-              Building your map...
-            </p>
-            <div style={{ width: "100%", height: "1px", borderRadius: "1px", overflow: "visible" }}>
-              <motion.div
-                style={{
-                  height: "1px",
-                  width: "100%",
-                  borderRadius: "1px",
-                  background: "rgba(255,255,255,0.50)",
-                  boxShadow: "0 0 6px 2px rgba(255,255,255,0.18)",
-                }}
-                animate={{ opacity: [0.35, 1, 0.35] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {label === "Uploading..." ? (
+                <motion.div
+                  style={{
+                    height: "1px",
+                    background: "rgba(255,255,255,0.60)",
+                    borderRadius: "1px",
+                    width: `${uploadPct}%`,
+                  }}
+                  transition={{ ease: "linear" }}
+                />
+              ) : (
+                <motion.div
+                  style={{
+                    height: "1px",
+                    width: "100%",
+                    borderRadius: "1px",
+                    background: "rgba(255,255,255,0.50)",
+                    boxShadow: "0 0 6px 2px rgba(255,255,255,0.16)",
+                  }}
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
             </div>
           </motion.div>
         )}
