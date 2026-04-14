@@ -110,19 +110,17 @@ export default function Municipal() {
             variants={fadeInUp}
             className="text-xl text-white/60 max-w-xl mx-auto mb-12 leading-relaxed"
           >
-            MAPIT gives every department a live aerial record of every project — roads, utilities, infrastructure —
-            updated from the sky.
+            MAPIT provides every department with a live aerial record of every project—roads, utilities, and infrastructure—updated directly from the sky.
           </motion.p>
 
           <motion.div variants={fadeInUp}>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setContactOpen(true)}
+            <a
+              href="/#map-begins-here"
+              className="inline-flex items-center gap-2 bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20 transition-colors"
             >
-              Request the Municipal Pilot Program
+              See Your City From Above
               <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            </a>
           </motion.div>
         </motion.div>
       </section>
@@ -317,7 +315,7 @@ export default function Municipal() {
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => setContactOpen(true)}
             >
-              See your city from above
+              Request the Municipal Pilot Program
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>

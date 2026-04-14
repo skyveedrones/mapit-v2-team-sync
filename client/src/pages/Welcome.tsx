@@ -46,7 +46,7 @@ export default function Welcome() {
   const [showContactModal, setShowContactModal] = useState(false);
 
   const handleGetStarted = () => {
-    setLocation("/pricing");
+    setLocation("/name");
   };
 
   return (
@@ -142,7 +142,7 @@ export default function Welcome() {
             <Button
               size="lg"
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={handleGetStarted}
+              onClick={() => setLocation("/pricing")}
             >
               Create Free Account
               <ChevronRight className="ml-2 h-5 w-5" />
