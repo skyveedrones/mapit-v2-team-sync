@@ -33,7 +33,19 @@ const isDemoRoute = () => {
                      path.startsWith('/demo/') || 
                      path === '/project/1' || 
                      path.startsWith('/project/1/');
-  return isDemoPath;
+  if (isDemoPath) return true;
+  // Also bypass redirect for onboarding trial projects (unauthenticated users)
+  // The project ID is stored in sessionStorage during the Create flow
+  try {
+    const onboardingId = sessionStorage.getItem('mapit_project_id');
+    if (onboardingId) {
+      const onboardingPath = `/project/${onboardingId}`;
+      if (path === onboardingPath || path.startsWith(`${onboardingPath}/`)) return true;
+    }
+  } catch {
+    // sessionStorage not available (e.g. private mode)
+  }
+  return false;
 };
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
