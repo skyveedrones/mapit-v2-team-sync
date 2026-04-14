@@ -215,8 +215,20 @@ export default function Create() {
       setProgress(100);
       const errorMsg = err instanceof Error ? err.message : String(err);
       if (errorMsg.includes("FORBIDDEN") || errorMsg.includes("Authenticated users cannot")) {
-        toast("Welcome back! Redirecting to your MAPIT dashboard...", { duration: 6000, position: "top-center" });
-        setTimeout(() => setLocation("/dashboard"), 2000);
+        // Run the full magic sequence before redirecting
+        setStatusText("Uploading...");
+        setProgress(20);
+        // Flip to Processing... after 3 seconds
+        setTimeout(() => {
+          setStatusText("Processing...");
+          setProgress(80);
+        }, 3000);
+        // Show toast and redirect after 5 seconds total
+        setTimeout(() => {
+          setProgress(100);
+          toast("Welcome back! Redirecting to your MAPIT dashboard...", { duration: 4000, position: "top-center" });
+          setTimeout(() => setLocation("/dashboard"), 800);
+        }, 5000);
       } else {
         setProgress(100);
         setTimeout(() => setLocation("/dashboard"), 400);
