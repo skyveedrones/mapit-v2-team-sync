@@ -28,15 +28,11 @@ const queryClient = new QueryClient();
 const isDemoRoute = () => {
   if (typeof window === "undefined") return false;
   const path = window.location.pathname;
-  // Check for demo routes: /demo, /demo/*, /project/1, /project/1/*, and the full onboarding funnel
+  // Check for demo routes: /demo, /demo/*, /project/1, /project/1/*
   const isDemoPath = path === '/demo' || 
                      path.startsWith('/demo/') || 
                      path === '/project/1' || 
-                     path.startsWith('/project/1/') ||
-                     path === '/create' ||
-                     path === '/welcome' ||
-                     path === '/name' ||
-                     path === '/marketing-demo';
+                     path.startsWith('/project/1/');
   return isDemoPath;
 };
 

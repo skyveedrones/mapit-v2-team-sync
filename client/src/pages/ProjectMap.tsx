@@ -107,18 +107,6 @@ export default function ProjectMap() {
   const onboardingPhotoCount =
     sessionStorage.getItem("mapit_photo_count") || null;
 
-  // ── DEMO FLOW DIAGNOSTIC ─────────────────────────────────────────────────
-  console.log("DEMO FLOW ACTIVE", {
-    projectId,
-    isDemoProject,
-    isDemoFlow,
-    isOnboardingProject,
-    projectName: onboardingProjectName,
-    photoCount: onboardingPhotoCount,
-    sessionProjectId: sessionStorage.getItem("mapit_project_id"),
-    sessionFlyCoords: sessionStorage.getItem("mapit_fly_coords"),
-  });
-
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
@@ -375,7 +363,7 @@ export default function ProjectMap() {
         <MapboxProjectMap
           ref={mapCompRef}
           projectId={projectId}
-          projectName={isDemoFlow && onboardingProjectName !== "your project" ? onboardingProjectName : project.name}
+          projectName={project.name}
           flightId={flightId}
           isDemoProject={isDemoProject}
           overlays={overlays}
@@ -425,7 +413,7 @@ export default function ProjectMap() {
                 className="text-base font-semibold truncate text-white"
                 style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
               >
-                {flightId ? "Flight Map" : (isDemoFlow && onboardingProjectName !== "your project" ? onboardingProjectName : project.name)}
+                {flightId ? "Flight Map" : project.name}
               </h1>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/50 mt-1">
                 <span className="flex items-center gap-1">
@@ -475,8 +463,6 @@ export default function ProjectMap() {
                 setTimeout(() => flybyRef.current?.startFlyby(), 400);
               }}
               onClose={() => setShowTour(false)}
-              photoCount={onboardingPhotoCount}
-              projectName={onboardingProjectName !== "your project" ? onboardingProjectName : null}
             />
           </div>
         </div>

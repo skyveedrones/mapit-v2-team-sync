@@ -1,9 +1,7 @@
 /**
- * CityParkTour — Guided 4-step DemoOnboarding overlay.
+ * CityParkTour — Guided 4-step DemoOnboarding overlay for the City Park Redevelopment project.
  *
- * All copy is dynamic — photoCount and projectName are passed as props
- * so the walkthrough always reflects the user's actual upload.
- *
+ * Matches the DemoOnboarding spec exactly:
  * - w-96 card, bottom-center, z-[999], bg-slate-900/90, border-[#10b981]
  * - "WALKTHROUGH: STEP 0X" mono label
  * - Full-width action button
@@ -15,6 +13,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
 
+// ── Tour step data (exact copy from spec) ─────────────────────────────────────
+
+const STEPS = [
+  {
+    title: "Step 01: The Data Drop",
+    text: "This project started with 142 raw drone photos. MAPIT's AI stitched them into this centimeter-accurate base map.",
+    btn: "Next: Check Overlays",
+  },
+  {
+    title: "Step 02: PDF & CAD Alignment",
+    text: "Open the 'Layers' tab. We've overlaid a Utility PDF. See how the sewer lines match the physical manholes on the map?",
+    btn: "Next: Verify Measurements",
+  },
+  {
+    title: "Step 03: Precision Metrics",
+    text: "Look at the playground area. That 4,500 sq ft measurement was generated in two clicks. No tape measure required.",
+    btn: "Final: Launch Flyby",
+  },
+  {
+    title: "The Stakeholder 'Wow' Moment",
+    text: "This is the Cinematic Flyby. It's how you present your work to the City Manager. Ready for takeoff?",
+    btn: "START FLYBY",
+  },
+] as const;
+
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 export interface CityParkTourProps {
@@ -22,44 +45,13 @@ export interface CityParkTourProps {
   onLaunchFlyby?: () => void;
   /** Called when the tour is dismissed (✕ or after flyby launch) */
   onClose?: () => void;
-  /** Real photo count from the user's upload */
-  photoCount?: string | null;
-  /** Real project name entered by the user */
-  projectName?: string | null;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function CityParkTour({ onLaunchFlyby, onClose, photoCount, projectName }: CityParkTourProps) {
+export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
   const [step, setStep] = useState(1);
   const [visible, setVisible] = useState(true);
-
-  const displayPhotoCount = photoCount || sessionStorage.getItem("mapit_photo_count") || "your";
-  const displayProjectName = projectName || sessionStorage.getItem("mapit_project_name") || "this project";
-
-  // Build steps dynamically so they always reflect the real upload
-  const STEPS = [
-    {
-      title: "Step 01: The Data Drop",
-      text: `${displayProjectName} started with ${displayPhotoCount} raw drone photo${Number(displayPhotoCount) !== 1 ? "s" : ""}. MAPIT's AI stitched them into this centimeter-accurate base map.`,
-      btn: "Next: Check Overlays",
-    },
-    {
-      title: "Step 02: PDF & CAD Alignment",
-      text: "Open the 'Layers' tab. We've overlaid a Utility PDF. See how the sewer lines match the physical manholes on the map?",
-      btn: "Next: Verify Measurements",
-    },
-    {
-      title: "Step 03: Precision Metrics",
-      text: "Look at the playground area. That 4,500 sq ft measurement was generated in two clicks. No tape measure required.",
-      btn: "Final: Launch Flyby",
-    },
-    {
-      title: "The Stakeholder 'Wow' Moment",
-      text: "This is the Cinematic Flyby. It's how you present your work to the City Manager. Ready for takeoff?",
-      btn: "START FLYBY",
-    },
-  ] as const;
 
   const current = STEPS[step - 1];
 
@@ -67,6 +59,7 @@ export function CityParkTour({ onLaunchFlyby, onClose, photoCount, projectName }
     if (step < 4) {
       setStep((s) => s + 1);
     } else {
+      // Step 4 — fire flyby then close
       onLaunchFlyby?.();
       dismiss();
     }
