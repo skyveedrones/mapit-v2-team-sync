@@ -90,9 +90,9 @@ export default function Create() {
 
   const initProject = trpc.onboarding.initProject.useMutation({
     onError: (error) => {
-      const msg = error.message || "";
-      if (msg.includes("FORBIDDEN") || msg.includes("Authenticated users cannot"))
-        (error as any).__handled = true;
+      // Mark ALL initProject errors as handled — this is a public demo procedure.
+      // The global error handler must never redirect to login from /create.
+      (error as any).__handled = true;
     },
   });
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
