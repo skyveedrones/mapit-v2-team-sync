@@ -310,3 +310,10 @@ html {
   transform: scaleX(1);
   box-shadow: 0 0 15px 2px rgba(16, 185, 129, 0.5);
 }
+
+/* Hide platform status banners */
+[class*="back-online"],
+[class*="status-banner"],
+[class*="online-indicator"] {
+  display: none !important;
+}
