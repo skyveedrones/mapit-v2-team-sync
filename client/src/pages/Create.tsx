@@ -248,15 +248,16 @@ export default function Create() {
 
       // ══════════════════════════════════════════════
       //  DEMO MODE — authenticated user, no DB write
+      //  Full sequence runs; pill at end points back to sign-in
       // ══════════════════════════════════════════════
       if (isAuthenticated) {
-        // After 5 s total → show "Return to Dashboard"
-        setTimeout(() => {
+        // After 5 s total → show the "sign in" pill
+        const doneTimer = setTimeout(() => {
           clearTimeout(processingTimer);
           finishProgress();
           setPhase("done");
         }, 5000);
-        return;
+        return () => clearTimeout(doneTimer);
       }
 
       // ══════════════════════════════════════════════
@@ -500,7 +501,7 @@ export default function Create() {
         </div>
       </div>
 
-      {/* ─── Layer 3: Return to Dashboard pill (above map, below nothing) ─── */}
+      {/* ─── Layer 3: Completion pill (above map) ─── */}
       <AnimatePresence>
         {phase === "done" && (
           <motion.div
@@ -509,14 +510,30 @@ export default function Create() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-            className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
+            className="absolute bottom-12 left-0 right-0 flex flex-col items-center gap-3 z-30"
           >
-            <button
-              onClick={() => setLocation("/dashboard")}
-              className="px-8 py-3 text-sm font-medium tracking-wide text-white/80 hover:text-white border border-white/15 hover:border-white/30 rounded-full transition-all duration-300 bg-black/40 hover:bg-black/60 backdrop-blur-md shadow-lg"
-            >
-              Return to Dashboard
-            </button>
+            {isAuthenticated ? (
+              // Authenticated user — Jobsian thank-you, redirect to sign-in
+              <>
+                <p className="text-white/50 text-sm tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  Thanks for trying the mapping demo.
+                </p>
+                <button
+                  onClick={() => setLocation("/dashboard")}
+                  className="px-8 py-3 text-sm font-semibold tracking-wide text-white border border-white/20 hover:border-white/50 rounded-full transition-all duration-300 bg-black/50 hover:bg-black/70 backdrop-blur-md shadow-lg"
+                >
+                  Sign in to your account →
+                </button>
+              </>
+            ) : (
+              // New / unauthenticated user — return to homepage
+              <button
+                onClick={() => setLocation("/")}
+                className="px-8 py-3 text-sm font-medium tracking-wide text-white/80 hover:text-white border border-white/15 hover:border-white/30 rounded-full transition-all duration-300 bg-black/40 hover:bg-black/60 backdrop-blur-md shadow-lg"
+              >
+                Start your free trial →
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
