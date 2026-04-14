@@ -80,7 +80,7 @@ export default function Create() {
   const [, setLocation] = useLocation();
   const [dropState, setDropState] = useState<DropState>("idle");
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Analyzing...");
+  const [statusText, setStatusText] = useState("Uploading...");
   const [shake, setShake] = useState(false);
   const [uploadPhase, setUploadPhase] = useState<"uploading" | "processing">("uploading");
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -134,7 +134,7 @@ export default function Create() {
     }
 
     setDropState("analyzing");
-    setStatusText("Analyzing...");
+    setStatusText("Uploading...");
 
     // Extract GPS — must complete before initProject call
     const coords = await extractGPS(files);
@@ -144,7 +144,6 @@ export default function Create() {
         "mapit_fly_coords",
         JSON.stringify({ lat: coords.lat, lng: coords.lng })
       );
-      setStatusText("Located.");
       setDropState("locating");
     } else {
       sessionStorage.removeItem("mapit_fly_coords");
@@ -164,7 +163,6 @@ export default function Create() {
     // Get project name from Act 1
     const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
 
-    setStatusText("Creating...");
     setDropState("creating");
 
     try {
@@ -181,9 +179,6 @@ export default function Create() {
 
       // Upload each file as a media record (fire-and-forget for speed,
       // but await at least the first one so the map has a pin on arrival)
-      setStatusText("Uploading...");
-      setUploadPhase("uploading");
-      
       // Start 3-second timer to transition from Uploading to Processing
       if (uploadPhaseTimerRef.current) clearTimeout(uploadPhaseTimerRef.current);
       uploadPhaseTimerRef.current = setTimeout(() => {
