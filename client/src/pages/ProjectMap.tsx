@@ -109,9 +109,10 @@ export default function ProjectMap() {
     conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 60000);
   };
 
-  // ── Discovery Hint (onboarding flow) ─────────────────────────────────────
-  // Fades in 3s after mapReady, dismissed by marker click or Prestige modal.
+  // ── Magic Window #1 (Marker/Discovery Hint) ─────────────────────────────
+  // Appears 3s after mapReady, auto-dismisses after 10s, then Window #2 appears.
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
+  const [showSidebarHint, setShowSidebarHint] = useState(false);
   const discoveryDismissed = useRef(false);
 
   const dismissDiscoveryHint = () => {
@@ -119,18 +120,31 @@ export default function ProjectMap() {
     setShowDiscoveryHint(false);
   };
 
-  // Show hint 3s after map is ready (onboarding only)
+  // Show Window #1 3s after map is ready (onboarding only);
+  // auto-dismiss after 10s, then show Window #2 after fade completes (~500ms)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
-    const timer = setTimeout(() => {
-      if (!discoveryDismissed.current) setShowDiscoveryHint(true);
+    const showTimer = setTimeout(() => {
+      if (!discoveryDismissed.current) {
+        setShowDiscoveryHint(true);
+        // Auto-dismiss Window #1 after 10s, then show Window #2
+        const autoTimer = setTimeout(() => {
+          setShowDiscoveryHint(false);
+          // Wait for fade-out transition (~500ms) before showing Window #2
+          setTimeout(() => setShowSidebarHint(true), 600);
+        }, 10000);
+        return () => clearTimeout(autoTimer);
+      }
     }, 3000);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(showTimer);
   }, [isOnboardingProject, mapReady]);
 
-  // Dismiss hint when Prestige modal fires
+  // Dismiss both hints when Prestige modal fires
   useEffect(() => {
-    if (showPrestige) dismissDiscoveryHint();
+    if (showPrestige) {
+      dismissDiscoveryHint();
+      setShowSidebarHint(false);
+    }
   }, [showPrestige]);
 
   // Poll for map readiness from the production component
@@ -572,8 +586,7 @@ export default function ProjectMap() {
         )}
       </AnimatePresence>
 
-      {/* ── Discovery Hint Card ── */}
-      {/* Square glassmorphic card, top-right, 24px below header HUD */}
+      {/* ── Magic Window #1 — Marker Discovery Hint ── */}
       <AnimatePresence>
         {showDiscoveryHint && (
           <motion.div
@@ -603,6 +616,77 @@ export default function ProjectMap() {
                 <span className="text-white/50">Click the marker to reveal the image</span>
               </p>
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Magic Window #2 — Sidebar Discovery ── */}
+      <AnimatePresence>
+        {showSidebarHint && (
+          <motion.div
+            key="sidebar-hint"
+            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.95 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="fixed z-[9990] pointer-events-auto"
+            style={{ top: "56px", right: "56px" }}
+          >
+            {/* Arrow pointing right toward the sidebar toggle */}
+            <div className="relative">
+              <div
+                className="rounded-2xl p-5 text-left"
+                style={{
+                  width: "220px",
+                  background: "rgba(0,0,0,0.72)",
+                  backdropFilter: "blur(28px)",
+                  WebkitBackdropFilter: "blur(28px)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
+                  fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                }}
+              >
+                <p
+                  className="text-white font-bold mb-2"
+                  style={{ fontSize: "15px", letterSpacing: "-0.02em", lineHeight: 1.2 }}
+                >
+                  Professional Grade.
+                </p>
+                <p className="text-white/55 text-xs leading-relaxed">
+                  The Sidebar holds your measurements, layers, and exports. Control the site with precision.
+                </p>
+                {/* Pointer arrow toward sidebar toggle (right side) */}
+                <div
+                  className="absolute top-1/2 -right-[9px] -translate-y-1/2"
+                  style={{
+                    width: 0,
+                    height: 0,
+                    borderTop: "8px solid transparent",
+                    borderBottom: "8px solid transparent",
+                    borderLeft: "9px solid rgba(255,255,255,0.18)",
+                  }}
+                />
+                <div
+                  className="absolute top-1/2 -right-[8px] -translate-y-1/2"
+                  style={{
+                    width: 0,
+                    height: 0,
+                    borderTop: "7px solid transparent",
+                    borderBottom: "7px solid transparent",
+                    borderLeft: "8px solid rgba(0,0,0,0.72)",
+                  }}
+                />
+              </div>
+              {/* Dismiss button */}
+              <button
+                onClick={() => setShowSidebarHint(false)}
+                className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 transition-colors"
+                style={{ background: "rgba(0,0,0,0.60)", border: "1px solid rgba(255,255,255,0.15)" }}
+                aria-label="Dismiss"
+              >
+                <span style={{ fontSize: "10px", lineHeight: 1 }}>✕</span>
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

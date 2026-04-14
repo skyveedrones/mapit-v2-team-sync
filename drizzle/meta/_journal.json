@@ -288,6 +288,20 @@
       "when": 1776003251911,
       "tag": "0040_long_silver_surfer",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1776108898591,
+      "tag": "0041_supreme_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1776182531210,
+      "tag": "0042_graceful_rage",
+      "breakpoints": true
     }
   ]
 }

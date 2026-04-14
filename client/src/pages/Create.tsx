@@ -1,8 +1,10 @@
 /**
  * MAPIT — /create Drop Zone (Act 2)
- * Extracts GPS coordinates from dropped files via exifr,
- * calls onboarding.initProject to create a real DB project,
- * then transitions to /project/[id] for the production map.
+ * 7-Step Cinematic Flow:
+ *   Step 4: Drop (idle) — text-7xl silver gradient, hero video BG
+ *   Step 5a: UPLOADING — 3s pulsing dashed line, hero video BG
+ *   Step 5b: PROCESSING — 5s minimum, stays until map is ready
+ *   Transition: Cross-fade overlay fades out as flyTo begins (no black gap)
  *
  * GPS extraction priority:
  *  1. exifr.gps() — works for JPEG/TIFF/HEIC drone images
@@ -18,15 +20,17 @@ import exifr from "exifr";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-type DropState = "idle" | "dragging" | "analyzing" | "locating" | "creating";
+// ── Types ──────────────────────────────────────────────────────────────────────
+type Stage = "idle" | "dragging" | "uploading" | "processing" | "done";
 
+// ── Constants ──────────────────────────────────────────────────────────────────
 const ACCEPTED_MIME = new Set([
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/tiff",
   "video/mp4",
-  "video/quicktime", // .mov
+  "video/quicktime",
 ]);
 const ACCEPTED_EXT = new Set([".jpg", ".jpeg", ".png", ".tiff", ".tif", ".mp4", ".mov"]);
 
@@ -38,74 +42,70 @@ function isAcceptedFile(file: File): boolean {
 
 /**
  * Robust GPS extraction — tries multiple exifr strategies.
- * Returns { lat, lng } in decimal degrees, or null.
  */
-async function extractGPS(
-  files: File[]
-): Promise<{ lat: number; lng: number } | null> {
+async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } | null> {
   for (const file of files) {
-    // Skip video files — exifr can't read MP4 EXIF reliably
     if (file.type.startsWith("video/")) continue;
-
     try {
-      // Strategy 1: dedicated GPS parse (fastest)
       const gps = await exifr.gps(file);
       if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
         return { lat: gps.latitude, lng: gps.longitude };
       }
-    } catch { /* unsupported format — try next strategy */ }
-
+    } catch { /* try next */ }
     try {
-      // Strategy 2: full EXIF parse — catches non-standard GPS blocks
-      const exif = await exifr.parse(file, {
-        gps: true,
-        tiff: true,
-        exif: true,
-        translateKeys: true,
-        translateValues: true,
-      });
+      const exif = await exifr.parse(file, { gps: true, tiff: true, exif: true, translateKeys: true, translateValues: true });
       if (exif) {
         const lat = exif.latitude ?? exif.GPSLatitude;
         const lng = exif.longitude ?? exif.GPSLongitude;
-        if (typeof lat === "number" && typeof lng === "number") {
-          return { lat, lng };
-        }
+        if (typeof lat === "number" && typeof lng === "number") return { lat, lng };
       }
     } catch { /* ignore */ }
   }
   return null;
 }
 
+// ── Component ──────────────────────────────────────────────────────────────────
 export default function Create() {
   const [, setLocation] = useLocation();
-  const [dropState, setDropState] = useState<DropState>("idle");
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Analyzing...");
+  const [stage, setStage] = useState<Stage>("idle");
   const [shake, setShake] = useState(false);
-  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Track whether the backend work is done AND the processing timer has elapsed
+  const backendDoneRef = useRef(false);
+  const processingTimerDoneRef = useRef(false);
+  const pendingNavRef = useRef<string | null>(null);
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const utils = trpc.useUtils();
 
-  // Progress bar animation
+  // Cleanup timers on unmount
   useEffect(() => {
-    if (dropState !== "analyzing" && dropState !== "locating" && dropState !== "creating") return;
-    setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 95) { clearInterval(interval); return 95; }
-        const increment = p < 60 ? 3 : p < 80 ? 1.5 : 0.5;
-        return Math.min(p + increment, 95);
-      });
-    }, 40);
-    return () => clearInterval(interval);
-  }, [dropState]);
+    return () => {
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      if (uploadTimerRef.current) clearTimeout(uploadTimerRef.current);
+      if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
+    };
+  }, []);
+
+  // When both backend and 5s processing timer are done → navigate
+  const tryNavigate = useCallback(() => {
+    if (backendDoneRef.current && processingTimerDoneRef.current && pendingNavRef.current) {
+      const dest = pendingNavRef.current;
+      pendingNavRef.current = null;
+      setStage("done");
+      // 1s cross-fade then navigate
+      setTimeout(() => setLocation(dest), 1000);
+    }
+  }, [setLocation]);
 
   const triggerShake = useCallback(() => {
     setShake(true);
-    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
-    shakeTimeoutRef.current = setTimeout(() => setShake(false), 600);
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = setTimeout(() => setShake(false), 600);
     toast("Format not supported. Use drone imagery or video.", {
       duration: 3500,
       position: "bottom-center",
@@ -124,29 +124,41 @@ export default function Create() {
   }, []);
 
   const processFiles = useCallback(async (files: File[]) => {
-    // Validate all files before processing
     const invalid = files.filter((f) => !isAcceptedFile(f));
-    if (invalid.length > 0) {
-      triggerShake();
-      return;
-    }
+    if (invalid.length > 0) { triggerShake(); return; }
 
-    setDropState("analyzing");
-    setStatusText("Analyzing...");
+    // Reset refs
+    backendDoneRef.current = false;
+    processingTimerDoneRef.current = false;
+    pendingNavRef.current = null;
 
-    // Extract GPS — must complete before initProject call
-    const coords = await extractGPS(files);
+    // Store photo count for Magic Windows
+    sessionStorage.setItem("mapit_photo_count", String(files.length));
+
+    // ── Step 5a: UPLOADING (3s) ────────────────────────────────────────────
+    setStage("uploading");
+
+    // Start GPS extraction in parallel
+    const coordsPromise = extractGPS(files);
+
+    // After 3s → PROCESSING
+    uploadTimerRef.current = setTimeout(() => {
+      setStage("processing");
+
+      // Processing must show for at least 5s
+      processingTimerRef.current = setTimeout(() => {
+        processingTimerDoneRef.current = true;
+        tryNavigate();
+      }, 5000);
+    }, 3000);
+
+    // ── Backend work (runs in parallel with timers) ────────────────────────
+    const coords = await coordsPromise;
 
     if (coords) {
-      sessionStorage.setItem(
-        "mapit_fly_coords",
-        JSON.stringify({ lat: coords.lat, lng: coords.lng })
-      );
-      setStatusText("Located.");
-      setDropState("locating");
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
     } else {
       sessionStorage.removeItem("mapit_fly_coords");
-      // Quiet Jobsian toast — no GPS found
       toast("No location found in file. Defaulting to world view.", {
         duration: 3500,
         style: {
@@ -159,11 +171,7 @@ export default function Create() {
       });
     }
 
-    // Get project name from Act 1
     const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
-
-    setStatusText("Creating...");
-    setDropState("creating");
 
     try {
       const result = await initProject.mutateAsync({
@@ -172,201 +180,211 @@ export default function Create() {
         lng: coords?.lng,
       });
 
-      // Store trial info for the Prestige modal
       sessionStorage.setItem("mapit_project_id", String(result.projectId));
       sessionStorage.setItem("mapit_project_name", projectName);
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
-      // Upload each file as a media record (fire-and-forget for speed,
-      // but await at least the first one so the map has a pin on arrival)
-      setStatusText("Uploading...");
+      // Upload media (fire-and-forget after first)
       for (const file of files) {
         try {
           const arrayBuffer = await file.arrayBuffer();
           const base64 = btoa(
-            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
           );
           await uploadMedia.mutateAsync({
             projectId: result.projectId,
             filename: file.name,
-            mimeType: file.type || 'image/jpeg',
+            mimeType: file.type || "image/jpeg",
             fileData: base64,
           });
         } catch (uploadErr) {
-          console.error('[Create] Failed to upload media:', file.name, uploadErr);
-          // Non-blocking — project still created, just no media pin
+          console.error("[Create] media upload failed:", file.name, uploadErr);
         }
       }
 
-      // Invalidate media.list cache so the map fetches fresh data on arrival
       await utils.media.list.invalidate({ projectId: result.projectId });
 
-      // Complete progress bar and navigate
-      setProgress(100);
-      setTimeout(() => setLocation(`/project/${result.projectId}/map`), 400);
+      pendingNavRef.current = `/project/${result.projectId}/map`;
     } catch (err) {
       console.error("[Create] Failed to create project:", err);
-      setProgress(100);
-      setTimeout(() => setLocation("/map"), 400);
+      pendingNavRef.current = "/map";
     }
-  }, [initProject, uploadMedia, setLocation, triggerShake]);
+
+    backendDoneRef.current = true;
+    tryNavigate();
+  }, [initProject, uploadMedia, utils, triggerShake, tryNavigate]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (dropState === "idle") setDropState("dragging");
-  }, [dropState]);
+    if (stage === "idle") setStage("dragging");
+  }, [stage]);
 
   const handleDragLeave = useCallback(() => {
-    setDropState((s) => (s === "dragging" ? "idle" : s));
+    setStage((s) => (s === "dragging" ? "idle" : s));
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) processFiles(files);
-      else setDropState("idle");
-    },
-    [processFiles]
-  );
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) processFiles(files);
+    else setStage("idle");
+  }, [processFiles]);
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      if (files.length > 0) processFiles(files);
-    },
-    [processFiles]
-  );
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length > 0) processFiles(files);
+  }, [processFiles]);
 
-  const isDragging = dropState === "dragging";
-  const isProcessing = dropState === "analyzing" || dropState === "locating" || dropState === "creating";
+  const isActive = stage === "uploading" || stage === "processing" || stage === "done";
+  const isDragging = stage === "dragging";
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
-      {/* ─── Top progress bar ─── */}
-      <AnimatePresence>
-        {isProcessing && (
-          <motion.div
-            key="progress-bar"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute top-0 left-0 right-0 h-[2px] z-50 bg-transparent"
+
+      {/* ── Back arrow (hidden during active processing) ── */}
+      {!isActive && (
+        <div className="absolute top-8 left-8 z-20">
+          <button
+            onClick={() => setLocation("/name")}
+            className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
           >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        </div>
+      )}
+
+      {/* ── Main content area ── */}
+      <div className="relative flex-1 flex items-center justify-center p-8" style={{ zIndex: 10 }}>
+
+        {/* ── UPLOADING state ── */}
+        <AnimatePresence mode="wait">
+          {stage === "uploading" && (
             <motion.div
-              className="h-full bg-[#00C853] shadow-[0_0_8px_#00C853]"
-              style={{ width: `${progress}%` }}
-              transition={{ ease: "linear" }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ─── Back arrow ─── */}
-      <div className="absolute top-8 left-8 z-20">
-        <button
-          onClick={() => setLocation("/name")}
-          className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-      </div>
-
-      {/* ─── Drop Zone ─── */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <motion.label
-          htmlFor="file-input"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            x: shake
-              ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0]
-              : 0,
-          }}
-          transition={shake
-            ? { duration: 0.5, ease: "easeInOut" }
-            : { duration: 0.4 }
-          }
-          className={`
-            relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
-            border rounded-3xl select-none transition-all duration-300
-            ${isProcessing ? "cursor-default" : "cursor-pointer"}
-            ${isDragging
-              ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
-              : shake
-              ? "border-red-500/40"
-              : "border-white/5 bg-transparent hover:border-white/10"
-            }
-          `}
-        >
-          {/* Metallic hook */}
-          <AnimatePresence mode="wait">
-            {isProcessing ? (
-              <motion.p
-                key="processing"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="text-[clamp(3rem,9vw,6rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent animate-pulse"
-                style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+              key="uploading"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center gap-8 select-none"
+            >
+              <p
+                className="font-bold tracking-tighter leading-none bg-clip-text text-transparent"
+                style={{
+                  fontSize: "clamp(4rem,14vw,9rem)",
+                  backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
+                }}
               >
-                {statusText}
-              </motion.p>
-            ) : (
+                Uploading
+              </p>
+              {/* Pulsing dashed execution line */}
+              <div className="w-64 flex items-center gap-1">
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="h-[2px] flex-1 rounded-full bg-white/40"
+                    animate={{ opacity: [0.2, 1, 0.2] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.075, ease: "easeInOut" }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── PROCESSING state ── */}
+          {stage === "processing" && (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center gap-8 select-none"
+            >
+              <p
+                className="font-bold tracking-tighter leading-none bg-clip-text text-transparent"
+                style={{
+                  fontSize: "clamp(4rem,14vw,9rem)",
+                  backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
+                }}
+              >
+                Processing
+              </p>
+              {/* Pulsing dashed execution line */}
+              <div className="w-64 flex items-center gap-1">
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="h-[2px] flex-1 rounded-full bg-white/40"
+                    animate={{ opacity: [0.2, 1, 0.2] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.085, ease: "easeInOut" }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── IDLE / DROP state ── */}
+          {(stage === "idle" || stage === "dragging") && (
+            <motion.label
+              key="drop"
+              htmlFor="file-input"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x: shake ? [0, -10, 10, -10, 10, -6, 6, -3, 3, 0] : 0,
+              }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={shake ? { duration: 0.5, ease: "easeInOut" } : { duration: 0.4 }}
+              className={`
+                relative w-full max-w-3xl aspect-video flex flex-col items-center justify-center
+                border rounded-3xl select-none transition-all duration-300 cursor-pointer
+                ${isDragging
+                  ? "border-emerald-500/50 bg-emerald-950/10 shadow-[0_0_40px_rgba(0,200,83,0.08)]"
+                  : shake
+                  ? "border-red-500/40"
+                  : "border-white/10 bg-black/20 hover:border-white/20"
+                }
+              `}
+            >
               <motion.p
-                key="drop"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0, scale: isDragging ? 1.05 : 1 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="text-[clamp(5rem,14vw,9rem)] font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent pointer-events-none"
-                style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+                animate={{ scale: isDragging ? 1.05 : 1 }}
+                transition={{ duration: 0.2 }}
+                className="font-bold tracking-tighter leading-none mb-6 bg-clip-text text-transparent pointer-events-none"
+                style={{
+                  fontSize: "clamp(5rem,14vw,9rem)",
+                  backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
+                }}
               >
                 Drop.
               </motion.p>
-            )}
-          </AnimatePresence>
-
-          {/* Instruction */}
-          <AnimatePresence>
-            {!isProcessing && (
-              <motion.div
-                key="instructions"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center pointer-events-none"
-              >
-                <p className="text-white/90 text-2xl leading-relaxed font-medium">
+              <div className="text-center pointer-events-none">
+                <p className="text-white/80 text-2xl leading-relaxed font-medium">
                   Drag your drone imagery or .mp4 files here to begin.
                 </p>
                 <p className="mt-5 text-white/40 text-sm tracking-widest uppercase font-semibold">
                   or click to browse
                 </p>
-                <p className="mt-3 text-white/60 text-sm tracking-wide">
+                <p className="mt-3 text-white/50 text-sm tracking-wide">
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Invisible file input — strict accept */}
-          <input
-            id="file-input"
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov"
-            className="sr-only"
-            onChange={handleFileInput}
-            disabled={isProcessing}
-          />
-        </motion.label>
+              </div>
+              <input
+                id="file-input"
+                type="file"
+                multiple
+                accept=".jpg,.jpeg,.png,.tiff,.tif,.mp4,.mov"
+                className="sr-only"
+                onChange={handleFileInput}
+              />
+            </motion.label>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
