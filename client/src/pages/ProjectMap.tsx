@@ -74,10 +74,19 @@ export default function ProjectMap() {
   const [showTour, setShowTour] = useState(isDemoProject);
 
   // ── Prestige modal (onboarding funnel) ───────────────────────────────
+  // isOnboardingProject is true when:
+  // 1. A new user just created a real trial project (normal flow), OR
+  // 2. An authenticated user is running the demo via project ID=1 (demo mode)
+  //    — detected by sessionStorage having mapit_project_id=1 AND mapit_photo_count set
+  const isDemoFlow =
+    isDemoProject &&
+    sessionStorage.getItem("mapit_project_id") === "1" &&
+    !!sessionStorage.getItem("mapit_photo_count");
   const isOnboardingProject =
-    !isDemoProject &&
-    !!sessionStorage.getItem("mapit_project_id") &&
-    sessionStorage.getItem("mapit_project_id") === String(projectId);
+    isDemoFlow ||
+    (!isDemoProject &&
+      !!sessionStorage.getItem("mapit_project_id") &&
+      sessionStorage.getItem("mapit_project_id") === String(projectId));
   const [showPrestige, setShowPrestige] = useState(false);
   const [prestigeEmail, setPrestigeEmail] = useState(user?.email ?? "");
   const [prestigeEmailTouched, setPrestigeEmailTouched] = useState(false);
@@ -95,6 +104,8 @@ export default function ProjectMap() {
   const isPrestigeEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(prestigeEmail.trim());
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
+  const onboardingPhotoCount =
+    sessionStorage.getItem("mapit_photo_count") || null;
 
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
   useEffect(() => {
@@ -518,7 +529,10 @@ export default function ProjectMap() {
                       className="text-white/60 text-base leading-relaxed"
                     >
                       You've just turned{" "}
-                      <span className="text-white font-semibold">{onboardingProjectName}</span>{" "}
+                      <span className="text-white font-semibold">{onboardingProjectName}</span>
+                      {onboardingPhotoCount && (
+                        <span className="text-white/50 text-sm"> ({onboardingPhotoCount} photo{Number(onboardingPhotoCount) !== 1 ? 's' : ''})</span>
+                      )}{" "}
                       into a living digital record. What used to take weeks, you've done in a single motion.
                     </motion.p>
                     <motion.p
@@ -719,6 +733,9 @@ export default function ProjectMap() {
             >
               <MapPin className="w-5 h-5 text-emerald-500 flex-shrink-0 animate-pulse" />
               <p className="text-slate-600 text-xs font-medium leading-relaxed">
+                {onboardingPhotoCount && (
+                  <><span className="text-slate-800 font-semibold">{onboardingPhotoCount} photo{Number(onboardingPhotoCount) !== 1 ? 's' : ''}</span> mapped.<br /></>
+                )}
                 The magic is in the coordinates.<br />
                 <span className="text-slate-500">Click the marker to reveal the image</span>
               </p>
@@ -751,7 +768,10 @@ export default function ProjectMap() {
               }}
             >
               <p className="text-slate-600 text-xs font-medium leading-relaxed">
-                Open the side bar for more magic — add overlays and measure area.
+                {onboardingProjectName !== "your project" && (
+                  <><span className="text-slate-800 font-semibold">{onboardingProjectName}</span> is live.<br /></>
+                )}
+                Open the sidebar for more magic — add overlays and measure area.
               </p>
               <p className="text-slate-400 text-xs">Look for the toggle on the right →</p>
             </div>

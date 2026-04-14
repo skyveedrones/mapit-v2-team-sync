@@ -218,6 +218,9 @@ export default function Create() {
     // Step 3: UPLOADING
     setStage("uploading");
 
+    // Store real photo count so ProjectMap can display it in Magic Windows and Triumph modal
+    sessionStorage.setItem("mapit_photo_count", String(files.length));
+
     // Extract GPS immediately in background
     const coordsPromise = extractGPS(files);
 
@@ -242,14 +245,16 @@ export default function Create() {
 
     const projectName = sessionStorage.getItem("mapit_project_name") || "New Project";
 
-    // DEMO MODE: Authenticated users bypass initProject entirely
-    // They get the full visual sequence (Uploading -> Processing -> Map Reveal -> Magic Windows)
-    // but no DB write. The Triumph modal at 30s handles the sign-in gate.
+    // DEMO MODE: Authenticated users bypass initProject entirely.
+    // Full visual sequence runs (Uploading → Processing → Map Reveal → Magic Windows).
+    // No DB write. Project ID=1 is the public demo host. Real name+count come from sessionStorage.
+    // The Triumph modal at 30s is the only gate — authenticated users see "Go to Dashboard".
     if (isAuthenticated) {
-      sessionStorage.setItem("mapit_project_id", "1"); // Demo project - public, no auth required
+      sessionStorage.setItem("mapit_project_id", "1");
       sessionStorage.setItem("mapit_project_name", projectName);
+      // mapit_photo_count already written above
       setUploadPct(100);
-      return; // Timers above handle Processing -> Reveal automatically
+      return; // Processing → Reveal handled by the useEffect timers
     }
 
     // NEW USER: Create real trial project
