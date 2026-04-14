@@ -200,9 +200,7 @@ export default function Pricing() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        <span className="text-white text-lg font-bold tracking-tight">
-          MAP<span className="text-emerald-400">i</span>T
-        </span>
+        <div className="w-16" />
         <div className="w-16" />
       </nav>
 
