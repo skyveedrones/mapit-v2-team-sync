@@ -155,7 +155,7 @@ export default function Welcome() {
       </section>
 
       <Footer onContactClick={() => setShowContactModal(true)} />
-      <ContactModal open={showContactModal} onClose={() => setShowContactModal(false)} />
+      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
 }

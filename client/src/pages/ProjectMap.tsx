@@ -20,9 +20,8 @@ import {
 import { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc as trpcClient } from "@/lib/trpc";
-import { Link, useParams, useLocation } from "wouter";
+import { Link, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
-import { toast } from "sonner";
 
 // ── Coordinate helpers ────────────────────────────────────────────────────────
 // DB stores "lat, lng"; Mapbox needs [lng, lat]
@@ -51,7 +50,6 @@ export default function ProjectMap() {
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const isDemoProject = projectId === 1;
   const { user, isAuthenticated } = useAuth();
-  const [, navigate] = useLocation();
 
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
@@ -74,19 +72,10 @@ export default function ProjectMap() {
   const [showTour, setShowTour] = useState(isDemoProject);
 
   // ── Prestige modal (onboarding funnel) ───────────────────────────────
-  // isOnboardingProject is true when:
-  // 1. A new user just created a real trial project (normal flow), OR
-  // 2. An authenticated user is running the demo via project ID=1 (demo mode)
-  //    — detected by sessionStorage having mapit_project_id=1 AND mapit_photo_count set
-  const isDemoFlow =
-    isDemoProject &&
-    sessionStorage.getItem("mapit_project_id") === "1" &&
-    !!sessionStorage.getItem("mapit_photo_count");
   const isOnboardingProject =
-    isDemoFlow ||
-    (!isDemoProject &&
-      !!sessionStorage.getItem("mapit_project_id") &&
-      sessionStorage.getItem("mapit_project_id") === String(projectId));
+    !isDemoProject &&
+    !!sessionStorage.getItem("mapit_project_id") &&
+    sessionStorage.getItem("mapit_project_id") === String(projectId);
   const [showPrestige, setShowPrestige] = useState(false);
   const [prestigeEmail, setPrestigeEmail] = useState(user?.email ?? "");
   const [prestigeEmailTouched, setPrestigeEmailTouched] = useState(false);
@@ -100,26 +89,15 @@ export default function ProjectMap() {
   const [prestigeSubmitting, setPrestigeSubmitting] = useState(false);
   const [prestigeClaimed, setPrestigeClaimed] = useState(false);
   const claimProject = trpcClient.onboarding.claimProject.useMutation();
-  const trackFunnelEvent = trpcClient.onboarding.trackEvent.useMutation();
   const isPrestigeEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(prestigeEmail.trim());
   const onboardingProjectName =
     sessionStorage.getItem("mapit_project_name") || "your project";
-  const onboardingPhotoCount =
-    sessionStorage.getItem("mapit_photo_count") || null;
 
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
     const timer = setTimeout(() => setShowPrestige(true), 30000);
     return () => clearTimeout(timer);
-  }, [isOnboardingProject, mapReady]);
-
-  // Track map_viewed event once when the onboarding map is ready
-  const mapViewedTracked = useRef(false);
-  useEffect(() => {
-    if (!isOnboardingProject || !mapReady || mapViewedTracked.current) return;
-    mapViewedTracked.current = true;
-    trackFunnelEvent.mutate({ event: 'map_viewed', projectId });
   }, [isOnboardingProject, mapReady]);
 
   // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
@@ -131,12 +109,6 @@ export default function ProjectMap() {
     conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 60000);
   };
 
-  // ── Magic Flow (sequenced onboarding) ──────────────────────────────────────
-  // Stage 1: Marker Tooltip (5s fade-out) → Stage 2: Sidebar Magic Popup
-  const [stage1Visible, setStage1Visible] = useState(false);
-  const [stage2Visible, setStage2Visible] = useState(false);
-  const magicFlowStarted = useRef(false);
-
   // ── Discovery Hint (onboarding flow) ─────────────────────────────────────
   // Fades in 3s after mapReady, dismissed by marker click or Prestige modal.
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
@@ -145,50 +117,7 @@ export default function ProjectMap() {
   const dismissDiscoveryHint = () => {
     discoveryDismissed.current = true;
     setShowDiscoveryHint(false);
-    setStage1Visible(false);
-    setStage2Visible(false);
   };
-
-  // Magic Flow: Stage 1 (Marker Tooltip) shows immediately, fades after 5s
-  // Stage 2 (Sidebar Popup) appears at 5.5s
-  // Authorized Handshake: authenticated users see Welcome back toast then redirect to /dashboard
-  useEffect(() => {
-    if (!isOnboardingProject || !mapReady || magicFlowStarted.current) return;
-    magicFlowStarted.current = true;
-    setStage1Visible(true);
-    const stage1Timer = setTimeout(() => setStage1Visible(false), 5000);
-    const stage2Timer = setTimeout(() => {
-      setStage2Visible(true);
-      if (isAuthenticated) {
-        const handshakeTimer = setTimeout(() => {
-          const firstName = user?.name?.split(' ')[0] || 'there';
-          toast(`Welcome back, ${firstName}. Your projects are waiting.`, {
-            duration: 5000,
-            position: 'top-center',
-            style: {
-              background: 'rgba(255,255,255,0.95)',
-              color: 'rgba(10,10,10,0.9)',
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderRadius: '16px',
-              fontSize: '16px',
-              fontWeight: '500',
-              fontFamily: 'Inter, sans-serif',
-              backdropFilter: 'blur(30px)',
-              padding: '20px 28px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-              letterSpacing: '-0.01em',
-            },
-          });
-          setTimeout(() => navigate('/dashboard'), 2000);
-        }, 2000);
-        return () => clearTimeout(handshakeTimer);
-      }
-    }, 5500);
-    return () => {
-      clearTimeout(stage1Timer);
-      clearTimeout(stage2Timer);
-    };
-  }, [isOnboardingProject, mapReady, isAuthenticated, user, navigate]);
 
   // Show hint 3s after map is ready (onboarding only)
   useEffect(() => {
@@ -199,13 +128,9 @@ export default function ProjectMap() {
     return () => clearTimeout(timer);
   }, [isOnboardingProject, mapReady]);
 
-  // Dismiss Magic flow and hint when Prestige modal fires
+  // Dismiss hint when Prestige modal fires
   useEffect(() => {
-    if (showPrestige) {
-      dismissDiscoveryHint();
-      setStage1Visible(false);
-      setStage2Visible(false);
-    }
+    if (showPrestige) dismissDiscoveryHint();
   }, [showPrestige]);
 
   // Poll for map readiness from the production component
@@ -222,8 +147,6 @@ export default function ProjectMap() {
   // Dismiss Prestige and start 60s conversion timer
   const handlePrestigeDismiss = () => {
     setShowPrestige(false);
-    setStage1Visible(false);
-    setStage2Visible(false);
     startConversionTimer();
   };
 
@@ -246,12 +169,11 @@ export default function ProjectMap() {
     ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
     : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
 
-  const { data: mediaItems = [], isLoading: mediaLoading } = isDemoProject
+  const { data: mediaItems, isLoading: mediaLoading } = isDemoProject
     ? trpc.media.listDemo.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 })
-    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0, refetchInterval: isOnboardingProject ? 2000 : undefined });
+    : trpc.media.list.useQuery({ projectId, flightId, includeFlightMedia: false }, { enabled: projectId > 0 });
 
   const geotaggedMedia = useMemo(() => {
-    if (!mediaItems) return [];
     return (mediaItems || [])
       .filter((m) => m.latitude !== null && m.longitude !== null)
       .map((m) => ({
@@ -272,33 +194,11 @@ export default function ProjectMap() {
     return (p?.overlays || []).filter((o: any) => o.isActive);
   }, [project]);
 
-  // ── Auto-map for trials: auto-flyto first coordinate with smooth animation ──
-  const autoMapFired = useRef(false);
-  useEffect(() => {
-    if (!isOnboardingProject || !mapReady || autoMapFired.current) return;
-    if (!geotaggedMedia || geotaggedMedia.length === 0) return;
-    
-    autoMapFired.current = true;
-    const map = mapCompRef.current?.getMap();
-    if (!map) return;
-    
-    // Auto-flyto first coordinate with smooth easing
-    const firstMedia = geotaggedMedia[0];
-    if (firstMedia?.latitude && firstMedia?.longitude) {
-      map.flyTo({
-        center: [firstMedia.longitude, firstMedia.latitude],
-        zoom: 16,
-        duration: 1200,
-        easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
-      });
-    }
-  }, [isOnboardingProject, mapReady, geotaggedMedia]);
-
   // ── Fly-in: once map is ready, fly to the best available coordinates ──────
   // Priority: sessionStorage → project.location DB → media centroid
   const hasFiredFlyIn = useRef(false);
   useEffect(() => {
-    if (!mapReady || hasFiredFlyIn.current || isOnboardingProject) return; // Skip for trials (auto-map handles it)
+    if (!mapReady || hasFiredFlyIn.current) return;
     const map = mapCompRef.current?.getMap();
     if (!map) return;
 
@@ -436,10 +336,7 @@ export default function ProjectMap() {
           {/* Save Your Progress — for unauthenticated users on onboarding projects */}
           {isOnboardingProject && !isAuthenticated && (
             <button
-              onClick={() => {
-                trackFunnelEvent.mutate({ event: 'save_progress_clicked', projectId });
-                window.location.href = getLoginUrl();
-              }}
+              onClick={() => { window.location.href = getLoginUrl(); }}
               className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-semibold py-2 rounded-md transition-all duration-200 select-none"
               style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
             >
@@ -529,10 +426,7 @@ export default function ProjectMap() {
                       className="text-white/60 text-base leading-relaxed"
                     >
                       You've just turned{" "}
-                      <span className="text-white font-semibold">{onboardingProjectName}</span>
-                      {onboardingPhotoCount && (
-                        <span className="text-white/50 text-sm"> ({onboardingPhotoCount} photo{Number(onboardingPhotoCount) !== 1 ? 's' : ''})</span>
-                      )}{" "}
+                      <span className="text-white font-semibold">{onboardingProjectName}</span>{" "}
                       into a living digital record. What used to take weeks, you've done in a single motion.
                     </motion.p>
                     <motion.p
@@ -544,73 +438,43 @@ export default function ProjectMap() {
                       The magic is yours. You are in control
                     </motion.p>
                   </div>
-                  {/* ── LOGIC GATE: Existing user → Jobsian sign-in. New user → 14-day trial form ── */}
-                  {isAuthenticated ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4, duration: 0.5 }}
-                      className="text-center"
-                    >
-                      <p
-                        className="text-white/80 text-base leading-relaxed mb-8"
-                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                      >
-                        The map is yours — it always was.
-                        <br />
-                        <span className="text-white/50 text-sm mt-2 block">
-                          Sign in to your account to access it.
-                        </span>
-                      </p>
-                      <button
-                        onClick={() => { setShowPrestige(false); navigate("/dashboard"); }}
-                        className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
-                      >
-                        Go to Dashboard
-                      </button>
-                      <button
-                        onClick={handlePrestigeDismiss}
-                        className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
-                      >
-                        Keep exploring →
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <>
-                      <input
-                        type="email"
-                        value={prestigeEmail}
-                        onChange={(e) => { setPrestigeEmail(e.target.value); setPrestigeEmailTouched(true); }}
-                        onBlur={() => setPrestigeEmailTouched(true)}
-                        onKeyDown={(e) => e.key === "Enter" && isPrestigeEmailValid && handlePrestigeClaim()}
-                        placeholder="your@email.com"
-                        className={`w-full bg-transparent border-0 border-b outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 ${
-                          prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0
-                            ? 'border-red-400/70 focus:border-red-400'
-                            : 'border-white/30 focus:border-white/80'
-                        }`}
-                        style={{ caretColor: "#10b981", marginBottom: prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 ? '0.5rem' : '2rem' }}
-                        disabled={prestigeSubmitting}
-                        autoComplete="email"
-                      />
-                      {prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 && (
-                        <p className="text-red-400/80 text-xs text-center mb-6 mt-1">Enter a valid email address</p>
-                      )}
-                      <button
-                        onClick={handlePrestigeClaim}
-                        disabled={!isPrestigeEmailValid || prestigeSubmitting}
-                        className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {prestigeSubmitting ? "Claiming..." : "Claim Project — Start 14-Day Trial"}
-                      </button>
-                      <button
-                        onClick={handlePrestigeDismiss}
-                        className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
-                      >
-                        Continue exploring →
-                      </button>
-                    </>
+                  {user?.email && (
+                    <p className="text-white/40 text-xs text-center mb-2 -mt-1">
+                      Signed in as {user.email}
+                    </p>
                   )}
+                  <input
+                    type="email"
+                    value={prestigeEmail}
+                    onChange={(e) => { setPrestigeEmail(e.target.value); setPrestigeEmailTouched(true); }}
+                    onBlur={() => setPrestigeEmailTouched(true)}
+                    onKeyDown={(e) => e.key === "Enter" && isPrestigeEmailValid && handlePrestigeClaim()}
+                    placeholder="your@email.com"
+                    className={`w-full bg-transparent border-0 border-b outline-none text-white text-lg text-center pb-3 placeholder:text-white/25 transition-colors duration-200 ${
+                      prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0
+                        ? 'border-red-400/70 focus:border-red-400'
+                        : 'border-white/30 focus:border-white/80'
+                    }`}
+                    style={{ caretColor: "#10b981", marginBottom: prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 ? '0.5rem' : '2rem' }}
+                    disabled={prestigeSubmitting}
+                    autoComplete="email"
+                  />
+                  {prestigeEmailTouched && !isPrestigeEmailValid && prestigeEmail.length > 0 && (
+                    <p className="text-red-400/80 text-xs text-center mb-6 mt-1">Enter a valid email address</p>
+                  )}
+                  <button
+                    onClick={handlePrestigeClaim}
+                    disabled={!isPrestigeEmailValid || prestigeSubmitting}
+                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {prestigeSubmitting ? "Claiming..." : "Claim Project"}
+                  </button>
+                  <button
+                    onClick={handlePrestigeDismiss}
+                    className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+                  >
+                    Continue exploring →
+                  </button>
                 </>
               ) : (
                 <motion.div
@@ -704,77 +568,6 @@ export default function ProjectMap() {
                 Maybe later
               </button>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Magic Flow Stage 1: Marker Tooltip (5s fade-out) ── */}
-      <AnimatePresence>
-        {stage1Visible && isOnboardingProject && (
-          <motion.div
-            key="magic-stage1"
-            initial={{ opacity: 0, scale: 0.92, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: -8 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed top-[180px] left-8 z-[9990] pointer-events-auto"
-          >
-            <div
-              className="flex flex-col items-center justify-center gap-3 px-6 py-6 rounded-2xl text-center select-none"
-              style={{
-                width: "192px",
-                background: "rgba(255,255,255,0.80)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.40)",
-                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.2)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              <MapPin className="w-5 h-5 text-emerald-500 flex-shrink-0 animate-pulse" />
-              <p className="text-slate-600 text-xs font-medium leading-relaxed">
-                {onboardingPhotoCount && (
-                  <><span className="text-slate-800 font-semibold">{onboardingPhotoCount} photo{Number(onboardingPhotoCount) !== 1 ? 's' : ''}</span> mapped.<br /></>
-                )}
-                The magic is in the coordinates.<br />
-                <span className="text-slate-500">Click the marker to reveal the image</span>
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Magic Flow Stage 2: Sidebar Magic Popup (after Stage 1 fades) ── */}
-      <AnimatePresence>
-        {stage2Visible && isOnboardingProject && (
-          <motion.div
-            key="magic-stage2"
-            initial={{ opacity: 0, scale: 0.92, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: -8 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed bottom-8 right-8 z-[9990] pointer-events-auto"
-          >
-            <div
-              className="flex flex-col items-start justify-start gap-3 px-6 py-6 rounded-2xl text-left select-none"
-              style={{
-                width: "240px",
-                background: "rgba(255,255,255,0.80)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.40)",
-                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.2)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              <p className="text-slate-600 text-xs font-medium leading-relaxed">
-                {onboardingProjectName !== "your project" && (
-                  <><span className="text-slate-800 font-semibold">{onboardingProjectName}</span> is live.<br /></>
-                )}
-                Open the sidebar for more magic — add overlays and measure area.
-              </p>
-              <p className="text-slate-400 text-xs">Look for the toggle on the right →</p>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

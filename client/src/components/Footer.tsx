@@ -47,16 +47,7 @@ const Footer = ({ onContactClick }: FooterProps) => {
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-[#00ff88]" />
-                {onContactClick ? (
-                  <button
-                    onClick={onContactClick}
-                    className="hover:text-[#00ff88] transition-colors text-left"
-                  >
-                    Contact Support
-                  </button>
-                ) : (
-                  <a href="mailto:support@skyveedrones.com" className="hover:text-[#00ff88] transition-colors">support@skyveedrones.com</a>
-                )}
+                <a href="mailto:support@skyveedrones.com" className="hover:text-[#00ff88] transition-colors">support@skyveedrones.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <MapPin size={16} className="text-[#00ff88]" />

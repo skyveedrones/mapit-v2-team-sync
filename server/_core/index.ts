@@ -18,7 +18,6 @@ import overlayUploadRouter from "../routes/overlay-upload";
 import documentUploadRouter from "../routes/document-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
 import createOverlayRouter from "../routes/create-overlay";
-import { startTrialCleanupJob } from "../onboardingCleanup";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -185,8 +184,6 @@ async function startServer() {
   
   server.listen(port, '0.0.0.0', () => {
     console.log(`[Server] Running on http://0.0.0.0:${port}/`);
-    // Start background jobs
-    startTrialCleanupJob();
   });
   
   // Graceful shutdown

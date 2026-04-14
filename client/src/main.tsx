@@ -69,9 +69,6 @@ queryClient.getMutationCache().subscribe(event => {
     if (isDemoRoute()) return;
     
     const error = event.mutation.state.error;
-    // Skip errors marked as handled (e.g., FORBIDDEN from onboarding.initProject)
-    if ((error as any)?.__handled) return;
-    
     redirectToLoginIfUnauthorized(error);
     console.error("[API Mutation Error]", error);
   }

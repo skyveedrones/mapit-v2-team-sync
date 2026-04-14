@@ -5,7 +5,7 @@
  * Update the Stripe price IDs after creating products in the Stripe Dashboard.
  */
 
-export type SubscriptionTier = "free" | "starter" | "professional" | "scale" | "enterprise";
+export type SubscriptionTier = "free" | "starter" | "professional" | "business" | "enterprise";
 
 export interface PlanLimits {
   maxProjects: number; // -1 for unlimited
@@ -140,7 +140,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
       onPremise: false,
     },
   },
-  scale: {
+  business: {
     maxProjects: 200,
     maxMediaPerProject: 50000,
     maxTotalMedia: 500000,
@@ -234,14 +234,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     limits: PLAN_LIMITS.professional,
   },
   {
-    id: "scale",
+    id: "business",
     name: "Scale",
     description: "Global scale. Unlimited stakeholder viewing, API access, and priority processing.",
     monthlyPriceId: "price_1T6Xu5GEMT6mikKwaxgTw2dy",
     annualPriceId: "price_1T6Xu5GEMT6mikKwCUBCrmlB",
     monthlyPrice: 349,
     annualPrice: 3559.80, // 15% off: $296.65/mo
-    limits: PLAN_LIMITS.scale,
+    limits: PLAN_LIMITS.business,
   },
   {
     id: "enterprise",

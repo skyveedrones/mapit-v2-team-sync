@@ -78,7 +78,7 @@ export function createPerUserRateLimiter() {
   const limiters: Record<string, any> = {};
 
   // Pre-create limiters for each tier
-  const tiers = ['free', 'starter', 'professional', 'scale', 'enterprise'];
+  const tiers = ['free', 'starter', 'professional', 'business', 'enterprise'];
   for (const tier of tiers) {
     const limits = getPlanLimits(tier as any);
     limiters[tier] = createTierLimiter(tier, limits);

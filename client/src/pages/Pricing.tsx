@@ -6,13 +6,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Check, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { ContactModal } from "@/components/ContactModal";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
 const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
@@ -26,7 +26,7 @@ const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null>
 const TIER_KEY_MAP: Record<string, string> = {
   starter: "experience",
   professional: "precision",
-  scale: "scale",
+  business: "scale",
   enterprise: "civic",
   free: "free",
 };
@@ -88,7 +88,7 @@ const TIERS = [
     trialTag: false,
     badge: null,
     description:
-      "Global scale. Unlimited stakeholder views, API access, and priority processing for world-shaping organizations.",
+      "Global scale. Unlimited stakeholder viewing, API access, and priority processing for organizations that shape the world.",
     specs: [
       "1.5 TB Storage",
       "Unlimited Stakeholder Viewing",
@@ -127,7 +127,6 @@ const TIERS = [
 export default function Pricing() {
   const [annual, setAnnual] = useState(false);
   const [loadingTierId, setLoadingTierId] = useState<string | null>(null);
-  const [contactOpen, setContactOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const createPortalSession = trpc.payment.createPortalSession.useMutation();
@@ -139,7 +138,7 @@ export default function Pricing() {
 
   const handleCTA = async (tier: (typeof TIERS)[0]) => {
     if (tier.action === "contact") {
-      setContactOpen(true);
+      window.location.href = "mailto:clay@skyveedrones.com?subject=MAPIT%20Civic%20Inquiry";
       return;
     }
     if (!user) {
@@ -181,6 +180,17 @@ export default function Pricing() {
       className="min-h-screen text-white flex flex-col"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
+      <GlobalHamburgerHeader />
+      {/* ── Trial Expired Banner ── */}
+      {isExpired && (
+        <div
+          className="flex items-center justify-center gap-3 px-6 py-3 text-sm font-medium"
+          style={{ background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}
+        >
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          Your complimentary experience has concluded. Upgrade to Precision to keep your projects.
+        </div>
+      )}
       {/* ── Nav ── */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
         <button
@@ -195,16 +205,6 @@ export default function Pricing() {
         </span>
         <div className="w-16" />
       </nav>
-      {/* ── Trial Expired Banner ── */}
-      {isExpired && (
-        <div
-          className="flex items-center justify-center gap-3 px-6 py-3 text-sm font-medium"
-          style={{ background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}
-        >
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          Your complimentary experience has concluded. Upgrade to Precision to keep your projects.
-        </div>
-      )}
 
       {/* ── Hero ── */}
       <div className="text-center pt-16 pb-10 px-6">
@@ -276,7 +276,7 @@ export default function Pricing() {
                 borderRadius: "20px",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                padding: "2rem 1.6rem 2.4rem",
+                padding: "2rem 1.6rem 1.8rem",
               }}
             >
               {/* MOST POPULAR badge — absolute, outside content flow so it never pushes hook text down */}
@@ -342,13 +342,13 @@ export default function Pricing() {
                 )}
               </div>
 
-              {/* Description — fixed height so CTA buttons stay level across all cards */}
-              <p className="text-white/42 text-sm leading-relaxed mb-5" style={{ minHeight: "4.5rem" }}>
+              {/* Description */}
+              <p className="text-white/42 text-sm leading-relaxed mb-5">
                 {tier.description}
               </p>
 
               {/* Specs */}
-              <ul className="flex-1 space-y-2.5 mb-10">
+              <ul className="flex-1 space-y-2.5 mb-7">
                 {tier.specs.map((spec) => (
                   <li key={spec} className="flex items-start gap-2.5">
                     <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -429,9 +429,6 @@ export default function Pricing() {
           </button>
         </div>
       )}
-
-      {/* Contact Modal */}
-      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} dark />
     </div>
   );
 }

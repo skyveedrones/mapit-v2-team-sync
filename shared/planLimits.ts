@@ -3,7 +3,7 @@
  * Internal IDs: free | starter (Experience) | professional (Precision) | business (Scale) | enterprise (Civic)
  */
 
-export type SubscriptionTier = "free" | "starter" | "professional" | "scale" | "enterprise";
+export type SubscriptionTier = "free" | "starter" | "professional" | "business" | "enterprise";
 
 export interface PlanLimits {
   maxProjects: number;
@@ -47,7 +47,7 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
       "Custom watermarks",
     ],
   },
-  scale: {
+  business: {
     maxProjects: 999999,
     maxMediaFiles: 999999,
     maxTeamMembers: 999999,
@@ -161,7 +161,7 @@ export function getNextTierForResource(
   currentTier: SubscriptionTier,
   resourceType: "projects" | "media" | "teamMembers"
 ): SubscriptionTier | null {
-  const tiers: SubscriptionTier[] = ["free", "starter", "professional", "scale", "enterprise"];
+  const tiers: SubscriptionTier[] = ["free", "starter", "professional", "business", "enterprise"];
   const currentIndex = tiers.indexOf(currentTier);
 
   if (currentIndex === -1 || currentIndex === tiers.length - 1) {

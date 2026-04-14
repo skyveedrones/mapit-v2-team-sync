@@ -292,7 +292,7 @@ export const users = mysqlTable("users", {
 	defaultLaancAuthNumber: varchar({ length: 100 }),
 	stripeCustomerId: varchar({ length: 255 }),
 	stripeSubscriptionId: varchar({ length: 255 }),
-		subscriptionTier: mysqlEnum(['free','starter','professional','scale','enterprise']).default('free').notNull(),
+	subscriptionTier: mysqlEnum(['free','starter','professional','business','enterprise']).default('free').notNull(),
 	subscriptionStatus: mysqlEnum(['active','canceled','past_due','trialing','incomplete']),
 	billingPeriod: mysqlEnum(['monthly','annual']),
 	currentPeriodStart: timestamp({ mode: 'string' }),

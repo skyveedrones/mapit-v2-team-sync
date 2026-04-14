@@ -2940,7 +2940,7 @@ export async function updateUserSubscription(
   data: {
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
-    subscriptionTier: "free" | "starter" | "professional" | "scale" | "enterprise";
+    subscriptionTier: "free" | "starter" | "professional" | "business" | "enterprise";
     subscriptionStatus?: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
     billingPeriod?: "monthly" | "annual";
     currentPeriodStart?: Date;
