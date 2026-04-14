@@ -43,6 +43,7 @@ import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import HomepageCinematicDemo from "./pages/HomepageCinematicDemo";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -244,6 +245,9 @@ function Router() {
         }}
       </Route>
       
+      {/* ARCHIVED: 12:50 PM Triumph Version — homepage hero / marketing demo */}
+      <Route path="/marketing-demo" component={HomepageCinematicDemo} />
+
       {/* Demo Project */}
       <Route path="/demo" component={DemoProject} />
       <Route path="/demo/create-tutorial" component={CreationTutorial} />
