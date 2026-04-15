@@ -359,8 +359,9 @@ export default function ProjectMap() {
       )}
 
       {/* ── Project Info Panel — Top Left ── */}
-      {/* Desktop: full card with stats | Mobile: compact pill with name + claim button only */}
-      <div className="absolute top-4 left-4 z-10 hidden sm:block" ref={projectCardRef}>
+      {/* Only shown for authenticated users — unauthenticated/demo users have no dashboard to return to */}
+      {isAuthenticated && (
+      <div className="absolute top-4 left-4 z-10" ref={projectCardRef}>
         {/* Desktop layout (sm and up) */}
         <div className="hidden sm:block bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
           <div className="flex items-start gap-3">
@@ -440,6 +441,7 @@ export default function ProjectMap() {
           )}
         </div>
       </div>
+      )}
 
       {/* ── Cinematic Flyby Controller ── */}
       {geotaggedMedia.length > 0 && (
