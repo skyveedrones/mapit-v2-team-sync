@@ -507,6 +507,23 @@ export default function Create() {
                   />
                 ))}
               </div>
+              {/* Persistent chunk progress bar — shown during large file / video uploads */}
+              {chunkProgress > 0 && (
+                <div className="w-64 flex flex-col items-center gap-1.5">
+                  <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, #10b981, #34d399)" }}
+                      initial={{ width: `${chunkProgress}%` }}
+                      animate={{ width: chunkProgress >= 100 ? "100%" : `${chunkProgress}%` }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono" style={{ color: "rgba(156,163,175,0.7)" }}>
+                    {chunkProgress >= 100 ? "Upload complete — processing..." : `${chunkProgress}% uploaded`}
+                  </span>
+                </div>
+              )}
             </motion.div>
           )}
 
