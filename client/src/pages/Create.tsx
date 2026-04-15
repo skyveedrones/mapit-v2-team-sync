@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import exifr from "exifr";
+import { extractDroneTelemetry } from "@/lib/exifExtraction";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -24,6 +25,49 @@ import { toast } from "sonner";
 type Stage = "idle" | "dragging" | "uploading" | "processing" | "done";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — matches backend
+const LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // 20 MB — route through chunked upload
+
+/** Read a slice of a File as base64 string */
+function readChunkAsBase64(file: File, start: number, end: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunk = file.slice(start, end);
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(chunk);
+  });
+}
+
+/** Extract a thumbnail frame from a video file */
+function extractVideoThumbnail(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    let resolved = false;
+    const cleanup = () => { if (!resolved) { resolved = true; try { URL.revokeObjectURL(video.src); } catch { /**/ } } };
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.onloadeddata = () => { video.currentTime = Math.min(1, video.duration * 0.1); };
+    video.onseeked = () => {
+      if (resolved) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      try {
+        ctx?.drawImage(video, 0, 0);
+        const thumb = canvas.toDataURL("image/jpeg", 0.7);
+        cleanup();
+        resolve(thumb && thumb.length > 1000 ? thumb.split(",")[1] : null);
+      } catch { cleanup(); resolve(null); }
+    };
+    video.onerror = () => { cleanup(); resolve(null); };
+    setTimeout(() => { if (!resolved) { cleanup(); resolve(null); } }, 15000);
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 const ACCEPTED_MIME = new Set([
   "image/jpeg",
   "image/jpg",
@@ -83,6 +127,8 @@ export default function Create() {
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
+  const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
+  const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
@@ -201,19 +247,55 @@ export default function Create() {
       sessionStorage.setItem("mapit_project_name", projectName);
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
-      // Upload media (fire-and-forget after first)
+      // Upload media — chunked for large files/video, single-shot for small images
       for (const file of files) {
         try {
-          const arrayBuffer = await file.arrayBuffer();
-          const base64 = btoa(
-            new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
-          );
-          await uploadMedia.mutateAsync({
-            projectId: result.projectId,
-            filename: file.name,
-            mimeType: file.type || "image/jpeg",
-            fileData: base64,
-          });
+          const isLarge = file.size > LARGE_FILE_THRESHOLD || file.type.startsWith("video/");
+          if (isLarge) {
+            // ── Chunked path ──
+            const telemetry = await extractDroneTelemetry(file);
+            const thumbnailData = file.type.startsWith("video/") ? await extractVideoThumbnail(file) : null;
+            const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            for (let i = 0; i < totalChunks; i++) {
+              const start = i * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, file.size);
+              const chunkData = await readChunkAsBase64(file, start, end);
+              await uploadChunk.mutateAsync({ uploadId, chunkIndex: i, totalChunks, chunkData, projectId: result.projectId, filename: file.name, mimeType: file.type || "video/mp4" });
+            }
+            let clientMd5: string | undefined;
+            try {
+              const SparkMD5 = (await import("spark-md5")).default;
+              const spark = new SparkMD5.ArrayBuffer();
+              spark.append(await file.arrayBuffer());
+              clientMd5 = spark.end();
+            } catch { /* non-fatal */ }
+            await finalizeChunkedUpload.mutateAsync({
+              uploadId,
+              projectId: result.projectId,
+              filename: file.name,
+              mimeType: file.type || "video/mp4",
+              fileSize: file.size,
+              thumbnailData: thumbnailData ?? undefined,
+              latitude: telemetry.latitude ?? undefined,
+              longitude: telemetry.longitude ?? undefined,
+              altitude: telemetry.absoluteAltitude ?? undefined,
+              capturedAt: telemetry.capturedAt ? telemetry.capturedAt.toISOString() : undefined,
+              clientMd5,
+            });
+          } else {
+            // ── Single-shot path (small images) ──
+            const arrayBuffer = await file.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
+            );
+            await uploadMedia.mutateAsync({
+              projectId: result.projectId,
+              filename: file.name,
+              mimeType: file.type || "image/jpeg",
+              fileData: base64,
+            });
+          }
         } catch (uploadErr) {
           console.error("[Create] media upload failed:", file.name, uploadErr);
         }
@@ -229,7 +311,7 @@ export default function Create() {
 
     backendDoneRef.current = true;
     tryNavigate();
-  }, [initProject, uploadMedia, utils, triggerShake, tryNavigate]);
+  }, [initProject, uploadMedia, uploadChunk, finalizeChunkedUpload, utils, triggerShake, tryNavigate]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

@@ -5407,10 +5407,119 @@ export const appRouter = router({
           // Non-fatal — project is already claimed
         }
 
-        return { success: true, userId: claimUser.id };
+         return { success: true, userId: claimUser.id };
+      }),
+
+    /**
+     * Upload a chunk during onboarding (public, no auth).
+     * Mirrors media.uploadChunk — stores 5MB chunk to S3 temp storage.
+     */
+    uploadChunk: publicProcedure
+      .input(z.object({
+        uploadId: z.string(),
+        chunkIndex: z.number(),
+        totalChunks: z.number(),
+        chunkData: z.string(),
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const chunkBuffer = Buffer.from(input.chunkData, 'base64');
+        const chunkKey = `temp-chunks/onboarding-${input.uploadId}/chunk-${input.chunkIndex.toString().padStart(5, '0')}`;
+        await storagePut(chunkKey, chunkBuffer, 'application/octet-stream');
+        return { success: true, chunkIndex: input.chunkIndex, totalChunks: input.totalChunks };
+      }),
+
+    /**
+     * Finalize chunked upload during onboarding (public, no auth).
+     * Mirrors media.finalizeChunkedUpload — reassembles chunks, MD5 check,
+     * thumbnail generation, and media record creation with client-side GPS metadata.
+     */
+    finalizeChunkedUpload: publicProcedure
+      .input(z.object({
+        uploadId: z.string(),
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+        thumbnailData: z.string().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        altitude: z.number().optional(),
+        capturedAt: z.string().optional(),
+        cameraMake: z.string().optional(),
+        cameraModel: z.string().optional(),
+        clientMd5: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+        const uniqueId = nanoid(12);
+        // Reassemble chunks from S3 temp storage
+        const totalChunks = Math.ceil(input.fileSize / (5 * 1024 * 1024));
+        const chunks: Buffer[] = [];
+        for (let i = 0; i < totalChunks; i++) {
+          const chunkKey = `temp-chunks/onboarding-${input.uploadId}/chunk-${i.toString().padStart(5, '0')}`;
+          const { url: chunkUrl } = await storageGet(chunkKey);
+          const response = await fetch(chunkUrl);
+          const arrayBuffer = await response.arrayBuffer();
+          chunks.push(Buffer.from(arrayBuffer));
+        }
+        const combinedBuffer = Buffer.concat(chunks);
+        // MD5 integrity check
+        if (input.clientMd5) {
+          const crypto = await import('crypto');
+          const serverMd5 = crypto.createHash('md5').update(combinedBuffer).digest('hex');
+          if (serverMd5 !== input.clientMd5) {
+            throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Integrity check failed: file hash mismatch. Please retry.' });
+          }
+        }
+        // Upload assembled file to S3
+        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const result = await storagePut(fileKey, combinedBuffer, input.mimeType);
+        const url = result.url;
+        // Generate thumbnail
+        let thumbnailUrl: string | null = null;
+        const isImage = input.mimeType.startsWith('image/');
+        const isVideo = input.mimeType.startsWith('video/');
+        if (isImage) {
+          try {
+            const thumbBuffer = await generateThumbnail(combinedBuffer, 250);
+            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbBuffer, 'image/jpeg');
+            thumbnailUrl = thumbResult.url;
+          } catch { thumbnailUrl = url; }
+        }
+        if (isVideo && input.thumbnailData) {
+          try {
+            const thumbnailBuffer = Buffer.from(input.thumbnailData, 'base64');
+            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbnailBuffer, 'image/jpeg');
+            thumbnailUrl = thumbResult.url;
+          } catch { /* non-fatal */ }
+        }
+        // Create media record with GPS metadata passed from client
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ownerUser.id,
+          filename: input.filename,
+          fileKey,
+          url,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: input.latitude != null ? String(input.latitude) : null,
+          longitude: input.longitude != null ? String(input.longitude) : null,
+          altitude: input.altitude != null ? String(input.altitude) : null,
+          capturedAt: input.capturedAt ? new Date(input.capturedAt).toISOString() : null,
+          cameraMake: input.cameraMake ?? null,
+          cameraModel: input.cameraModel ?? null,
+          thumbnailUrl,
+        });
+        return { success: true, mediaId: mediaItem.id, url, thumbnailUrl };
       }),
   }),
-
   // ─── Municipal Lead Capture ───
   municipal: router({
     submitContactSales: publicProcedure

@@ -2734,3 +2734,9 @@
 - [ ] Task 1: Lock success modal — disable overlay click, ESC, remove X button; only 'Go to My Dashboard' exits
 - [ ] Task 2: Off-map guard — unauthenticated user on /project/:id/map with claimed project redirects to /welcome
 - [ ] Task 3: Lead capture — claimProject saves email+projectId to DB immediately; if no /welcome signup within 5 min, fire recovery email
+
+## Chunked Upload for Onboarding Demo
+- [ ] Add onboarding.uploadChunk publicProcedure (mirror of media.uploadChunk)
+- [ ] Add onboarding.finalizeChunkedUpload publicProcedure (mirror of media.finalizeChunkedUpload)
+- [ ] Update Create.tsx to route files >20MB through chunked path, small files stay on single-upload path
+- [ ] Accept .mp4 / video files in demo flow via chunked upload with EXIF extracted client-side
