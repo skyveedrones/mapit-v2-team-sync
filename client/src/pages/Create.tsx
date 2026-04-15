@@ -68,6 +68,24 @@ function extractVideoThumbnail(file: File): Promise<string | null> {
   });
 }
 
+/**
+ * Detect H.265/HEVC codec by reading the first 64 KB of an MP4/MOV file.
+ * Looks for 'hvc1', 'hev1', or 'dvhe' codec boxes in the ftyp/moov atoms.
+ * Returns true if HEVC is detected.
+ */
+async function isH265(file: File): Promise<boolean> {
+  if (!file.type.startsWith("video/")) return false;
+  try {
+    const buf = await file.slice(0, 65536).arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const text = new TextDecoder("latin1").decode(bytes);
+    // Common HEVC codec identifiers in MP4 container
+    return /hvc1|hev1|dvhe|HEVC|hevc/.test(text);
+  } catch {
+    return false;
+  }
+}
+
 const ACCEPTED_MIME = new Set([
   "image/jpeg",
   "image/jpg",
@@ -183,6 +201,35 @@ export default function Create() {
   const processFiles = useCallback(async (files: File[]) => {
     const invalid = files.filter((f) => !isAcceptedFile(f));
     if (invalid.length > 0) { triggerShake(); return; }
+
+    // ── H.265 pre-check ────────────────────────────────────────────────────
+    for (const file of files) {
+      if (file.type.startsWith("video/")) {
+        const hevc = await isH265(file);
+        if (hevc) {
+          toast(
+            "H.265 video detected. Please convert to H.264 using HandBrake before uploading.",
+            {
+              duration: 8000,
+              position: "bottom-center",
+              style: {
+                background: "rgba(10,10,10,0.95)",
+                color: "rgba(255,255,255,0.85)",
+                border: "1px solid rgba(255,80,80,0.35)",
+                borderRadius: "14px",
+                fontSize: "13px",
+                fontFamily: "Inter, sans-serif",
+                backdropFilter: "blur(20px)",
+                padding: "14px 20px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+                maxWidth: "360px",
+              },
+            }
+          );
+          return;
+        }
+      }
+    }
 
     // Reset refs
     backendDoneRef.current = false;
