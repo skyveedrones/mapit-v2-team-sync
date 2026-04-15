@@ -302,6 +302,20 @@
       "when": 1776182531210,
       "tag": "0042_graceful_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1776219891206,
+      "tag": "0043_powerful_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1776219909229,
+      "tag": "0044_deep_guardian",
+      "breakpoints": true
     }
   ]
 }

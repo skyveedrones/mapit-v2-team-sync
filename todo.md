@@ -2729,3 +2729,8 @@
 - [x] Convert media.list to publicProcedure with onboarding bypass for unauthenticated users
 - [x] Fix media.list onboarding bypass to directly query media (bypass getProjectMediaWithAccess userId check)
 - [x] Add 'Save Your Progress' button in ProjectMap for unauthenticated users on onboarding projects
+
+## Conversion Funnel Logic Gates
+- [ ] Task 1: Lock success modal — disable overlay click, ESC, remove X button; only 'Go to My Dashboard' exits
+- [ ] Task 2: Off-map guard — unauthenticated user on /project/:id/map with claimed project redirects to /welcome
+- [ ] Task 3: Lead capture — claimProject saves email+projectId to DB immediately; if no /welcome signup within 5 min, fire recovery email

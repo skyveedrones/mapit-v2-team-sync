@@ -328,6 +328,20 @@ export const warrantyReminders = mysqlTable("warranty_reminders", {
 	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
 });
 
+export const onboardingLeads = mysqlTable("onboarding_leads", {
+	id: int().autoincrement().notNull(),
+	email: varchar({ length: 320 }).notNull(),
+	projectId: int().notNull(),
+	projectName: varchar({ length: 255 }),
+	// 'pending' = claimed but not signed up, 'converted' = completed /welcome signup, 'recovery_sent' = recovery email fired
+	status: mysqlEnum(['pending', 'converted', 'recovery_sent']).default('pending').notNull(),
+	recoveryScheduledAt: timestamp({ mode: 'string' }),
+	recoverySentAt: timestamp({ mode: 'string' }),
+	convertedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
 // ─── Inferred Type Exports ───────────────────────────────────────────────────
 // Allow components to import types: import type { Project } from '../../../drizzle/schema'
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";

@@ -184,8 +184,29 @@ export default function ProjectMap() {
     return () => clearInterval(interval);
   }, []);
 
+  // Task 2: Off-map guard — if unauthenticated user revisits/refreshes a claimed project map
+  // (sessionStorage key is gone = project was already claimed), redirect to /welcome
+  useEffect(() => {
+    if (isDemoProject || isAuthenticated) return;
+    const storedId = sessionStorage.getItem('mapit_project_id');
+    // If there's no sessionStorage key for this project, the user is a ghost — redirect
+    if (!storedId || storedId !== String(projectId)) {
+      window.location.href = '/welcome';
+    }
+  }, [isDemoProject, isAuthenticated, projectId]);
+
+  // Block ESC globally when modal is locked after claim
+  useEffect(() => {
+    if (!prestigeClaimed) return;
+    const blockEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') e.stopImmediatePropagation(); };
+    window.addEventListener('keydown', blockEsc, true);
+    return () => window.removeEventListener('keydown', blockEsc, true);
+  }, [prestigeClaimed]);
+
   // Dismiss Prestige and start 60s conversion timer
+  // Once claimed, modal is locked — only 'Go to My Dashboard' can exit
   const handlePrestigeDismiss = () => {
+    if (prestigeClaimed) return;
     setShowPrestige(false);
     startConversionTimer();
   };
@@ -200,7 +221,7 @@ export default function ProjectMap() {
       sessionStorage.removeItem("mapit_project_id");
       sessionStorage.removeItem("mapit_project_name");
       sessionStorage.removeItem("mapit_trial_expires");
-      setTimeout(() => setShowPrestige(false), 2000);
+      // Modal stays open — only 'Go to My Dashboard' button can exit
     } catch {
       setPrestigeSubmitting(false);
     }
@@ -442,6 +463,8 @@ export default function ProjectMap() {
             transition={{ duration: 0.5 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center"
             style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(20px)" }}
+            onKeyDown={(e) => { if (prestigeClaimed && e.key === 'Escape') e.stopPropagation(); }}
+            onClick={(e) => { if (prestigeClaimed) e.stopPropagation(); }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 20 }}

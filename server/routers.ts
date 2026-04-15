@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
-import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations, projectDocuments } from "../drizzle/schema";
+import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations, projectDocuments, onboardingLeads } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminRouter } from "./routers/admin";
@@ -5323,9 +5323,63 @@ export const appRouter = router({
           .where(eq(projects.id, input.projectId))
           .then((r) => r[0]);
         const projectName = claimedProject?.name || 'your project';
-        const projectUrl = `https://mapit.skyveedrones.com/project/${input.projectId}/map`;
 
-        // Send Resend confirmation email (fire-and-forget — don't block the response)
+        // ── Task 3: Save lead record immediately before showing popup ────────────────
+        const recoveryAt = new Date(Date.now() + 5 * 60 * 1000);
+        try {
+          await db.insert(onboardingLeads).values({
+            email: input.email,
+            projectId: input.projectId,
+            projectName,
+            status: 'pending',
+            recoveryScheduledAt: recoveryAt.toISOString().slice(0, 19).replace('T', ' '),
+          });
+        } catch (dbErr) {
+          console.error('[claimProject] Lead insert failed (non-fatal):', dbErr);
+        }
+
+        // Schedule recovery email: fire after 5 min if lead is still 'pending'
+        setTimeout(async () => {
+          try {
+            const freshDb = await getDb();
+            if (!freshDb) return;
+            const lead = await freshDb
+              .select()
+              .from(onboardingLeads)
+              .where(and(eq(onboardingLeads.email, input.email), eq(onboardingLeads.projectId, input.projectId)))
+              .then((r) => r[0]);
+            if (!lead || lead.status !== 'pending') return; // already converted
+            const { sendEmail: sendRecovery } = await import('./_core/email');
+            await sendRecovery({
+              to: input.email,
+              subject: 'Your map is waiting',
+              html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your map is waiting</title></head>
+<body style="margin:0;padding:0;background:#0A0A0A;font-family:'Inter',system-ui,sans-serif;color:#ffffff">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:48px 24px">
+    <tr><td>
+      <p style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0 0 32px">MAPIT</p>
+      <h1 style="font-size:clamp(2rem,8vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1;margin:0 0 24px;background:linear-gradient(to bottom,#ffffff,#6b7280);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Your map is waiting</h1>
+      <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 32px">You claimed <strong style="color:#ffffff">${projectName}</strong> but haven't secured your account yet. Your digital twin is ready — complete your setup to access it.</p>
+      <a href="https://mapit.skyveedrones.com/welcome" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">Secure My Map</a>
+      <p style="margin:48px 0 0;font-size:12px;color:rgba(255,255,255,0.2)">MAPIT &nbsp;·&nbsp; Precision mapping for the modern job site</p>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+            });
+            await freshDb
+              .update(onboardingLeads)
+              .set({ status: 'recovery_sent', recoverySentAt: new Date().toISOString().slice(0, 19).replace('T', ' ') })
+              .where(and(eq(onboardingLeads.email, input.email), eq(onboardingLeads.projectId, input.projectId)));
+            console.log(`[claimProject] Recovery email sent to ${input.email}`);
+          } catch (recErr) {
+            console.error('[claimProject] Recovery email failed:', recErr);
+          }
+        }, 5 * 60 * 1000);
+
+        // Send immediate confirmation email (fire-and-forget)
         try {
           const { sendEmail } = await import('./_core/email');
           await sendEmail({
