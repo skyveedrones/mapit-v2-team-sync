@@ -186,14 +186,15 @@ export default function ProjectMap() {
 
   // Task 2: Off-map guard — if unauthenticated user revisits/refreshes a claimed project map
   // (sessionStorage key is gone = project was already claimed), redirect to /welcome
+  // Skip if prestigeClaimed is true — user just claimed and the success modal is showing
   useEffect(() => {
-    if (isDemoProject || isAuthenticated) return;
+    if (isDemoProject || isAuthenticated || prestigeClaimed) return;
     const storedId = sessionStorage.getItem('mapit_project_id');
     // If there's no sessionStorage key for this project, the user is a ghost — redirect
     if (!storedId || storedId !== String(projectId)) {
       window.location.href = '/welcome';
     }
-  }, [isDemoProject, isAuthenticated, projectId]);
+  }, [isDemoProject, isAuthenticated, projectId, prestigeClaimed]);
 
   // Block ESC globally when modal is locked after claim
   useEffect(() => {
