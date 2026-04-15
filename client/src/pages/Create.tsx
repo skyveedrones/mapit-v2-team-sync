@@ -132,6 +132,7 @@ export default function Create() {
   const [stage, setStage] = useState<Stage>("idle");
   const [shake, setShake] = useState(false);
   const [processingLabel, setProcessingLabel] = useState(0);
+  const [chunkProgress, setChunkProgress] = useState(0); // 0–100 for large file uploads
   const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -208,9 +209,19 @@ export default function Create() {
         const hevc = await isH265(file);
         if (hevc) {
           toast(
-            "H.265 video detected. Please convert to H.264 using HandBrake before uploading.",
+            <span>
+              H.265 video detected. Please convert to H.264 before uploading.{" "}
+              <a
+                href="https://handbrake.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#10b981", textDecoration: "underline", fontWeight: 600 }}
+              >
+                Download HandBrake &rarr;
+              </a>
+            </span>,
             {
-              duration: 8000,
+              duration: 10000,
               position: "bottom-center",
               style: {
                 background: "rgba(10,10,10,0.95)",
@@ -222,7 +233,7 @@ export default function Create() {
                 backdropFilter: "blur(20px)",
                 padding: "14px 20px",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
-                maxWidth: "360px",
+                maxWidth: "380px",
               },
             }
           );
@@ -304,11 +315,13 @@ export default function Create() {
             const thumbnailData = file.type.startsWith("video/") ? await extractVideoThumbnail(file) : null;
             const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            setChunkProgress(0);
             for (let i = 0; i < totalChunks; i++) {
               const start = i * CHUNK_SIZE;
               const end = Math.min(start + CHUNK_SIZE, file.size);
               const chunkData = await readChunkAsBase64(file, start, end);
               await uploadChunk.mutateAsync({ uploadId, chunkIndex: i, totalChunks, chunkData, projectId: result.projectId, filename: file.name, mimeType: file.type || "video/mp4" });
+              setChunkProgress(Math.round(((i + 1) / totalChunks) * 100));
             }
             let clientMd5: string | undefined;
             try {
@@ -416,10 +429,12 @@ export default function Create() {
               className="flex flex-col items-center gap-8 select-none"
             >
               <p
-                className="font-bold tracking-tighter leading-none bg-clip-text text-transparent"
+                className="font-bold tracking-tighter bg-clip-text text-transparent"
                 style={{
                   fontSize: "clamp(4rem,14vw,9rem)",
                   backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
+                  lineHeight: 1.15,
+                  paddingBottom: "0.15em",
                 }}
               >
                 Uploading
@@ -435,6 +450,23 @@ export default function Create() {
                   />
                 ))}
               </div>
+              {/* Chunk progress bar — only visible during large file / video upload */}
+              {chunkProgress > 0 && chunkProgress < 100 && (
+                <div className="w-64 flex flex-col items-center gap-1.5">
+                  <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, #10b981, #34d399)" }}
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${chunkProgress}%` }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono" style={{ color: "rgba(156,163,175,0.7)" }}>
+                    {chunkProgress}%
+                  </span>
+                </div>
+              )}
             </motion.div>
           )}
 

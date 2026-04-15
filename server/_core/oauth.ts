@@ -1,9 +1,11 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
-import { EmailConflictError } from "../db";
+import { EmailConflictError, getDb } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { onboardingLeads } from "../../drizzle/schema";
+import { eq, and } from "drizzle-orm";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -36,6 +38,21 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date().toISOString(),
       });
+
+      // Mark any pending onboarding lead as converted to suppress the 5-min recovery email
+      if (userInfo.email) {
+        try {
+          const orm = await getDb();
+          if (orm) {
+            await orm
+              .update(onboardingLeads)
+              .set({ status: 'converted', convertedAt: new Date().toISOString() })
+              .where(and(eq(onboardingLeads.email, userInfo.email), eq(onboardingLeads.status, 'pending')));
+          }
+        } catch (e) {
+          console.error('[OAuth] Failed to mark onboarding lead as converted', e);
+        }
+      }
 
       // Fetch the user record to determine role for redirect
       const dbUser = await db.getUserByOpenId(userInfo.openId);
