@@ -359,8 +359,10 @@ export default function ProjectMap() {
       )}
 
       {/* ── Project Info Panel — Top Left ── */}
+      {/* Desktop: full card with stats | Mobile: compact pill with name + claim button only */}
       <div className="absolute top-4 left-4 z-10" ref={projectCardRef}>
-        <div className="bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
+        {/* Desktop layout (sm and up) */}
+        <div className="hidden sm:block bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
           <div className="flex items-start gap-3">
             {/* Hide 'Return to Project' for all unauthenticated users — no project page to go back to */}
             {isAuthenticated && (
@@ -405,6 +407,32 @@ export default function ProjectMap() {
             <button
               onClick={() => setShowPrestige(true)}
               className="mt-3 w-full bg-white hover:bg-gray-100 text-black text-sm font-bold py-2.5 rounded-full shadow-lg transition-all duration-200 select-none"
+              style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
+            >
+              Claim Your Project
+            </button>
+          )}
+        </div>
+
+        {/* Mobile layout (below sm) — compact pill: name + optional claim button only */}
+        <div className="sm:hidden bg-black/70 backdrop-blur-md rounded-lg border border-white/10 px-3 py-2 max-w-[calc(100vw-5rem)]">
+          <div className="flex items-center gap-2">
+            {isAuthenticated && (
+              <Link href={flightId ? `/project/${projectId}/flight/${flightId}` : `/project/${projectId}`}>
+                <ArrowLeft className="h-4 w-4 text-white/70 flex-shrink-0" />
+              </Link>
+            )}
+            <h1
+              className="text-sm font-semibold truncate text-white"
+              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+            >
+              {flightId ? "Flight Map" : project.name}
+            </h1>
+          </div>
+          {isOnboardingProject && !isAuthenticated && !prestigeClaimed && (
+            <button
+              onClick={() => setShowPrestige(true)}
+              className="mt-2 w-full bg-white hover:bg-gray-100 text-black text-xs font-bold py-1.5 rounded-full shadow-lg transition-all duration-200 select-none"
               style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
             >
               Claim Your Project
