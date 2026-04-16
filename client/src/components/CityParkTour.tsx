@@ -81,7 +81,8 @@ export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ type: "spring", stiffness: 300, damping: 26 }}
-          onPointerUp={step === 2 ? dismiss : undefined}
+          onClick={step === 2 ? dismiss : undefined}
+          onTouchEnd={step === 2 ? (e) => { e.preventDefault(); dismiss(); } : undefined}
           className={`fixed bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 w-96 max-w-[calc(100vw-2rem)] bg-slate-900/90 border-2 border-[#10b981] p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl z-[999] backdrop-blur-md${step === 2 ? " cursor-pointer select-none" : ""}`}
         >
           {/* Dismiss button */}
@@ -128,8 +129,8 @@ export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            onClick={handleAction}
-            onPointerUp={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); handleAction(); }}
+            onTouchEnd={(e) => e.stopPropagation()}
             className={`w-full py-3 font-black rounded-xl transition-all text-slate-900 ${
               isFinalStep
                 ? "bg-[#10b981] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] text-base tracking-widest uppercase"

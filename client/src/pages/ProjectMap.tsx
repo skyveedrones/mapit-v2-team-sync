@@ -334,6 +334,7 @@ export default function ProjectMap() {
           onOverlayButtonClick={() => {}}
           heightClass="h-screen"
           showFullScreenLink={false}
+          hideHeader={true}
           projectLocation={(project as any)?.location}
           initialMedia={geotaggedMedia.length > 0 ? geotaggedMedia : undefined}
           onSidebarOpen={() => setShowSidebarHint(false)}

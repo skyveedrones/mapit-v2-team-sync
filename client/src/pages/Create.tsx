@@ -398,6 +398,9 @@ export default function Create() {
   const isDragging = stage === "dragging";
 
   // ── Sample Site Injector ────────────────────────────────────────────────────
+  // Forney TX street survey GPS fallback (Center St & E Shands Dr)
+  const SAMPLE_GPS_FALLBACK = { lat: 32.7479, lng: -96.4677 };
+
   const SAMPLE_DRONE_URLS = [
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-1_62997deb.webp",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-2_dd7f082e.webp",
@@ -413,6 +416,8 @@ export default function Create() {
           return new File([blob], `sample-drone-${i + 1}.webp`, { type: "image/webp" });
         })
       );
+      // Pre-seed GPS coords so the map always centers on Forney TX
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
       processFiles(fileObjects);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
@@ -609,6 +614,17 @@ export default function Create() {
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
               </div>
+              {/* Sample Site injector — inside the card, below file types */}
+              <div className="mt-6 text-center pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadSampleSite(); }}
+                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
+                  style={{ fontFamily: "Inter, sans-serif" }}
+                >
+                  No image ready? Load a sample site.
+                </button>
+              </div>
               <input
                 id="file-input"
                 type="file"
@@ -619,25 +635,7 @@ export default function Create() {
               />
             </motion.label>
           )}
-          {/* Sample Site injector — shown only when idle */}
-          {(stage === "idle" || stage === "dragging") && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="mt-4 text-center"
-            >
-              <button
-                type="button"
-                onClick={loadSampleSite}
-                className="text-slate-400 hover:text-slate-200 text-sm transition-colors duration-200 underline underline-offset-4 decoration-slate-600 hover:decoration-slate-400"
-                style={{ fontFamily: "Inter, sans-serif" }}
-              >
-                No image ready? Load a sample site.
-              </button>
-            </motion.div>
-          )}
+
         </AnimatePresence>
       </div>
     </div>

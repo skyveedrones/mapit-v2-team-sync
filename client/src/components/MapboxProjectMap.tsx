@@ -99,6 +99,8 @@ interface MapboxProjectMapProps {
   projectLocation?: string | null;
   /** Called when the sidebar is opened — used by parent to dismiss onboarding guides */
   onSidebarOpen?: () => void;
+  /** When true, hides the 'Project Map' card header (used in full-screen ProjectMap page) */
+  hideHeader?: boolean;
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -161,6 +163,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       projectLocation,
       initialMedia,
       onSidebarOpen,
+      hideHeader = false,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -1343,23 +1346,25 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     return (
       <Card className="bg-card">
         <CardContent className="pt-4">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
-              <MapPin className="h-5 w-5 inline mr-2 text-emerald-400" />
-              Project Map
-              {mediaWithGPS.length > 0 && (
-                <span className="text-sm font-normal text-muted-foreground ml-2">
-                  ({mediaWithGPS.length} location{mediaWithGPS.length !== 1 ? "s" : ""})
-                </span>
-              )}
-              {activeOverlays.length > 0 && (
-                <span className="text-sm font-normal text-blue-400 ml-2">
-                  &bull; {activeOverlays.length} overlay{activeOverlays.length !== 1 ? "s" : ""}
-                </span>
-              )}
-            </h2>
-          </div>
+          {/* Header — hidden in full-screen ProjectMap page */}
+          {!hideHeader && (
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
+                <MapPin className="h-5 w-5 inline mr-2 text-emerald-400" />
+                Project Map
+                {mediaWithGPS.length > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    ({mediaWithGPS.length} location{mediaWithGPS.length !== 1 ? "s" : ""})
+                  </span>
+                )}
+                {activeOverlays.length > 0 && (
+                  <span className="text-sm font-normal text-blue-400 ml-2">
+                    &bull; {activeOverlays.length} overlay{activeOverlays.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </h2>
+            </div>
+          )}
 
           {/* Map wrapper — always rendered so mapContainerRef is never null */}
           <div

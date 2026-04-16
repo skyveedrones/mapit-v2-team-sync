@@ -2080,7 +2080,7 @@
 - [ ] Change "See Your City in a New Light" to "Smart Data for the Modern Municipality"
 - [ ] Add scrollbar to Manage Project Access popup dialog
 - [ ] Fix user 7920012 not showing in Forney TX Municipal client folder
-- [ ] Move Municipal Solutions up under Solutions (not nested under Services) in hamburger menu
+- [x] Move 'No image ready? Load a sample site.' link inside the dropzone card, below the file types text, centered with mt-6 spacing
 
 ## Overlay Manager Enhancements
 - [x] Add fullscreen mode for the project map
@@ -2740,3 +2740,4 @@
 - [ ] Add onboarding.finalizeChunkedUpload publicProcedure (mirror of media.finalizeChunkedUpload)
 - [ ] Update Create.tsx to route files >20MB through chunked path, small files stay on single-upload path
 - [ ] Accept .mp4 / video files in demo flow via chunked upload with EXIF extracted client-side
+- [x] Move 'No image ready? Load a sample site.' link inside the dropzone card, below the file types text, centered with mt-6 spacing
