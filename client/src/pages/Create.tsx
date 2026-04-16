@@ -397,6 +397,39 @@ export default function Create() {
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
 
+  // ── Sample Site Injector ────────────────────────────────────────────────────
+  const SAMPLE_DRONE_URLS = [
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-1_62997deb.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-2_dd7f082e.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-3_3b438da6.webp",
+  ];
+
+  const loadSampleSite = useCallback(async () => {
+    try {
+      const fileObjects: File[] = await Promise.all(
+        SAMPLE_DRONE_URLS.map(async (url, i) => {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          return new File([blob], `sample-drone-${i + 1}.webp`, { type: "image/webp" });
+        })
+      );
+      processFiles(fileObjects);
+    } catch {
+      toast("Could not load sample. Please try uploading your own file.", {
+        duration: 3000,
+        position: "bottom-center",
+        style: {
+          background: "rgba(10,10,10,0.92)",
+          color: "rgba(255,255,255,0.75)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          borderRadius: "14px",
+          fontSize: "13px",
+          fontFamily: "Inter, sans-serif",
+        },
+      });
+    }
+  }, [processFiles]);
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
@@ -585,6 +618,25 @@ export default function Create() {
                 onChange={handleFileInput}
               />
             </motion.label>
+          )}
+          {/* Sample Site injector — shown only when idle */}
+          {(stage === "idle" || stage === "dragging") && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              className="mt-4 text-center"
+            >
+              <button
+                type="button"
+                onClick={loadSampleSite}
+                className="text-slate-400 hover:text-slate-200 text-sm transition-colors duration-200 underline underline-offset-4 decoration-slate-600 hover:decoration-slate-400"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                No image ready? Load a sample site.
+              </button>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
