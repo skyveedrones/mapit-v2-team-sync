@@ -41,9 +41,8 @@
 import { randomBytes } from "crypto";
 import { parseArgs } from "util";
 import * as db from "../db";
-import { sdk } from "../_core/sdk";
-import { ONE_YEAR_MS } from "../../shared/const";
 import { ENV } from "../_core/env";
+import { createClerkClient } from "@clerk/backend";
 
 // ---------------------------------------------------------------------------
 // Argument parsing
@@ -107,30 +106,27 @@ function parseCliArgs() {
 }
 
 // ---------------------------------------------------------------------------
-// Magic login link generation
+// Magic login link generation (Clerk)
 // ---------------------------------------------------------------------------
 
 /**
- * Generates a signed JWT session token for the given openId and wraps it
- * in a magic login URL that sets the session cookie via a lightweight
- * server endpoint (/api/magic-login?token=...).
- *
- * If the app does not yet have a /api/magic-login endpoint, the raw JWT
- * is printed so it can be set manually as the app_session_id cookie.
+ * Generates a Clerk magic sign-in link for the given Clerk user ID.
+ * The user must already exist in Clerk (created via the Clerk API or webhook).
  */
-async function generateMagicLoginLink(openId: string, name: string): Promise<string> {
-  const token = await sdk.createSessionToken(openId, {
-    name,
-    expiresInMs: ONE_YEAR_MS,
-  });
-
-  // Derive the app's public base URL from env, falling back to localhost
+async function generateMagicLoginLink(clerkUserId: string, _name: string): Promise<string> {
+  const clerk = createClerkClient({ secretKey: ENV.clerkSecretKey });
   const baseUrl =
     process.env.APP_BASE_URL ??
     process.env.VITE_APP_URL ??
-    "http://localhost:5000";
+    "https://mapit.skyveedrones.com";
 
-  return `${baseUrl}/api/magic-login?token=${encodeURIComponent(token)}`;
+  // Create a sign-in token (magic link) via Clerk
+  const signInToken = await clerk.signInTokens.createSignInToken({
+    userId: clerkUserId,
+    expiresInSeconds: 60 * 60 * 24 * 7, // 7 days
+  });
+
+  return `${baseUrl}/login?token=${encodeURIComponent(signInToken.token)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,7 +230,9 @@ export async function onboardClient(args: {
 
   // ── Step 5: Generate Magic Login Link ─────────────────────────────────────
   console.log(`\n[5/5] Generating magic login link...`);
-  const magicLink = await generateMagicLoginLink(syntheticOpenId, args.userName);
+  // Use clerkUserId if available; fall back to a note that Clerk user must be created first
+  const clerkIdForLink = newUser.clerkUserId ?? syntheticOpenId;
+  const magicLink = await generateMagicLoginLink(clerkIdForLink, args.userName);
   console.log(`      ✓ Magic login link generated`);
 
   // ── Summary ───────────────────────────────────────────────────────────────

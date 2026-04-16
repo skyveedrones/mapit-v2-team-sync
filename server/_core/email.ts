@@ -54,7 +54,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
  * Send welcome email to new users
  */
 export async function sendWelcomeEmail(userEmail: string, userName: string): Promise<boolean> {
-  const dashboardUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace('/oauth/portal', '') || 'https://app.manus.im';
+  const dashboardUrl = process.env.APP_BASE_URL || 'https://mapit.skyveedrones.com';
   const getStartedUrl = `${dashboardUrl}/dashboard`;
 
   const html = `

@@ -18,7 +18,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     openId: "test-user-123",
     email: "test@skyvee.com",
     name: "Test Pilot",
-    loginMethod: "manus",
+    loginMethod: "clerk",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),
