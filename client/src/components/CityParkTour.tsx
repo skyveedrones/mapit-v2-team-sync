@@ -1,19 +1,15 @@
 /**
  * CityParkTour — Guided 4-step DemoOnboarding overlay for the City Park Redevelopment project.
  *
- * Matches the DemoOnboarding spec exactly:
- * - w-96 card, bottom-center, z-[999], bg-slate-900/90, border-[#10b981]
- * - "WALKTHROUGH: STEP 0X" mono label
- * - Full-width action button
- * - Step 4 fires onLaunchFlyby then closes
- * - ✕ dismiss button at top-right
+ * Step 2 is tap-to-dismiss: clicking/tapping anywhere on the card (except the Next button) closes it.
+ * The button uses a ref-based guard to prevent ghost click race conditions on mobile.
  */
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-// ── Tour step data (exact copy from spec) ─────────────────────────────────────
+// ── Tour step data ─────────────────────────────────────────────────────────────
 
 const STEPS = [
   {
@@ -41,9 +37,7 @@ const STEPS = [
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 export interface CityParkTourProps {
-  /** Called when the user hits START FLYBY on step 4 */
   onLaunchFlyby?: () => void;
-  /** Called when the tour is dismissed (✕ or after flyby launch) */
   onClose?: () => void;
 }
 
@@ -52,22 +46,33 @@ export interface CityParkTourProps {
 export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
   const [step, setStep] = useState(1);
   const [visible, setVisible] = useState(true);
+  // Tracks whether the action button was just activated so the card-level handler can ignore it
+  const buttonActivatedRef = useRef(false);
 
   const current = STEPS[step - 1];
+
+  const dismiss = () => {
+    setVisible(false);
+    setTimeout(() => onClose?.(), 350);
+  };
 
   const handleAction = () => {
     if (step < 4) {
       setStep((s) => s + 1);
     } else {
-      // Step 4 — fire flyby then close
       onLaunchFlyby?.();
       dismiss();
     }
   };
 
-  const dismiss = () => {
-    setVisible(false);
-    setTimeout(() => onClose?.(), 350);
+  // Card-level tap handler — only fires for Step 2, and only if the button wasn't what was tapped
+  const handleCardTap = () => {
+    if (step !== 2) return;
+    if (buttonActivatedRef.current) {
+      buttonActivatedRef.current = false;
+      return;
+    }
+    dismiss();
   };
 
   const isFinalStep = step === 4;
@@ -81,13 +86,22 @@ export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ type: "spring", stiffness: 300, damping: 26 }}
-          onClick={step === 2 ? dismiss : undefined}
-          onTouchEnd={step === 2 ? (e) => { e.preventDefault(); dismiss(); } : undefined}
+          onClick={handleCardTap}
+          onTouchEnd={(e) => {
+            if (step !== 2) return;
+            if (buttonActivatedRef.current) {
+              buttonActivatedRef.current = false;
+              return;
+            }
+            e.preventDefault();
+            dismiss();
+          }}
           className={`fixed bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 w-96 max-w-[calc(100vw-2rem)] bg-slate-900/90 border-2 border-[#10b981] p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl z-[999] backdrop-blur-md${step === 2 ? " cursor-pointer select-none" : ""}`}
         >
           {/* Dismiss button */}
           <button
-            onClick={dismiss}
+            onClick={(e) => { e.stopPropagation(); dismiss(); }}
+            onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); dismiss(); }}
             className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
             aria-label="Close walkthrough"
           >
@@ -129,8 +143,9 @@ export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
+            onPointerDown={() => { buttonActivatedRef.current = true; }}
             onClick={(e) => { e.stopPropagation(); handleAction(); }}
-            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); buttonActivatedRef.current = true; handleAction(); }}
             className={`w-full py-3 font-black rounded-xl transition-all text-slate-900 ${
               isFinalStep
                 ? "bg-[#10b981] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] text-base tracking-widest uppercase"
@@ -139,6 +154,11 @@ export function CityParkTour({ onLaunchFlyby, onClose }: CityParkTourProps) {
           >
             {current.btn}
           </motion.button>
+
+          {/* Step 2 hint */}
+          {step === 2 && (
+            <p className="text-center text-slate-600 text-[10px] mt-3 tracking-wide">tap anywhere to dismiss</p>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
