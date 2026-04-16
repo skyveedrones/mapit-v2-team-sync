@@ -360,8 +360,8 @@ export default function ProjectMap() {
       )}
 
       {/* ── Project Info Panel — Top Left ── */}
-      {/* Only shown for authenticated users — unauthenticated/demo users have no dashboard to return to */}
-      {isAuthenticated && (
+      {/* Only shown for real authenticated users — onboarding/demo users have no dashboard to return to */}
+      {isAuthenticated && !isOnboardingProject && !isDemoProject && (
       <div className="absolute top-4 left-4 z-10" ref={projectCardRef}>
         {/* Desktop layout (sm and up) */}
         <div className="hidden sm:block bg-black/70 backdrop-blur-md rounded-lg border border-white/10 p-4 max-w-sm">
