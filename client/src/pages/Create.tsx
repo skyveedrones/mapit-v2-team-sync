@@ -413,7 +413,7 @@ export default function Create() {
         SAMPLE_DRONE_URLS.map(async (url, i) => {
           const res = await fetch(url);
           const blob = await res.blob();
-          return new File([blob], `sample-drone-${i + 1}.webp`, { type: "image/webp" });
+          return new File([blob], `sample-drone-${i + 1}.jpg`, { type: "image/jpeg" });
         })
       );
       // Pre-seed GPS coords so the map always centers on Forney TX
