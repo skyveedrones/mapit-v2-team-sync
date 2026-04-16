@@ -748,7 +748,9 @@ export default function ProjectMap() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.96 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed z-[9990] pointer-events-auto"
+            onClick={() => setShowSidebarHint(false)}
+            onTouchEnd={(e) => { e.preventDefault(); setShowSidebarHint(false); }}
+            className="fixed z-[9990] pointer-events-auto cursor-pointer"
             style={{ top: "16px", left: "50%", transform: "translateX(-50%)" }}
           >
             {/* Arrow pointing right toward the sidebar toggle */}
