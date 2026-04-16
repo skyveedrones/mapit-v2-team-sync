@@ -5209,6 +5209,8 @@ export const appRouter = router({
           filename: z.string(),
           mimeType: z.string(),
           fileData: z.string(), // Base64 encoded
+          latitude: z.number().optional(),  // Client-side fallback GPS
+          longitude: z.number().optional(), // Client-side fallback GPS
         })
       )
       .mutation(async ({ input }) => {
@@ -5261,8 +5263,8 @@ export const appRouter = router({
           mimeType: input.mimeType,
           fileSize,
           mediaType: getMediaType(input.mimeType),
-          latitude: (exifData.latitude && !isNaN(exifData.latitude)) ? exifData.latitude.toString() : null,
-          longitude: (exifData.longitude && !isNaN(exifData.longitude)) ? exifData.longitude.toString() : null,
+          latitude: (exifData.latitude && !isNaN(exifData.latitude)) ? exifData.latitude.toString() : (input.latitude != null ? input.latitude.toString() : null),
+          longitude: (exifData.longitude && !isNaN(exifData.longitude)) ? exifData.longitude.toString() : (input.longitude != null ? input.longitude.toString() : null),
           altitude: (exifData.altitude && !isNaN(exifData.altitude)) ? exifData.altitude.toString() : null,
           capturedAt: exifData.capturedAt ? String(exifData.capturedAt) : null,
           cameraMake: exifData.cameraMake,
@@ -5270,7 +5272,7 @@ export const appRouter = router({
           thumbnailUrl,
         });
 
-        return { mediaId: mediaItem.id, url, latitude: exifData.latitude, longitude: exifData.longitude };
+        return { mediaId: mediaItem.id, url, latitude: exifData.latitude ?? input.latitude ?? null, longitude: exifData.longitude ?? input.longitude ?? null };
       }),
 
     /**

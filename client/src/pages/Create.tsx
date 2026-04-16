@@ -199,7 +199,7 @@ export default function Create() {
     });
   }, []);
 
-  const processFiles = useCallback(async (files: File[]) => {
+  const processFiles = useCallback(async (files: File[], fallbackCoords?: { lat: number; lng: number }) => {
     const invalid = files.filter((f) => !isAcceptedFile(f));
     if (invalid.length > 0) { triggerShake(); return; }
 
@@ -276,8 +276,9 @@ export default function Create() {
     // ── Backend work (runs in parallel with timers) ────────────────────────
     const coords = await coordsPromise;
 
-    if (coords) {
-      sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
+    const effectiveCoords = coords ?? fallbackCoords ?? null;
+    if (effectiveCoords) {
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: effectiveCoords.lat, lng: effectiveCoords.lng }));
     } else {
       sessionStorage.removeItem("mapit_fly_coords");
       toast("No location found in file. Defaulting to world view.", {
@@ -297,8 +298,8 @@ export default function Create() {
     try {
       const result = await initProject.mutateAsync({
         name: projectName,
-        lat: coords?.lat,
-        lng: coords?.lng,
+        lat: effectiveCoords?.lat,
+        lng: effectiveCoords?.lng,
       });
 
       sessionStorage.setItem("mapit_project_id", String(result.projectId));
@@ -354,6 +355,8 @@ export default function Create() {
               filename: file.name,
               mimeType: file.type || "image/jpeg",
               fileData: base64,
+              latitude: fallbackCoords?.lat,
+              longitude: fallbackCoords?.lng,
             });
           }
         } catch (uploadErr) {
@@ -418,7 +421,7 @@ export default function Create() {
       );
       // Pre-seed GPS coords so the map always centers on Forney TX
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles(fileObjects);
+      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
