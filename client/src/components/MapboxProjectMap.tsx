@@ -101,6 +101,8 @@ interface MapboxProjectMapProps {
   onSidebarOpen?: () => void;
   /** When true, hides the 'Project Map' card header (used in full-screen ProjectMap page) */
   hideHeader?: boolean;
+  /** When true, user is unauthenticated/demo — lock Add Map Overlay and Show Flight Path with premium popups */
+  isGuestUser?: boolean;
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -163,6 +165,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       projectLocation,
       initialMedia,
       onSidebarOpen,
+      isGuestUser = false,
       hideHeader = false,
     } = props;
 
@@ -1631,7 +1634,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                         {/* Hide/Show Flight Path */}
                         {mediaWithGPS.length > 0 && (
                           <button
-                            onClick={() => setFlightPathVisible((v) => !v)}
+                            onClick={() => {
+                              if (isGuestUser || isDemoProject) {
+                                toast.info("Telemetry Locked.", {
+                                  description: "Flight paths rely on raw, encrypted drone logs. Secure your account to visualize your private flight metrics.",
+                                });
+                                return;
+                              }
+                              setFlightPathVisible((v) => !v);
+                            }}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                               flightPathVisible ? "bg-emerald-600/20 border border-emerald-500/30" : "bg-slate-800 hover:bg-slate-700"
                             }`}
@@ -1663,7 +1674,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                         {/* Project Map Overlay */}
                         <button
-                          onClick={onOverlayButtonClick}
+                          onClick={() => {
+                            if (isGuestUser || isDemoProject) {
+                              toast.info("Enterprise Data Required.", {
+                                description: "Map overlays require secure CAD or DXF uploads. Secure your account to sync your private engineering layers.",
+                              });
+                              return;
+                            }
+                            onOverlayButtonClick?.();
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all"
                         >
                           <Layers size={16} className="text-orange-400" />

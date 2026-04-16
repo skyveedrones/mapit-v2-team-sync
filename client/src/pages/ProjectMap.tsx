@@ -329,6 +329,7 @@ export default function ProjectMap() {
           projectName={project.name}
           flightId={flightId}
           isDemoProject={isDemoProject}
+          isGuestUser={isDemoProject || isOnboardingProject}
           overlays={overlays}
           onOverlayUpdated={() => {}}
           onOverlayButtonClick={() => {}}
