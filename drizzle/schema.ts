@@ -307,6 +307,7 @@ export const users = mysqlTable("users", {
 	organizationId: int(),
 	orgRole: mysqlEnum(['PROVIDER','ORG_ADMIN','ORG_USER']).default('ORG_USER'),
 	trialEndsAt: timestamp({ mode: 'string' }),
+	clerkUserId: varchar({ length: 64 }),
 },
 (table) => [
 		index("users_openId_unique").on(table.openId),

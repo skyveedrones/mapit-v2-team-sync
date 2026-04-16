@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `clerkUserId` varchar(64);

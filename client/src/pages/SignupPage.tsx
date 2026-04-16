@@ -1,99 +1,80 @@
 /**
- * Signup Page
- * Welcome page for new users signing up to Mapit
- * Captures referral code from URL parameter
+ * Signup Page — Clerk SignUp
+ * Wraps Clerk's <SignUp /> in the MAPIT dark glassmorphism shell.
  */
 
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { getLoginUrl } from "@/const";
-import { useEffect, useState } from "react";
+import { SignUp } from "@clerk/clerk-react";
+import { motion } from "framer-motion";
 
 export default function SignupPage() {
-  const [, setLocation] = useLocation();
-  const [refCode, setRefCode] = useState<string | null>(null);
-
-  // Extract ref parameter from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
-    if (ref) {
-      setRefCode(ref);
-    }
-  }, []);
-
-  const handleSignup = () => {
-    // Build login URL with ref parameter if available
-    let loginUrl = getLoginUrl();
-    if (refCode) {
-      const separator = loginUrl.includes("?") ? "&" : "?";
-      loginUrl += `${separator}ref=${encodeURIComponent(refCode)}`;
-    }
-    window.location.href = loginUrl;
-  };
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-foreground">Welcome to Mapit</h1>
-          <p className="text-lg text-muted-foreground">
-            Precise drone mapping and geospatial data for your projects
-          </p>
-        </div>
-
-        {/* Referral Info */}
-        {refCode && (
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Signing up with referral code: <span className="font-semibold text-foreground">{refCode}</span>
-            </p>
-          </div>
-        )}
-
-        {/* Features List */}
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">✓</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Interactive maps with GPS-tagged photos and videos</p>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">✓</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Flight path tracking and visualization</p>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">✓</span>
-            </div>
-            <p className="text-sm text-muted-foreground">PDF overlay calibration and alignment tools</p>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">✓</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Export data in multiple formats (KML, GeoJSON, GPX)</p>
-          </div>
-        </div>
-
-        {/* CTA Button */}
-        <Button
-          onClick={handleSignup}
-          size="lg"
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
-        >
-          Get Started
-        </Button>
-
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground">
-          By signing up, you agree to our Terms of Service and Privacy Policy
-        </p>
+    <div className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0A]">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[600px] h-[600px] rounded-full bg-emerald-950/30 blur-[120px]" />
       </div>
+
+      {/* Top-left branding */}
+      <div className="absolute top-6 left-8 z-10 flex items-center gap-2">
+        <img
+          src="/images/mapit-logo.webp"
+          alt="MAPIT"
+          className="h-8 w-auto"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+        <span
+          className="text-white text-xl font-bold tracking-widest"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          MAP<span className="text-emerald-400">i</span>T
+        </span>
+      </div>
+
+      {/* Clerk SignUp card */}
+      <motion.div
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-md mx-4"
+      >
+        <SignUp
+          routing="path"
+          path="/signup"
+          signInUrl="/login"
+          forceRedirectUrl="/dashboard"
+          appearance={{
+            variables: {
+              colorPrimary: "#10b981",
+              colorBackground: "rgba(10,10,10,0.95)",
+              colorText: "#ffffff",
+              colorTextSecondary: "rgba(255,255,255,0.5)",
+              colorInputBackground: "rgba(255,255,255,0.06)",
+              colorInputText: "#ffffff",
+              borderRadius: "0.75rem",
+              fontFamily: "Inter, sans-serif",
+            },
+            elements: {
+              card: "bg-transparent shadow-none border-0",
+              headerTitle: "text-white font-bold",
+              headerSubtitle: "text-white/50",
+              formButtonPrimary:
+                "bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-semibold",
+              formFieldInput:
+                "bg-white/5 border border-white/10 text-white placeholder-white/25 focus:border-emerald-500/50 focus:ring-emerald-500/10",
+              formFieldLabel: "text-white/60 text-xs uppercase tracking-wider",
+              footerActionLink: "text-emerald-400 hover:text-emerald-300",
+              dividerLine: "bg-white/10",
+              dividerText: "text-white/30",
+              socialButtonsBlockButton:
+                "bg-white/5 border border-white/12 text-white/80 hover:bg-white/9 hover:text-white",
+              socialButtonsBlockButtonText: "text-white/80",
+              alert: "bg-red-900/30 border border-red-500/30 text-red-300",
+            },
+          }}
+        />
+      </motion.div>
     </div>
   );
 }

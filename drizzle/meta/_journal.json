@@ -316,6 +316,13 @@
       "when": 1776219909229,
       "tag": "0044_deep_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "5",
+      "when": 1776379747358,
+      "tag": "0045_misty_proteus",
+      "breakpoints": true
     }
   ]
 }

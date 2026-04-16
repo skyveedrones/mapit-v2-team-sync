@@ -23,6 +23,8 @@
     "@capacitor/filesystem": "^8.1.0",
     "@capacitor/geolocation": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
+    "@clerk/backend": "^3.2.12",
+    "@clerk/clerk-react": "^5.61.3",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

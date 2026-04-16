@@ -1,16 +1,15 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserButton } from "@clerk/clerk-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, ClipboardList, Download, FolderPlus, LayoutDashboard, LogOut, Menu, Moon, Plane, Settings, Sun, Trash2, UserCircle, Users as UsersIcon } from "lucide-react";
+import { Building2, ClipboardList, Download, FolderPlus, LayoutDashboard, Menu, Moon, Plane, Settings, Sun, Trash2, Users as UsersIcon } from "lucide-react";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { PWAInstallModal } from "./PWAInstallModal";
@@ -79,7 +78,7 @@ export default function DashboardLayout({
           </div>
           <Button
             onClick={() => {
-              window.location.href = getLoginUrl();
+              window.location.href = "/login";
             }}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
@@ -105,7 +104,7 @@ type DashboardLayoutContentProps = {
 function DashboardLayoutContent({
   children,
 }: DashboardLayoutContentProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
@@ -173,47 +172,14 @@ function DashboardLayoutContent({
               </Button>
             )}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-8 w-8 border">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {!isMobile && (
-                    <div className="flex flex-col gap-0.5 text-left min-w-0">
-                      <p className="text-sm font-medium truncate leading-none">
-                        {user?.name || "-"}
-                      </p>
-                    </div>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => setLocation("/account")}
-                  className="cursor-pointer"
-                >
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>My Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setLocation("/settings")}
-                  className="cursor-pointer"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8",
+                },
+              }}
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
