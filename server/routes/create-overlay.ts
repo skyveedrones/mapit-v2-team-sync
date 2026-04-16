@@ -15,18 +15,13 @@ import express, { Router, Request, Response } from "express";
 import { getDb } from "../db";
 import { projectOverlays, projects, media } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { sdk } from "../_core/sdk";
+import { authenticateRequest } from "../_core/auth";
 
 const router = Router();
 
-// Session helper via SDK
+// Session helper via Clerk
 async function getSessionUser(req: Request) {
-  try {
-    return await sdk.authenticateRequest(req);
-  } catch (e) {
-    console.error("[Create Overlay] Auth error:", e);
-    return null;
-  }
+  return authenticateRequest(req);
 }
 
 // Get default coordinates for project (centered on first media item or project center)

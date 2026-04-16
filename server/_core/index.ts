@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -10,9 +9,11 @@ import { tusRouter } from "../tusUploadRoute";
 import photoUploadRouter from "../photoUploadRoute";
 import { imageProxyRouter } from "../imageProxy";
 import { handleStripeWebhook } from "../stripe-webhook";
+import clerkWebhookRouter from "../routes/clerk-webhook";
 import { initializeVersion, getVersionJson } from "../version";
 import { initializeRedisClient, createPerUserRateLimiter, createUploadRateLimiter, createConcurrentRequestsLimiter, closeRedisClient } from "./rateLimiter";
-import { sdk } from "./sdk";
+import { ENV } from "./env";
+import * as db from "../db";
 import emailRouter from "../routes/email";
 import overlayUploadRouter from "../routes/overlay-upload";
 import documentUploadRouter from "../routes/document-upload";
@@ -51,6 +52,9 @@ async function startServer() {
   // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
   app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);
 
+  // Clerk webhook endpoint - must be registered BEFORE express.json() for raw body verification
+  app.use("/api", clerkWebhookRouter);
+
   // Overlay upload route — uses multer for multipart parsing (registered before express.json for safety)
   app.use("/api", overlayUploadRouter);
   
@@ -80,14 +84,22 @@ async function startServer() {
     next(err);
   });
   
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
-  
-  // Extract user from session cookie before rate limiting so tier is correct
+  // Extract user from Clerk session token for rate limiting tier detection
   app.use('/api/trpc', async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const user = await sdk.authenticateRequest(req);
-      (req as any).user = user;
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const { createClerkClient } = await import('@clerk/backend');
+        const clerkClient = createClerkClient({ secretKey: ENV.clerkSecretKey });
+        const requestState = await clerkClient.authenticateRequest(req as any, { authorizedParties: [] });
+        if (requestState.isSignedIn) {
+          const clerkUserId = requestState.toAuth().userId;
+          if (clerkUserId) {
+            const user = await db.getUserByClerkId(clerkUserId);
+            if (user) (req as any).user = user;
+          }
+        }
+      }
     } catch {
       // Not authenticated — will fall back to free tier limits
     }

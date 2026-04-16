@@ -1,6 +1,15 @@
-import { getLoginUrl } from "@/const";
+/**
+ * useAuth — Clerk-backed auth hook.
+ *
+ * Preserves the same return shape as the old Manus-based hook so all existing
+ * consumers (40+ files) continue to work without modification:
+ *   { user, loading, error, isAuthenticated, logout, refresh }
+ *
+ * `user` is the tRPC `auth.me` record (DB row), not the Clerk user object.
+ * Clerk manages the session; tRPC `auth.me` syncs the DB row.
+ */
+import { useClerk, useUser } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
-import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
 type UseAuthOptions = {
@@ -9,70 +18,49 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
+  const { redirectOnUnauthenticated = false, redirectPath = "/login" } =
     options ?? {};
+
+  const { isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
   const utils = trpc.useUtils();
 
+  // Only fetch the DB user row when Clerk says the user is signed in
   const meQuery = trpc.auth.me.useQuery(undefined, {
+    enabled: clerkLoaded && Boolean(isSignedIn),
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
-    },
-  });
-
   const logout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-    }
-  }, [logoutMutation, utils]);
+    await signOut();
+    utils.auth.me.setData(undefined, null);
+    await utils.auth.me.invalidate();
+  }, [signOut, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    const loading = !clerkLoaded || (Boolean(isSignedIn) && meQuery.isLoading);
+    const user = meQuery.data ?? null;
+    localStorage.setItem("manus-runtime-user-info", JSON.stringify(user));
     return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      user,
+      loading,
+      error: meQuery.error ?? null,
+      isAuthenticated: Boolean(isSignedIn) && Boolean(user),
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  }, [clerkLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
+    if (state.loading) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
-
-    window.location.href = redirectPath
+    window.location.href = redirectPath;
   }, [
     redirectOnUnauthenticated,
     redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
+    state.loading,
     state.user,
   ]);
 

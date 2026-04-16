@@ -982,6 +982,21 @@ export async function getPendingInvitationsForEmail(email: string) {
 /**
  * Get user by email (case-insensitive)
  */
+export async function getUserByClerkId(clerkUserId: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkUserId, clerkUserId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) {

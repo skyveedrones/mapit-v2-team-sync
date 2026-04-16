@@ -14,7 +14,7 @@ import multer from "multer";
 import { getDb } from "../db";
 import { projectDocuments } from "../../drizzle/schema";
 import { storagePut, sanitizeFilename } from "../storage";
-import { sdk } from "../_core/sdk";
+import { authenticateRequest } from "../_core/auth";
 
 const router = Router();
 
@@ -24,11 +24,7 @@ const upload = multer({
 });
 
 async function getSessionUser(req: Request) {
-  try {
-    return await sdk.authenticateRequest(req);
-  } catch {
-    return null;
-  }
+  return authenticateRequest(req);
 }
 
 router.post("/document/upload", upload.single("file"), async (req: Request, res: Response) => {

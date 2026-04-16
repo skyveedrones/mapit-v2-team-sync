@@ -21,7 +21,7 @@ import { projectOverlays, projectDocuments, projects, media } from "../../drizzl
 import { eq } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
-import { sdk } from "../_core/sdk";
+import { authenticateRequest } from "../_core/auth";
 
 const router = Router();
 
@@ -31,14 +31,9 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
 });
 
-// ── Session helper via SDK ────────────────────────────────────────────────
+// ── Session helper via Clerk ────────────────────────────────────────────────
 async function getSessionUser(req: Request) {
-  try {
-    return await sdk.authenticateRequest(req);
-  } catch (e) {
-    console.error("[Overlay Upload] Auth error:", e);
-    return null;
-  }
+  return authenticateRequest(req);
 }
 
 // ── Convert PDF to PNG: tries pdftoppm first, falls back to pure-JS ────────
