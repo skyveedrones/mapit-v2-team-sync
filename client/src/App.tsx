@@ -131,21 +131,21 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
     }
   }, [loading, isAuthenticated, user, location, setLocation]);
 
-  if (loading) {
+  // Show spinner while loading OR while Clerk says signed in but DB hasn't resolved yet
+  // (prevents black screen during TiDB read-after-write latency after SSO callback)
+  if (loading || (clerkIsSignedIn && !isAuthenticated)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+          <p style={{ color: '#9ca3af' }}>Loading...</p>
         </div>
       </div>
     );
   }
-
-  if (!isAuthenticated) {
+   if (!isAuthenticated) {
     return null;
   }
-
   // While client redirect is pending, render nothing to avoid flash
   if (user?.role === 'client' && ADMIN_ONLY_PATHS.some((p) => location === p || location.startsWith(p + '/'))) {
     return null;
