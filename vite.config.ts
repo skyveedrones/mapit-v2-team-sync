@@ -181,7 +181,14 @@ const plugins = [
     workbox: {
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit for precaching
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+      // Exclude external CDN URLs from precaching — they have no CORS headers and crash the service worker
+      navigateFallbackDenylist: [/^\/api\//],
       runtimeCaching: [
+        {
+          // Block Workbox from ever trying to cache manuscdn.com or cloudfront CDN favicon redirects
+          urlPattern: /^https:\/\/(files\.manuscdn\.com|d2xsxph8kpxj0f\.cloudfront\.net)\/.*/i,
+          handler: 'NetworkOnly',
+        },
         {
           urlPattern: /^https:\/\/api\..+\/api\/trpc\/.*/i,
           handler: 'NetworkFirst',
