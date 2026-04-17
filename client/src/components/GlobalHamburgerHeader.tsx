@@ -2,6 +2,19 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 
+const navLinkStyle: React.CSSProperties = {
+  color: "rgba(255,255,255,0.9)",
+  fontFamily: "'Inter', sans-serif",
+  fontWeight: 500,
+  fontSize: "0.875rem",
+  transition: "color 0.2s ease",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  position: "relative",
+};
+
 export const GlobalHamburgerHeader = () => {
   const [location, setLocation] = useLocation();
   const { isAuthenticated, loading } = useAuth();
@@ -21,34 +34,41 @@ export const GlobalHamburgerHeader = () => {
     }
   };
 
-  // Determine if we should show the navigation (hide on app routes like /dashboard, /project, etc.)
   const isAppRoute = location.startsWith("/dashboard") || location.startsWith("/project");
 
-  // Check which nav item is active
-  const isHowItWorksActive = location === "/" && false; // Only active when user scrolls to section
+  const isHowItWorksActive = false;
   const isMunicipalActive = location === "/municipal";
   const isPricingActive = location === "/pricing";
 
   if (isAppRoute) {
-    return null; // Don't render on app routes
+    return null;
   }
 
   const NavLink = ({ label, onClick, isActive }: { label: string; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
-      className="relative text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200 group"
+      style={navLinkStyle}
+      onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,1)")}
+      onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.9)")}
     >
       {label}
       {isActive && (
-        <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-foreground rounded-full mt-1" />
+        <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
       )}
     </button>
   );
 
   return (
-    <header className="sticky top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-border/30">
+    <header
+      className="sticky top-0 left-0 w-full z-50 border-b border-white/10"
+      style={{
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        backgroundColor: "rgba(0,0,0,0.35)",
+      }}
+    >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* LOGO — small and crisp */}
+        {/* LOGO */}
         <div
           className="flex items-center cursor-pointer"
           onClick={() => setLocation("/")}
@@ -61,7 +81,7 @@ export const GlobalHamburgerHeader = () => {
           />
         </div>
 
-        {/* CENTER: Navigation Items — generous spacing, no dividers */}
+        {/* CENTER: Navigation */}
         <nav className="hidden md:flex items-center gap-12">
           {location === "/" && (
             <NavLink
@@ -88,7 +108,9 @@ export const GlobalHamburgerHeader = () => {
             isAuthenticated ? (
               <button
                 onClick={handleDashboard}
-                className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
+                style={navLinkStyle}
+                onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,1)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.9)")}
               >
                 Dashboard
               </button>
@@ -96,13 +118,16 @@ export const GlobalHamburgerHeader = () => {
               <>
                 <button
                   onClick={handleSignIn}
-                  className="text-muted-foreground hover:text-foreground font-medium text-sm transition-colors duration-200"
+                  style={navLinkStyle}
+                  onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,1)")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.9)")}
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => setLocation("/pricing")}
                   className="bg-black text-white font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
                 >
                   Get Started
                 </button>
