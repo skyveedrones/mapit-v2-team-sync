@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import { Webhook } from "svix";
 import { ENV } from "../_core/env";
 import * as db from "../db";
+import { EmailConflictError } from "../db";
 
 const router = express.Router();
 
@@ -94,6 +95,14 @@ router.post(
           );
         }
       } catch (err) {
+        if (err instanceof EmailConflictError) {
+          // Email already exists under a different login method — not a fatal error.
+          // Return 200 so Clerk does not retry; log a warning for visibility.
+          console.warn(
+            `[ClerkWebhook] Email conflict for clerkUserId=${clerkUserId}: email already registered via ${err.existingLoginMethod}. Skipping insert.`
+          );
+          return res.json({ received: true, warning: "email_conflict", existingMethod: err.existingLoginMethod });
+        }
         console.error("[ClerkWebhook] Failed to upsert user:", err);
         return res.status(500).json({ error: "Failed to process user" });
       }
