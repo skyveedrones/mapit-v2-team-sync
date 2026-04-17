@@ -197,8 +197,12 @@ function Router() {
       <Route path="/map" component={MapView} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/signup/sso-callback" component={() => <AuthenticateWithRedirectCallback signUpForceRedirectUrl="/dashboard" />} />
+      {/* Catch-all for Clerk multi-step signup flows (factor-one, factor-two, continue, etc.) */}
+      <Route path="/signup/:rest*" component={SignupPage} />
       <Route path="/login" component={Login} />
       <Route path="/login/sso-callback" component={() => <AuthenticateWithRedirectCallback signInForceRedirectUrl="/dashboard" />} />
+      {/* Catch-all for Clerk multi-step login flows (factor-one, factor-two, continue, etc.) */}
+      <Route path="/login/:rest*" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
       <Route path="/account">
