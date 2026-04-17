@@ -7,10 +7,15 @@
  *
  * `user` is the tRPC `auth.me` record (DB row), not the Clerk user object.
  * Clerk manages the session; tRPC `auth.me` syncs the DB row.
+ *
+ * Timeout fallback: if Clerk hasn't loaded within 3 seconds (e.g. production
+ * keys on a non-allowed domain in dev/preview), treat the user as
+ * unauthenticated so the Sign In button always renders instead of staying
+ * hidden forever.
  */
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -24,6 +29,17 @@ export function useAuth(options?: UseAuthOptions) {
   const { isLoaded: clerkLoaded, isSignedIn } = useUser();
   const { signOut } = useClerk();
   const utils = trpc.useUtils();
+
+  // Fallback: treat Clerk as "loaded but not signed in" after 3 s if it never
+  // initialises (production keys on a non-allowed domain in dev/preview).
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (clerkLoaded) return;
+    const t = setTimeout(() => setTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [clerkLoaded]);
+
+  const effectivelyLoaded = clerkLoaded || timedOut;
 
   // Only fetch the DB user row when Clerk says the user is signed in
   const meQuery = trpc.auth.me.useQuery(undefined, {
@@ -39,7 +55,7 @@ export function useAuth(options?: UseAuthOptions) {
   }, [signOut, utils]);
 
   const state = useMemo(() => {
-    const loading = !clerkLoaded || (Boolean(isSignedIn) && meQuery.isLoading);
+    const loading = !effectivelyLoaded || (Boolean(isSignedIn) && meQuery.isLoading);
     const user = meQuery.data ?? null;
     localStorage.setItem("manus-runtime-user-info", JSON.stringify(user));
     return {
@@ -48,7 +64,7 @@ export function useAuth(options?: UseAuthOptions) {
       error: meQuery.error ?? null,
       isAuthenticated: Boolean(isSignedIn) && Boolean(user),
     };
-  }, [clerkLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading]);
+  }, [effectivelyLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
