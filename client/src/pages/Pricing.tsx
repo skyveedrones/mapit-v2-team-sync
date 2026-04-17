@@ -205,7 +205,7 @@ export default function Pricing() {
       </nav>
 
       {/* ── Hero ── */}
-      <div className="text-center pt-16 pb-10 px-6">
+      <div className="text-center pb-10 px-6" style={{ paddingTop: 'calc(4rem + 60px)' }}>
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

@@ -96,7 +96,7 @@ export default function Home() {
           animate="visible"
           variants={stagger}
           className="relative z-20 max-w-3xl mx-auto px-6 text-center"
-          style={{ paddingTop: '40px' }}
+          style={{ paddingTop: '60px' }}
         >
           <motion.h1
             variants={fadeInUp}

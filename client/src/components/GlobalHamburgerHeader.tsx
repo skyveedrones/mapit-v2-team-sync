@@ -67,7 +67,7 @@ export const GlobalHamburgerHeader = () => {
         backgroundColor: "rgba(0,0,0,0.35)",
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-8 flex items-center justify-between">
         {/* LOGO */}
         <div
           className="flex items-center cursor-pointer"
@@ -76,7 +76,7 @@ export const GlobalHamburgerHeader = () => {
           <img
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
-            className="h-12 w-auto object-contain select-none"
+            className="h-6 w-auto object-contain select-none"
             draggable={false}
           />
         </div>

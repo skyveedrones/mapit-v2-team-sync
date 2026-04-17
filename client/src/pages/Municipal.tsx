@@ -83,6 +83,7 @@ export default function Municipal() {
           animate="visible"
           variants={stagger}
           className="relative z-10 max-w-3xl mx-auto px-6 text-center"
+          style={{ paddingTop: '60px' }}
         >
           <motion.p
             variants={fadeInUp}
