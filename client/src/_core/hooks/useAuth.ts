@@ -41,10 +41,14 @@ export function useAuth(options?: UseAuthOptions) {
 
   const effectivelyLoaded = clerkLoaded || timedOut;
 
-  // Only fetch the DB user row when Clerk says the user is signed in
+  // Only fetch the DB user row when Clerk says the user is signed in.
+  // retry: 2 + retryDelay handles the brief window after an SSO callback where
+  // Clerk reports isSignedIn=true but getToken() hasn't hydrated yet, causing
+  // the first auth.me request to arrive with no Bearer token (ctx.user = null).
   const meQuery = trpc.auth.me.useQuery(undefined, {
     enabled: clerkLoaded && Boolean(isSignedIn),
-    retry: false,
+    retry: 2,
+    retryDelay: 800,
     refetchOnWindowFocus: false,
   });
 
