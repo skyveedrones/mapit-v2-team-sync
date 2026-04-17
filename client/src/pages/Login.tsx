@@ -4,6 +4,7 @@
  */
 
 import { SignIn } from "@clerk/clerk-react";
+import { dark } from "@clerk/themes";
 import { motion } from "framer-motion";
 import { Map } from "lucide-react";
 
@@ -46,6 +47,7 @@ export default function Login() {
           signUpUrl="/signup"
           forceRedirectUrl="/dashboard"
           appearance={{
+            baseTheme: dark,
             variables: {
               colorPrimary: "#10b981",
               colorBackground: "rgba(10,10,10,0.95)",
@@ -71,8 +73,10 @@ export default function Login() {
               dividerLine: "bg-white/10",
               dividerText: "text-white/30",
               socialButtonsBlockButton:
-                "bg-white/5 border border-white/12 text-white/80 hover:bg-white/9 hover:text-white",
-              socialButtonsBlockButtonText: "text-white/80",
+                "bg-white/5 border border-white/10 text-white hover:bg-white/10",
+              socialButtonsBlockButtonText: "text-white font-medium",
+              socialButtonsBlockButtonArrow: "text-white",
+              socialButtonsProviderIcon: "brightness-0 invert",
               alert: "bg-red-900/30 border border-red-500/30 text-red-300",
             },
           }}
