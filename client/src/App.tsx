@@ -41,6 +41,7 @@ import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -195,7 +196,9 @@ function Router() {
       <Route path="/create" component={Create} />
       <Route path="/map" component={MapView} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/signup/sso-callback" component={() => <AuthenticateWithRedirectCallback signUpForceRedirectUrl="/dashboard" />} />
       <Route path="/login" component={Login} />
+      <Route path="/login/sso-callback" component={() => <AuthenticateWithRedirectCallback signInForceRedirectUrl="/dashboard" />} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
       <Route path="/account">
