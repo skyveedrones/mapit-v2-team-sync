@@ -51,7 +51,8 @@ export async function createContext(
                 loginMethod: "clerk",
                 lastSignedIn: new Date().toISOString(),
               });
-              dbUser = await db.getUserByClerkId(clerkUserId);
+              // Use openId lookup to avoid TiDB read-after-write race on clerkUserId index
+              dbUser = await db.getUserByOpenId(clerkUserId) ?? null;
             } else {
               // Link the existing user to Clerk
               const dbInstance = await db.getDb();
@@ -62,7 +63,8 @@ export async function createContext(
                   .update(users)
                   .set({ clerkUserId })
                   .where(eq(users.id, dbUser.id));
-                dbUser = await db.getUserByClerkId(clerkUserId);
+                // Patch in-memory to avoid TiDB read-after-write race
+                dbUser = { ...dbUser, clerkUserId };
               }
             }
           } catch (err) {
