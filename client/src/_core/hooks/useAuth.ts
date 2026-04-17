@@ -47,8 +47,8 @@ export function useAuth(options?: UseAuthOptions) {
   // the first auth.me request to arrive with no Bearer token (ctx.user = null).
   const meQuery = trpc.auth.me.useQuery(undefined, {
     enabled: clerkLoaded && Boolean(isSignedIn),
-    retry: 2,
-    retryDelay: 800,
+    retry: 5,
+    retryDelay: 1500,
     refetchOnWindowFocus: false,
   });
 

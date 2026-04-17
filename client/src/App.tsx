@@ -41,7 +41,7 @@ import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
-import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
+import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -75,6 +75,7 @@ const ADMIN_ONLY_PATHS = ["/", "/dashboard", "/clients", "/users", "/billing", "
  */
 function ProtectedRoute({ component: Component, isDemoRoute = false }: { component: React.ComponentType; isDemoRoute?: boolean }) {
   const { user, isAuthenticated, loading } = useAuth();
+  const { isSignedIn: clerkIsSignedIn } = useUser();
   const [location, setLocation] = useLocation();
 
   // Skip authentication check for demo routes
@@ -83,10 +84,14 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
   }
 
   useEffect(() => {
+    // BYPASS: If Clerk reports the user is signed in, never redirect to /login
+    // even if auth.me is still loading/retrying after an SSO callback. This
+    // prevents the redirect loop caused by the DB query not resolving in time.
+    if (clerkIsSignedIn) return;
     if (!loading && !isAuthenticated) {
       window.location.href = getLoginUrl();
     }
-  }, [loading, isAuthenticated, setLocation]);
+  }, [loading, isAuthenticated, clerkIsSignedIn, setLocation]);
 
   // Onboarding guard: redirect pilots (non-client users) without an org to /onboarding/pilot
   // Bypassed on localhost for local development
