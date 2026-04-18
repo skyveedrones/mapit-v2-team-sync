@@ -38,11 +38,16 @@ export async function createContext(
       ],
     });
 
+    // DEBUG: log auth state so we can diagnose why isSignedIn may be false
+    console.log('[Auth] isSignedIn:', requestState.isSignedIn, '| status:', requestState.status, '| reason:', (requestState as any).reason ?? 'none');
+
     if (requestState.isSignedIn) {
       const clerkUserId = requestState.toAuth().userId;
+      console.log('[Auth] clerkUserId from token:', clerkUserId);
       if (clerkUserId) {
         // Look up by Clerk user ID first
         let dbUser = await db.getUserByClerkId(clerkUserId);
+        console.log('[Auth] DB lookup by clerkUserId:', dbUser ? `found id=${dbUser.id}` : 'not found');
 
         if (!dbUser) {
           // Fallback: fetch user from Clerk and try email match (for migrated users)
@@ -51,6 +56,7 @@ export async function createContext(
             const email = clerkUser.emailAddresses[0]?.emailAddress;
             if (email) {
               dbUser = await db.getUserByEmail(email);
+              console.log('[Auth] DB lookup by email:', dbUser ? `found id=${dbUser.id}` : 'not found');
             }
             // If still not found, create a new DB record
             if (!dbUser) {
@@ -87,10 +93,12 @@ export async function createContext(
         }
 
         user = dbUser ?? null;
+        console.log('[Auth] Final user resolved:', user ? `id=${user.id} email=${user.email}` : 'null');
       }
     }
-  } catch {
+  } catch (err) {
     // Not authenticated — public procedures will still work
+    console.error('[Auth] authenticateRequest threw:', err);
     user = null;
   }
 
