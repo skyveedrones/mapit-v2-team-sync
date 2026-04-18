@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLoginUrl } from "@/const";
 import NotFound from "@/pages/NotFound";
 import AuthError from "@/pages/AuthError";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { GlobalBackground } from "./components/GlobalBackground";
@@ -77,6 +77,17 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
   const { user, isAuthenticated, loading } = useAuth();
   const { isSignedIn: clerkIsSignedIn } = useUser();
   const [location, setLocation] = useLocation();
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
+
+  // If spinner has been showing for 12 seconds, offer a manual retry / sign-in option
+  useEffect(() => {
+    if (!loading && !(clerkIsSignedIn && !isAuthenticated)) {
+      setLoadingTooLong(false);
+      return;
+    }
+    const t = setTimeout(() => setLoadingTooLong(true), 12000);
+    return () => clearTimeout(t);
+  }, [loading, clerkIsSignedIn, isAuthenticated]);
 
   // Skip authentication check for demo routes
   if (isDemoRoute) {
@@ -137,8 +148,43 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-          <p style={{ color: '#9ca3af' }}>Loading...</p>
+          {!loadingTooLong ? (
+            <>
+              <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+              <p style={{ color: '#9ca3af' }}>Loading...</p>
+            </>
+          ) : (
+            <>
+              <p style={{ color: '#9ca3af', marginBottom: '0.5rem' }}>Taking longer than expected.</p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  background: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => { window.location.href = getLoginUrl(); }}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  background: 'transparent',
+                  color: '#9ca3af',
+                  border: '1px solid #374151',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Sign In Again
+              </button>
+            </>
+          )}
         </div>
       </div>
     );

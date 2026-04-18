@@ -12,6 +12,10 @@
  * keys on a non-allowed domain in dev/preview), treat the user as
  * unauthenticated so the Sign In button always renders instead of staying
  * hidden forever.
+ *
+ * auth.me timeout: if Clerk is signed in but auth.me never resolves within
+ * 10 seconds, force loading=false so ProtectedRoute stops spinning and
+ * redirects to login instead of hanging forever.
  */
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
@@ -52,6 +56,18 @@ export function useAuth(options?: UseAuthOptions) {
     refetchOnWindowFocus: false,
   });
 
+  // Hard timeout: if Clerk is signed in but auth.me never resolves within
+  // 10 seconds, stop showing the spinner so ProtectedRoute can redirect.
+  const [meTimedOut, setMeTimedOut] = useState(false);
+  useEffect(() => {
+    if (!isSignedIn || meQuery.data || meQuery.isError) {
+      setMeTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setMeTimedOut(true), 10000);
+    return () => clearTimeout(t);
+  }, [isSignedIn, meQuery.data, meQuery.isError]);
+
   const logout = useCallback(async () => {
     await signOut();
     utils.auth.me.setData(undefined, null);
@@ -59,7 +75,8 @@ export function useAuth(options?: UseAuthOptions) {
   }, [signOut, utils]);
 
   const state = useMemo(() => {
-    const loading = !effectivelyLoaded || (Boolean(isSignedIn) && meQuery.isLoading);
+    const meLoading = Boolean(isSignedIn) && meQuery.isLoading && !meTimedOut;
+    const loading = !effectivelyLoaded || meLoading;
     const user = meQuery.data ?? null;
     localStorage.setItem("manus-runtime-user-info", JSON.stringify(user));
     return {
@@ -68,7 +85,7 @@ export function useAuth(options?: UseAuthOptions) {
       error: meQuery.error ?? null,
       isAuthenticated: Boolean(isSignedIn) && Boolean(user),
     };
-  }, [effectivelyLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading]);
+  }, [effectivelyLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading, meTimedOut]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
