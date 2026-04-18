@@ -6,7 +6,6 @@
 import { SignIn } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { motion } from "framer-motion";
-import { Map } from "lucide-react";
 
 export default function Login() {
   return (
@@ -43,9 +42,9 @@ export default function Login() {
           appearance={{
             baseTheme: dark,
             variables: {
-              colorPrimary: "#10b981",
-              colorBackground: "rgba(10,10,10,0.95)",
-              colorText: "#ffffff",
+              colorPrimary: "#FFFFFF",
+              colorBackground: "#111111",
+              colorText: "#FFFFFF",
               colorTextSecondary: "rgba(255,255,255,0.5)",
               colorInputBackground: "rgba(255,255,255,0.06)",
               colorInputText: "#ffffff",
@@ -53,25 +52,26 @@ export default function Login() {
               fontFamily: "Inter, sans-serif",
             },
             elements: {
-              card: "bg-transparent shadow-none border-0",
+              card: "border border-white/10 shadow-2xl backdrop-blur-md",
               headerTitle: "text-white font-bold",
               headerSubtitle: "text-white/50",
-              formButtonPrimary:
-                "bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-semibold",
+              formButtonPrimary: "text-black font-bold hover:bg-zinc-200",
               formFieldInput:
-                "bg-white/5 border border-white/10 text-white placeholder-white/25 focus:border-emerald-500/50 focus:ring-emerald-500/10",
+                "bg-white/5 border border-white/10 text-white placeholder-white/25 focus:border-white/30 focus:ring-white/10",
               formFieldLabel: "text-white/60 text-xs uppercase tracking-wider",
-              footerActionLink: "text-emerald-400 hover:text-emerald-300",
+              footerActionLink: "text-white/70 hover:text-white",
               identityPreviewText: "text-white",
-              identityPreviewEditButton: "text-emerald-400",
+              identityPreviewEditButton: "text-white/70",
               dividerLine: "bg-white/10",
               dividerText: "text-white/30",
+              socialButtonsIconButton: "border-white/10 hover:bg-white/5",
               socialButtonsBlockButton:
                 "bg-white/5 border border-white/10 text-white hover:bg-white/10",
               socialButtonsBlockButtonText: "text-white font-medium",
               socialButtonsBlockButtonArrow: "text-white",
               socialButtonsProviderIcon: "brightness-0 invert",
               alert: "bg-red-900/30 border border-red-500/30 text-red-300",
+              footer: "hidden",
             },
           }}
         />
