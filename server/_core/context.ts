@@ -21,7 +21,16 @@ export async function createContext(
     // Clerk sends the session token in the Authorization header as "Bearer <token>"
     // or as a __session cookie. The Clerk backend SDK handles both.
     const requestState = await clerkClient.authenticateRequest(opts.req as any, {
-      authorizedParties: [],
+      // Allow tokens issued for any of our deployed domains.
+      // Empty array would cause Clerk to reject tokens with an azp claim mismatch.
+      authorizedParties: [
+        'https://mapit.skyveedrones.com',
+        'https://skyveedrones.com',
+        'https://skyveemapit.manus.space',
+        'https://dronemapv2-fis5wf2n.manus.space',
+        'http://localhost:3000',
+        'http://localhost:5173',
+      ],
     });
 
     if (requestState.isSignedIn) {

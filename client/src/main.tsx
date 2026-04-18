@@ -1,3 +1,4 @@
+import React from "react";
 import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
@@ -133,8 +134,39 @@ function AppWithClerkToken() {
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+// Satellite domain configuration.
+// When the app is deployed on mapit.skyveedrones.com (a subdomain of the Clerk
+// primary domain skyveedrones.com), we must tell ClerkProvider it is a satellite
+// so it syncs the session from the root domain cookie.
+// We skip this on localhost / Manus preview domains to avoid breaking dev.
+const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+const isProductionSubdomain =
+  hostname.endsWith('.skyveedrones.com') && hostname !== 'skyveedrones.com';
+
+function ClerkRoot({ children }: { children: React.ReactNode }) {
+  if (isProductionSubdomain) {
+    return (
+      <ClerkProvider
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        afterSignOutUrl="/"
+        isSatellite
+        domain={hostname}
+        signInUrl={`https://${hostname}/login`}
+        signUpUrl={`https://${hostname}/login`}
+      >
+        {children}
+      </ClerkProvider>
+    );
+  }
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+      {children}
+    </ClerkProvider>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+  <ClerkRoot>
     <AppWithClerkToken />
-  </ClerkProvider>
+  </ClerkRoot>
 );
