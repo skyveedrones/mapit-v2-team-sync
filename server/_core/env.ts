@@ -9,5 +9,7 @@ export const ENV = {
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkWebhookSecret: process.env.CLERK_WEBHOOK_SECRET ?? "",
-  clerkJwtKey: process.env.CLERK_JWT_KEY ?? "",
+  // Replace literal \n sequences with real newlines — env vars stored via secrets UI
+  // often encode newlines as the two-character sequence \n instead of actual line breaks.
+  clerkJwtKey: (process.env.CLERK_JWT_KEY ?? "").replace(/\\n/g, "\n"),
 };
