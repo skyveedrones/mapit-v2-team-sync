@@ -159,7 +159,7 @@ const plugins = [
   vitePluginManusDebugCollector(),
   VitePWA({
     registerType: 'autoUpdate',
-    includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+    includeAssets: ['apple-touch-icon.png', 'masked-icon.svg'],
     manifest: {
       name: 'MapIt - Drone Mapping Platform',
       short_name: 'MapIt',
@@ -180,8 +180,10 @@ const plugins = [
     },
     workbox: {
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit for precaching
-      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-      // Exclude external CDN URLs from precaching — they have no CORS headers and crash the service worker
+      globPatterns: ['**/*.{js,css,html,png,svg,woff,woff2}'],
+      // Explicitly exclude favicon.ico — Manus platform redirects it to an external CDN (files.manuscdn.com)
+      // which has no CORS headers, crashing the service worker during the install phase precache step.
+      globIgnores: ['**/favicon.ico', '**/favicon/**'],
       navigateFallbackDenylist: [/^\/api\//],
       runtimeCaching: [
         {
