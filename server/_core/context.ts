@@ -27,20 +27,12 @@ async function getPublicKey() {
 async function verifyClerkToken(token: string): Promise<string | null> {
   try {
     const publicKey = await getPublicKey();
-    if (!publicKey) {
-      console.warn("[Auth] No CLERK_JWT_KEY configured, skipping local verification");
-      return null;
-    }
+    if (!publicKey) return null;
     const { payload } = await jwtVerify(token, publicKey, {
-      // Allow up to 60 seconds of clock skew
       clockTolerance: 60,
     });
-    const sub = payload.sub;
-    if (!sub) return null;
-    console.log("[Auth] JWT verified locally, sub:", sub);
-    return sub;
-  } catch (err: any) {
-    console.error("[Auth] JWT verification failed:", err.message);
+    return payload.sub ?? null;
+  } catch {
     return null;
   }
 }
@@ -57,14 +49,12 @@ export async function createContext(
     if (authHeader?.startsWith("Bearer ")) {
       token = authHeader.slice(7);
     } else {
-      // Try __session cookie as fallback
       const cookieHeader = opts.req.headers.cookie ?? "";
       const match = cookieHeader.match(/(?:^|;\s*)__session=([^;]+)/);
       if (match) token = match[1];
     }
 
     if (!token) {
-      console.log("[Auth] No token found in request");
       return { req: opts.req, res: opts.res, user: null };
     }
 
@@ -75,7 +65,6 @@ export async function createContext(
 
     // Look up by Clerk user ID first
     let dbUser = await db.getUserByClerkId(clerkUserId);
-    console.log("[Auth] DB lookup by clerkUserId:", dbUser ? `found id=${dbUser.id}` : "not found");
 
     if (!dbUser) {
       // Fallback: fetch user from Clerk and try email match (for migrated users)
@@ -84,7 +73,6 @@ export async function createContext(
         const email = clerkUser.emailAddresses[0]?.emailAddress;
         if (email) {
           dbUser = await db.getUserByEmail(email);
-          console.log("[Auth] DB lookup by email:", dbUser ? `found id=${dbUser.id}` : "not found");
         }
         if (!dbUser) {
           const firstName = clerkUser.firstName ?? "";
@@ -100,7 +88,7 @@ export async function createContext(
           });
           dbUser = await db.getUserByOpenId(clerkUserId) ?? null;
         } else {
-          // Link the existing user to Clerk
+          // Link the existing user to the new Clerk ID
           const dbInstance = await db.getDb();
           if (dbInstance) {
             const { users } = await import("../../drizzle/schema");
@@ -118,7 +106,6 @@ export async function createContext(
     }
 
     user = dbUser ?? null;
-    console.log("[Auth] Final user:", user ? `id=${user.id} email=${user.email}` : "null");
   } catch (err) {
     console.error("[Auth] Unexpected error in createContext:", err);
     user = null;
