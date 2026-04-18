@@ -168,10 +168,19 @@ const plugins = [
       icons: []
     },
     workbox: {
-      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit for precaching
-      globPatterns: ['**/*.{js,css,html,woff,woff2}'],
-      // Exclude all icon/image files from precache — avoids CORS crashes from CDN-redirected assets.
-      globIgnores: ['**/favicon.ico', '**/favicon/**', '**/*.png', '**/*.ico', '**/*.svg'],
+      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB limit — skip huge chunks
+      // Only precache HTML, CSS, fonts, and small JS. Large JS bundles (mapbox, index) are
+      // fetched fresh on each visit — precaching them bloats the SW install to 5+ MB and
+      // causes deployment timeouts.
+      globPatterns: ['**/*.{css,html,woff,woff2}', '**/*.js'],
+      // Exclude all icon/image files AND large vendor bundles from precache.
+      globIgnores: [
+        '**/favicon.ico', '**/favicon/**', '**/*.png', '**/*.ico', '**/*.svg',
+        '**/mapbox-*.js',       // ~1.7 MB — too large to precache
+        '**/index-*.js',        // ~1.9 MB — too large to precache
+        '**/MediaUploadDialog-*.js', // ~244 KB
+        '**/ProjectDetail-*.js',     // ~194 KB
+      ],
       navigateFallbackDenylist: [/^\/api\//],
       runtimeCaching: [
         {
