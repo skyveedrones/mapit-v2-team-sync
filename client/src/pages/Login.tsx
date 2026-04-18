@@ -26,12 +26,6 @@ export default function Login() {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-        <span
-          className="text-white text-xl font-bold tracking-widest"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          MAP<span className="text-emerald-400">i</span>T
-        </span>
       </div>
 
       {/* Clerk SignIn card */}
