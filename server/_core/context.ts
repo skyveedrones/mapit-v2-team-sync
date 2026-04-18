@@ -10,7 +10,12 @@ export type TrpcContext = {
   user: User | null;
 };
 
-const clerkClient = createClerkClient({ secretKey: ENV.clerkSecretKey });
+// jwtKey enables local JWT verification — no network round-trip to Clerk FAPI per request.
+// This eliminates the auth.me hang caused by slow/failing remote token verification.
+const clerkClient = createClerkClient({
+  secretKey: ENV.clerkSecretKey,
+  ...(ENV.clerkJwtKey ? { jwtKey: ENV.clerkJwtKey } : {}),
+});
 
 export async function createContext(
   opts: CreateExpressContextOptions

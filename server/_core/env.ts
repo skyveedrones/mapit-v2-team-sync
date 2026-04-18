@@ -9,4 +9,5 @@ export const ENV = {
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkWebhookSecret: process.env.CLERK_WEBHOOK_SECRET ?? "",
+  clerkJwtKey: process.env.CLERK_JWT_KEY ?? "",
 };
