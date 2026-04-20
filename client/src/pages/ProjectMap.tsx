@@ -107,8 +107,9 @@ export default function ProjectMap() {
   const [triumphHasFired, setTriumphHasFired] = useState(false);
 
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
+  // Skip for sample users — they have their own 4-window + 20s conversion path
   useEffect(() => {
-    if (!isOnboardingProject || !mapReady) return;
+    if (!isOnboardingProject || !mapReady || isSampleProject) return;
     const timer = setTimeout(() => {
       setShowPrestige(true);
       setTriumphHasFired(true);
