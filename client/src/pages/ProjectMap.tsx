@@ -759,6 +759,8 @@ export default function ProjectMap() {
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
+            {/* Ambient glow */}
+            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
             <div
               className="relative overflow-hidden"
               style={{
@@ -799,7 +801,11 @@ export default function ProjectMap() {
                 </p>
                 {/* CTA */}
                 <button
-                  onClick={dismissDiscoveryHint}
+                  onClick={() => {
+                    dismissDiscoveryHint();
+                    // Auto-open sidebar so Window #2's instruction is immediately actionable
+                    setTimeout(() => mapCompRef.current?.openSidebar(), 650);
+                  }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
@@ -822,6 +828,8 @@ export default function ProjectMap() {
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
+            {/* Ambient glow */}
+            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
             <div
               className="relative overflow-hidden"
               style={{
