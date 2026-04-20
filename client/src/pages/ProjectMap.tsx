@@ -958,7 +958,7 @@ export default function ProjectMap() {
                 <button
                   onClick={() => {
                     setShowExportHint(false);
-                    setTimeout(() => setShowConversionModal(true), 400);
+                    setTimeout(() => setShowConversionModal(true), 10000);
                   }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
@@ -984,51 +984,74 @@ export default function ProjectMap() {
             style={{ transform: "translateX(-50%)" }}
           >
             <div
-              className="flex items-center gap-5 px-6 py-4 rounded-2xl"
+              className="flex flex-col items-center gap-3 px-7 py-4 rounded-2xl"
               style={{
-                background: "rgba(10,10,10,0.55)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                background: "rgba(8,8,8,0.65)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.04) inset",
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                minWidth: "280px",
               }}
             >
-              {/* Pan */}
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
-                  <path d="M10 2v16M2 10h16M6 6l-4 4 4 4M14 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-white/45 text-[10px] tracking-wide uppercase">Pan</span>
+              {/* Jobsian header */}
+              <div className="flex items-center justify-between w-full">
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.55)",
+                  }}
+                >
+                  Control your view
+                </span>
+                <button
+                  onClick={() => setShowControlsLegend(false)}
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-white/25 hover:text-white/55 transition-colors flex-shrink-0"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  aria-label="Dismiss controls legend"
+                >
+                  <span style={{ fontSize: "9px", lineHeight: 1 }}>✕</span>
+                </button>
               </div>
-              <div className="w-px h-8 bg-white/10" />
-              {/* Zoom */}
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
-                  <rect x="7" y="2" width="6" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M10 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <span className="text-white/45 text-[10px] tracking-wide uppercase">Scroll</span>
+              {/* Divider */}
+              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+              {/* Controls row */}
+              <div className="flex items-center gap-6">
+                {/* Pan */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
+                    <path d="M10 2v16M2 10h16M6 6l-4 4 4 4M14 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Drag</span>
+                </div>
+                <div className="w-px h-8" style={{ background: "rgba(255,255,255,0.08)" }} />
+                {/* Zoom */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
+                    <rect x="7" y="2" width="6" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M10 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Zoom</span>
+                </div>
+                <div className="w-px h-8" style={{ background: "rgba(255,255,255,0.08)" }} />
+                {/* Right-drag Tilt */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <circle cx="10" cy="10" r="2" fill="currentColor" fillOpacity="0.55"/>
+                  </svg>
+                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Right-drag</span>
+                </div>
               </div>
-              <div className="w-px h-8 bg-white/10" />
-              {/* Tilt & Rotate */}
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
-                  <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.4"/>
-                  <circle cx="10" cy="10" r="2" fill="currentColor" fillOpacity="0.6"/>
-                </svg>
-                <span className="text-white/45 text-[10px] tracking-wide uppercase">Tilt</span>
-              </div>
-              {/* Dismiss */}
-              <button
-                onClick={() => setShowControlsLegend(false)}
-                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
-                aria-label="Dismiss controls legend"
-              >
-                <span style={{ fontSize: "9px", lineHeight: 1 }}>✕</span>
-              </button>
+              {/* Sub-label */}
+              <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.03em", marginTop: "-4px" }}>
+                with your mouse
+              </p>
             </div>
           </motion.div>
         )}
