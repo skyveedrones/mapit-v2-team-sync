@@ -463,7 +463,7 @@ export default function Create() {
         },
       });
     }
-  }, [registerSampleMedia, tryNavigate]);
+  }, [tryNavigate]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
