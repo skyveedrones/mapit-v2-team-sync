@@ -78,6 +78,14 @@ export default function ProjectMap() {
     !isDemoProject &&
     !!sessionStorage.getItem("mapit_project_id") &&
     sessionStorage.getItem("mapit_project_id") === String(projectId);
+  // True only when the user arrived via the sample-photo bypass
+  const isSampleProject = isOnboardingProject && sessionStorage.getItem("mapit_is_sample") === "1";
+
+  // ── Sample onboarding UX state ──────────────────────────────────────────
+  const [showControlsLegend, setShowControlsLegend] = useState(false);
+  const [showSamplePulseRing, setShowSamplePulseRing] = useState(false);
+  const cinematicFiredRef = useRef(false);
+
   const [showPrestige, setShowPrestige] = useState(false);
   const [prestigeEmail, setPrestigeEmail] = useState(user?.email ?? "");
   const [prestigeEmailTouched, setPrestigeEmailTouched] = useState(false);
@@ -285,6 +293,41 @@ export default function ProjectMap() {
     map.resize();
     map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 3800, essential: true });
   }, [mapReady, project, geotaggedMedia]);
+
+  // ── Sample-only: cinematic bearing reveal + controls legend + pulse ring ────────
+  useEffect(() => {
+    if (!isSampleProject || !mapReady || cinematicFiredRef.current) return;
+    cinematicFiredRef.current = true;
+    const map = mapCompRef.current?.getMap();
+
+    // 1. Cinematic bearing rotate: fires 4.6s after map ready (after fly-in completes)
+    const cinematicTimer = setTimeout(() => {
+      if (map) {
+        map.easeTo({
+          bearing: -25,
+          pitch: 52,
+          duration: 4000,
+          easing: (t: number) => t * (2 - t), // ease-out quad
+        });
+      }
+    }, 4600);
+
+    // 2. Controls legend: fade in 5.2s after map ready, auto-dismiss at 15s
+    const legendShowTimer = setTimeout(() => setShowControlsLegend(true), 5200);
+    const legendHideTimer = setTimeout(() => setShowControlsLegend(false), 15200);
+
+    // 3. Pulse ring on sidebar toggle: show 6s after map ready, hide after 8s
+    const ringShowTimer = setTimeout(() => setShowSamplePulseRing(true), 6000);
+    const ringHideTimer = setTimeout(() => setShowSamplePulseRing(false), 14000);
+
+    return () => {
+      clearTimeout(cinematicTimer);
+      clearTimeout(legendShowTimer);
+      clearTimeout(legendHideTimer);
+      clearTimeout(ringShowTimer);
+      clearTimeout(ringHideTimer);
+    };
+  }, [isSampleProject, mapReady]);
 
   // ── Determine if we have any coordinates to show the map ─────────────────
   // Rule: if project.location exists OR sessionStorage has coords, the map is
@@ -788,6 +831,104 @@ export default function ProjectMap() {
               >
                 <span style={{ fontSize: "10px", lineHeight: 1 }}>✕</span>
               </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sample Onboarding: Glassmorphic Controls Legend ───────────────────── */}
+      <AnimatePresence>
+        {showControlsLegend && (
+          <motion.div
+            key="controls-legend"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="fixed bottom-8 left-1/2 z-[9980] pointer-events-auto"
+            style={{ transform: "translateX(-50%)" }}
+          >
+            <div
+              className="flex items-center gap-5 px-6 py-4 rounded-2xl"
+              style={{
+                background: "rgba(10,10,10,0.55)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Pan */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <path d="M10 2v16M2 10h16M6 6l-4 4 4 4M14 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Pan</span>
+              </div>
+              <div className="w-px h-8 bg-white/10" />
+              {/* Zoom */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <rect x="7" y="2" width="6" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M10 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Scroll</span>
+              </div>
+              <div className="w-px h-8 bg-white/10" />
+              {/* Tilt & Rotate */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.4"/>
+                  <circle cx="10" cy="10" r="2" fill="currentColor" fillOpacity="0.6"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Tilt</span>
+              </div>
+              {/* Dismiss */}
+              <button
+                onClick={() => setShowControlsLegend(false)}
+                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                aria-label="Dismiss controls legend"
+              >
+                <span style={{ fontSize: "9px", lineHeight: 1 }}>✕</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sample Onboarding: Sidebar Toggle Pulse Ring ──────────────────────── */}
+      {/* Positioned over the sidebar toggle button (top-right area of the map) */}
+      <AnimatePresence>
+        {showSamplePulseRing && (
+          <motion.div
+            key="pulse-ring"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed z-[9975] pointer-events-none"
+            style={{ top: "12px", right: "12px" }}
+          >
+            <div className="relative w-10 h-10">
+              {/* Outer pulsing ring */}
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: "2px solid rgba(16,185,129,0.7)",
+                  animation: "sample-pulse-ring 1.8s ease-out infinite",
+                }}
+              />
+              {/* Second ring offset */}
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: "2px solid rgba(16,185,129,0.4)",
+                  animation: "sample-pulse-ring 1.8s ease-out 0.6s infinite",
+                }}
+              />
             </div>
           </motion.div>
         )}
