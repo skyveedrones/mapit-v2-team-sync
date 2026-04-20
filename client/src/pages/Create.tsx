@@ -641,7 +641,7 @@ export default function Create() {
                   className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  No image ready? Let us drop one in for you.
+                  Don't have a drone photo? Try a sample project.
                 </button>
               </div>
               <input
