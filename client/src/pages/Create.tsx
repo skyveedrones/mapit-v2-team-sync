@@ -400,28 +400,21 @@ export default function Create() {
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
 
-  // ── Sample Site Injector ────────────────────────────────────────────────────
-  // Forney TX street survey GPS fallback (Center St & E Shands Dr)
-  const SAMPLE_GPS_FALLBACK = { lat: 32.7479, lng: -96.4677 };
-
-  const SAMPLE_DRONE_URLS = [
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-1_62997deb.webp",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-2_dd7f082e.webp",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-3_3b438da6.webp",
-  ];
+  // ── Sample Site Injector ──────────────────────────────────────────────────────
+  // Fetches the real GPS-tagged sample photo from project 60001 and injects it
+  // into processFiles() exactly as if the user had dropped their own file.
+  // The backend cannot distinguish this from a normal upload.
+  const SAMPLE_IMAGE_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/projects/60001/photos/1776523788588-hwb0wit72/final";
+  const SAMPLE_IMAGE_NAME = "Gail Wilson Ext 740 Intersection Image.JPG";
 
   const loadSampleSite = useCallback(async () => {
     try {
-      const fileObjects: File[] = await Promise.all(
-        SAMPLE_DRONE_URLS.map(async (url, i) => {
-          const res = await fetch(url);
-          const blob = await res.blob();
-          return new File([blob], `sample-drone-${i + 1}.jpg`, { type: "image/jpeg" });
-        })
-      );
-      // Pre-seed GPS coords so the map always centers on Forney TX
-      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
+      const res = await fetch(SAMPLE_IMAGE_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], SAMPLE_IMAGE_NAME, { type: "image/jpeg" });
+      // Hand off to the real upload handler — identical to drag-and-drop
+      processFiles([file]);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
