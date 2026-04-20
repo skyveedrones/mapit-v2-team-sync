@@ -149,6 +149,24 @@ export default function Create() {
   const [showNameOverlay, setShowNameOverlay] = useState(false);
   const [projectNameInput, setProjectNameInput] = useState("");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingFileCount, setPendingFileCount] = useState(0);
+
+  // Derive a clean project name from a filename:
+  //   1. Strip extension
+  //   2. Remove leading DJI_ / DJI / IMG_ / IMG prefixes (case-insensitive)
+  //   3. Remove pure numeric or date-like tokens (e.g. 20240415, 0001)
+  //   4. Replace underscores/hyphens with spaces and trim
+  const smartDefaultName = useCallback((files: File[]): string => {
+    if (files.length === 0) return "";
+    const base = files[0].name.replace(/\.[^.]+$/, ""); // strip extension
+    const cleaned = base
+      .replace(/^(DJI_?|IMG_?|DCIM_?)/i, "")           // strip camera prefixes
+      .replace(/[_-]/g, " ")                             // underscores/hyphens → spaces
+      .replace(/\b\d{4,}\b/g, "")                       // remove pure numeric tokens ≥4 digits
+      .replace(/\s{2,}/g, " ")                           // collapse whitespace
+      .trim();
+    return cleaned || base.replace(/[_-]/g, " ").trim();
+  }, []);
 
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
@@ -416,19 +434,23 @@ export default function Create() {
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       pendingFilesRef.current = files;
+      setPendingFileCount(files.length);
+      setProjectNameInput(smartDefaultName(files));
       setShowNameOverlay(true);
     } else {
       setStage("idle");
     }
-  }, []);
+  }, [smartDefaultName]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length > 0) {
       pendingFilesRef.current = files;
+      setPendingFileCount(files.length);
+      setProjectNameInput(smartDefaultName(files));
       setShowNameOverlay(true);
     }
-  }, []);
+  }, [smartDefaultName]);
 
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
@@ -448,6 +470,8 @@ export default function Create() {
       const file = new File([blob], SAMPLE_IMAGE_NAME, { type: "image/jpeg" });
       // Gate through the name overlay — same path as a real drop
       pendingFilesRef.current = [file];
+      setPendingFileCount(1);
+      setProjectNameInput(smartDefaultName([file]));
       setShowNameOverlay(true);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
@@ -463,7 +487,7 @@ export default function Create() {
         },
       });
     }
-  }, [processFiles]);
+  }, [processFiles, smartDefaultName]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -644,6 +668,16 @@ export default function Create() {
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
               </div>
+              {/* ── File-count badge: shown briefly when files are queued ── */}
+              {pendingFileCount > 0 && !showNameOverlay && (
+                <div className="mt-5 flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 pointer-events-none">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-emerald-400 text-xs font-medium tracking-wide">
+                    {pendingFileCount} {pendingFileCount === 1 ? "file" : "files"} ready
+                  </span>
+                </div>
+              )}
+
               {/* Sample Site injector — inside the card, below file types */}
               <div className="mt-6 text-center pointer-events-auto">
                 <button
@@ -683,7 +717,7 @@ export default function Create() {
             {/* Back — dismiss overlay, return to drop zone */}
             <div className="absolute top-8 left-8">
               <button
-                onClick={() => { setShowNameOverlay(false); setProjectNameInput(""); pendingFilesRef.current = null; }}
+                onClick={() => { setShowNameOverlay(false); setProjectNameInput(""); setPendingFileCount(0); pendingFilesRef.current = null; }}
                 className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
