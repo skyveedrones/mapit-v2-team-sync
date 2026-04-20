@@ -150,6 +150,8 @@ export default function Create() {
   const [projectNameInput, setProjectNameInput] = useState("");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingFileCount, setPendingFileCount] = useState(0);
+  // Stable ref so handleNameSubmit never captures a stale processFiles closure
+  const processFilesRef = useRef<((files: File[], fallbackCoords?: { lat: number; lng: number }) => Promise<void>) | null>(null);
 
   // Derive a clean project name from a filename:
   //   1. Strip extension
@@ -407,18 +409,21 @@ export default function Create() {
     tryNavigate();
   }, [initProject, uploadMedia, uploadChunk, finalizeChunkedUpload, utils, triggerShake, tryNavigate]);
 
-  // Called when user submits the name overlay — writes sessionStorage then fires processFiles
+  // Keep the ref in sync with the latest processFiles so handleNameSubmit never captures a stale closure
+  processFilesRef.current = processFiles;
+
+  // Called when user submits the name overlay — writes sessionStorage then fires processFiles via ref
   const handleNameSubmit = useCallback((e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmed = projectNameInput.trim();
-    if (!trimmed || !pendingFilesRef.current) return;
+    if (!trimmed || !pendingFilesRef.current || !processFilesRef.current) return;
     sessionStorage.setItem("mapit_project_name", trimmed);
     const files = pendingFilesRef.current;
     pendingFilesRef.current = null;
     setShowNameOverlay(false);
     setProjectNameInput("");
-    processFiles(files);
-  }, [projectNameInput, processFiles]);
+    processFilesRef.current(files);
+  }, [projectNameInput]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
