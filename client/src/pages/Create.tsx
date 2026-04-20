@@ -138,6 +138,7 @@ export default function Create() {
   const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const labelTimer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
   const labelTimer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track whether the backend work is done AND the processing timer has elapsed
   const backendDoneRef = useRef(false);
@@ -164,6 +165,7 @@ export default function Create() {
       if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
       if (labelTimer1Ref.current) clearTimeout(labelTimer1Ref.current);
       if (labelTimer2Ref.current) clearTimeout(labelTimer2Ref.current);
+      if (hardTimeoutRef.current) clearTimeout(hardTimeoutRef.current);
     };
   }, []);
 
@@ -246,6 +248,17 @@ export default function Create() {
     backendDoneRef.current = false;
     processingTimerDoneRef.current = false;
     pendingNavRef.current = null;
+
+    // Hard timeout: if backend hasn't responded in 90s, navigate anyway to avoid infinite stuck screen
+    if (hardTimeoutRef.current) clearTimeout(hardTimeoutRef.current);
+    hardTimeoutRef.current = setTimeout(() => {
+      if (!backendDoneRef.current) {
+        console.warn('[Create] Hard timeout reached — forcing navigation');
+        backendDoneRef.current = true;
+        if (!pendingNavRef.current) pendingNavRef.current = '/map';
+        tryNavigate();
+      }
+    }, 90_000);
 
     // Store photo count for Magic Windows
     sessionStorage.setItem("mapit_photo_count", String(files.length));

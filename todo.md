@@ -2754,3 +2754,8 @@
 - [x] Add second GPS-tagged image from project 60001 to show flight path
 - [x] Resize both sample images to ~2-3MB for faster mobile loading
 - [x] Add "Sample image loaded" toast when user clicks "No image ready?"
+
+## Fix Upload Stuck on Processing Screen
+- [x] Identify root cause: storagePut fetch had no timeout, could hang indefinitely
+- [x] Add 30s AbortController timeout to storagePut in server/storage.ts
+- [x] Add 90s hard client-side timeout in Create.tsx to force navigation if backend hangs
