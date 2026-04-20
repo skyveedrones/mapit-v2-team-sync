@@ -209,19 +209,6 @@ export default function Create() {
     }
   }, [setLocation]);
 
-  // Called when user submits the name overlay — writes sessionStorage then fires processFiles
-  const handleNameSubmit = useCallback((e?: React.FormEvent) => {
-    e?.preventDefault();
-    const trimmed = projectNameInput.trim();
-    if (!trimmed || !pendingFilesRef.current) return;
-    sessionStorage.setItem("mapit_project_name", trimmed);
-    const files = pendingFilesRef.current;
-    pendingFilesRef.current = null;
-    setShowNameOverlay(false);
-    setProjectNameInput("");
-    processFiles(files);
-  }, [projectNameInput, processFiles]);
-
   const triggerShake = useCallback(() => {
     setShake(true);
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
@@ -419,6 +406,19 @@ export default function Create() {
     backendDoneRef.current = true;
     tryNavigate();
   }, [initProject, uploadMedia, uploadChunk, finalizeChunkedUpload, utils, triggerShake, tryNavigate]);
+
+  // Called when user submits the name overlay — writes sessionStorage then fires processFiles
+  const handleNameSubmit = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmed = projectNameInput.trim();
+    if (!trimmed || !pendingFilesRef.current) return;
+    sessionStorage.setItem("mapit_project_name", trimmed);
+    const files = pendingFilesRef.current;
+    pendingFilesRef.current = null;
+    setShowNameOverlay(false);
+    setProjectNameInput("");
+    processFiles(files);
+  }, [projectNameInput, processFiles]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
