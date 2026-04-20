@@ -407,8 +407,8 @@ export default function Create() {
   const SAMPLE_GPS_FALLBACK = { lat: 32.7746896, lng: -96.4680275 };
 
   const SAMPLE_DRONE_URLS = [
-    { url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/ZAsmvNzXpZrGPBel.jpg", name: "sample-drone-demo-1.jpg" },
-    { url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/PoWfBjrnMhJodsFD.jpg", name: "sample-drone-demo-2.jpg" },
+    { url: "/manus-storage/sample-drone-demo-1_9404a7ff.jpg", name: "sample-drone-demo-1.jpg" },
+    { url: "/manus-storage/sample-drone-demo-2_59b2e515.jpg", name: "sample-drone-demo-2.jpg" },
   ];
 
   const loadSampleSite = useCallback(async () => {
