@@ -149,6 +149,7 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
   const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
+  const createSampleProject = trpc.onboarding.createSampleProject.useMutation();
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
@@ -424,35 +425,24 @@ export default function Create() {
     { url: "/manus-storage/sample-drone-demo-2_59b2e515.jpg", name: "sample-drone-demo-2.jpg" },
   ];
 
+  const [sampleLoading, setSampleLoading] = useState(false);
+
   const loadSampleSite = useCallback(async () => {
+    if (sampleLoading) return;
+    setSampleLoading(true);
     try {
-      const fileObjects: File[] = await Promise.all(
-        SAMPLE_DRONE_URLS.map(async ({ url, name }) => {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}`);
-          const blob = await res.blob();
-          return new File([blob], name, { type: "image/jpeg" });
-        })
-      );
-      // Confirm to the user that sample images are loaded
-      toast("Sample images loaded — mapping now.", {
-        duration: 2500,
-        position: "bottom-center",
-        style: {
-          background: "rgba(10,10,10,0.92)",
-          color: "rgba(255,255,255,0.75)",
-          border: "1px solid rgba(16,185,129,0.30)",
-          borderRadius: "14px",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
-          backdropFilter: "blur(20px)",
-        },
-      });
-      // Pre-seed GPS coords from the real EXIF so the map flies to the correct location
+      const { projectId, trialExpiresAt } = await createSampleProject.mutateAsync();
+      // Seed sessionStorage so ProjectMap flies to the correct GPS location
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
+      sessionStorage.setItem("mapit_project_id", String(projectId));
+      sessionStorage.setItem("mapit_project_name", "Gail Wilson Ext — Sample");
+      sessionStorage.setItem("mapit_trial_expires", trialExpiresAt);
+      sessionStorage.setItem("mapit_photo_count", "2");
+      // Navigate instantly to the real project map
+      setLocation(`/project/${projectId}/map`);
     } catch {
-      toast("Could not load sample. Please try uploading your own file.", {
+      setSampleLoading(false);
+      toast("Could not create sample project. Please try uploading your own file.", {
         duration: 3000,
         position: "bottom-center",
         style: {
@@ -465,7 +455,7 @@ export default function Create() {
         },
       });
     }
-  }, [processFiles]);
+  }, [sampleLoading, createSampleProject, setLocation]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -646,15 +636,16 @@ export default function Create() {
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
               </div>
-              {/* Sample Site injector — inside the card, below file types */}
+              {/* Sample project bypass — instant, no upload */}
               <div className="mt-6 text-center pointer-events-auto">
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadSampleSite(); }}
-                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
+                  disabled={sampleLoading}
+                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  No image ready? Let us drop one in for you.
+                  {sampleLoading ? "Loading sample project..." : "Don't have a drone photo? Try a sample project."}
                 </button>
               </div>
               <input

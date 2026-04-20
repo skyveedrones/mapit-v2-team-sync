@@ -5521,6 +5521,77 @@ export const appRouter = router({
         });
         return { success: true, mediaId: mediaItem.id, url, thumbnailUrl };
       }),
+
+    /**
+     * Instant sample project bypass — no file upload.
+     * Creates a real project + 2 media rows using pre-extracted static GPS
+     * from the Gail Wilson Ext DJI shots. Returns projectId immediately.
+     */
+    createSampleProject: publicProcedure
+      .mutation(async () => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+
+        // Pre-extracted GPS from sample-drone-demo-1.jpg and sample-drone-demo-2.jpg
+        const SAMPLE_IMAGES = [
+          {
+            filename: 'Gail-Wilson-Ext-740-Intersection.jpg',
+            url: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-1_9404a7ff.jpg',
+            thumbnailUrl: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-1_9404a7ff.jpg',
+            latitude: 32.774689555555554,
+            longitude: -96.46802747222222,
+            altitude: 34.257,
+            capturedAt: '2025-12-15T14:53:32.000Z',
+            cameraMake: 'DJI',
+            cameraModel: 'FC9113',
+          },
+          {
+            filename: 'Gail-Wilson-Ext-NW-Corner.jpg',
+            url: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-2_59b2e515.jpg',
+            thumbnailUrl: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-2_59b2e515.jpg',
+            latitude: 32.77657447222222,
+            longitude: -96.46376155555556,
+            altitude: 108.257,
+            capturedAt: '2025-12-15T14:44:11.000Z',
+            cameraMake: 'DJI',
+            cameraModel: 'FC9113',
+          },
+        ];
+
+        const location = `${SAMPLE_IMAGES[0].latitude.toFixed(6)}, ${SAMPLE_IMAGES[0].longitude.toFixed(6)}`;
+
+        const project = await createProject({
+          userId: ownerUser.id,
+          name: 'Gail Wilson Ext — Sample',
+          description: 'Sample project created via onboarding demo bypass',
+          location,
+          status: 'active',
+        });
+
+        for (const img of SAMPLE_IMAGES) {
+          const fileKey = `projects/${project.id}/media/sample-${nanoid(8)}-${img.filename}`;
+          await createMedia({
+            projectId: project.id,
+            userId: ownerUser.id,
+            filename: img.filename,
+            fileKey,
+            url: img.url,
+            mimeType: 'image/jpeg',
+            fileSize: 0,
+            mediaType: 'photo',
+            latitude: String(img.latitude),
+            longitude: String(img.longitude),
+            altitude: String(img.altitude),
+            capturedAt: img.capturedAt,
+            cameraMake: img.cameraMake,
+            cameraModel: img.cameraModel,
+            thumbnailUrl: img.thumbnailUrl,
+          });
+        }
+
+        const trialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        return { projectId: project.id, trialExpiresAt };
+      }),
   }),
   // ─── Municipal Lead Capture ───
   municipal: router({

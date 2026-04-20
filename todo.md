@@ -2759,3 +2759,15 @@
 - [x] Identify root cause: storagePut fetch had no timeout, could hang indefinitely
 - [x] Add 30s AbortController timeout to storagePut in server/storage.ts
 - [x] Add 90s hard client-side timeout in Create.tsx to force navigation if backend hangs
+
+## Sample Project Bypass Flow (Zero-Friction Demo)
+- [ ] Extract GPS metadata from both sample images and store as static constants in frontend
+- [ ] Add "Don't have a drone photo? Try a sample project." link below upload zone
+- [ ] Implement bypass: skip all server calls, inject static metadata, navigate instantly to map
+- [ ] Wire sample map route to render pre-extracted GPS data without server dependency
+
+## Sample Project Bypass Flow (Zero Friction Demo)
+- [x] Add createSampleProject server procedure (no file upload, static GPS)
+- [x] Replace loadSampleSite in Create.tsx with instant bypass to /project/:id/map
+- [x] Update sample link copy to "Don't have a drone photo? Try a sample project."
+- [x] Add loading state to sample link button
