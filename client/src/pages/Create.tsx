@@ -148,7 +148,6 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
   const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
-  const registerSampleMedia = trpc.onboarding.registerSampleMedia.useMutation();
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
@@ -425,9 +424,17 @@ export default function Create() {
       }, 5500);
     }, 3000);
 
-    // 3. Fire the fast DB-only mutation in parallel
+    // 3. Fire the fast DB-only mutation in parallel (direct fetch — bypasses tRPC client init)
     try {
-      const result = await registerSampleMedia.mutateAsync();
+      const resp = await fetch('/api/trpc/onboarding.registerSampleMedia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      const result = json?.result?.data ?? json;
       const flyCoords = result.flyCoords;
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(flyCoords));
       pendingNavRef.current = `/project/${result.projectId}/map`;
