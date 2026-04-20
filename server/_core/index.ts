@@ -19,6 +19,7 @@ import overlayUploadRouter from "../routes/overlay-upload";
 import documentUploadRouter from "../routes/document-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
 import createOverlayRouter from "../routes/create-overlay";
+import { registerStorageProxy } from "./storageProxy";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +49,9 @@ async function startServer() {
   
   // Initialize version system
   initializeVersion();
+
+  // Storage proxy for /manus-storage/* paths
+  registerStorageProxy(app);
 
   // Stripe webhook endpoint - must be registered BEFORE express.json() for raw body
   app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), handleStripeWebhook);

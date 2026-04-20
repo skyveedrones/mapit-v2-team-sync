@@ -355,8 +355,8 @@ export default function Create() {
               filename: file.name,
               mimeType: file.type || "image/jpeg",
               fileData: base64,
-              latitude: fallbackCoords?.lat,
-              longitude: fallbackCoords?.lng,
+              latitude: effectiveCoords?.lat,
+              longitude: effectiveCoords?.lng,
             });
           }
         } catch (uploadErr) {
@@ -401,27 +401,21 @@ export default function Create() {
   const isDragging = stage === "dragging";
 
   // ── Sample Site Injector ────────────────────────────────────────────────────
-  // Forney TX street survey GPS fallback (Center St & E Shands Dr)
-  const SAMPLE_GPS_FALLBACK = { lat: 32.7479, lng: -96.4677 };
+  // Gail Wilson Ext 740 Intersection — real DJI drone shot with embedded GPS
+  const SAMPLE_GPS_FALLBACK = { lat: 32.7746896, lng: -96.4680275 };
 
-  const SAMPLE_DRONE_URLS = [
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-1_62997deb.webp",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-2_dd7f082e.webp",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-3_3b438da6.webp",
-  ];
+  // Single GPS-tagged JPG from project 60001 (no watermark, full EXIF)
+  const SAMPLE_DRONE_URL = "/manus-storage/sample-drone-demo_c8d7cb07.jpg";
 
   const loadSampleSite = useCallback(async () => {
     try {
-      const fileObjects: File[] = await Promise.all(
-        SAMPLE_DRONE_URLS.map(async (url, i) => {
-          const res = await fetch(url);
-          const blob = await res.blob();
-          return new File([blob], `sample-drone-${i + 1}.jpg`, { type: "image/jpeg" });
-        })
-      );
-      // Pre-seed GPS coords so the map always centers on Forney TX
+      const res = await fetch(SAMPLE_DRONE_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const fileObj = new File([blob], "sample-drone-demo.jpg", { type: "image/jpeg" });
+      // Pre-seed GPS coords from the real EXIF so the map flies to the correct location
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
+      processFiles([fileObj], SAMPLE_GPS_FALLBACK);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,

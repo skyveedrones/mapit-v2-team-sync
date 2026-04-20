@@ -2741,3 +2741,11 @@
 - [ ] Update Create.tsx to route files >20MB through chunked path, small files stay on single-upload path
 - [ ] Accept .mp4 / video files in demo flow via chunked upload with EXIF extracted client-side
 - [x] Move 'No image ready? Load a sample site.' link inside the dropzone card, below the file types text, centered with mt-6 spacing
+
+## Demo Drop Page GPS Fix
+- [x] Replace old webp sample images (no GPS) with GPS-tagged JPG from project 60001
+- [x] Update SAMPLE_GPS_FALLBACK to real coordinates (32.7746896, -96.4680275)
+- [x] Fix uploadMedia call to use effectiveCoords instead of fallbackCoords
+- [x] Add storage proxy (server/_core/storageProxy.ts) for /manus-storage/* paths
+- [x] Register storage proxy in server/_core/index.ts
+- [x] Ensure sample image has no watermark applied
