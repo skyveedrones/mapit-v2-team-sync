@@ -118,6 +118,7 @@ export default function ProjectMap() {
 
   // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
   const [showConversionModal, setShowConversionModal] = useState(false);
+  const [conversionDismissed, setConversionDismissed] = useState(false);
   const conversionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startConversionTimer = () => {
@@ -722,18 +723,40 @@ export default function ProjectMap() {
                 Now that you've explored our vision, it's time to build yours. Start your complimentary 14-day trial to preserve your data and unlock the complete platform.
               </motion.p>
               {/* CTA */}
-              <button
-                onClick={() => { window.location.href = getLoginUrl(); }}
-                className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
-              >
-                Start Your Trial
-              </button>
-              <button
-                onClick={() => setShowConversionModal(false)}
-                className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
-              >
-                Maybe later
-              </button>
+              {!conversionDismissed ? (
+                <>
+                  <button
+                    onClick={() => { window.location.href = getLoginUrl(); }}
+                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
+                  >
+                    Start Your Trial
+                  </button>
+                  <button
+                    onClick={() => setConversionDismissed(true)}
+                    className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+                  >
+                    Maybe later
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-4 mt-2">
+                  <p className="text-white/40 text-sm leading-relaxed">
+                    Your demo map is still here whenever you're ready.
+                  </p>
+                  <button
+                    onClick={() => { window.location.href = getLoginUrl(); }}
+                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
+                  >
+                    Start Your Trial
+                  </button>
+                  <a
+                    href="/welcome"
+                    className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-4"
+                  >
+                    Return to MAPIT homepage
+                  </a>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -933,7 +956,10 @@ export default function ProjectMap() {
                 </p>
                 {/* CTA */}
                 <button
-                  onClick={() => setShowExportHint(false)}
+                  onClick={() => {
+                    setShowExportHint(false);
+                    setTimeout(() => setShowConversionModal(true), 400);
+                  }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
