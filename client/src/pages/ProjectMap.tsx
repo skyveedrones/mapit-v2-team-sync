@@ -49,7 +49,7 @@ export default function ProjectMap() {
   const projectId = parseInt(id || "0", 10);
   const flightId = flightIdParam ? parseInt(flightIdParam, 10) : undefined;
   const isDemoProject = projectId === 1;
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const mapCompRef = useRef<MapboxProjectMapHandle | null>(null);
   const flybyRef = useRef<FlybyControllerHandle | null>(null);
@@ -195,14 +195,17 @@ export default function ProjectMap() {
   // Task 2: Off-map guard — if unauthenticated user revisits/refreshes a claimed project map
   // (sessionStorage key is gone = project was already claimed), redirect to /welcome
   // Skip if prestigeClaimed is true — user just claimed and the success modal is showing
+  // Skip if isSampleProject — sample users are always allowed regardless of Clerk state
   useEffect(() => {
-    if (isDemoProject || isAuthenticated || prestigeClaimed) return;
+    if (isDemoProject || isAuthenticated || prestigeClaimed || isSampleProject) return;
+    // Wait for Clerk to fully settle (including 3s timeout) before evaluating
+    if (authLoading) return;
     const storedId = sessionStorage.getItem('mapit_project_id');
     // If there's no sessionStorage key for this project, the user is a ghost — redirect
     if (!storedId || storedId !== String(projectId)) {
       window.location.href = '/welcome';
     }
-  }, [isDemoProject, isAuthenticated, projectId, prestigeClaimed]);
+  }, [isDemoProject, isAuthenticated, projectId, prestigeClaimed, isSampleProject, authLoading]);
 
   // Block ESC globally when modal is locked after claim
   useEffect(() => {
