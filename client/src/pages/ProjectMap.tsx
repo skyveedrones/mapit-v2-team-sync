@@ -120,7 +120,9 @@ export default function ProjectMap() {
   // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
   const [showConversionModal, setShowConversionModal] = useState(false);
   const [conversionDismissed, setConversionDismissed] = useState(false);
+  const [showConversionProgress, setShowConversionProgress] = useState(false);
   const conversionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const conversionReshowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startConversionTimer = () => {
     if (conversionTimerRef.current) clearTimeout(conversionTimerRef.current);
@@ -735,7 +737,14 @@ export default function ProjectMap() {
                     Start Your Trial
                   </button>
                   <button
-                    onClick={() => setConversionDismissed(true)}
+                    onClick={() => {
+                      setConversionDismissed(true);
+                      if (conversionReshowRef.current) clearTimeout(conversionReshowRef.current);
+                      conversionReshowRef.current = setTimeout(() => {
+                        setConversionDismissed(false);
+                        setShowConversionModal(true);
+                      }, 60000);
+                    }}
                     className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
                   >
                     Maybe later
@@ -1031,7 +1040,11 @@ export default function ProjectMap() {
                 <button
                   onClick={() => {
                     setShowReportHint(false);
-                    setTimeout(() => setShowConversionModal(true), 20000);
+                    setShowConversionProgress(true);
+                    setTimeout(() => {
+                      setShowConversionProgress(false);
+                      setShowConversionModal(true);
+                    }, 20000);
                   }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
@@ -1039,6 +1052,29 @@ export default function ProjectMap() {
                   Got it →
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Conversion Progress Bar (20s countdown after Window 4 Got it) ─────── */}
+      <AnimatePresence>
+        {showConversionProgress && (
+          <motion.div
+            key="conversion-progress"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-0 left-0 right-0 z-[9970] pointer-events-none"
+          >
+            <div style={{ height: "2px", background: "rgba(255,255,255,0.06)", width: "100%" }}>
+              <motion.div
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 20, ease: "linear" }}
+                style={{ height: "100%", background: "linear-gradient(90deg, rgba(16,185,129,0.6) 0%, rgba(52,211,153,1) 50%, rgba(16,185,129,0.6) 100%)" }}
+              />
             </div>
           </motion.div>
         )}
