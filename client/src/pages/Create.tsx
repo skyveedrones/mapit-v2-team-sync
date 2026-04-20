@@ -690,8 +690,14 @@ export default function Create() {
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadSampleSite(); }}
-                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
-                  style={{ fontFamily: "Inter, sans-serif" }}
+                  className="transition-colors duration-200 cursor-pointer hover:underline underline-offset-4"
+                  style={{
+                    fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                    fontSize: "clamp(0.95rem, 2vw, 1.15rem)",
+                    color: "rgba(148,163,184,0.85)",
+                    letterSpacing: "0.01em",
+                    fontWeight: 400,
+                  }}
                 >
                   No image ready? Let us drop one in for you.
                 </button>
@@ -763,7 +769,16 @@ export default function Create() {
             </form>
 
             {projectNameInput.trim().length > 0 && (
-              <p className="mt-6 text-white/30 text-sm animate-pulse">
+              <p
+                className="mt-8 animate-pulse"
+                style={{
+                  fontSize: "clamp(1rem, 2.5vw, 1.35rem)",
+                  color: "rgba(255,255,255,0.55)",
+                  letterSpacing: "0.04em",
+                  fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                  fontWeight: 400,
+                }}
+              >
                 Press Enter to continue →
               </p>
             )}

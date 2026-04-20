@@ -765,21 +765,34 @@ export default function ProjectMap() {
           >
             <button
               onClick={dismissDiscoveryHint}
-              className="flex flex-col items-center justify-center gap-3 px-6 py-6 rounded-2xl text-center transition-all duration-200 hover:border-white/25 select-none"
+              className="flex flex-col items-start gap-4 px-7 py-6 rounded-2xl text-left transition-all duration-200 select-none group"
               style={{
-                width: "192px",
-                background: "rgba(0,0,0,0.60)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.20)",
-                boxShadow: "0 25px 50px -12px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.6)",
+                width: "240px",
+                background: "rgba(8,8,8,0.75)",
+                backdropFilter: "blur(32px)",
+                WebkitBackdropFilter: "blur(32px)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                boxShadow: "0 32px 64px -16px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)",
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
               }}
             >
-              <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0 animate-pulse" />
-              <p className="text-white/80 text-xs leading-relaxed">
-                The magic is in the coordinates.<br />
-                <span className="text-white/50">Click the marker to reveal the image</span>
+              <div className="flex items-center gap-2.5">
+                <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0 animate-pulse" />
+                <span
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}
+                >
+                  GPS Located
+                </span>
+              </div>
+              <p
+                style={{ fontSize: "17px", fontWeight: 600, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", lineHeight: 1.3 }}
+              >
+                The magic is in the coordinates.
+              </p>
+              <p
+                style={{ fontSize: "13px", color: "rgba(255,255,255,0.42)", lineHeight: 1.5, letterSpacing: "0.01em" }}
+              >
+                Click the marker to reveal the image.
               </p>
             </button>
           </motion.div>
@@ -803,27 +816,35 @@ export default function ProjectMap() {
             {/* Arrow pointing right toward the sidebar toggle */}
             <div className="relative">
               <div
-                className="rounded-2xl p-5 text-left"
+                className="rounded-2xl text-left"
                 style={{
-                  width: "220px",
-                  background: "rgba(0,0,0,0.72)",
-                  backdropFilter: "blur(28px)",
-                  WebkitBackdropFilter: "blur(28px)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
+                  width: "260px",
+                  padding: "28px",
+                  background: "rgba(8,8,8,0.78)",
+                  backdropFilter: "blur(32px)",
+                  WebkitBackdropFilter: "blur(32px)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  boxShadow: "0 32px 64px -16px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
                   fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
                 }}
               >
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    style={{ fontSize: "12px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}
+                  >
+                    Pro Tools
+                  </span>
+                </div>
                 <p
-                  className="text-white font-bold mb-2"
-                  style={{ fontSize: "15px", letterSpacing: "-0.02em", lineHeight: 1.2 }}
+                  style={{ fontSize: "19px", fontWeight: 700, color: "rgba(255,255,255,0.95)", letterSpacing: "-0.03em", lineHeight: 1.2, marginBottom: "12px" }}
                 >
                   Professional Grade.
                 </p>
-                <p className="text-white/55 text-xs leading-relaxed">
-                  Click the icon with the diamond shapes on the right hand side to open the sidebar. This is where you access measurements, layers, and professional exports.
+                <p
+                  style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6, letterSpacing: "0.01em" }}
+                >
+                  Tap the diamond icon on the right to open the sidebar — measurements, layers, and professional exports.
                 </p>
-
               </div>
               {/* Dismiss button */}
               <button
