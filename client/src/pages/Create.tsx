@@ -434,9 +434,11 @@ export default function Create() {
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = await resp.json();
-      const result = json?.result?.data ?? json;
+      // tRPC + superjson wraps data as: { result: { data: { json: { ... } } } }
+      const result = json?.result?.data?.json ?? json?.result?.data ?? json;
       const flyCoords = result.flyCoords;
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(flyCoords));
+      sessionStorage.setItem("mapit_project_id", String(result.projectId));
       pendingNavRef.current = `/project/${result.projectId}/map`;
       backendDoneRef.current = true;
       tryNavigate();
