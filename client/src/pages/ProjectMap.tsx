@@ -126,9 +126,10 @@ export default function ProjectMap() {
   };
 
   // ── Magic Window #1 (Marker/Discovery Hint) ─────────────────────────────
-  // Appears 3s after mapReady, auto-dismisses after 10s, then Window #2 appears.
+  // Appears 3s after mapReady, stays until user clicks "Got it →".
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
   const [showSidebarHint, setShowSidebarHint] = useState(false);
+  const [showExportHint, setShowExportHint] = useState(false);
   const discoveryDismissed = useRef(false);
 
   const dismissDiscoveryHint = () => {
@@ -137,33 +138,23 @@ export default function ProjectMap() {
   };
 
   // Show Window #1 3s after map is ready (onboarding only);
-  // auto-dismiss after 10s, then show Window #2 after fade completes (~500ms)
+  // stays until user clicks "Got it" — no auto-dismiss
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
     const showTimer = setTimeout(() => {
       if (!discoveryDismissed.current) {
         setShowDiscoveryHint(true);
-        // Auto-dismiss Window #1 after 10s, then show Window #2
-        const autoTimer = setTimeout(() => {
-          setShowDiscoveryHint(false);
-          // Wait for fade-out transition (~500ms) before showing Window #2
-          setTimeout(() => {
-            setShowSidebarHint(true);
-            // Auto-dismiss Window #2 after 15s
-            setTimeout(() => setShowSidebarHint(false), 15000);
-          }, 600);
-        }, 10000);
-        return () => clearTimeout(autoTimer);
       }
     }, 3000);
     return () => clearTimeout(showTimer);
   }, [isOnboardingProject, mapReady]);
 
-  // Dismiss both hints when Prestige modal fires
+  // Dismiss all hint windows when Prestige modal fires
   useEffect(() => {
     if (showPrestige) {
       dismissDiscoveryHint();
       setShowSidebarHint(false);
+      setShowExportHint(false);
     }
   }, [showPrestige]);
 
@@ -757,7 +748,7 @@ export default function ProjectMap() {
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
+            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
           >
             {/* Ambient glow */}
             <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
@@ -788,6 +779,7 @@ export default function ProjectMap() {
                     <div className="flex gap-1">
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                     </div>
                   </div>
                 </div>
@@ -804,7 +796,10 @@ export default function ProjectMap() {
                   onClick={() => {
                     dismissDiscoveryHint();
                     // Auto-open sidebar so Window #2's instruction is immediately actionable
-                    setTimeout(() => mapCompRef.current?.openSidebar(), 650);
+                    setTimeout(() => {
+                      mapCompRef.current?.openSidebar();
+                      setShowSidebarHint(true);
+                    }, 650);
                   }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
@@ -856,6 +851,7 @@ export default function ProjectMap() {
                     <div className="flex gap-1">
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                     </div>
                   </div>
                 </div>
@@ -869,7 +865,10 @@ export default function ProjectMap() {
                 </p>
                 {/* CTA */}
                 <button
-                  onClick={() => setShowSidebarHint(false)}
+                  onClick={() => {
+                    setShowSidebarHint(false);
+                    setTimeout(() => setShowExportHint(true), 650);
+                  }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
@@ -881,7 +880,72 @@ export default function ProjectMap() {
         )}
       </AnimatePresence>
 
-      {/* ── Sample Onboarding: Glassmorphic Controls Legend ───────────────────── */}
+       {/* ── Magic Window #3 ─ Export Ready ────────────────────────────────── */}
+      <AnimatePresence>
+        {showExportHint && (
+          <motion.div
+            key="export-hint"
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
+          >
+            {/* Ambient glow */}
+            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
+            <div
+              className="relative overflow-hidden"
+              style={{
+                width: "300px",
+                background: "rgba(6,6,6,0.88)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Emerald accent bar top */}
+              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
+              <div className="px-6 pt-5 pb-6">
+                {/* Step indicator */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Export Ready</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
+                    <div className="flex gap-1">
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Headline */}
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
+                  Your data.<br />Any format.
+                </p>
+                {/* Body */}
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
+                  Export as KML, CSV, GeoJSON, or GPX — ready for any GIS platform, CAD tool, or field crew app.
+                </p>
+                {/* CTA */}
+                <button
+                  onClick={() => setShowExportHint(false)}
+                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
+                >
+                  Got it →
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sample Onboarding: Glassmorphic Controls Legend ─────────────────── */}
       <AnimatePresence>
         {showControlsLegend && (
           <motion.div

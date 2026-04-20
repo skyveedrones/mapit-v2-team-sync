@@ -289,22 +289,22 @@ export default function Create() {
     // Start GPS extraction in parallel
     const coordsPromise = extractGPS(files);
 
-    // After 6s → PROCESSING
+    // After 3s → PROCESSING
     uploadTimerRef.current = setTimeout(() => {
       setStage("processing");
       console.log('[MAPIT Analytics] Demo_Started');
 
-      // Processing must show for at least 5s
-      // Reset and cycle processing labels: 0s→label0, 4s→label1, 7s→label2
+      // Processing must show for at least 3s
+      // Reset and cycle processing labels: 0s→label0, 2s→label1, 4s→label2
       setProcessingLabel(0);
-      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 4000);
-      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 7000);
+      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 2000);
+      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 4000);
 
       processingTimerRef.current = setTimeout(() => {
         processingTimerDoneRef.current = true;
         tryNavigate();
-      }, 5000);
-    }, 6000);
+      }, 3000);
+    }, 3000);
 
     // ── Backend work (runs in parallel with timers) ────────────────────────
     const coords = await coordsPromise;
