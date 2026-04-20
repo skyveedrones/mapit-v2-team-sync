@@ -179,7 +179,7 @@ export default function Create() {
   const PROCESSING_LABELS = [
     "Extracting GPS Telemetry & Metadata...",
     "Generating High-Precision 3D Mesh...",
-    "Optimizing Georeferenced Digital Twin...",
+    "Optimizing Georeferenced\nDigital Twin...",
   ];
 
   // Cleanup timers on unmount
@@ -586,7 +586,7 @@ export default function Create() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.5 }}
-                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl"
+                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl whitespace-pre-line"
                   style={{
                     fontSize: "clamp(1.5rem,4vw,2.5rem)",
                     backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
