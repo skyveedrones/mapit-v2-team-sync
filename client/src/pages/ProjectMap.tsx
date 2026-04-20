@@ -315,20 +315,16 @@ export default function ProjectMap() {
       }
     }, 4600);
 
-    // 2. Controls legend: fade in 5.2s after map ready, auto-dismiss at 15s
+    // 2. Controls legend: fade in 5.2s after map ready — stays permanently until × is clicked
     const legendShowTimer = setTimeout(() => setShowControlsLegend(true), 5200);
-    const legendHideTimer = setTimeout(() => setShowControlsLegend(false), 15200);
 
-    // 3. Pulse ring on sidebar toggle: show 6s after map ready, hide after 8s
+    // 3. Pulse ring on sidebar toggle: show 6s after map ready — stays until user clicks it
     const ringShowTimer = setTimeout(() => setShowSamplePulseRing(true), 6000);
-    const ringHideTimer = setTimeout(() => setShowSamplePulseRing(false), 14000);
 
     return () => {
       clearTimeout(cinematicTimer);
       clearTimeout(legendShowTimer);
-      clearTimeout(legendHideTimer);
       clearTimeout(ringShowTimer);
-      clearTimeout(ringHideTimer);
     };
   }, [isSampleProject, mapReady]);
 
@@ -757,44 +753,60 @@ export default function ProjectMap() {
         {showDiscoveryHint && (
           <motion.div
             key="discovery-hint"
-            initial={{ opacity: 0, scale: 0.92, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: -8 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed top-[180px] left-8 z-[9990] pointer-events-auto"
+            initial={{ opacity: 0, x: -24, y: 0 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
-            <button
-              onClick={dismissDiscoveryHint}
-              className="flex flex-col items-start gap-4 px-7 py-6 rounded-2xl text-left transition-all duration-200 select-none group"
+            <div
+              className="relative overflow-hidden"
               style={{
-                width: "240px",
-                background: "rgba(8,8,8,0.75)",
-                backdropFilter: "blur(32px)",
-                WebkitBackdropFilter: "blur(32px)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                boxShadow: "0 32px 64px -16px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)",
+                width: "300px",
+                background: "rgba(6,6,6,0.88)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
               }}
             >
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0 animate-pulse" />
-                <span
-                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}
+              {/* Emerald accent bar top */}
+              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
+              <div className="px-6 pt-5 pb-6">
+                {/* Step indicator */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>GPS Located</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
+                    <div className="flex gap-1">
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Headline */}
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
+                  The magic is in<br />the coordinates.
+                </p>
+                {/* Body */}
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
+                  Your drone photo is pinned to its exact GPS location. Click the marker on the map to reveal the image.
+                </p>
+                {/* CTA */}
+                <button
+                  onClick={dismissDiscoveryHint}
+                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
-                  GPS Located
-                </span>
+                  Got it →
+                </button>
               </div>
-              <p
-                style={{ fontSize: "17px", fontWeight: 600, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", lineHeight: 1.3 }}
-              >
-                The magic is in the coordinates.
-              </p>
-              <p
-                style={{ fontSize: "13px", color: "rgba(255,255,255,0.42)", lineHeight: 1.5, letterSpacing: "0.01em" }}
-              >
-                Click the marker to reveal the image.
-              </p>
-            </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -804,57 +816,58 @@ export default function ProjectMap() {
         {showSidebarHint && (
           <motion.div
             key="sidebar-hint"
-            initial={{ opacity: 0, y: -12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.96 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            onClick={() => setShowSidebarHint(false)}
-            onTouchEnd={(e) => { e.preventDefault(); setShowSidebarHint(false); }}
-            className="fixed z-[9990] pointer-events-auto cursor-pointer"
-            style={{ top: "16px", left: "50%", transform: "translateX(-50%)" }}
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
-            {/* Arrow pointing right toward the sidebar toggle */}
-            <div className="relative">
-              <div
-                className="rounded-2xl text-left"
-                style={{
-                  width: "260px",
-                  padding: "28px",
-                  background: "rgba(8,8,8,0.78)",
-                  backdropFilter: "blur(32px)",
-                  WebkitBackdropFilter: "blur(32px)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  boxShadow: "0 32px 64px -16px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
-                  fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <span
-                    style={{ fontSize: "12px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}
-                  >
-                    Pro Tools
-                  </span>
+            <div
+              className="relative overflow-hidden"
+              style={{
+                width: "300px",
+                background: "rgba(6,6,6,0.88)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Emerald accent bar top */}
+              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
+              <div className="px-6 pt-5 pb-6">
+                {/* Step indicator */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pro Tools</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
+                    <div className="flex gap-1">
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
+                    </div>
+                  </div>
                 </div>
-                <p
-                  style={{ fontSize: "19px", fontWeight: 700, color: "rgba(255,255,255,0.95)", letterSpacing: "-0.03em", lineHeight: 1.2, marginBottom: "12px" }}
-                >
-                  Professional Grade.
+                {/* Headline */}
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
+                  Professional<br />Grade.
                 </p>
-                <p
-                  style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6, letterSpacing: "0.01em" }}
-                >
+                {/* Body */}
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
                   Tap the diamond icon on the right to open the sidebar — measurements, layers, and professional exports.
                 </p>
+                {/* CTA */}
+                <button
+                  onClick={() => setShowSidebarHint(false)}
+                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
+                >
+                  Got it →
+                </button>
               </div>
-              {/* Dismiss button */}
-              <button
-                onClick={() => setShowSidebarHint(false)}
-                className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 transition-colors"
-                style={{ background: "rgba(0,0,0,0.60)", border: "1px solid rgba(255,255,255,0.15)" }}
-                aria-label="Dismiss"
-              >
-                <span style={{ fontSize: "10px", lineHeight: 1 }}>✕</span>
-              </button>
             </div>
           </motion.div>
         )}
@@ -933,8 +946,10 @@ export default function ProjectMap() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed z-[9975] pointer-events-none"
+            className="fixed z-[9975] pointer-events-auto cursor-pointer"
             style={{ top: "12px", right: "12px" }}
+            onClick={() => setShowSamplePulseRing(false)}
+            title="Dismiss"
           >
             <div className="relative w-10 h-10">
               {/* Outer pulsing ring */}
