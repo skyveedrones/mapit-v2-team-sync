@@ -126,13 +126,7 @@ async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } |
   return null;
 }
 
-// ── Sample images (stored in S3, served via /manus-storage/ proxy) ──────────────
-const SAMPLE_IMAGES = [
-  { key: "sample-drone/gail-wilson-740-intersection.jpg", name: "DJI_0001.JPG" },
-  { key: "sample-drone/gail-wilson-nw-corner.jpg",        name: "DJI_0002.JPG" },
-];
-
-// ── Component ──────────────────────────────────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────────────────────
 export default function Create() {
   const [, setLocation] = useLocation();
   const [stage, setStage] = useState<Stage>("idle");
@@ -361,8 +355,8 @@ export default function Create() {
               filename: file.name,
               mimeType: file.type || "image/jpeg",
               fileData: base64,
-              latitude: effectiveCoords?.lat,
-              longitude: effectiveCoords?.lng,
+              latitude: fallbackCoords?.lat,
+              longitude: fallbackCoords?.lng,
             });
           }
         } catch (uploadErr) {
@@ -406,24 +400,29 @@ export default function Create() {
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
 
-  // ── Sample Demo Bypass ──────────────────────────────────────────────────────
-  // Fetches two pre-stored GPS-tagged JPGs via the /manus-storage/ proxy,
-  // converts them to File blobs, and feeds them into processFiles() directly —
-  // IDENTICAL to a user drag-and-drop. No new backend routes. No special handling.
+  // ── Sample Site Injector ────────────────────────────────────────────────────
+  // Forney TX street survey GPS fallback (Center St & E Shands Dr)
+  const SAMPLE_GPS_FALLBACK = { lat: 32.7479, lng: -96.4677 };
+
+  const SAMPLE_DRONE_URLS = [
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-1_62997deb.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-2_dd7f082e.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/sample-drone-3_3b438da6.webp",
+  ];
+
   const loadSampleSite = useCallback(async () => {
     try {
-      const files: File[] = await Promise.all(
-        SAMPLE_IMAGES.map(async ({ key, name }) => {
-          const resp = await fetch(`/manus-storage/${key}`, { credentials: "include" });
-          if (!resp.ok) throw new Error(`Failed to fetch sample image: ${resp.status}`);
-          const blob = await resp.blob();
-          return new File([blob], name, { type: "image/jpeg" });
+      const fileObjects: File[] = await Promise.all(
+        SAMPLE_DRONE_URLS.map(async (url, i) => {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          return new File([blob], `sample-drone-${i + 1}.jpg`, { type: "image/jpeg" });
         })
       );
-      // Hand off to the real upload handler — identical to drag-and-drop
-      processFiles(files);
-    } catch (err) {
-      console.error("[Sample] fetch failed:", err);
+      // Pre-seed GPS coords so the map always centers on Forney TX
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
+      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
+    } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
         position: "bottom-center",
@@ -626,7 +625,7 @@ export default function Create() {
                   className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  Don't have a drone photo? Try a sample project.
+                  No image ready? Let us drop one in for you.
                 </button>
               </div>
               <input
