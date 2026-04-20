@@ -40,6 +40,7 @@ import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
+import SignupSuccess from "./pages/SignupSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -247,7 +248,8 @@ function Router() {
       <Route path="/create" component={Create} />
       <Route path="/map" component={MapView} />
       <Route path="/signup" component={SignupPage} />
-      <Route path="/signup/sso-callback" component={() => <AuthenticateWithRedirectCallback signUpForceRedirectUrl="/dashboard" />} />
+      <Route path="/signup-success" component={SignupSuccess} />
+      <Route path="/signup/sso-callback" component={() => <AuthenticateWithRedirectCallback signUpForceRedirectUrl="/signup-success" />} />
       {/* Catch-all for Clerk multi-step signup flows (factor-one, factor-two, continue, etc.) */}
       <Route path="/signup/:rest*" component={SignupPage} />
       <Route path="/login" component={Login} />

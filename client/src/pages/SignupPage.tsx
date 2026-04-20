@@ -43,7 +43,7 @@ export default function SignupPage() {
           routing="path"
           path="/signup"
           signInUrl="/login"
-          forceRedirectUrl="/dashboard"
+          forceRedirectUrl="/signup-success"
           appearance={{
             variables: {
               colorPrimary: "#10b981",
