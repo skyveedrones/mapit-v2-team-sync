@@ -138,7 +138,6 @@ export default function Create() {
   const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const labelTimer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
   const labelTimer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track whether the backend work is done AND the processing timer has elapsed
   const backendDoneRef = useRef(false);
@@ -149,7 +148,6 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
   const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
-  const createSampleProject = trpc.onboarding.createSampleProject.useMutation();
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
@@ -166,7 +164,6 @@ export default function Create() {
       if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
       if (labelTimer1Ref.current) clearTimeout(labelTimer1Ref.current);
       if (labelTimer2Ref.current) clearTimeout(labelTimer2Ref.current);
-      if (hardTimeoutRef.current) clearTimeout(hardTimeoutRef.current);
     };
   }, []);
 
@@ -249,17 +246,6 @@ export default function Create() {
     backendDoneRef.current = false;
     processingTimerDoneRef.current = false;
     pendingNavRef.current = null;
-
-    // Hard timeout: if backend hasn't responded in 90s, navigate anyway to avoid infinite stuck screen
-    if (hardTimeoutRef.current) clearTimeout(hardTimeoutRef.current);
-    hardTimeoutRef.current = setTimeout(() => {
-      if (!backendDoneRef.current) {
-        console.warn('[Create] Hard timeout reached — forcing navigation');
-        backendDoneRef.current = true;
-        if (!pendingNavRef.current) pendingNavRef.current = '/map';
-        tryNavigate();
-      }
-    }, 90_000);
 
     // Store photo count for Magic Windows
     sessionStorage.setItem("mapit_photo_count", String(files.length));
@@ -425,24 +411,35 @@ export default function Create() {
     { url: "/manus-storage/sample-drone-demo-2_59b2e515.jpg", name: "sample-drone-demo-2.jpg" },
   ];
 
-  const [sampleLoading, setSampleLoading] = useState(false);
-
   const loadSampleSite = useCallback(async () => {
-    if (sampleLoading) return;
-    setSampleLoading(true);
     try {
-      const { projectId, trialExpiresAt } = await createSampleProject.mutateAsync();
-      // Seed sessionStorage so ProjectMap flies to the correct GPS location
+      const fileObjects: File[] = await Promise.all(
+        SAMPLE_DRONE_URLS.map(async ({ url, name }) => {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}`);
+          const blob = await res.blob();
+          return new File([blob], name, { type: "image/jpeg" });
+        })
+      );
+      // Confirm to the user that sample images are loaded
+      toast("Sample images loaded — mapping now.", {
+        duration: 2500,
+        position: "bottom-center",
+        style: {
+          background: "rgba(10,10,10,0.92)",
+          color: "rgba(255,255,255,0.75)",
+          border: "1px solid rgba(16,185,129,0.30)",
+          borderRadius: "14px",
+          fontSize: "13px",
+          fontFamily: "Inter, sans-serif",
+          backdropFilter: "blur(20px)",
+        },
+      });
+      // Pre-seed GPS coords from the real EXIF so the map flies to the correct location
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      sessionStorage.setItem("mapit_project_id", String(projectId));
-      sessionStorage.setItem("mapit_project_name", "Gail Wilson Ext — Sample");
-      sessionStorage.setItem("mapit_trial_expires", trialExpiresAt);
-      sessionStorage.setItem("mapit_photo_count", "2");
-      // Navigate instantly to the real project map
-      setLocation(`/project/${projectId}/map`);
+      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
     } catch {
-      setSampleLoading(false);
-      toast("Could not create sample project. Please try uploading your own file.", {
+      toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
         position: "bottom-center",
         style: {
@@ -455,7 +452,7 @@ export default function Create() {
         },
       });
     }
-  }, [sampleLoading, createSampleProject, setLocation]);
+  }, [processFiles]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -636,16 +633,15 @@ export default function Create() {
                   JPG · PNG · TIFF · MP4 · MOV
                 </p>
               </div>
-              {/* Sample project bypass — instant, no upload */}
+              {/* Sample Site injector — inside the card, below file types */}
               <div className="mt-6 text-center pointer-events-auto">
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadSampleSite(); }}
-                  disabled={sampleLoading}
-                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-slate-400 hover:text-white text-sm transition-colors duration-200 cursor-pointer underline-offset-4 hover:underline"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {sampleLoading ? "Loading sample project..." : "Don't have a drone photo? Try a sample project."}
+                  No image ready? Let us drop one in for you.
                 </button>
               </div>
               <input
