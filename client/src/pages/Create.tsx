@@ -144,6 +144,12 @@ export default function Create() {
   const processingTimerDoneRef = useRef(false);
   const pendingNavRef = useRef<string | null>(null);
 
+  // ── Name-first gate: files wait here until user names the project ──────────
+  const pendingFilesRef = useRef<File[] | null>(null);
+  const [showNameOverlay, setShowNameOverlay] = useState(false);
+  const [projectNameInput, setProjectNameInput] = useState("");
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+
   const initProject = trpc.onboarding.initProject.useMutation();
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
@@ -167,6 +173,13 @@ export default function Create() {
     };
   }, []);
 
+  // Focus name input whenever the overlay opens
+  useEffect(() => {
+    if (showNameOverlay) {
+      setTimeout(() => nameInputRef.current?.focus(), 80);
+    }
+  }, [showNameOverlay]);
+
   // When both backend and 5s processing timer are done → navigate
   const tryNavigate = useCallback(() => {
     if (backendDoneRef.current && processingTimerDoneRef.current && pendingNavRef.current) {
@@ -177,6 +190,19 @@ export default function Create() {
       setTimeout(() => { window.location.href = dest; }, 1000);
     }
   }, [setLocation]);
+
+  // Called when user submits the name overlay — writes sessionStorage then fires processFiles
+  const handleNameSubmit = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmed = projectNameInput.trim();
+    if (!trimmed || !pendingFilesRef.current) return;
+    sessionStorage.setItem("mapit_project_name", trimmed);
+    const files = pendingFilesRef.current;
+    pendingFilesRef.current = null;
+    setShowNameOverlay(false);
+    setProjectNameInput("");
+    processFiles(files);
+  }, [projectNameInput, processFiles]);
 
   const triggerShake = useCallback(() => {
     setShake(true);
@@ -388,14 +414,21 @@ export default function Create() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) processFiles(files);
-    else setStage("idle");
-  }, [processFiles]);
+    if (files.length > 0) {
+      pendingFilesRef.current = files;
+      setShowNameOverlay(true);
+    } else {
+      setStage("idle");
+    }
+  }, []);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) processFiles(files);
-  }, [processFiles]);
+    if (files.length > 0) {
+      pendingFilesRef.current = files;
+      setShowNameOverlay(true);
+    }
+  }, []);
 
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
@@ -413,8 +446,9 @@ export default function Create() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const file = new File([blob], SAMPLE_IMAGE_NAME, { type: "image/jpeg" });
-      // Hand off to the real upload handler — identical to drag-and-drop
-      processFiles([file]);
+      // Gate through the name overlay — same path as a real drop
+      pendingFilesRef.current = [file];
+      setShowNameOverlay(true);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
@@ -439,7 +473,7 @@ export default function Create() {
       {!isActive && (
         <div className="absolute top-8 left-8 z-20">
           <button
-            onClick={() => setLocation("/name")}
+            onClick={() => setLocation("/welcome")}
             className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -634,6 +668,67 @@ export default function Create() {
 
         </AnimatePresence>
       </div>
+
+      {/* ── Name Overlay ── appears after file is selected, before processFiles fires ── */}
+      <AnimatePresence>
+        {showNameOverlay && (
+          <motion.div
+            key="name-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0A]"
+          >
+            {/* Back — dismiss overlay, return to drop zone */}
+            <div className="absolute top-8 left-8">
+              <button
+                onClick={() => { setShowNameOverlay(false); setProjectNameInput(""); pendingFilesRef.current = null; }}
+                className="flex items-center gap-2 text-white/30 hover:text-white transition-colors duration-200 text-sm font-medium"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+
+            {/* Massive metallic hook */}
+            <h1
+              className="font-bold tracking-tighter text-transparent bg-clip-text select-none mb-6"
+              style={{
+                fontSize: "clamp(4rem, 15vw, 10rem)",
+                backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #6b7280 100%)",
+                lineHeight: 1,
+              }}
+            >
+              Name
+            </h1>
+
+            <p className="text-white/60 text-lg mb-12 text-center">
+              Name your project to get started.
+            </p>
+
+            <form onSubmit={handleNameSubmit} className="w-full max-w-md px-6">
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={projectNameInput}
+                onChange={(e) => setProjectNameInput(e.target.value)}
+                placeholder="e.g. Main St Utility Survey"
+                maxLength={255}
+                className="w-full bg-transparent border-0 border-b border-white/30 focus:border-white/80 outline-none text-white text-xl text-center pb-3 placeholder:text-white/20 transition-colors duration-200"
+                style={{ caretColor: "#10b981" }}
+              />
+              <button type="submit" className="hidden" />
+            </form>
+
+            {projectNameInput.trim().length > 0 && (
+              <p className="mt-6 text-white/30 text-sm animate-pulse">
+                Press Enter to continue →
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

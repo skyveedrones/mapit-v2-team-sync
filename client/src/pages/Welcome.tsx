@@ -46,7 +46,7 @@ export default function Welcome() {
   const [showContactModal, setShowContactModal] = useState(false);
 
   const handleGetStarted = () => {
-    setLocation("/name");
+    setLocation("/create");
   };
 
   return (
