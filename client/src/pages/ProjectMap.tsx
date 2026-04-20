@@ -131,6 +131,7 @@ export default function ProjectMap() {
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
   const [showSidebarHint, setShowSidebarHint] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
+  const [showReportHint, setShowReportHint] = useState(false);
   const discoveryDismissed = useRef(false);
 
   const dismissDiscoveryHint = () => {
@@ -156,6 +157,7 @@ export default function ProjectMap() {
       dismissDiscoveryHint();
       setShowSidebarHint(false);
       setShowExportHint(false);
+      setShowReportHint(false);
     }
   }, [showPrestige]);
 
@@ -958,7 +960,77 @@ export default function ProjectMap() {
                 <button
                   onClick={() => {
                     setShowExportHint(false);
-                    setTimeout(() => setShowConversionModal(true), 10000);
+                    mapCompRef.current?.closeSidebar();
+                    setTimeout(() => setShowReportHint(true), 650);
+                  }}
+                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
+                >
+                  Got it →
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Magic Window #4 ─ Custom Report ────────────────────────────────── */}
+      <AnimatePresence>
+        {showReportHint && (
+          <motion.div
+            key="report-hint"
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
+          >
+            {/* Ambient glow */}
+            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
+            <div
+              className="relative overflow-hidden"
+              style={{
+                width: "300px",
+                background: "rgba(6,6,6,0.88)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Emerald accent bar top */}
+              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
+              <div className="px-6 pt-5 pb-6">
+                {/* Step indicator */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Project Report</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
+                    <div className="flex gap-1">
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
+                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Headline */}
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
+                  One report.<br />Every stakeholder.
+                </p>
+                {/* Body */}
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
+                  Generate a branded PDF report from this map — GPS coordinates, flight data, and overlays included. Share it with your team, city planners, or clients in one tap.
+                </p>
+                {/* CTA */}
+                <button
+                  onClick={() => {
+                    setShowReportHint(false);
+                    setTimeout(() => setShowConversionModal(true), 20000);
                   }}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
