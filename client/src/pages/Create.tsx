@@ -148,6 +148,7 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
   const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
+  const registerSampleMedia = trpc.onboarding.registerSampleMedia.useMutation();
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
@@ -400,45 +401,48 @@ export default function Create() {
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
 
-  // ── Sample Site Injector ────────────────────────────────────────────────────
-  // Two GPS-tagged DJI shots from Gail Wilson Ext project — ~400m apart for visible flight path
-  // Image 1: 740 Intersection (32.774690, -96.468027) — project 60001
-  // Image 2: NW corner (32.776574, -96.463762) — project 1470001
-  const SAMPLE_GPS_FALLBACK = { lat: 32.7746896, lng: -96.4680275 };
-
-  const SAMPLE_DRONE_URLS = [
-    { url: "/manus-storage/sample-drone-demo-1_9404a7ff.jpg", name: "sample-drone-demo-1.jpg" },
-    { url: "/manus-storage/sample-drone-demo-2_59b2e515.jpg", name: "sample-drone-demo-2.jpg" },
-  ];
-
+  // ── Sample Demo Bypass ──────────────────────────────────────────────────────
+  // Shows the full upload UI animation, then does a fast DB-only write (no S3 upload).
+  // Navigates to the real project map — identical experience to a real upload.
   const loadSampleSite = useCallback(async () => {
+    // 1. Start the full processing animation immediately — identical to real upload
+    backendDoneRef.current = false;
+    processingTimerDoneRef.current = false;
+    pendingNavRef.current = null;
+    setStage("uploading");
+    setProcessingLabel(0);
+
+    // 2. After 3s uploading animation, switch to processing labels
+    uploadTimerRef.current = setTimeout(() => {
+      setStage("processing");
+      setProcessingLabel(0);
+      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 2000);
+      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 4000);
+      // 5s minimum processing screen
+      processingTimerRef.current = setTimeout(() => {
+        processingTimerDoneRef.current = true;
+        tryNavigate();
+      }, 5500);
+    }, 3000);
+
+    // 3. Fire the fast DB-only mutation in parallel
     try {
-      const fileObjects: File[] = await Promise.all(
-        SAMPLE_DRONE_URLS.map(async ({ url, name }) => {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}`);
-          const blob = await res.blob();
-          return new File([blob], name, { type: "image/jpeg" });
-        })
-      );
-      // Confirm to the user that sample images are loaded
-      toast("Sample images loaded — mapping now.", {
-        duration: 2500,
-        position: "bottom-center",
-        style: {
-          background: "rgba(10,10,10,0.92)",
-          color: "rgba(255,255,255,0.75)",
-          border: "1px solid rgba(16,185,129,0.30)",
-          borderRadius: "14px",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
-          backdropFilter: "blur(20px)",
-        },
-      });
-      // Pre-seed GPS coords from the real EXIF so the map flies to the correct location
-      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
-    } catch {
+      const result = await registerSampleMedia.mutateAsync();
+      const flyCoords = result.flyCoords;
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(flyCoords));
+      pendingNavRef.current = `/project/${result.projectId}/map`;
+      backendDoneRef.current = true;
+      tryNavigate();
+    } catch (err) {
+      console.error("[Sample] registerSampleMedia failed:", err);
+      // Reset UI so user can try again
+      setStage("idle");
+      backendDoneRef.current = false;
+      processingTimerDoneRef.current = false;
+      if (uploadTimerRef.current) clearTimeout(uploadTimerRef.current);
+      if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
+      if (labelTimer1Ref.current) clearTimeout(labelTimer1Ref.current);
+      if (labelTimer2Ref.current) clearTimeout(labelTimer2Ref.current);
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
         position: "bottom-center",
@@ -452,7 +456,7 @@ export default function Create() {
         },
       });
     }
-  }, [processFiles]);
+  }, [registerSampleMedia, tryNavigate]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (

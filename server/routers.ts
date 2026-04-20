@@ -5521,6 +5521,74 @@ export const appRouter = router({
         });
         return { success: true, mediaId: mediaItem.id, url, thumbnailUrl };
       }),
+
+    /**
+     * Sample demo bypass — creates a project + 2 pre-known media rows with real GPS.
+     * No file upload, no storagePut. Instant DB-only write.
+     */
+    registerSampleMedia: publicProcedure
+      .mutation(async () => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+
+        const SAMPLE = [
+          {
+            filename: 'Gail-Wilson-Ext-740-Intersection.jpg',
+            url: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-1_9404a7ff.jpg',
+            latitude: '32.774689556',
+            longitude: '-96.468027472',
+            altitude: '34.26',
+            capturedAt: '2025-10-23T13:03:28.000Z',
+            cameraMake: 'DJI',
+            cameraModel: 'FC9113',
+          },
+          {
+            filename: 'Gail-Wilson-Ext-NW-Corner.jpg',
+            url: 'https://files.manuscdn.com/file/5b9e1f20-1c5e-11f0-b7f0-325861b3b4e5/sample-drone-demo-2_59b2e515.jpg',
+            latitude: '32.776574472',
+            longitude: '-96.463761556',
+            altitude: '108.26',
+            capturedAt: '2025-10-23T13:03:28.000Z',
+            cameraMake: 'DJI',
+            cameraModel: 'FC9113',
+          },
+        ];
+
+        const location = `${SAMPLE[0].latitude}, ${SAMPLE[0].longitude}`;
+        const project = await createProject({
+          userId: ownerUser.id,
+          name: 'Sample Drone Project',
+          description: 'Demo project',
+          location,
+          status: 'active',
+        });
+
+        for (const img of SAMPLE) {
+          const fileKey = `projects/${project.id}/media/sample-${nanoid(8)}-${img.filename}`;
+          await createMedia({
+            projectId: project.id,
+            userId: ownerUser.id,
+            filename: img.filename,
+            fileKey,
+            url: img.url,
+            mimeType: 'image/jpeg',
+            fileSize: 0,
+            mediaType: 'photo',
+            latitude: img.latitude,
+            longitude: img.longitude,
+            altitude: img.altitude,
+            capturedAt: img.capturedAt,
+            cameraMake: img.cameraMake,
+            cameraModel: img.cameraModel,
+            thumbnailUrl: img.url,
+          });
+        }
+
+        return {
+          projectId: project.id,
+          flyCoords: { lat: parseFloat(SAMPLE[0].latitude), lng: parseFloat(SAMPLE[0].longitude) },
+        };
+      }),
   }),
   // ─── Municipal Lead Capture ───
   municipal: router({
