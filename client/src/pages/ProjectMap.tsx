@@ -495,19 +495,24 @@ export default function ProjectMap() {
           onFlybyStop={() => {
             // Recenter on GPS marker after flyby ends (1.8s smooth glide)
             const map = mapCompRef.current?.getMap();
-            if (!map) return;
-            // Use same 3-tier GPS fallback as fly-in
-            let center: [number, number] | null = null;
-            const sessionCoords = getSessionCoords();
-            if (sessionCoords) center = sessionCoords;
-            if (!center && (project as any)?.location) center = parseLocation((project as any).location);
-            if (!center && geotaggedMedia.length > 0) {
-              const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
-              const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
-              center = [avgLng, avgLat];
+            if (map) {
+              // Use same 3-tier GPS fallback as fly-in
+              let center: [number, number] | null = null;
+              const sessionCoords = getSessionCoords();
+              if (sessionCoords) center = sessionCoords;
+              if (!center && (project as any)?.location) center = parseLocation((project as any).location);
+              if (!center && geotaggedMedia.length > 0) {
+                const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+                const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+                center = [avgLng, avgLat];
+              }
+              if (center) {
+                map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 1800, essential: true });
+              }
             }
-            if (!center) return;
-            map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 1800, essential: true });
+            // Flyby complete — show conversion modal after re-center settles
+            setShowConversionProgress(false);
+            setTimeout(() => setShowConversionModal(true), 2200);
           }}
         />
       )}
@@ -1112,6 +1117,7 @@ export default function ProjectMap() {
                   <button
                     onClick={() => {
                       setShowFlybyHint(false);
+                      setShowConversionProgress(true);
                       setTimeout(() => flybyRef.current?.startFlyby(), 300);
                     }}
                     className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
