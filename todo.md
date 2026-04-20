@@ -2749,3 +2749,8 @@
 - [x] Add storage proxy (server/_core/storageProxy.ts) for /manus-storage/* paths
 - [x] Register storage proxy in server/_core/index.ts
 - [x] Ensure sample image has no watermark applied
+
+## Demo Drop Page Enhancements
+- [x] Add second GPS-tagged image from project 60001 to show flight path
+- [x] Resize both sample images to ~2-3MB for faster mobile loading
+- [x] Add "Sample image loaded" toast when user clicks "No image ready?"

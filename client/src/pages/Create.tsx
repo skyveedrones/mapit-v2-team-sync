@@ -401,21 +401,43 @@ export default function Create() {
   const isDragging = stage === "dragging";
 
   // ── Sample Site Injector ────────────────────────────────────────────────────
-  // Gail Wilson Ext 740 Intersection — real DJI drone shot with embedded GPS
+  // Two GPS-tagged DJI shots from Gail Wilson Ext project — ~400m apart for visible flight path
+  // Image 1: 740 Intersection (32.774690, -96.468027) — project 60001
+  // Image 2: NW corner (32.776574, -96.463762) — project 1470001
   const SAMPLE_GPS_FALLBACK = { lat: 32.7746896, lng: -96.4680275 };
 
-  // Single GPS-tagged JPG from project 60001 (no watermark, full EXIF)
-  const SAMPLE_DRONE_URL = "/manus-storage/sample-drone-demo_c8d7cb07.jpg";
+  const SAMPLE_DRONE_URLS = [
+    { url: "/manus-storage/sample-drone-demo-1_9404a7ff.jpg", name: "sample-drone-demo-1.jpg" },
+    { url: "/manus-storage/sample-drone-demo-2_59b2e515.jpg", name: "sample-drone-demo-2.jpg" },
+  ];
 
   const loadSampleSite = useCallback(async () => {
     try {
-      const res = await fetch(SAMPLE_DRONE_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const fileObj = new File([blob], "sample-drone-demo.jpg", { type: "image/jpeg" });
+      const fileObjects: File[] = await Promise.all(
+        SAMPLE_DRONE_URLS.map(async ({ url, name }) => {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}`);
+          const blob = await res.blob();
+          return new File([blob], name, { type: "image/jpeg" });
+        })
+      );
+      // Confirm to the user that sample images are loaded
+      toast("Sample images loaded — mapping now.", {
+        duration: 2500,
+        position: "bottom-center",
+        style: {
+          background: "rgba(10,10,10,0.92)",
+          color: "rgba(255,255,255,0.75)",
+          border: "1px solid rgba(16,185,129,0.30)",
+          borderRadius: "14px",
+          fontSize: "13px",
+          fontFamily: "Inter, sans-serif",
+          backdropFilter: "blur(20px)",
+        },
+      });
       // Pre-seed GPS coords from the real EXIF so the map flies to the correct location
       sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS_FALLBACK));
-      processFiles([fileObj], SAMPLE_GPS_FALLBACK);
+      processFiles(fileObjects, SAMPLE_GPS_FALLBACK);
     } catch {
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
