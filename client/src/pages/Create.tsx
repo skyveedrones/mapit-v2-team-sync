@@ -126,7 +126,13 @@ async function extractGPS(files: File[]): Promise<{ lat: number; lng: number } |
   return null;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ── Sample images (stored in S3, served via /manus-storage/ proxy) ──────────────
+const SAMPLE_IMAGES = [
+  { key: "sample-drone/gail-wilson-740-intersection.jpg", name: "DJI_0001.JPG" },
+  { key: "sample-drone/gail-wilson-nw-corner.jpg",        name: "DJI_0002.JPG" },
+];
+
+// ── Component ──────────────────────────────────────────────────────────────────────────────
 export default function Create() {
   const [, setLocation] = useLocation();
   const [stage, setStage] = useState<Stage>("idle");
@@ -401,57 +407,23 @@ export default function Create() {
   const isDragging = stage === "dragging";
 
   // ── Sample Demo Bypass ──────────────────────────────────────────────────────
-  // Shows the full upload UI animation, then does a fast DB-only write (no S3 upload).
-  // Navigates to the real project map — identical experience to a real upload.
+  // Fetches two pre-stored GPS-tagged JPGs via the /manus-storage/ proxy,
+  // converts them to File blobs, and feeds them into processFiles() directly —
+  // IDENTICAL to a user drag-and-drop. No new backend routes. No special handling.
   const loadSampleSite = useCallback(async () => {
-    // 1. Start the full processing animation immediately — identical to real upload
-    backendDoneRef.current = false;
-    processingTimerDoneRef.current = false;
-    pendingNavRef.current = null;
-    setStage("uploading");
-    setProcessingLabel(0);
-
-    // 2. After 3s uploading animation, switch to processing labels
-    uploadTimerRef.current = setTimeout(() => {
-      setStage("processing");
-      setProcessingLabel(0);
-      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 2000);
-      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 4000);
-      // 5s minimum processing screen
-      processingTimerRef.current = setTimeout(() => {
-        processingTimerDoneRef.current = true;
-        tryNavigate();
-      }, 5500);
-    }, 3000);
-
-    // 3. Fire the fast DB-only mutation in parallel (direct fetch — bypasses tRPC client init)
     try {
-      const resp = await fetch('/api/trpc/onboarding.registerSampleMedia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({}),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      // tRPC + superjson wraps data as: { result: { data: { json: { ... } } } }
-      const result = json?.result?.data?.json ?? json?.result?.data ?? json;
-      const flyCoords = result.flyCoords;
-      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(flyCoords));
-      sessionStorage.setItem("mapit_project_id", String(result.projectId));
-      pendingNavRef.current = `/project/${result.projectId}/map`;
-      backendDoneRef.current = true;
-      tryNavigate();
+      const files: File[] = await Promise.all(
+        SAMPLE_IMAGES.map(async ({ key, name }) => {
+          const resp = await fetch(`/manus-storage/${key}`, { credentials: "include" });
+          if (!resp.ok) throw new Error(`Failed to fetch sample image: ${resp.status}`);
+          const blob = await resp.blob();
+          return new File([blob], name, { type: "image/jpeg" });
+        })
+      );
+      // Hand off to the real upload handler — identical to drag-and-drop
+      processFiles(files);
     } catch (err) {
-      console.error("[Sample] registerSampleMedia failed:", err);
-      // Reset UI so user can try again
-      setStage("idle");
-      backendDoneRef.current = false;
-      processingTimerDoneRef.current = false;
-      if (uploadTimerRef.current) clearTimeout(uploadTimerRef.current);
-      if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
-      if (labelTimer1Ref.current) clearTimeout(labelTimer1Ref.current);
-      if (labelTimer2Ref.current) clearTimeout(labelTimer2Ref.current);
+      console.error("[Sample] fetch failed:", err);
       toast("Could not load sample. Please try uploading your own file.", {
         duration: 3000,
         position: "bottom-center",
@@ -465,7 +437,7 @@ export default function Create() {
         },
       });
     }
-  }, [tryNavigate]);
+  }, [processFiles]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
