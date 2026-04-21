@@ -72,6 +72,10 @@ export default function ProjectMap() {
 
   // Demo tour state
   const [showTour, setShowTour] = useState(isDemoProject);
+  // While true, sidebar manual toggle is disabled — tour automation has full control
+  const [isTourActive, setIsTourActive] = useState(isDemoProject);
+  // Fades in after the tour fully completes
+  const [showTrialPill, setShowTrialPill] = useState(false);
 
   // ── Prestige modal (onboarding funnel) ───────────────────────────────
   const isOnboardingProject =
@@ -381,6 +385,7 @@ export default function ProjectMap() {
           projectLocation={(project as any)?.location}
           initialMedia={geotaggedMedia.length > 0 ? geotaggedMedia : undefined}
           onSidebarOpen={() => setShowSidebarHint(false)}
+          isTourActive={isTourActive}
         />
       </div>
 
@@ -521,11 +526,33 @@ export default function ProjectMap() {
               onLaunchFlyby={() => {
                 setTimeout(() => flybyRef.current?.startFlyby(), 400);
               }}
-              onClose={() => setShowTour(false)}
+              onClose={() => {
+                setShowTour(false);
+                setIsTourActive(false);
+                // Small delay so the tour card fully fades before the pill appears
+                setTimeout(() => setShowTrialPill(true), 400);
+              }}
             />
           </div>
         </div>
       )}
+
+      {/* ── Post-Tour Trial Pill ── */}
+      <AnimatePresence>
+        {isDemoProject && showTrialPill && (
+          <motion.a
+            key="trial-pill"
+            href="/register"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-white text-black font-semibold text-sm px-6 py-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors select-none whitespace-nowrap"
+          >
+            Start My Free Trial
+          </motion.a>
+        )}
+      </AnimatePresence>
 
       {/* ── Prestige Modal (Onboarding Funnel) ── */}
       <AnimatePresence>

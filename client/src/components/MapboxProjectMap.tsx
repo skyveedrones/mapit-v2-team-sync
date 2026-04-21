@@ -99,6 +99,8 @@ interface MapboxProjectMapProps {
   projectLocation?: string | null;
   /** Called when the sidebar is opened — used by parent to dismiss onboarding guides */
   onSidebarOpen?: () => void;
+  /** When true, disables manual sidebar toggle — tour automation retains full control */
+  isTourActive?: boolean;
   /** When true, hides the 'Project Map' card header (used in full-screen ProjectMap page) */
   hideHeader?: boolean;
   /** When true, user is unauthenticated/demo — lock Add Map Overlay and Show Flight Path with premium popups */
@@ -167,6 +169,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       onSidebarOpen,
       isGuestUser = false,
       hideHeader = false,
+      isTourActive = false,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -1586,7 +1589,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 <>
                   {!sidebarOpen && !snapMode && !measureMode && (
                     <button
-                      onClick={() => { setSidebarOpen(true); onSidebarOpen?.(); }}
+                      onClick={() => { if (isTourActive) return; setSidebarOpen(true); onSidebarOpen?.(); }}
                       className="absolute right-0 top-14 z-[100] bg-slate-900/90 backdrop-blur-md text-white p-2 rounded-l-md border-l border-t border-b border-slate-700 hover:bg-slate-800 transition-colors"
                       title="Open Overlay Manager"
                     >
@@ -1600,7 +1603,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                     }`}
                   >
                     <button
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => { if (isTourActive) return; setSidebarOpen(false); }}
                       className="absolute -left-10 top-4 bg-slate-900 p-2 rounded-l-md border-l border-t border-b border-slate-700 hover:bg-slate-800 transition-colors"
                     >
                       <ChevronRight size={20} />
@@ -1613,7 +1616,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           <Layers className="text-blue-400" size={20} />
                           <h2 className="font-bold text-lg tracking-tight">Overlay Manager</h2>
                         </div>
-                        <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-800 rounded">
+                        <button onClick={() => { if (isTourActive) return; setSidebarOpen(false); }} className="p-1 hover:bg-slate-800 rounded">
                           <X size={16} />
                         </button>
                       </div>
