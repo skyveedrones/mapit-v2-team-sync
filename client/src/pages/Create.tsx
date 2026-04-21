@@ -28,6 +28,16 @@ type Stage = "idle" | "dragging" | "uploading" | "processing" | "done";
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — matches backend
 const LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // 20 MB — route through chunked upload
 
+/** Read an entire File as base64 string using FileReader (faster than btoa loop) */
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 /** Read a slice of a File as base64 string */
 function readChunkAsBase64(file: File, start: number, end: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -146,6 +156,7 @@ export default function Create() {
 
   // ── Name-first gate: files wait here until user names the project ──────────
   const pendingFilesRef = useRef<File[] | null>(null);
+  const pendingFallbackCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const [showNameOverlay, setShowNameOverlay] = useState(false);
   const [projectNameInput, setProjectNameInput] = useState("");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
@@ -286,8 +297,9 @@ export default function Create() {
     // ── Step 5a: UPLOADING (3s) ────────────────────────────────────────────
     setStage("uploading");
 
-    // Start GPS extraction in parallel
-    const coordsPromise = extractGPS(files);
+    // Skip GPS extraction for sample files — coords are pre-known via fallbackCoords
+    const isSample = sessionStorage.getItem("mapit_is_sample") === "1";
+    const coordsPromise = isSample ? Promise.resolve(null) : extractGPS(files);
 
     // After 3s → PROCESSING
     uploadTimerRef.current = setTimeout(() => {
@@ -306,7 +318,7 @@ export default function Create() {
       }, 3000);
     }, 3000);
 
-    // ── Backend work (runs in parallel with timers) ────────────────────────
+    // ── Backend work (runs in parallel with timers) ────────────────────
     const coords = await coordsPromise;
 
     const effectiveCoords = coords ?? fallbackCoords ?? null;
@@ -340,9 +352,11 @@ export default function Create() {
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
       // Upload media — chunked for large files/video, single-shot for small images
+      // Exception: sample file always uses single-shot path (GPS is pre-known, chunked adds ~30s)
+      const isSampleFile = sessionStorage.getItem("mapit_is_sample") === "1";
       for (const file of files) {
         try {
-          const isLarge = file.size > LARGE_FILE_THRESHOLD || file.type.startsWith("video/");
+          const isLarge = !isSampleFile && (file.size > LARGE_FILE_THRESHOLD || file.type.startsWith("video/"));
           if (isLarge) {
             // ── Chunked path ──
             const telemetry = await extractDroneTelemetry(file);
@@ -378,11 +392,8 @@ export default function Create() {
               clientMd5,
             });
           } else {
-            // ── Single-shot path (small images) ──
-            const arrayBuffer = await file.arrayBuffer();
-            const base64 = btoa(
-              new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
-            );
+            // ── Single-shot path (small images + sample file) ──
+            const base64 = await readFileAsBase64(file);
             await uploadMedia.mutateAsync({
               projectId: result.projectId,
               filename: file.name,
@@ -419,10 +430,12 @@ export default function Create() {
     if (!trimmed || !pendingFilesRef.current || !processFilesRef.current) return;
     sessionStorage.setItem("mapit_project_name", trimmed);
     const files = pendingFilesRef.current;
+    const fallbackCoords = pendingFallbackCoordsRef.current;
     pendingFilesRef.current = null;
+    pendingFallbackCoordsRef.current = null;
     setShowNameOverlay(false);
     setProjectNameInput("");
-    processFilesRef.current(files);
+    processFilesRef.current(files, fallbackCoords ?? undefined);
   }, [projectNameInput]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -467,6 +480,9 @@ export default function Create() {
   const SAMPLE_IMAGE_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/projects/60001/photos/1776523788588-hwb0wit72/final";
   const SAMPLE_IMAGE_NAME = "Gail Wilson Ext 740 Intersection Image.JPG";
 
+  // Known GPS for the sample image (pre-extracted, avoids 25MB EXIF parse on client)
+  const SAMPLE_GPS = { lat: 32.774690, lng: -96.468027 };
+
   const loadSampleSite = useCallback(async () => {
     try {
       const res = await fetch(SAMPLE_IMAGE_URL);
@@ -475,8 +491,11 @@ export default function Create() {
       const file = new File([blob], SAMPLE_IMAGE_NAME, { type: "image/jpeg" });
       // Mark this session as a sample-photo demo (used by map for onboarding UX)
       sessionStorage.setItem("mapit_is_sample", "1");
+      // Pre-store GPS so extractGPS is skipped and map flies to correct location
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS));
       // Gate through the name overlay — same path as a real drop
       pendingFilesRef.current = [file];
+      pendingFallbackCoordsRef.current = SAMPLE_GPS;
       setPendingFileCount(1);
       setProjectNameInput(smartDefaultName([file]));
       setShowNameOverlay(true);
