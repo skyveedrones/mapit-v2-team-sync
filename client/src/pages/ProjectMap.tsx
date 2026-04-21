@@ -107,9 +107,8 @@ export default function ProjectMap() {
   const [triumphHasFired, setTriumphHasFired] = useState(false);
 
   // Fire Prestige modal 30 seconds after map is ready (onboarding flow only)
-  // Skip for sample users — they have their own 4-window + 20s conversion path
   useEffect(() => {
-    if (!isOnboardingProject || !mapReady || isSampleProject) return;
+    if (!isOnboardingProject || !mapReady) return;
     const timer = setTimeout(() => {
       setShowPrestige(true);
       setTriumphHasFired(true);
@@ -119,10 +118,7 @@ export default function ProjectMap() {
 
   // ── Conversion Modal (60s after Prestige dismiss) ──────────────────────────
   const [showConversionModal, setShowConversionModal] = useState(false);
-  const [conversionDismissed, setConversionDismissed] = useState(false);
-  const [showConversionProgress, setShowConversionProgress] = useState(false);
   const conversionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const conversionReshowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startConversionTimer = () => {
     if (conversionTimerRef.current) clearTimeout(conversionTimerRef.current);
@@ -130,12 +126,9 @@ export default function ProjectMap() {
   };
 
   // ── Magic Window #1 (Marker/Discovery Hint) ─────────────────────────────
-  // Appears 3s after mapReady, stays until user clicks "Got it →".
+  // Appears 3s after mapReady, auto-dismisses after 10s, then Window #2 appears.
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
   const [showSidebarHint, setShowSidebarHint] = useState(false);
-  const [showExportHint, setShowExportHint] = useState(false);
-  const [showReportHint, setShowReportHint] = useState(false);
-  const [showFlybyHint, setShowFlybyHint] = useState(false);
   const discoveryDismissed = useRef(false);
 
   const dismissDiscoveryHint = () => {
@@ -144,25 +137,33 @@ export default function ProjectMap() {
   };
 
   // Show Window #1 3s after map is ready (onboarding only);
-  // stays until user clicks "Got it" — no auto-dismiss
+  // auto-dismiss after 10s, then show Window #2 after fade completes (~500ms)
   useEffect(() => {
     if (!isOnboardingProject || !mapReady) return;
     const showTimer = setTimeout(() => {
       if (!discoveryDismissed.current) {
         setShowDiscoveryHint(true);
+        // Auto-dismiss Window #1 after 10s, then show Window #2
+        const autoTimer = setTimeout(() => {
+          setShowDiscoveryHint(false);
+          // Wait for fade-out transition (~500ms) before showing Window #2
+          setTimeout(() => {
+            setShowSidebarHint(true);
+            // Auto-dismiss Window #2 after 15s
+            setTimeout(() => setShowSidebarHint(false), 15000);
+          }, 600);
+        }, 10000);
+        return () => clearTimeout(autoTimer);
       }
     }, 3000);
     return () => clearTimeout(showTimer);
   }, [isOnboardingProject, mapReady]);
 
-  // Dismiss all hint windows when Prestige modal fires
+  // Dismiss both hints when Prestige modal fires
   useEffect(() => {
     if (showPrestige) {
       dismissDiscoveryHint();
       setShowSidebarHint(false);
-      setShowExportHint(false);
-      setShowReportHint(false);
-      setShowFlybyHint(false);
     }
   }, [showPrestige]);
 
@@ -495,24 +496,19 @@ export default function ProjectMap() {
           onFlybyStop={() => {
             // Recenter on GPS marker after flyby ends (1.8s smooth glide)
             const map = mapCompRef.current?.getMap();
-            if (map) {
-              // Use same 3-tier GPS fallback as fly-in
-              let center: [number, number] | null = null;
-              const sessionCoords = getSessionCoords();
-              if (sessionCoords) center = sessionCoords;
-              if (!center && (project as any)?.location) center = parseLocation((project as any).location);
-              if (!center && geotaggedMedia.length > 0) {
-                const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
-                const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
-                center = [avgLng, avgLat];
-              }
-              if (center) {
-                map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 1800, essential: true });
-              }
+            if (!map) return;
+            // Use same 3-tier GPS fallback as fly-in
+            let center: [number, number] | null = null;
+            const sessionCoords = getSessionCoords();
+            if (sessionCoords) center = sessionCoords;
+            if (!center && (project as any)?.location) center = parseLocation((project as any).location);
+            if (!center && geotaggedMedia.length > 0) {
+              const avgLat = geotaggedMedia.reduce((s, m) => s + m.latitude, 0) / geotaggedMedia.length;
+              const avgLng = geotaggedMedia.reduce((s, m) => s + m.longitude, 0) / geotaggedMedia.length;
+              center = [avgLng, avgLat];
             }
-            // Flyby complete — show conversion modal after re-center settles
-            setShowConversionProgress(false);
-            setTimeout(() => setShowConversionModal(true), 2200);
+            if (!center) return;
+            map.flyTo({ center, zoom: 18, pitch: 45, bearing: 0, duration: 1800, essential: true });
           }}
         />
       )}
@@ -735,47 +731,18 @@ export default function ProjectMap() {
                 Now that you've explored our vision, it's time to build yours. Start your complimentary 14-day trial to preserve your data and unlock the complete platform.
               </motion.p>
               {/* CTA */}
-              {!conversionDismissed ? (
-                <>
-                  <button
-                    onClick={() => { window.location.href = getLoginUrl(); }}
-                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
-                  >
-                    Start Your Trial
-                  </button>
-                  <button
-                    onClick={() => {
-                      setConversionDismissed(true);
-                      if (conversionReshowRef.current) clearTimeout(conversionReshowRef.current);
-                      conversionReshowRef.current = setTimeout(() => {
-                        setConversionDismissed(false);
-                        setShowConversionModal(true);
-                      }, 60000);
-                    }}
-                    className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
-                  >
-                    Maybe later
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-4 mt-2">
-                  <p className="text-white/40 text-sm leading-relaxed">
-                    Your demo map is still here whenever you're ready.
-                  </p>
-                  <button
-                    onClick={() => { window.location.href = getLoginUrl(); }}
-                    className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
-                  >
-                    Start Your Trial
-                  </button>
-                  <a
-                    href="/welcome"
-                    className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-4"
-                  >
-                    Return to MAPIT homepage
-                  </a>
-                </div>
-              )}
+              <button
+                onClick={() => { window.location.href = getLoginUrl(); }}
+                className="w-full bg-white text-black font-bold text-base py-4 rounded-full transition-all duration-200 hover:bg-gray-100"
+              >
+                Start Your Trial
+              </button>
+              <button
+                onClick={() => setShowConversionModal(false)}
+                className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
+              >
+                Maybe later
+              </button>
             </motion.div>
           </motion.div>
         )}
@@ -790,10 +757,8 @@ export default function ProjectMap() {
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
+            className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
-            {/* Ambient glow */}
-            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
             <div
               className="relative overflow-hidden"
               style={{
@@ -821,7 +786,6 @@ export default function ProjectMap() {
                     <div className="flex gap-1">
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                     </div>
                   </div>
                 </div>
@@ -835,14 +799,7 @@ export default function ProjectMap() {
                 </p>
                 {/* CTA */}
                 <button
-                  onClick={() => {
-                    dismissDiscoveryHint();
-                    // Auto-open sidebar so Window #2's instruction is immediately actionable
-                    setTimeout(() => {
-                      mapCompRef.current?.openSidebar();
-                      setShowSidebarHint(true);
-                    }, 650);
-                  }}
+                  onClick={dismissDiscoveryHint}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
@@ -865,8 +822,6 @@ export default function ProjectMap() {
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-[160px] left-6 z-[9990] pointer-events-auto"
           >
-            {/* Ambient glow */}
-            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
             <div
               className="relative overflow-hidden"
               style={{
@@ -893,7 +848,6 @@ export default function ProjectMap() {
                     <div className="flex gap-1">
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                       <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
                     </div>
                   </div>
                 </div>
@@ -907,10 +861,7 @@ export default function ProjectMap() {
                 </p>
                 {/* CTA */}
                 <button
-                  onClick={() => {
-                    setShowSidebarHint(false);
-                    setTimeout(() => setShowExportHint(true), 650);
-                  }}
+                  onClick={() => setShowSidebarHint(false)}
                   className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
                   style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
                 >
@@ -922,254 +873,7 @@ export default function ProjectMap() {
         )}
       </AnimatePresence>
 
-       {/* ── Magic Window #3 ─ Export Ready ────────────────────────────────── */}
-      <AnimatePresence>
-        {showExportHint && (
-          <motion.div
-            key="export-hint"
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
-          >
-            {/* Ambient glow */}
-            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
-            <div
-              className="relative overflow-hidden"
-              style={{
-                width: "300px",
-                background: "rgba(6,6,6,0.88)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                borderRadius: "12px",
-                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              {/* Emerald accent bar top */}
-              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
-              <div className="px-6 pt-5 pb-6">
-                {/* Step indicator */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Export Ready</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
-                    <div className="flex gap-1">
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
-                    </div>
-                  </div>
-                </div>
-                {/* Headline */}
-                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
-                  Your data.<br />Any format.
-                </p>
-                {/* Body */}
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
-                  Export as KML, CSV, GeoJSON, or GPX — ready for any GIS platform, CAD tool, or field crew app.
-                </p>
-                {/* CTA */}
-                <button
-                  onClick={() => {
-                    setShowExportHint(false);
-                    mapCompRef.current?.closeSidebar();
-                    setTimeout(() => setShowReportHint(true), 650);
-                  }}
-                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
-                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
-                >
-                  Got it →
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Magic Window #4 ─ Custom Report ────────────────────────────────── */}
-      <AnimatePresence>
-        {showReportHint && (
-          <motion.div
-            key="report-hint"
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
-          >
-            {/* Ambient glow */}
-            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
-            <div
-              className="relative overflow-hidden"
-              style={{
-                width: "300px",
-                background: "rgba(6,6,6,0.88)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                borderRadius: "12px",
-                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              {/* Emerald accent bar top */}
-              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
-              <div className="px-6 pt-5 pb-6">
-                {/* Step indicator */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Project Report</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
-                    <div className="flex gap-1">
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
-                    </div>
-                  </div>
-                </div>
-                {/* Headline */}
-                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
-                  One report.<br />Every stakeholder.
-                </p>
-                {/* Body */}
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
-                  Generate a branded PDF report from this map — GPS coordinates, flight data, and overlays included. Share it with your team, city planners, or clients in one tap.
-                </p>
-                {/* CTA */}
-                <button
-                  onClick={() => {
-                    setShowReportHint(false);
-                    setTimeout(() => setShowFlybyHint(true), 650);
-                  }}
-                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
-                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
-                >
-                  Got it →
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Magic Window #5 ─ Flyby Feature ───────────────────────────────── */}
-      <AnimatePresence>
-        {showFlybyHint && (
-          <motion.div
-            key="flyby-hint"
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-[120px] left-6 z-[9990] pointer-events-auto"
-          >
-            {/* Ambient glow */}
-            <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)", filter: "blur(20px)", pointerEvents: "none", zIndex: -1 }} />
-            <div
-              className="relative overflow-hidden"
-              style={{
-                width: "300px",
-                background: "rgba(6,6,6,0.88)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                borderRadius: "12px",
-                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
-                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-              }}
-            >
-              {/* Emerald accent bar top */}
-              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
-              <div className="px-6 pt-5 pb-6">
-                {/* Step indicator */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Cinematic Flyby</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Step</span>
-                    <div className="flex gap-1">
-                      {[0,1,2,3].map(i => (
-                        <span key={i} style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(255,255,255,0.15)", display: "inline-block" }} />
-                      ))}
-                      <span style={{ width: "18px", height: "3px", borderRadius: "2px", background: "rgba(52,211,153,0.9)", display: "inline-block" }} />
-                    </div>
-                  </div>
-                </div>
-                {/* Headline */}
-                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
-                  Fly your site.<br />Like a director.
-                </p>
-                {/* Body */}
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
-                  Hit Flyby in the sidebar to launch a cinematic orbit around your GPS points — perfect for client presentations and stakeholder walkthroughs.
-                </p>
-                {/* CTA */}
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => {
-                      setShowFlybyHint(false);
-                      setShowConversionProgress(true);
-                      setTimeout(() => flybyRef.current?.startFlyby(), 300);
-                    }}
-                    className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
-                    style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
-                  >
-                    Launch Flyby →
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowFlybyHint(false);
-                      setShowConversionProgress(true);
-                      setTimeout(() => {
-                        setShowConversionProgress(false);
-                        setShowConversionModal(true);
-                      }, 20000);
-                    }}
-                    className="transition-opacity duration-200 hover:opacity-80"
-                    style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.02em" }}
-                  >
-                    Skip
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Conversion Progress Bar (20s countdown after Window 4 Got it) ─────── */}
-      <AnimatePresence>
-        {showConversionProgress && (
-          <motion.div
-            key="conversion-progress"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-0 left-0 right-0 z-[9970] pointer-events-none"
-          >
-            <div style={{ height: "2px", background: "rgba(255,255,255,0.06)", width: "100%" }}>
-              <motion.div
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 20, ease: "linear" }}
-                style={{ height: "100%", background: "linear-gradient(90deg, rgba(16,185,129,0.6) 0%, rgba(52,211,153,1) 50%, rgba(16,185,129,0.6) 100%)" }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Sample Onboarding: Glassmorphic Controls Legend ─────────────────── */}
+      {/* ── Sample Onboarding: Glassmorphic Controls Legend ───────────────────── */}
       <AnimatePresence>
         {showControlsLegend && (
           <motion.div
@@ -1182,74 +886,51 @@ export default function ProjectMap() {
             style={{ transform: "translateX(-50%)" }}
           >
             <div
-              className="flex flex-col items-center gap-3 px-7 py-4 rounded-2xl"
+              className="flex items-center gap-5 px-6 py-4 rounded-2xl"
               style={{
-                background: "rgba(8,8,8,0.65)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.04) inset",
+                background: "rgba(10,10,10,0.55)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
                 fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-                minWidth: "280px",
               }}
             >
-              {/* Jobsian header */}
-              <div className="flex items-center justify-between w-full">
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: "rgba(255,255,255,0.55)",
-                  }}
-                >
-                  Control your view
-                </span>
-                <button
-                  onClick={() => setShowControlsLegend(false)}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-white/25 hover:text-white/55 transition-colors flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  aria-label="Dismiss controls legend"
-                >
-                  <span style={{ fontSize: "9px", lineHeight: 1 }}>✕</span>
-                </button>
+              {/* Pan */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <path d="M10 2v16M2 10h16M6 6l-4 4 4 4M14 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Pan</span>
               </div>
-              {/* Divider */}
-              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
-              {/* Controls row */}
-              <div className="flex items-center gap-6">
-                {/* Pan */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
-                    <path d="M10 2v16M2 10h16M6 6l-4 4 4 4M14 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Drag</span>
-                </div>
-                <div className="w-px h-8" style={{ background: "rgba(255,255,255,0.08)" }} />
-                {/* Zoom */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
-                    <rect x="7" y="2" width="6" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M10 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Zoom</span>
-                </div>
-                <div className="w-px h-8" style={{ background: "rgba(255,255,255,0.08)" }} />
-                {/* Right-drag Tilt */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/65">
-                    <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <circle cx="10" cy="10" r="2" fill="currentColor" fillOpacity="0.55"/>
-                  </svg>
-                  <span className="text-white/35 text-[10px] tracking-widest uppercase">Right-drag</span>
-                </div>
+              <div className="w-px h-8 bg-white/10" />
+              {/* Zoom */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <rect x="7" y="2" width="6" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M10 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Scroll</span>
               </div>
-              {/* Sub-label */}
-              <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.03em", marginTop: "-4px" }}>
-                with your mouse
-              </p>
+              <div className="w-px h-8 bg-white/10" />
+              {/* Tilt & Rotate */}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/70">
+                  <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.4"/>
+                  <circle cx="10" cy="10" r="2" fill="currentColor" fillOpacity="0.6"/>
+                </svg>
+                <span className="text-white/45 text-[10px] tracking-wide uppercase">Tilt</span>
+              </div>
+              {/* Dismiss */}
+              <button
+                onClick={() => setShowControlsLegend(false)}
+                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                aria-label="Dismiss controls legend"
+              >
+                <span style={{ fontSize: "9px", lineHeight: 1 }}>✕</span>
+              </button>
             </div>
           </motion.div>
         )}

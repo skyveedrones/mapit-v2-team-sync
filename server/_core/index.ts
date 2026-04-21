@@ -19,6 +19,7 @@ import overlayUploadRouter from "../routes/overlay-upload";
 import documentUploadRouter from "../routes/document-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
 import createOverlayRouter from "../routes/create-overlay";
+import { registerStorageProxy } from "./storageProxy";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -68,6 +69,9 @@ async function startServer() {
   app.use(express.json({ limit: "1500mb" }));
   app.use(express.urlencoded({ limit: "1500mb", extended: true }));
   
+  // Storage proxy — serves /manus-storage/{key} via signed Forge URLs
+  registerStorageProxy(app);
+
   // Create overlay route — auto-add converted overlays to projects (AFTER express.json)
   app.use("/api", createOverlayRouter);
   

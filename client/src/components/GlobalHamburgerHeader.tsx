@@ -76,7 +76,7 @@ export const GlobalHamburgerHeader = () => {
           <img
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/mapit-logo-transparent_db1582d4.webp"
             alt="MAPIT"
-            className="h-10 w-auto object-contain select-none"
+            className="h-8 w-auto object-contain select-none"
             draggable={false}
           />
         </div>

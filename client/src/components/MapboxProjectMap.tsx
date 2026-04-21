@@ -83,7 +83,6 @@ export interface MapboxProjectMapHandle {
   isMapLoaded: () => boolean;
   startEditingOverlay: (overlay: OverlayData) => void;
   openSidebar: () => void;
-  closeSidebar: () => void;
 }
 
 interface MapboxProjectMapProps {
@@ -311,7 +310,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         setTimeout(() => handleStartEditRef.current(overlay), 120);
       },
       openSidebar: () => setSidebarOpen(true),
-      closeSidebar: () => setSidebarOpen(false),
     }), [mapLoaded]);
 
     // ── Initialize Mapbox map ─────────────────────────────────────────

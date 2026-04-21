@@ -2741,3 +2741,9 @@
 - [ ] Update Create.tsx to route files >20MB through chunked path, small files stay on single-upload path
 - [ ] Accept .mp4 / video files in demo flow via chunked upload with EXIF extracted client-side
 - [x] Move 'No image ready? Load a sample site.' link inside the dropzone card, below the file types text, centered with mt-6 spacing
+
+## Sample Upload Optimizations
+- [ ] Compress sample image to ~3-5 MB and upload to CDN
+- [ ] Add server-side sample project clone endpoint (eliminates upload entirely)
+- [ ] Update frontend loadSampleSite to use clone path
+- [ ] Add visible upload progress indicator for sample path

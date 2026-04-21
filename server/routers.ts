@@ -5521,6 +5521,54 @@ export const appRouter = router({
         });
         return { success: true, mediaId: mediaItem.id, url, thumbnailUrl };
       }),
+    /**
+     * Instant sample project clone.
+     * Creates a new trial project and a media record pointing to the pre-compressed
+     * sample image — no file download or upload required.
+     */
+    cloneSampleProject: publicProcedure
+      .input(z.object({ name: z.string().min(1).max(255) }))
+      .mutation(async ({ input }) => {
+        const { ENV } = await import('./_core/env');
+        const ownerUser = await getOrCreateGuestUser(ENV.ownerOpenId);
+        // Known GPS for the sample image (Gail Wilson Ext 740 Intersection, Dallas TX)
+        const SAMPLE_LAT = 32.774690;
+        const SAMPLE_LNG = -96.468027;
+        // Permanent CloudFront URL from master sample project 60001 (no expiry)
+        const SAMPLE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/projects/60001/photos/1776523788588-hwb0wit72/final';
+        const SAMPLE_THUMBNAIL_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/projects/60001/thumbnails/YnwYvmSVVQfG-thumb.jpg';
+        const SAMPLE_FILE_KEY = 'projects/60001/photos/1776523788588-hwb0wit72/final';
+        const SAMPLE_FILENAME = 'Gail Wilson Ext 740 Intersection Image.JPG';
+        const SAMPLE_FILE_SIZE = 24900000; // original file size
+        // Create the trial project
+        const project = await createProject({
+          userId: ownerUser.id,
+          name: input.name,
+          description: 'Created via onboarding funnel — trial project',
+          location: `${SAMPLE_LAT.toFixed(6)}, ${SAMPLE_LNG.toFixed(6)}`,
+          status: 'active',
+        });
+        // Create media record pointing to the pre-compressed sample image (no upload needed)
+        await createMedia({
+          projectId: project.id,
+          userId: ownerUser.id,
+          filename: SAMPLE_FILENAME,
+          fileKey: SAMPLE_FILE_KEY,
+          url: SAMPLE_URL,
+          mimeType: 'image/jpeg',
+          fileSize: SAMPLE_FILE_SIZE,
+          mediaType: 'photo',
+          latitude: String(SAMPLE_LAT),
+          longitude: String(SAMPLE_LNG),
+          altitude: null,
+          capturedAt: null,
+          cameraMake: 'DJI',
+          cameraModel: null,
+          thumbnailUrl: SAMPLE_THUMBNAIL_URL,
+        });
+        const trialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        return { projectId: project.id, trialExpiresAt };
+      }),
   }),
   // ─── Municipal Lead Capture ───
   municipal: router({

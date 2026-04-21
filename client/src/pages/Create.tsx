@@ -28,16 +28,6 @@ type Stage = "idle" | "dragging" | "uploading" | "processing" | "done";
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — matches backend
 const LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // 20 MB — route through chunked upload
 
-/** Read an entire File as base64 string using FileReader (faster than btoa loop) */
-function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 /** Read a slice of a File as base64 string */
 function readChunkAsBase64(file: File, start: number, end: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -156,7 +146,6 @@ export default function Create() {
 
   // ── Name-first gate: files wait here until user names the project ──────────
   const pendingFilesRef = useRef<File[] | null>(null);
-  const pendingFallbackCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const [showNameOverlay, setShowNameOverlay] = useState(false);
   const [projectNameInput, setProjectNameInput] = useState("");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
@@ -185,12 +174,15 @@ export default function Create() {
   const uploadMedia = trpc.onboarding.uploadMedia.useMutation();
   const uploadChunk = trpc.onboarding.uploadChunk.useMutation();
   const finalizeChunkedUpload = trpc.onboarding.finalizeChunkedUpload.useMutation();
+  const cloneSampleProject = trpc.onboarding.cloneSampleProject.useMutation();
+  // When true, handleNameSubmit calls cloneSampleProject instead of processFiles
+  const isSampleCloneRef = useRef(false);
   const utils = trpc.useUtils();
 
   const PROCESSING_LABELS = [
     "Extracting GPS Telemetry & Metadata...",
     "Generating High-Precision 3D Mesh...",
-    "Optimizing Georeferenced\nDigital Twin...",
+    "Optimizing Georeferenced Digital Twin...",
   ];
 
   // Cleanup timers on unmount
@@ -297,28 +289,27 @@ export default function Create() {
     // ── Step 5a: UPLOADING (3s) ────────────────────────────────────────────
     setStage("uploading");
 
-    // Skip GPS extraction for sample files — coords are pre-known via fallbackCoords
-    const isSample = sessionStorage.getItem("mapit_is_sample") === "1";
-    const coordsPromise = isSample ? Promise.resolve(null) : extractGPS(files);
+    // Start GPS extraction in parallel
+    const coordsPromise = extractGPS(files);
 
-    // After 3s → PROCESSING
+    // After 6s → PROCESSING
     uploadTimerRef.current = setTimeout(() => {
       setStage("processing");
       console.log('[MAPIT Analytics] Demo_Started');
 
-      // Processing must show for at least 3s
-      // Reset and cycle processing labels: 0s→label0, 2s→label1, 4s→label2
+      // Processing must show for at least 5s
+      // Reset and cycle processing labels: 0s→label0, 4s→label1, 7s→label2
       setProcessingLabel(0);
-      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 2000);
-      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 4000);
+      labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 4000);
+      labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 7000);
 
       processingTimerRef.current = setTimeout(() => {
         processingTimerDoneRef.current = true;
         tryNavigate();
-      }, 3000);
-    }, 3000);
+      }, 5000);
+    }, 6000);
 
-    // ── Backend work (runs in parallel with timers) ────────────────────
+    // ── Backend work (runs in parallel with timers) ────────────────────────
     const coords = await coordsPromise;
 
     const effectiveCoords = coords ?? fallbackCoords ?? null;
@@ -352,11 +343,9 @@ export default function Create() {
       sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
 
       // Upload media — chunked for large files/video, single-shot for small images
-      // Exception: sample file always uses single-shot path (GPS is pre-known, chunked adds ~30s)
-      const isSampleFile = sessionStorage.getItem("mapit_is_sample") === "1";
       for (const file of files) {
         try {
-          const isLarge = !isSampleFile && (file.size > LARGE_FILE_THRESHOLD || file.type.startsWith("video/"));
+          const isLarge = file.size > LARGE_FILE_THRESHOLD || file.type.startsWith("video/");
           if (isLarge) {
             // ── Chunked path ──
             const telemetry = await extractDroneTelemetry(file);
@@ -392,8 +381,11 @@ export default function Create() {
               clientMd5,
             });
           } else {
-            // ── Single-shot path (small images + sample file) ──
-            const base64 = await readFileAsBase64(file);
+            // ── Single-shot path (small images) ──
+            const arrayBuffer = await file.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(arrayBuffer).reduce((d, b) => d + String.fromCharCode(b), "")
+            );
             await uploadMedia.mutateAsync({
               projectId: result.projectId,
               filename: file.name,
@@ -427,16 +419,63 @@ export default function Create() {
   const handleNameSubmit = useCallback((e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmed = projectNameInput.trim();
-    if (!trimmed || !pendingFilesRef.current || !processFilesRef.current) return;
+    if (!trimmed) return;
     sessionStorage.setItem("mapit_project_name", trimmed);
-    const files = pendingFilesRef.current;
-    const fallbackCoords = pendingFallbackCoordsRef.current;
-    pendingFilesRef.current = null;
-    pendingFallbackCoordsRef.current = null;
     setShowNameOverlay(false);
     setProjectNameInput("");
-    processFilesRef.current(files, fallbackCoords ?? undefined);
-  }, [projectNameInput]);
+    // ── Sample clone path: instant DB clone, no file upload ──
+    if (isSampleCloneRef.current) {
+      isSampleCloneRef.current = false;
+      pendingFilesRef.current = null;
+      const SAMPLE_LAT = 32.774690;
+      const SAMPLE_LNG = -96.468027;
+      sessionStorage.setItem("mapit_is_sample", "1");
+      sessionStorage.setItem("mapit_fly_coords", JSON.stringify({ lat: SAMPLE_LAT, lng: SAMPLE_LNG }));
+      sessionStorage.setItem("mapit_photo_count", "1");
+      // Reset nav refs
+      backendDoneRef.current = false;
+      processingTimerDoneRef.current = false;
+      pendingNavRef.current = null;
+      setStage("uploading");
+      // Animate a quick progress fill to show activity
+      setChunkProgress(10);
+      setTimeout(() => setChunkProgress(60), 300);
+      setTimeout(() => setChunkProgress(90), 700);
+      // Start processing timer (same 5s minimum as normal flow)
+      uploadTimerRef.current = setTimeout(() => {
+        setStage("processing");
+        setProcessingLabel(0);
+        labelTimer1Ref.current = setTimeout(() => setProcessingLabel(1), 4000);
+        labelTimer2Ref.current = setTimeout(() => setProcessingLabel(2), 7000);
+        processingTimerRef.current = setTimeout(() => {
+          processingTimerDoneRef.current = true;
+          tryNavigate();
+        }, 5000);
+      }, 1200);
+      // Backend: instant clone
+      cloneSampleProject.mutateAsync({ name: trimmed })
+        .then((result) => {
+          setChunkProgress(100);
+          sessionStorage.setItem("mapit_project_id", String(result.projectId));
+          sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
+          pendingNavRef.current = `/project/${result.projectId}/map`;
+          backendDoneRef.current = true;
+          tryNavigate();
+        })
+        .catch((err) => {
+          console.error("[Create] cloneSampleProject failed:", err);
+          pendingNavRef.current = "/map";
+          backendDoneRef.current = true;
+          tryNavigate();
+        });
+      return;
+    }
+    // ── Normal upload path ──
+    if (!pendingFilesRef.current || !processFilesRef.current) return;
+    const files = pendingFilesRef.current;
+    pendingFilesRef.current = null;
+    processFilesRef.current(files);
+  }, [projectNameInput, cloneSampleProject, tryNavigate]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -473,47 +512,18 @@ export default function Create() {
   const isActive = stage === "uploading" || stage === "processing" || stage === "done";
   const isDragging = stage === "dragging";
 
-  // ── Sample Site Injector ──────────────────────────────────────────────────────
-  // Fetches the real GPS-tagged sample photo from project 60001 and injects it
-  // into processFiles() exactly as if the user had dropped their own file.
-  // The backend cannot distinguish this from a normal upload.
-  const SAMPLE_IMAGE_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/projects/60001/photos/1776523788588-hwb0wit72/final";
-  const SAMPLE_IMAGE_NAME = "Gail Wilson Ext 740 Intersection Image.JPG";
+  // ── Sample Site Injector ────────────────────────────────────────────
+  // Instant path: sets isSampleCloneRef so handleNameSubmit calls cloneSampleProject
+  // instead of processFiles. No file download or upload needed.
+  const SAMPLE_DEFAULT_NAME = "Gail Wilson Ext 740 Intersection";
 
-  // Known GPS for the sample image (pre-extracted, avoids 25MB EXIF parse on client)
-  const SAMPLE_GPS = { lat: 32.774690, lng: -96.468027 };
-
-  const loadSampleSite = useCallback(async () => {
-    try {
-      const res = await fetch(SAMPLE_IMAGE_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const file = new File([blob], SAMPLE_IMAGE_NAME, { type: "image/jpeg" });
-      // Mark this session as a sample-photo demo (used by map for onboarding UX)
-      sessionStorage.setItem("mapit_is_sample", "1");
-      // Pre-store GPS so extractGPS is skipped and map flies to correct location
-      sessionStorage.setItem("mapit_fly_coords", JSON.stringify(SAMPLE_GPS));
-      // Gate through the name overlay — same path as a real drop
-      pendingFilesRef.current = [file];
-      pendingFallbackCoordsRef.current = SAMPLE_GPS;
-      setPendingFileCount(1);
-      setProjectNameInput(smartDefaultName([file]));
-      setShowNameOverlay(true);
-    } catch {
-      toast("Could not load sample. Please try uploading your own file.", {
-        duration: 3000,
-        position: "bottom-center",
-        style: {
-          background: "rgba(10,10,10,0.92)",
-          color: "rgba(255,255,255,0.75)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          borderRadius: "14px",
-          fontSize: "13px",
-          fontFamily: "Inter, sans-serif",
-        },
-      });
-    }
-  }, [processFiles, smartDefaultName]);
+  const loadSampleSite = useCallback(() => {
+    isSampleCloneRef.current = true;
+    pendingFilesRef.current = []; // not used but satisfies the non-null check
+    setPendingFileCount(1);
+    setProjectNameInput(SAMPLE_DEFAULT_NAME);
+    setShowNameOverlay(true);
+  }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -605,7 +615,7 @@ export default function Create() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.5 }}
-                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl whitespace-pre-line"
+                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl"
                   style={{
                     fontSize: "clamp(1.5rem,4vw,2.5rem)",
                     backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
