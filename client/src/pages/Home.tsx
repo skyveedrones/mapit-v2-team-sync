@@ -166,32 +166,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── PILOT PERSONA ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="max-w-4xl mx-auto text-center"
-        >
-          <motion.h2
-            variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-8"
-          >
-            Share a link.
-            <br />
-            Not a hard drive.
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            className="text-xl sm:text-2xl text-gray-300 leading-relaxed max-w-2xl mx-auto"
-          >
-            Stop crushing client inboxes with 4GB GeoTIFFs. MAPit is your elegant delivery portal. Look professional, deliver instantly, and win more contracts.
-          </motion.p>
-        </motion.div>
-      </section>
-
       {/* ─── MUNICIPAL GATEWAY ─── */}
       <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
@@ -224,6 +198,41 @@ export default function Home() {
                 className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
               >
                 Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── PILOT PERSONA ─── */}
+      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-8"
+            >
+              Elevate your deliverables.
+            </motion.h2>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12"
+            >
+              Stop handing clients massive raw files they can't open. MAPIT transforms your drone data into a professional, interactive handoff portal. Look like an enterprise agency and win the bid, every time.
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="mt-12">
+              <a
+                href="/providers"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                Explore Pilot Solutions <ChevronRight className="w-4 h-4" />
               </a>
             </motion.div>
           </motion.div>
