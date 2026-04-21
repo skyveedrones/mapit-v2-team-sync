@@ -27,6 +27,8 @@ const Footer = ({ onContactClick }: FooterProps) => {
           <div>
             <h4 className="text-white font-bold mb-6">Platform</h4>
             <ul className="space-y-4 text-sm text-gray-400">
+              <li><a href="/providers" className="hover:text-[#00ff88] transition-colors">For Pilots</a></li>
+              <li><a href="/municipal" className="hover:text-[#00ff88] transition-colors">Municipal</a></li>
               <li><a href="/pricing" className="hover:text-[#00ff88] transition-colors">Pricing Plans</a></li>
             </ul>
           </div>

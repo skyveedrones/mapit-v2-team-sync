@@ -38,6 +38,7 @@ export const GlobalHamburgerHeader = () => {
 
   const isHowItWorksActive = false;
   const isMunicipalActive = location === "/municipal";
+  const isProvidersActive = location === "/providers";
   const isPricingActive = location === "/pricing";
 
   if (isAppRoute) {
@@ -94,6 +95,11 @@ export const GlobalHamburgerHeader = () => {
             label="Municipal"
             onClick={() => setLocation("/municipal")}
             isActive={isMunicipalActive}
+          />
+          <NavLink
+            label="For Pilots"
+            onClick={() => setLocation("/providers")}
+            isActive={isProvidersActive}
           />
           <NavLink
             label="Pricing"

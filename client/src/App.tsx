@@ -38,6 +38,7 @@ import Create from "./pages/Create";
 import MapView from "./pages/MapView";
 import OnboardingPilot from "./pages/OnboardingPilot";
 import Municipal from "./pages/Municipal";
+import Providers from "./pages/Providers";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -315,6 +316,9 @@ function Router() {
       
       {/* Municipal Solutions */}
       <Route path="/municipal" component={Municipal} />
+      
+      {/* Service Providers — For Pilots */}
+      <Route path="/providers" component={Providers} />
       
       {/* Referral Program */}
       <Route path="/referral" component={Referral} />
