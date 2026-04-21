@@ -31,8 +31,8 @@ const featureCards = [
     body: "Interactive maps built from your footage, ready to share in minutes.",
   },
   {
-    headline: "Your data. Any format.",
-    body: "KML, CSV, GeoJSON, GPX — one click, every tool.",
+    headline: "Native to your workflow.",
+    body: "Seamless GIS and CAD integration. Export to Esri/ArcGIS or CAD in one click. KML, CSV, GeoJSON, and GPX—supported natively.",
   },
   {
     headline: "Plans meet reality.",
@@ -166,6 +166,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── PILOT PERSONA ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <motion.h2
+            variants={fadeInUp}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-8"
+          >
+            Share a link.
+            <br />
+            Not a hard drive.
+          </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            className="text-xl sm:text-2xl text-gray-300 leading-relaxed max-w-2xl mx-auto"
+          >
+            Stop crushing client inboxes with 4GB GeoTIFFs. MAPit is your elegant delivery portal. Look professional, deliver instantly, and win more contracts.
+          </motion.p>
+        </motion.div>
+      </section>
+
       {/* ─── MUNICIPAL GATEWAY ─── */}
       <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
@@ -237,8 +263,8 @@ export default function Home() {
                   Universal.
                 </p>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Your data. Any format.</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">KML, CSV, GeoJSON, GPX — one click, every tool.</p>
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Seamless GIS and CAD integration. Export to Esri/ArcGIS or CAD in one click. KML, CSV, GeoJSON, and GPX—supported natively.</p>
                 </div>
               </motion.div>
 
@@ -258,6 +284,40 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
+      </section>
+
+      {/* ─── GOVERNMENT TRUST SIGNALS ─── */}
+      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.div
+            variants={fadeInUp}
+            className="inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-sm"
+          >
+            <svg className="w-4 h-4 text-white/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" />
+            </svg>
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/40">Trust &amp; Security</span>
+          </motion.div>
+
+          <motion.h2
+            variants={fadeInUp}
+            className="text-4xl sm:text-5xl font-bold tracking-tight mb-6"
+          >
+            Built for the public trust.
+          </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            className="text-lg text-gray-400 leading-relaxed max-w-xl mx-auto"
+          >
+            Secure cloud infrastructure. Immutable audit trails for capital projects. Public Works ready.
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* ─── SINGLE CTA ─── */}
