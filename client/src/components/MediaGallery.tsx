@@ -1375,24 +1375,23 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                     Download
                   </a>
                 </Button>
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    if (selectedMedia && selectedMedia.highResUrl) {
-                      setSelectedMedia({
-                        ...selectedMedia,
-                        url: selectedMedia.highResUrl,
-                      });
-                      toast.success("Viewing high-resolution version");
-                    } else {
-                      toast.info("No high-resolution version uploaded yet");
-                    }
-                  }}
-                  disabled={!selectedMedia?.highResUrl}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  View High Resolution
-                </Button>
+                {selectedMedia?.highResUrl && (
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      if (selectedMedia && selectedMedia.highResUrl) {
+                        setSelectedMedia({
+                          ...selectedMedia,
+                          url: selectedMedia.highResUrl,
+                        });
+                        toast.success("Viewing high-resolution version");
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    View High Resolution
+                  </Button>
+                )}
 
                 <Button variant="outline" onClick={() => setSelectedMedia(null)}>
                   Close
