@@ -2921,6 +2921,17 @@ export async function getUserRoleForProject(projectId: number, userId: number): 
     throw new Error("Database connection failed");
   }
 
+  // Check global role — webmaster and admin have access to all projects
+  const userRecord = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (userRecord.length > 0 && (userRecord[0].role === 'webmaster' || userRecord[0].role === 'admin')) {
+    return 'owner'; // Global admins have full permissions
+  }
+
   // First, check if user is the project owner
   const ownerProject = await db
     .select()
