@@ -50,6 +50,7 @@ import {
   updateMediaGPS,
   updateMediaNotes,
   updateMediaPriority,
+  updateMediaIssueTracking,
   updateMediaFilename,
   updateProject,
   userHasFlightAccess,
@@ -479,7 +480,7 @@ export const appRouter = router({
       .input(z.object({
         userId: z.number(),
         name: z.string().min(1),
-        role: z.enum(['user', 'admin', 'webmaster', 'client']),
+        role: z.enum(['user', 'admin', 'webmaster', 'client', 'project_mgr']),
         companyName: z.string().nullable().optional(),
         department: z.string().nullable().optional(),
         phone: z.string().nullable().optional(),
@@ -2149,12 +2150,76 @@ export const appRouter = router({
           });
         }
 
-        // Update the media item with new priority
+          // Update the media item with new priority
         const updated = await updateMediaPriority(input.id, input.priority);
-
         return updated;
       }),
-
+    // Update issue tracking fields
+    updateIssueTracking: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          issueReportType: z.enum(['none', 'corrective', 'punchlist']).optional(),
+          issueStatus: z.enum(['open', 'corrected']).optional(),
+          issueWorkflowAction: z.enum(['none', 'assign', 'review', 'rejected', 'accepted']).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Media not found' });
+        }
+        const userRole = await getUserRoleForProject(mediaItem.projectId, ctx.user.id);
+        if (!userRole) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
+        }
+        if (userRole === 'viewer') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Viewers cannot modify media' });
+        }
+        // Only project_mgr, admin, and webmaster can set accepted/rejected workflow actions
+        const isPrivileged = ctx.user.role === 'project_mgr' || ctx.user.role === 'admin' || ctx.user.role === 'webmaster';
+        if (!isPrivileged && (input.issueWorkflowAction === 'accepted' || input.issueWorkflowAction === 'rejected')) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Project Managers can accept or reject items' });
+        }
+        const updated = await updateMediaIssueTracking(input.id, {
+          issueReportType: input.issueReportType,
+          issueStatus: input.issueStatus,
+          issueWorkflowAction: input.issueWorkflowAction,
+        });
+        // Write audit log entry
+        await createAuditLogEntry({
+          action: 'update_issue_tracking',
+          entityType: 'media',
+          entityId: input.id,
+          entityName: mediaItem.filename,
+          userId: ctx.user.id,
+          userName: ctx.user.name || undefined,
+          details: JSON.stringify({
+            issueReportType: input.issueReportType,
+            issueStatus: input.issueStatus,
+            issueWorkflowAction: input.issueWorkflowAction,
+          }),
+        });
+        return updated;
+      }),
+    // Get audit history for a media item
+    getHistory: protectedProcedure
+      .input(z.object({ id: z.number(), limit: z.number().min(1).max(100).optional() }))
+      .query(async ({ ctx, input }) => {
+        const mediaItem = await getMediaById(input.id, ctx.user.id);
+        if (!mediaItem) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Media not found' });
+        }
+        const userRole = await getUserRoleForProject(mediaItem.projectId, ctx.user.id);
+        if (!userRole) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No access to this project' });
+        }
+        return listAuditLog({
+          entityType: 'media',
+          entityId: input.id,
+          limit: input.limit ?? 50,
+        });
+      }),
     // Rename a media file
     rename: protectedProcedure
       .input(
@@ -3698,6 +3763,74 @@ export const appRouter = router({
         }
       }),
 
+    // Generate issue report (corrective actions or punchlist)
+    generateIssueReport: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        issueReportType: z.enum(['corrective', 'punchlist']),
+        resolution: z.enum(['high', 'medium', 'low', 'thumbnail']).default('medium'),
+        mapStyle: z.enum(['roadmap', 'satellite', 'hybrid', 'terrain']).default('hybrid'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectWithAccess(input.projectId, ctx.user.id);
+        if (!project) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found or you don\'t have access' });
+        }
+        const allMedia = await getProjectMediaWithAccess(input.projectId, ctx.user.id) || [];
+        const filteredMedia = allMedia.filter(m => m.issueReportType === input.issueReportType);
+        if (filteredMedia.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `No media tagged as "${input.issueReportType}" found in this project`,
+          });
+        }
+        const { generateReportHtml, processImageForReport, fetchStaticMapAsDataUrl, RESOLUTION_PRESETS } = await import('./report');
+        const mediaImages: { filename: string; dataUrl: string; media: typeof filteredMedia[0] }[] = [];
+        for (const media of filteredMedia) {
+          if (media.mediaType !== 'photo') continue;
+          try {
+            const response = await fetch(media.url);
+            if (!response.ok) continue;
+            const imageBuffer = Buffer.from(await response.arrayBuffer());
+            const processedBuffer = await processImageForReport(imageBuffer, input.resolution);
+            const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
+            mediaImages.push({ filename: media.filename, dataUrl, media });
+          } catch (e) {
+            console.warn('[IssueReport] Failed to process image:', (e as Error).message);
+          }
+        }
+        const mapImageDataUrl = await fetchStaticMapAsDataUrl(filteredMedia, {
+          mapStyle: input.mapStyle,
+          showFlightPath: true,
+        });
+        // Load MAPIT logo
+        let skyVeeLogoDataUrl: string | undefined;
+        try {
+          const fs = await import('fs/promises');
+          const path = await import('path');
+          const logoPath = path.join(process.cwd(), 'client', 'public', 'images', 'mapit-logo-header.png');
+          const logoBuffer = await fs.readFile(logoPath);
+          skyVeeLogoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        } catch { /* logo optional */ }
+        const reportTitle = input.issueReportType === 'corrective'
+          ? 'Project Corrective Actions Report'
+          : 'Project Punchlist Report';
+        const html = generateReportHtml(
+          { ...project, name: `${project.name} — ${reportTitle}` },
+          mediaImages,
+          mapImageDataUrl,
+          new Date(),
+          project.logoUrl || undefined,
+          skyVeeLogoDataUrl
+        );
+        return {
+          html,
+          projectName: project.name,
+          reportTitle,
+          mediaCount: mediaImages.length,
+          resolution: RESOLUTION_PRESETS[input.resolution].label,
+        };
+      }),
     // Generate flight report
     generateFlight: protectedProcedure
       .input(z.object({

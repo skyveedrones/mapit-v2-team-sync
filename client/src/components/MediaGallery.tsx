@@ -337,7 +337,8 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   const userClientRole = useClientRole();
   const isViewer = userClientRole === 'viewer';
   const canEditMedia = canEdit && !isViewer;
-  const canDeleteMedia = canEditMedia && (authUser?.role === 'admin' || authUser?.role === 'webmaster');
+  const canDeleteMedia = canEditMedia && (authUser?.role === 'admin' || authUser?.role === 'webmaster' || authUser?.role === 'project_mgr');
+  const isPrivilegedUser = authUser?.role === 'admin' || authUser?.role === 'webmaster' || authUser?.role === 'project_mgr';
   const canDownloadMedia = canDownload(userClientRole);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -379,7 +380,6 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
   });
   const updatePriorityMutation = trpc.media.updatePriority.useMutation({
     onSuccess: () => {
-      // Invalidate media list to refresh data
       utils.media.list.invalidate({ projectId, flightId });
       toast.success("Priority updated");
     },
@@ -387,8 +387,22 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
       toast.error(`Failed to update priority: ${error.message}`);
     },
   });
-  const renameMutation = trpc.media.rename.useMutation();
   const utils = trpc.useUtils();
+  const updateIssueTrackingMutation = trpc.media.updateIssueTracking.useMutation({
+    onSuccess: () => {
+      utils.media.list.invalidate({ projectId, flightId });
+      utils.media.getHistory.invalidate({ id: selectedMedia?.id ?? 0 });
+      toast.success("Issue tracking updated");
+    },
+    onError: (error: { message: string }) => {
+      toast.error(`Failed to update: ${error.message}`);
+    },
+  });
+  const historyQuery = trpc.media.getHistory.useQuery(
+    { id: selectedMedia?.id ?? 0 },
+    { enabled: !!selectedMedia && !isDemoProject, staleTime: 30_000 }
+  );
+  const renameMutation = trpc.media.rename.useMutation();
 
   // Create GPS marker number mapping based on capture time (flight path order)
   // This ensures numbers stay consistent with map markers regardless of gallery sorting
@@ -1147,78 +1161,77 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                 </div>
               )}
 
-              {/* Priority Selection - Full width */}
+              {/* Issue Tracking - Full width */}
               {!isFullscreen && (
                 <div className="mb-4">
-                  <div className="p-3 rounded-lg bg-card border border-border flex flex-col">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                  <div className="p-3 rounded-lg bg-card border border-border flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <FileImage className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">Priority for PDF Report</span>
+                      <span className="text-xs uppercase tracking-wide font-semibold">Issue Tracking</span>
                     </div>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="priority"
-                          value="none"
-                          checked={selectedMedia.priority === "none"}
-                          onChange={(e) => {
-                            const newPriority = e.target.value as "none" | "low" | "high";
-                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
-                            updatePriorityMutation.mutate({
-                              id: selectedMedia.id,
-                              priority: newPriority,
-                            });
-                          }}
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* Report Type */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-muted-foreground font-medium">Report Type</label>
+                        <select
+                          className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                          value={selectedMedia.issueReportType ?? 'none'}
                           disabled={!canEditMedia}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">None</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="priority"
-                          value="low"
-                          checked={selectedMedia.priority === "low"}
                           onChange={(e) => {
-                            const newPriority = e.target.value as "none" | "low" | "high";
-                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
-                            updatePriorityMutation.mutate({
-                              id: selectedMedia.id,
-                              priority: newPriority,
-                            });
+                            const val = e.target.value as 'none' | 'corrective' | 'punchlist';
+                            setSelectedMedia({ ...selectedMedia, issueReportType: val });
+                            updateIssueTrackingMutation.mutate({ id: selectedMedia.id, issueReportType: val });
                           }}
+                        >
+                          <option value="none">— None —</option>
+                          <option value="corrective">Corrective</option>
+                          <option value="punchlist">Punchlist</option>
+                        </select>
+                      </div>
+                      {/* Status */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-muted-foreground font-medium">Status</label>
+                        <select
+                          className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                          value={selectedMedia.issueStatus ?? 'open'}
                           disabled={!canEditMedia}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm flex items-center gap-1">
-                          <span className="text-yellow-500 font-bold">!</span>
-                          Low Priority (Yellow)
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="priority"
-                          value="high"
-                          checked={selectedMedia.priority === "high"}
                           onChange={(e) => {
-                            const newPriority = e.target.value as "none" | "low" | "high";
-                            setSelectedMedia({ ...selectedMedia, priority: newPriority });
-                            updatePriorityMutation.mutate({
-                              id: selectedMedia.id,
-                              priority: newPriority,
-                            });
+                            const val = e.target.value as 'open' | 'corrected';
+                            setSelectedMedia({ ...selectedMedia, issueStatus: val });
+                            updateIssueTrackingMutation.mutate({ id: selectedMedia.id, issueStatus: val });
                           }}
+                        >
+                          <option value="open">Open</option>
+                          <option value="corrected">Corrected</option>
+                        </select>
+                      </div>
+                      {/* Workflow Action */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-muted-foreground font-medium">Workflow Action</label>
+                        <select
+                          className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                          value={selectedMedia.issueWorkflowAction ?? 'none'}
                           disabled={!canEditMedia}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm flex items-center gap-1">
-                          <span className="text-red-500 font-bold">!</span>
-                          High Priority (Red)
-                        </span>
-                      </label>
+                          onChange={(e) => {
+                            const val = e.target.value as 'none' | 'assign' | 'review' | 'rejected' | 'accepted';
+                            setSelectedMedia({ ...selectedMedia, issueWorkflowAction: val });
+                            updateIssueTrackingMutation.mutate({ id: selectedMedia.id, issueWorkflowAction: val });
+                          }}
+                        >
+                          <option value="none">— None —</option>
+                          <option value="assign">Assign</option>
+                          <option value="review">Review</option>
+                          <option value="rejected" disabled={!isPrivilegedUser}>
+                            {isPrivilegedUser ? 'Rejected' : 'Rejected (Project Mgr only)'}
+                          </option>
+                          <option value="accepted" disabled={!isPrivilegedUser}>
+                            {isPrivilegedUser ? 'Accepted' : 'Accepted (Project Mgr only)'}
+                          </option>
+                        </select>
+                        {!isPrivilegedUser && (
+                          <p className="text-xs text-muted-foreground">Accept/Reject requires Project Manager access</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1247,6 +1260,45 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       }}
                       disabled={!canEditMedia}
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* History Feed - below Notes */}
+              {!isFullscreen && !isDemoProject && (
+                <div className="mb-4">
+                  <div className="p-3 rounded-lg bg-card border border-border flex flex-col">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <RotateCcw className="h-4 w-4" />
+                      <span className="text-xs uppercase tracking-wide font-semibold">History</span>
+                    </div>
+                    <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5">
+                      {historyQuery.isLoading && (
+                        <p className="text-xs text-muted-foreground">Loading history…</p>
+                      )}
+                      {!historyQuery.isLoading && (!historyQuery.data || historyQuery.data.length === 0) && (
+                        <p className="text-xs text-muted-foreground italic">No changes recorded yet.</p>
+                      )}
+                      {historyQuery.data?.map((entry: { id: number; action: string; entityType: string; entityId: number; entityName: string | null; userId: number; userName: string | null; details: string | null; ipAddress: string | null; createdAt: string }) => {
+                        let detail = '';
+                        try {
+                          const parsed = JSON.parse(entry.details ?? '{}');
+                          const parts: string[] = [];
+                          if (parsed.issueReportType !== undefined) parts.push(`Report Type → ${parsed.issueReportType}`);
+                          if (parsed.issueStatus !== undefined) parts.push(`Status → ${parsed.issueStatus}`);
+                          if (parsed.issueWorkflowAction !== undefined) parts.push(`Workflow → ${parsed.issueWorkflowAction}`);
+                          detail = parts.join(', ');
+                        } catch { detail = entry.action; }
+                        return (
+                          <div key={entry.id} className="flex flex-col gap-0.5 py-1 border-b border-border/50 last:border-0">
+                            <span className="text-xs text-foreground">{detail || entry.action}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {entry.userName || 'Unknown'} · {new Date(entry.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}

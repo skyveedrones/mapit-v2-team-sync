@@ -2349,6 +2349,30 @@ export async function updateMediaPriority(
 }
 
 /**
+ * Update issue tracking fields for a media item
+ */
+export async function updateMediaIssueTracking(
+  mediaId: number,
+  data: {
+    issueReportType?: 'none' | 'corrective' | 'punchlist';
+    issueStatus?: 'open' | 'corrected';
+    issueWorkflowAction?: 'none' | 'assign' | 'review' | 'rejected' | 'accepted';
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error('Database not available');
+  }
+  const updateSet: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  if (data.issueReportType !== undefined) updateSet.issueReportType = data.issueReportType;
+  if (data.issueStatus !== undefined) updateSet.issueStatus = data.issueStatus;
+  if (data.issueWorkflowAction !== undefined) updateSet.issueWorkflowAction = data.issueWorkflowAction;
+  await db.update(media).set(updateSet).where(eq(media.id, mediaId));
+  const [updated] = await db.select().from(media).where(eq(media.id, mediaId));
+  return updated;
+}
+
+/**
  * Update filename for a media item
  */
 export async function updateMediaFilename(
@@ -2795,7 +2819,7 @@ export async function getUserDetailsById(userId: number) {
  */
 export async function updateUserDetails(userId: number, data: {
   name?: string;
-  role?: 'user' | 'admin' | 'webmaster' | 'client';
+  role?: 'user' | 'admin' | 'webmaster' | 'client' | 'project_mgr';
   companyName?: string | null;
   department?: string | null;
   phone?: string | null;

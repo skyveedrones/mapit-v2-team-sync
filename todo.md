@@ -2747,3 +2747,17 @@
 - [ ] Add server-side sample project clone endpoint (eliminates upload entirely)
 - [ ] Update frontend loadSampleSite to use clone path
 - [ ] Add visible upload progress indicator for sample path
+
+## Issue Tracking / Audit Log / Project Mgr Role
+- [ ] Add issueReportType, issueStatus, issueWorkflowAction fields to media table
+- [ ] Add 'project_mgr' to user role enum in schema
+- [ ] Create mediaAuditLog table (id, mediaId, userId, action, fromValue, toValue, createdAt)
+- [ ] Run pnpm db:push
+- [ ] Add getMediaAuditLog and createAuditLogEntry helpers in db.ts
+- [ ] Add updateIssueTracking tRPC procedure with RBAC
+- [ ] Guard deleteMedia procedure to require project_mgr role
+- [ ] Update media modal UI: replace Priority radio buttons with Issue Tracking dropdowns
+- [ ] Hide Delete button and disable Accepted/Rejected for standard users
+- [ ] Add History feed below Notes box in media modal
+- [ ] Add Corrective Actions Report generation to Project Documents area
+- [ ] Add Punchlist Report generation to Project Documents area

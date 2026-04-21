@@ -33,7 +33,7 @@ export function UserManagementDialog({
   userEmail,
 }: UserManagementDialogProps) {
   const [editName, setEditName] = useState(userName || "");
-  const [selectedRole, setSelectedRole] = useState<"user" | "admin" | "webmaster" | "client">("user");
+  const [selectedRole, setSelectedRole] = useState<"user" | "admin" | "webmaster" | "client" | "project_mgr">("user");
   const [companyName, setCompanyName] = useState("");
   const [department, setDepartment] = useState("");
   const [phone, setPhone] = useState("");
@@ -123,7 +123,7 @@ export function UserManagementDialog({
   useEffect(() => {
     if (userDetails) {
       setEditName(userDetails.name || "");
-      setSelectedRole(userDetails.role || "user");
+      setSelectedRole((userDetails.role || "user") as "user" | "admin" | "webmaster" | "client" | "project_mgr");
       setCompanyName(userDetails.companyName || "");
       setDepartment(userDetails.department || "");
       setPhone(userDetails.phone || "");
@@ -148,7 +148,7 @@ export function UserManagementDialog({
       await updateUserMutation.mutateAsync({
         userId,
         name: editName,
-        role: selectedRole,
+        role: selectedRole as 'user' | 'admin' | 'webmaster' | 'client',
         companyName: companyName || null,
         department: department || null,
         phone: phone || null,
@@ -297,7 +297,7 @@ export function UserManagementDialog({
                   <Label htmlFor="user-role">User Role</Label>
                   <Select
                     value={selectedRole}
-                    onValueChange={(value) => setSelectedRole(value as "user" | "admin" | "webmaster" | "client")}
+                    onValueChange={(value) => setSelectedRole(value as "user" | "admin" | "webmaster" | "client" | "project_mgr")}
                     disabled={isSaving}
                   >
                     <SelectTrigger id="user-role">
@@ -308,6 +308,7 @@ export function UserManagementDialog({
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="webmaster">Webmaster</SelectItem>
                       <SelectItem value="client">Client</SelectItem>
+                      <SelectItem value="project_mgr">Project Manager</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -322,6 +323,7 @@ export function UserManagementDialog({
                     <p><strong>Admin:</strong> Full access to all projects and user management</p>
                     <p><strong>Webmaster:</strong> Full access to all projects and user management</p>
                     <p><strong>Client:</strong> Restricted to client portal view only</p>
+                    <p><strong>Project Manager:</strong> Can manage issue tracking, accept/reject media, and delete media</p>
                   </div>
                 </div>
               </div>

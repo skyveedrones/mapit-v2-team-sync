@@ -18,6 +18,7 @@ import { ProjectDocuments } from "@/components/ProjectDocuments";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { NewFlightDialog } from "@/components/NewFlightDialog";
 import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
+import { IssueReportDialog } from "@/components/IssueReportDialog";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { WarrantyReminderDialog } from "@/components/WarrantyReminderDialog";
 import { ProjectLogoDialog } from "@/components/ProjectLogoDialog";
@@ -136,6 +137,8 @@ export default function ProjectDetail() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [newFlightDialogOpen, setNewFlightDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [correctiveReportOpen, setCorrectiveReportOpen] = useState(false);
+  const [punchlistReportOpen, setPunchlistReportOpen] = useState(false);
   const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [sampleReportDialogOpen, setSampleReportDialogOpen] = useState(false);
@@ -437,6 +440,14 @@ export default function ProjectDetail() {
                         <FileText className="h-4 w-4 mr-2 text-orange-500" />
                         Generate Report
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setCorrectiveReportOpen(true)}>
+                        <FileText className="h-4 w-4 mr-2 text-red-500" />
+                        Corrective Actions Report
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setPunchlistReportOpen(true)}>
+                        <FileText className="h-4 w-4 mr-2 text-yellow-500" />
+                        Punchlist Report
+                      </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => isDemoProject ? null : setExportDialogOpen(true)}
                         disabled={isDemoProject}
@@ -715,6 +726,22 @@ export default function ProjectDetail() {
         projectName={project?.name || "Project"}
         media={mediaList || []}
         isDemoProject={isDemoProject}
+      />
+
+      <IssueReportDialog
+        projectId={projectId}
+        projectName={project?.name || "Project"}
+        issueReportType="corrective"
+        open={correctiveReportOpen}
+        onOpenChange={setCorrectiveReportOpen}
+      />
+
+      <IssueReportDialog
+        projectId={projectId}
+        projectName={project?.name || "Project"}
+        issueReportType="punchlist"
+        open={punchlistReportOpen}
+        onOpenChange={setPunchlistReportOpen}
       />
 
       <WarrantyReminderDialog
