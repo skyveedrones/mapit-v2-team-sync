@@ -206,9 +206,9 @@ export default function Providers() {
             <Button
               size="lg"
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setLocation("/welcome")}
+              onClick={() => setLocation("/pricing")}
             >
-              Start Mapping Free
+              See Pilot Plans
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
