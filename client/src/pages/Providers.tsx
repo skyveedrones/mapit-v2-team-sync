@@ -133,7 +133,7 @@ export default function Providers() {
               variants={fadeInUp}
               className="text-4xl sm:text-5xl font-bold tracking-tight text-center mb-20"
             >
-              Built for pilots who bill clients.
+              Your work, beautifully delivered.
             </motion.h2>
 
             <div className="grid md:grid-cols-3 gap-16">
