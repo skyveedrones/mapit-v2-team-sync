@@ -76,6 +76,8 @@ export default function ProjectMap() {
   const [isTourActive, setIsTourActive] = useState(isDemoProject);
   // Fades in after the tour fully completes
   const [showTrialPill, setShowTrialPill] = useState(false);
+  // Flyby pro tooltip — shown after conversion modal is dismissed
+  const [showFlybyProTooltip, setShowFlybyProTooltip] = useState(false);
 
   // ── Prestige modal (onboarding funnel) ───────────────────────────────
   const isOnboardingProject =
@@ -537,6 +539,52 @@ export default function ProjectMap() {
         </div>
       )}
 
+      {/* ── Post-Tour Bottom Bar (replaces tour card after it closes) ── */}
+      <AnimatePresence>
+        {isDemoProject && !showTour && (
+          <motion.div
+            key="post-tour-bar"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 z-[999] pointer-events-auto"
+            style={{ transform: "translateX(-50%)" }}
+          >
+            <div
+              className="flex items-center gap-4 px-6 py-3 rounded-full"
+              style={{
+                background: "rgba(10,10,10,0.80)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.04em" }}>City Park Redevelopment</span>
+              <div className="w-px h-4 bg-white/15" />
+              <button
+                onClick={() => flybyRef.current?.startFlyby()}
+                className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
+                style={{ fontSize: "12px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em", background: "none", border: "none", cursor: "pointer" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l8-4v8L2 6z" fill="currentColor"/></svg>
+                Flyby
+              </button>
+              <div className="w-px h-4 bg-white/15" />
+              <a
+                href="/register"
+                style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", fontWeight: 500, letterSpacing: "0.02em", textDecoration: "none" }}
+                className="hover:text-white transition-colors"
+              >
+                Start Trial →
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Post-Tour Trial Pill ── */}
       <AnimatePresence>
         {isDemoProject && showTrialPill && (
@@ -765,12 +813,76 @@ export default function ProjectMap() {
                 Start Your Trial
               </button>
               <button
-                onClick={() => setShowConversionModal(false)}
+                onClick={() => {
+                  setShowConversionModal(false);
+                  // Show trial pill and flyby pro tooltip after dismissal
+                  setTimeout(() => setShowTrialPill(true), 300);
+                  setTimeout(() => setShowFlybyProTooltip(true), 800);
+                }}
                 className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
               >
                 Maybe later
               </button>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Flyby Pro Tooltip (appears after conversion modal dismiss) ── */}
+      <AnimatePresence>
+        {isDemoProject && showFlybyProTooltip && (
+          <motion.div
+            key="flyby-pro-tooltip"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 24 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-[160px] right-6 z-[9990] pointer-events-auto"
+          >
+            <div
+              className="relative overflow-hidden"
+              style={{
+                width: "300px",
+                background: "rgba(6,6,6,0.88)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+                fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {/* Emerald accent bar top */}
+              <div style={{ height: "2px", background: "linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 40%, rgba(52,211,153,1) 60%, rgba(16,185,129,0) 100%)" }} />
+              <div className="px-6 pt-5 pb-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: "11px", color: "rgba(52,211,153,0.85)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pro Feature</span>
+                  </div>
+                  <button
+                    onClick={() => setShowFlybyProTooltip(false)}
+                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", background: "none", border: "none", cursor: "pointer" }}
+                    aria-label="Dismiss"
+                  >✕</button>
+                </div>
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.96)", letterSpacing: "-0.04em", lineHeight: 1.15, marginBottom: "10px" }}>
+                  Cinematic Flyby.
+                </p>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", lineHeight: 1.6, marginBottom: "20px" }}>
+                  Present your project like a film director. The Flyby tool renders a smooth cinematic path over your entire site — perfect for client presentations and stakeholder reviews.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowFlybyProTooltip(false);
+                    setTimeout(() => flybyRef.current?.startFlyby(), 200);
+                  }}
+                  className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-80"
+                  style={{ fontSize: "13px", color: "rgba(52,211,153,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}
+                >
+                  Launch Flyby →
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
