@@ -805,3 +805,400 @@ export function generateReportHtml(
 </html>
   `;
 }
+
+// ─── Issue Report Types ────────────────────────────────────────────────────────
+
+export interface IssueAuditEntry {
+  createdAt: string;
+  userName: string | null;
+  action: string;
+  details: string | null;
+}
+
+export interface IssueMediaItem {
+  filename: string;
+  dataUrl: string;
+  media: Media;
+  auditHistory: IssueAuditEntry[];
+}
+
+/**
+ * Generate HTML for a Corrective Actions or Punchlist PDF report.
+ * Layout: one row per issue — left column (data + audit trail), right column (thumbnail).
+ * Designed for print/PDF with graceful page breaks.
+ */
+export function generateIssueReportHtml(
+  project: Project,
+  reportTitle: string,
+  issueItems: IssueMediaItem[],
+  mapImageDataUrl: string | null,
+  generatedAt: Date | string,
+  userLogoUrl?: string,
+  skyVeeLogoDataUrl?: string
+): string {
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatDateTime = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const skyVeeLogo = skyVeeLogoDataUrl
+    ? `<img src="${skyVeeLogoDataUrl}" alt="MAPIT" style="height:30px;width:auto;max-width:120px;" />`
+    : `<span style="color:#333;font-weight:700;font-size:22px;">MAPIT</span>`;
+
+  // Status badge colour
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "corrected": return "#16a34a";
+      case "open": return "#dc2626";
+      default: return "#6b7280";
+    }
+  };
+
+  // Workflow badge colour
+  const workflowColor = (action: string) => {
+    switch (action) {
+      case "accepted": return "#16a34a";
+      case "rejected": return "#dc2626";
+      case "review": return "#d97706";
+      case "assign": return "#2563eb";
+      default: return "#6b7280";
+    }
+  };
+
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // Build one issue row
+  const buildIssueRow = (item: IssueMediaItem, index: number) => {
+    const { media, dataUrl, auditHistory } = item;
+    const rowBg = index % 2 === 0 ? "#ffffff" : "#f8f9fa";
+
+    const auditRows = auditHistory.length > 0
+      ? auditHistory.map(entry => `
+          <tr>
+            <td style="padding:3px 6px;font-size:9px;color:#555;white-space:nowrap;">${formatDateTime(entry.createdAt)}</td>
+            <td style="padding:3px 6px;font-size:9px;color:#333;font-weight:600;">${entry.userName ?? "System"}</td>
+            <td style="padding:3px 6px;font-size:9px;color:#333;">${capitalize(entry.action.replace(/_/g, " "))}</td>
+            <td style="padding:3px 6px;font-size:9px;color:#555;">${entry.details ?? ""}</td>
+          </tr>`).join("")
+      : `<tr><td colspan="4" style="padding:4px 6px;font-size:9px;color:#aaa;font-style:italic;">No history recorded</td></tr>`;
+
+    return `
+    <div class="issue-row" style="background:${rowBg};">
+      <!-- Left: data column -->
+      <div class="issue-data">
+        <div class="issue-filename">${media.filename}</div>
+
+        <div class="issue-badges">
+          <span class="badge" style="background:${statusColor(media.issueStatus)};">
+            ${capitalize(media.issueStatus)}
+          </span>
+          ${media.issueWorkflowAction && media.issueWorkflowAction !== "none"
+            ? `<span class="badge" style="background:${workflowColor(media.issueWorkflowAction)};">${capitalize(media.issueWorkflowAction)}</span>`
+            : ""}
+          <span class="badge badge-outline">
+            ${media.issueReportType === "corrective" ? "Corrective Action" : "Punchlist"}
+          </span>
+        </div>
+
+        ${media.notes ? `
+        <div class="issue-notes-label">Notes</div>
+        <div class="issue-notes">${media.notes}</div>
+        ` : ""}
+
+        <div class="issue-history-label">Audit Trail</div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${auditRows}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Right: thumbnail -->
+      <div class="issue-thumb">
+        <img src="${dataUrl}" alt="${media.filename}" />
+      </div>
+    </div>`;
+  };
+
+  const issueRowsHtml = issueItems.map((item, i) => buildIssueRow(item, i)).join("\n");
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      margin: 0.4in 0.45in;
+      size: letter;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+    /* ── Header ── */
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 3px solid #22c55e;
+      margin-bottom: 18px;
+    }
+    .logo-right img {
+      max-height: 80px;
+      max-width: 260px;
+      object-fit: contain;
+    }
+
+    /* ── Title ── */
+    .report-title {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .report-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+    }
+    .report-title .subtitle {
+      font-size: 11px;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    /* ── Project info bar ── */
+    .info-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+      padding: 10px 14px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 10px;
+    }
+    .info-bar span { color: #555; }
+    .info-bar strong { color: #111; }
+
+    /* ── Map ── */
+    .map-section { margin-bottom: 18px; }
+    .map-section img {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      display: block;
+    }
+    .map-caption {
+      text-align: center;
+      font-size: 9px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* ── Section heading ── */
+    .section-heading {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #111;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #22c55e;
+      margin-bottom: 12px;
+    }
+
+    /* ── Issue row ── */
+    .issue-row {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Left column */
+    .issue-data {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .issue-filename {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .issue-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .badge-outline {
+      background: transparent !important;
+      color: #555 !important;
+      border: 1px solid #ccc;
+    }
+    .issue-notes-label, .issue-history-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #888;
+      margin-bottom: 3px;
+      margin-top: 8px;
+    }
+    .issue-notes {
+      font-size: 10px;
+      color: #333;
+      line-height: 1.5;
+      padding: 7px 10px;
+      background: #f9fafb;
+      border-left: 3px solid #22c55e;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 2px;
+    }
+
+    /* Audit trail table */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      margin-top: 2px;
+    }
+    .history-table thead tr {
+      background: #f3f4f6;
+    }
+    .history-table th {
+      padding: 3px 6px;
+      text-align: left;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .history-table tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .history-table td {
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+
+    /* Right column — thumbnail */
+    .issue-thumb {
+      flex: 0 0 200px;
+      width: 200px;
+    }
+    .issue-thumb img {
+      width: 100%;
+      height: auto;
+      max-height: 180px;
+      object-fit: cover;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: block;
+    }
+
+    /* ── Footer ── */
+    .report-footer {
+      position: fixed;
+      bottom: 0.3in;
+      left: 0.5in;
+      right: 0.5in;
+      text-align: center;
+      font-size: 8px;
+      color: #bbb;
+      border-top: 1px solid #eee;
+      padding-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="report-header">
+    <div>${skyVeeLogo}</div>
+    ${userLogoUrl ? `<div class="logo-right"><img src="${userLogoUrl}" alt="Company Logo" /></div>` : ""}
+  </div>
+
+  <!-- Title -->
+  <div class="report-title">
+    <h1>${project.name}</h1>
+    <div class="subtitle">${reportTitle} &bull; Generated ${formatDate(generatedAt)}</div>
+  </div>
+
+  <!-- Project info bar -->
+  <div class="info-bar">
+    ${project.location ? `<span><strong>Location:</strong> ${project.location}</span>` : ""}
+    ${project.clientName ? `<span><strong>Client:</strong> ${project.clientName}</span>` : ""}
+    ${project.flightDate ? `<span><strong>Flight Date:</strong> ${formatDate(project.flightDate)}</span>` : ""}
+    <span><strong>Items:</strong> ${issueItems.length}</span>
+    <span><strong>Status:</strong> ${project.status ?? "N/A"}</span>
+  </div>
+
+  <!-- Map -->
+  ${mapImageDataUrl ? `
+  <div class="map-section">
+    <img src="${mapImageDataUrl}" alt="Project Map" />
+    <div class="map-caption">${issueItems.length} GPS location${issueItems.length !== 1 ? "s" : ""} mapped</div>
+  </div>
+  ` : ""}
+
+  <!-- Issue rows -->
+  <div class="section-heading">Issue Log (${issueItems.length} item${issueItems.length !== 1 ? "s" : ""})</div>
+  ${issueRowsHtml}
+
+  <!-- Footer -->
+  <div class="report-footer">
+    MAPIT &mdash; ${reportTitle} &mdash; Confidential
+  </div>
+
+</body>
+</html>`;
+}

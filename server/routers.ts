@@ -3784,8 +3784,9 @@ export const appRouter = router({
             message: `No media tagged as "${input.issueReportType}" found in this project`,
           });
         }
-        const { generateReportHtml, processImageForReport, fetchStaticMapAsDataUrl, RESOLUTION_PRESETS } = await import('./report');
-        const mediaImages: { filename: string; dataUrl: string; media: typeof filteredMedia[0] }[] = [];
+        const { generateIssueReportHtml, processImageForReport, fetchStaticMapAsDataUrl, RESOLUTION_PRESETS } = await import('./report');
+        // Build issue items with audit history
+        const issueItems: { filename: string; dataUrl: string; media: typeof filteredMedia[0]; auditHistory: { createdAt: string; userName: string | null; action: string; details: string | null }[] }[] = [];
         for (const media of filteredMedia) {
           if (media.mediaType !== 'photo') continue;
           try {
@@ -3794,7 +3795,18 @@ export const appRouter = router({
             const imageBuffer = Buffer.from(await response.arrayBuffer());
             const processedBuffer = await processImageForReport(imageBuffer, input.resolution);
             const dataUrl = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
-            mediaImages.push({ filename: media.filename, dataUrl, media });
+            // Fetch audit history for this media item
+            let auditHistory: { createdAt: string; userName: string | null; action: string; details: string | null }[] = [];
+            try {
+              const rawHistory = await listAuditLog({ entityType: 'media', entityId: media.id, limit: 50 });
+              auditHistory = rawHistory.map(e => ({
+                createdAt: e.createdAt,
+                userName: e.userName ?? null,
+                action: e.action,
+                details: e.details ?? null,
+              }));
+            } catch { /* audit history optional */ }
+            issueItems.push({ filename: media.filename, dataUrl, media, auditHistory });
           } catch (e) {
             console.warn('[IssueReport] Failed to process image:', (e as Error).message);
           }
@@ -3815,9 +3827,10 @@ export const appRouter = router({
         const reportTitle = input.issueReportType === 'corrective'
           ? 'Project Corrective Actions Report'
           : 'Project Punchlist Report';
-        const html = generateReportHtml(
-          { ...project, name: `${project.name} — ${reportTitle}` },
-          mediaImages,
+        const html = generateIssueReportHtml(
+          project,
+          reportTitle,
+          issueItems,
           mapImageDataUrl,
           new Date(),
           project.logoUrl || undefined,
@@ -3827,7 +3840,7 @@ export const appRouter = router({
           html,
           projectName: project.name,
           reportTitle,
-          mediaCount: mediaImages.length,
+          mediaCount: issueItems.length,
           resolution: RESOLUTION_PRESETS[input.resolution].label,
         };
       }),
