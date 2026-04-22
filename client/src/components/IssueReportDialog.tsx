@@ -36,6 +36,8 @@ export function IssueReportDialog({
   const [mediaCount, setMediaCount] = useState(0);
 
   const generateMutation = trpc.report.generateIssueReport.useMutation();
+  const downloadPdfMutation = trpc.report.downloadPdf.useMutation();
+  const saveReportToDocuments = trpc.report.saveReportToDocuments.useMutation();
 
   const reportTitle =
     issueReportType === "corrective"
@@ -80,6 +82,19 @@ export function IssueReportDialog({
     win.focus();
     setTimeout(() => win.print(), 800);
     toast.info("Opening print dialog — select 'Save as PDF' as the destination.");
+
+    // Background: generate a server-side PDF and save it to project documents
+    const dateStr = new Date().toISOString().split('T')[0];
+    const fileName = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_${reportTitle.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+    downloadPdfMutation.mutateAsync({ html: previewHtml, projectName }).then(pdfResult => {
+      return saveReportToDocuments.mutateAsync({
+        projectId,
+        pdfBase64: pdfResult.pdfData,
+        fileName,
+      });
+    }).then(() => {
+      toast.success('Report saved to project documents', { description: fileName, duration: 3000 });
+    }).catch(() => { /* non-fatal */ });
   };
 
   const handleClose = () => {

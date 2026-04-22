@@ -2858,6 +2858,42 @@ export const appRouter = router({
           mimeType: 'application/gpx+xml',
         };
       }),
+
+    // Save a GPS export file to the project documents section
+    saveExportToDocuments: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        content: z.string(),
+        fileName: z.string(),
+        mimeType: z.string(),
+        fileType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Verify access
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+
+        // Upload content bytes to S3
+        const { storagePut } = await import('./storage');
+        const contentBuffer = Buffer.from(input.content, 'utf-8');
+        const fileKey = `exports/${input.projectId}/${Date.now()}-${input.fileName}`;
+        const { url } = await storagePut(fileKey, contentBuffer, input.mimeType);
+
+        // Insert project document record
+        const result = await db.insert(projectDocuments).values({
+          projectId: input.projectId,
+          fileName: input.fileName,
+          fileKey,
+          fileType: input.fileType,
+          status: 'uploaded',
+        });
+
+        console.log(`[Export] Saved ${input.fileType} export to documents: ${input.fileName} (projectId=${input.projectId})`);
+        return { success: true, documentId: result[0], url };
+      }),
   }),
 
   // Flight procedures
@@ -3700,6 +3736,40 @@ export const appRouter = router({
             message: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
           });
         }
+      }),
+
+    // Save a generated PDF report to the project documents section
+    saveReportToDocuments: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        pdfBase64: z.string(),
+        fileName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Verify access
+        const project = await getProjectWithAccess(input.projectId, ctx.user.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+
+        // Upload PDF bytes to S3
+        const { storagePut } = await import('./storage');
+        const pdfBuffer = Buffer.from(input.pdfBase64, 'base64');
+        const fileKey = `reports/${input.projectId}/${Date.now()}-${input.fileName}`;
+        const { url } = await storagePut(fileKey, pdfBuffer, 'application/pdf');
+
+        // Insert project document record
+        const result = await db.insert(projectDocuments).values({
+          projectId: input.projectId,
+          fileName: input.fileName,
+          fileKey,
+          fileType: 'pdf',
+          status: 'uploaded',
+        });
+
+        console.log(`[Report] Saved PDF to documents: ${input.fileName} (projectId=${input.projectId})`);
+        return { success: true, documentId: result[0], url };
       }),
 
     // Email PDF report

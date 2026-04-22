@@ -67,6 +67,8 @@ export function ReportGeneratorDialog({
 
   const generateReportMutation = trpc.report.generate.useMutation();
   const emailReportMutation = trpc.report.emailReport.useMutation();
+  const downloadPdfMutation = trpc.report.downloadPdf.useMutation();
+  const saveReportToDocuments = trpc.report.saveReportToDocuments.useMutation();
 
   const handleGeneratePreview = useCallback(async () => {
     setIsGenerating(true);
@@ -207,6 +209,19 @@ export function ReportGeneratorDialog({
       printWindow.document.close();
 
       toast.success("Print dialog will open automatically. Select 'Save as PDF' to download.");
+
+      // Background: generate a server-side PDF and save it to project documents
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_Report_${dateStr}.pdf`;
+      downloadPdfMutation.mutateAsync({ html: previewHtml, projectName }).then(pdfResult => {
+        return saveReportToDocuments.mutateAsync({
+          projectId,
+          pdfBase64: pdfResult.pdfData,
+          fileName,
+        });
+      }).then(() => {
+        toast.success('Report saved to project documents', { description: fileName, duration: 3000 });
+      }).catch(() => { /* non-fatal — print already triggered */ });
     } catch (error) {
       console.error("[PDF Generation Error]:", error);
       toast.error("Failed to generate PDF. Please try again.");

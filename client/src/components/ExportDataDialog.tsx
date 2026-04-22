@@ -55,6 +55,8 @@ export function ExportDataDialog({
 }: ExportDataDialogProps) {
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
+  const saveExportToDocuments = trpc.export.saveExportToDocuments.useMutation();
+
   // Export queries - we'll use refetch to trigger them on demand
   const kmlExport = trpc.export.kml.useQuery(
     { projectId },
@@ -101,6 +103,26 @@ export function ExportDataDialog({
         
         toast.success(`${formatInfo[format].name} file downloaded`, {
           description: result.data.filename,
+        });
+
+        // Auto-save a copy to project documents (non-blocking)
+        const mimeTypeMap: Record<ExportFormat, string> = {
+          kml: 'application/vnd.google-earth.kml+xml',
+          csv: 'text/csv',
+          geojson: 'application/geo+json',
+          gpx: 'application/gpx+xml',
+        };
+        saveExportToDocuments.mutate({
+          projectId,
+          content: result.data.content,
+          fileName: result.data.filename,
+          mimeType: mimeTypeMap[format],
+          fileType: format,
+        }, {
+          onSuccess: () => {
+            toast.success('Saved to project documents', { description: result.data!.filename, duration: 2500 });
+          },
+          onError: () => { /* silent — download already succeeded */ },
         });
       }
     } catch (error) {
