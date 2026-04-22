@@ -353,33 +353,47 @@ export default function Create() {
             const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
             setChunkProgress(0);
+            // Compute MD5 incrementally during chunk reads — avoids re-reading the whole file
+            let spark: import("spark-md5").default.ArrayBuffer | null = null;
+            try {
+              const SparkMD5 = (await import("spark-md5")).default;
+              spark = new SparkMD5.ArrayBuffer();
+            } catch { /* non-fatal */ }
             for (let i = 0; i < totalChunks; i++) {
               const start = i * CHUNK_SIZE;
               const end = Math.min(start + CHUNK_SIZE, file.size);
               const chunkData = await readChunkAsBase64(file, start, end);
+              // Feed raw bytes into MD5 incrementally (decode base64 back to ArrayBuffer)
+              if (spark) {
+                try {
+                  const raw = Uint8Array.from(atob(chunkData), c => c.charCodeAt(0));
+                  spark.append(raw.buffer);
+                } catch { /* non-fatal */ }
+              }
               await uploadChunk.mutateAsync({ uploadId, chunkIndex: i, totalChunks, chunkData, projectId: result.projectId, filename: file.name, mimeType: file.type || "video/mp4" });
               setChunkProgress(Math.round(((i + 1) / totalChunks) * 100));
             }
             let clientMd5: string | undefined;
-            try {
-              const SparkMD5 = (await import("spark-md5")).default;
-              const spark = new SparkMD5.ArrayBuffer();
-              spark.append(await file.arrayBuffer());
-              clientMd5 = spark.end();
-            } catch { /* non-fatal */ }
-            await finalizeChunkedUpload.mutateAsync({
-              uploadId,
-              projectId: result.projectId,
-              filename: file.name,
-              mimeType: file.type || "video/mp4",
-              fileSize: file.size,
-              thumbnailData: thumbnailData ?? undefined,
-              latitude: telemetry.latitude ?? undefined,
-              longitude: telemetry.longitude ?? undefined,
-              altitude: telemetry.absoluteAltitude ?? undefined,
-              capturedAt: telemetry.capturedAt ? telemetry.capturedAt.toISOString() : undefined,
-              clientMd5,
-            });
+            try { if (spark) clientMd5 = spark.end(); } catch { /* non-fatal */ }
+            // Finalize with a 30s timeout so a slow S3 multipart completion never hangs forever
+            await Promise.race([
+              finalizeChunkedUpload.mutateAsync({
+                uploadId,
+                projectId: result.projectId,
+                filename: file.name,
+                mimeType: file.type || "video/mp4",
+                fileSize: file.size,
+                thumbnailData: thumbnailData ?? undefined,
+                latitude: telemetry.latitude ?? undefined,
+                longitude: telemetry.longitude ?? undefined,
+                altitude: telemetry.absoluteAltitude ?? undefined,
+                capturedAt: telemetry.capturedAt ? telemetry.capturedAt.toISOString() : undefined,
+                clientMd5,
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error("finalizeChunkedUpload timed out after 30s")), 30000)
+              ),
+            ]);
           } else {
             // ── Single-shot path (small images) ──
             const arrayBuffer = await file.arrayBuffer();
