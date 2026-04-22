@@ -126,7 +126,7 @@ export default function ProjectMap() {
 
   const startConversionTimer = () => {
     if (conversionTimerRef.current) clearTimeout(conversionTimerRef.current);
-    conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 60000);
+    conversionTimerRef.current = setTimeout(() => setShowConversionModal(true), 30000);
   };
 
   // ── Magic Window #1 (Marker/Discovery Hint) ─────────────────────────────
@@ -547,7 +547,7 @@ export default function ProjectMap() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-white text-black font-semibold text-sm px-6 py-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors select-none whitespace-nowrap"
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[9990] bg-white text-black font-semibold text-sm px-6 py-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors select-none whitespace-nowrap"
           >
             Start My Free Trial
           </motion.a>

@@ -887,6 +887,12 @@ export function generateIssueReportHtml(
     const { media, dataUrl, auditHistory } = item;
     const rowBg = index % 2 === 0 ? "#ffffff" : "#f8f9fa";
 
+    // Derive "Corrected by" — the user who last set action to 'accepted' or status to 'corrected'
+    const correctedByEntry = auditHistory.find(e =>
+      e.action === 'accepted' || e.action === 'corrected' || (e.details ?? '').toLowerCase().includes('corrected')
+    );
+    const correctedBy = correctedByEntry?.userName ?? null;
+
     const auditRows = auditHistory.length > 0
       ? auditHistory.map(entry => `
           <tr>
@@ -894,8 +900,11 @@ export function generateIssueReportHtml(
             <td style="padding:3px 6px;font-size:9px;color:#333;font-weight:600;">${entry.userName ?? "System"}</td>
             <td style="padding:3px 6px;font-size:9px;color:#333;">${capitalize(entry.action.replace(/_/g, " "))}</td>
             <td style="padding:3px 6px;font-size:9px;color:#555;">${entry.details ?? ""}</td>
+            <td style="padding:3px 6px;font-size:9px;color:#555;">${
+              (entry.action === 'accepted' || entry.action === 'corrected') ? (entry.userName ?? "—") : ""
+            }</td>
           </tr>`).join("")
-      : `<tr><td colspan="4" style="padding:4px 6px;font-size:9px;color:#aaa;font-style:italic;">No history recorded</td></tr>`;
+      : `<tr><td colspan="5" style="padding:4px 6px;font-size:9px;color:#aaa;font-style:italic;">No history recorded</td></tr>`;
 
     return `
     <div class="issue-row" style="background:${rowBg};">
@@ -920,6 +929,8 @@ export function generateIssueReportHtml(
         <div class="issue-notes">${media.notes}</div>
         ` : ""}
 
+        ${correctedBy ? `<div class="issue-notes-label" style="margin-top:6px;">Corrected By</div><div class="issue-notes" style="border-left-color:#16a34a;">${correctedBy}</div>` : ""}
+
         <div class="issue-history-label">Audit Trail</div>
         <table class="history-table">
           <thead>
@@ -928,6 +939,7 @@ export function generateIssueReportHtml(
               <th>User</th>
               <th>Action</th>
               <th>Details</th>
+              <th>Corrected By</th>
             </tr>
           </thead>
           <tbody>
@@ -943,7 +955,55 @@ export function generateIssueReportHtml(
     </div>`;
   };
 
-  const issueRowsHtml = issueItems.map((item, i) => buildIssueRow(item, i)).join("\n");
+  const issueRowsHtml = issueItems.length > 0
+    ? issueItems.map((item, i) => buildIssueRow(item, i)).join("\n")
+    : `<div style="padding:40px;text-align:center;border:1px dashed #e5e7eb;border-radius:8px;color:#999;font-size:13px;">
+        <p style="font-size:28px;margin-bottom:12px;">&#10003;</p>
+        <p style="font-weight:700;color:#555;margin-bottom:6px;">No issues found</p>
+        <p>All items in this project are clear of ${reportTitle.toLowerCase().includes('corrective') ? 'corrective actions' : 'punchlist items'}.</p>
+      </div>`;
+
+  // ── Summary table (first page, before issue rows) ──────────────────────────
+  const summaryRows = issueItems.map((item, i) => {
+    const { media } = item;
+    const correctedByEntry = item.auditHistory.find(e =>
+      e.action === 'accepted' || e.action === 'corrected' || (e.details ?? '').toLowerCase().includes('corrected')
+    );
+    return `
+      <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'}">
+        <td style="padding:5px 8px;font-size:10px;">${i + 1}</td>
+        <td style="padding:5px 8px;font-size:10px;word-break:break-word;max-width:200px;">${media.filename}</td>
+        <td style="padding:5px 8px;font-size:10px;">
+          <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;background:${statusColor(media.issueStatus)};">${capitalize(media.issueStatus)}</span>
+        </td>
+        <td style="padding:5px 8px;font-size:10px;">
+          ${media.issueWorkflowAction && media.issueWorkflowAction !== 'none'
+            ? `<span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;background:${workflowColor(media.issueWorkflowAction)};">${capitalize(media.issueWorkflowAction)}</span>`
+            : '<span style="color:#aaa;font-size:9px;">—</span>'}
+        </td>
+        <td style="padding:5px 8px;font-size:10px;color:#555;">${correctedByEntry?.userName ?? '—'}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#555;max-width:160px;word-break:break-word;">${media.notes ? media.notes.substring(0, 80) + (media.notes.length > 80 ? '…' : '') : '—'}</td>
+      </tr>`;
+  }).join("");
+
+  const summaryTableHtml = `
+  <div class="section-heading" style="margin-top:0;">Summary (${issueItems.length} item${issueItems.length !== 1 ? 's' : ''})</div>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+    <thead>
+      <tr style="background:#f3f4f6;">
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">#</th>
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">File</th>
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">Status</th>
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">Workflow</th>
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">Corrected By</th>
+        <th style="padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #22c55e;text-align:left;">Notes (preview)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${summaryRows}
+    </tbody>
+  </table>`;
+
 
   return `<!DOCTYPE html>
 <html>
@@ -1190,8 +1250,11 @@ export function generateIssueReportHtml(
   </div>
   ` : ""}
 
+  <!-- Summary table -->
+  ${summaryTableHtml}
+
   <!-- Issue rows -->
-  <div class="section-heading">Issue Log (${issueItems.length} item${issueItems.length !== 1 ? "s" : ""})</div>
+  <div class="section-heading" style="page-break-before:always;">Issue Log (${issueItems.length} item${issueItems.length !== 1 ? "s" : ""})</div>
   ${issueRowsHtml}
 
   <!-- Footer -->
