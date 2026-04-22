@@ -26,7 +26,7 @@ type Stage = "idle" | "dragging" | "uploading" | "processing" | "done";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — matches backend
-const LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // 20 MB — route through chunked upload
+const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024; // 10 MB — route through chunked upload
 
 /** Read a slice of a File as base64 string */
 function readChunkAsBase64(file: File, start: number, end: number): Promise<string> {
@@ -133,6 +133,7 @@ export default function Create() {
   const [shake, setShake] = useState(false);
   const [processingLabel, setProcessingLabel] = useState(0);
   const [chunkProgress, setChunkProgress] = useState(0); // 0–100 for large file uploads
+  const [backendDoneState, setBackendDoneState] = useState(false); // mirrors backendDoneRef for UI
   const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -280,6 +281,7 @@ export default function Create() {
 
     // Reset refs
     backendDoneRef.current = false;
+    setBackendDoneState(false);
     processingTimerDoneRef.current = false;
     pendingNavRef.current = null;
 
@@ -354,7 +356,8 @@ export default function Create() {
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
             setChunkProgress(0);
             // Compute MD5 incrementally during chunk reads — avoids re-reading the whole file
-            let spark: import("spark-md5").default.ArrayBuffer | null = null;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let spark: any = null;
             try {
               const SparkMD5 = (await import("spark-md5")).default;
               spark = new SparkMD5.ArrayBuffer();
@@ -423,8 +426,9 @@ export default function Create() {
     }
 
     backendDoneRef.current = true;
+    setBackendDoneState(true);
     tryNavigate();
-  }, [initProject, uploadMedia, uploadChunk, finalizeChunkedUpload, utils, triggerShake, tryNavigate]);
+  }, [initProject, uploadMedia, uploadChunk, finalizeChunkedUpload, utils, triggerShake, tryNavigate, setBackendDoneState]);
 
   // Keep the ref in sync with the latest processFiles so handleNameSubmit never captures a stale closure
   processFilesRef.current = processFiles;
@@ -448,6 +452,7 @@ export default function Create() {
       sessionStorage.setItem("mapit_photo_count", "1");
       // Reset nav refs
       backendDoneRef.current = false;
+      setBackendDoneState(false);
       processingTimerDoneRef.current = false;
       pendingNavRef.current = null;
       setStage("uploading");
@@ -474,12 +479,14 @@ export default function Create() {
           sessionStorage.setItem("mapit_trial_expires", result.trialExpiresAt);
           pendingNavRef.current = `/project/${result.projectId}/map`;
           backendDoneRef.current = true;
+          setBackendDoneState(true);
           tryNavigate();
         })
         .catch((err) => {
           console.error("[Create] cloneSampleProject failed:", err);
           pendingNavRef.current = "/map";
           backendDoneRef.current = true;
+          setBackendDoneState(true);
           tryNavigate();
         });
       return;
@@ -593,7 +600,7 @@ export default function Create() {
                 ))}
               </div>
               {/* Chunk progress bar — only visible during large file / video upload */}
-              {chunkProgress > 0 && chunkProgress < 100 && (
+              {chunkProgress > 0 && (
                 <div className="w-64 flex flex-col items-center gap-1.5">
                   <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
                     <motion.div
@@ -605,7 +612,7 @@ export default function Create() {
                     />
                   </div>
                   <span className="text-xs font-mono" style={{ color: "rgba(156,163,175,0.7)" }}>
-                    {chunkProgress}%
+                    {chunkProgress >= 100 && !backendDoneState ? "Finalizing upload…" : `${chunkProgress}% uploaded`}
                   </span>
                 </div>
               )}
@@ -662,7 +669,7 @@ export default function Create() {
                     />
                   </div>
                   <span className="text-xs font-mono" style={{ color: "rgba(156,163,175,0.7)" }}>
-                    {chunkProgress >= 100 ? "Upload complete — processing..." : `${chunkProgress}% uploaded`}
+                    {chunkProgress >= 100 && !backendDoneState ? "Finalizing upload…" : chunkProgress >= 100 ? "Upload complete — processing..." : `${chunkProgress}% uploaded`}
                   </span>
                 </div>
               )}
