@@ -636,9 +636,9 @@ export default function Create() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.5 }}
-                  className="font-bold tracking-tighter leading-snug bg-clip-text text-transparent text-center max-w-2xl"
+                  className="font-bold tracking-tighter leading-none bg-clip-text text-transparent text-center whitespace-nowrap"
                   style={{
-                    fontSize: "clamp(1.5rem,4vw,2.5rem)",
+                    fontSize: "clamp(1rem,2.5vw,1.75rem)",
                     backgroundImage: "linear-gradient(to bottom, #ffffff 0%, #9ca3af 60%, #4b5563 100%)",
                   }}
                 >
