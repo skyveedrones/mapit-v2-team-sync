@@ -818,10 +818,11 @@ export default function ProjectMap() {
                   // Show trial pill and flyby pro tooltip after dismissal
                   setTimeout(() => setShowTrialPill(true), 300);
                   setTimeout(() => setShowFlybyProTooltip(true), 800);
+                  window.location.href = "/";
                 }}
                 className="mt-5 text-white/25 text-sm hover:text-white/50 transition-colors"
               >
-                Maybe later
+                Return to MAPIT Home Page
               </button>
             </motion.div>
           </motion.div>
