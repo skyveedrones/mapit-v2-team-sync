@@ -131,7 +131,7 @@ export default function Providers() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
             >
               Your work, beautifully delivered.
             </motion.h2>
@@ -166,11 +166,9 @@ export default function Providers() {
         >
           <motion.h2
             variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-8"
+            className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8"
           >
-            Your clients deserve
-            <br />
-            better than a Dropbox link.
+            Your clients deserve better than a Dropbox link.
           </motion.h2>
           <motion.p
             variants={fadeInUp}
@@ -197,7 +195,7 @@ export default function Providers() {
         >
           <motion.h2
             variants={fadeInUp}
-            className="text-5xl sm:text-6xl font-bold tracking-tight mb-12"
+            className="text-4xl md:text-5xl font-bold tracking-tight mb-12"
           >
             Ready to look like a pro?
           </motion.h2>
