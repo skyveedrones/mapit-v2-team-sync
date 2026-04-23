@@ -326,13 +326,13 @@ export default function Municipal() {
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => setContactOpen(true)}
             >
-              Request the Municipal Pilot Program
+              Start Municipal Pilot
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
 
-          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
-            Municipal Pilot Program &nbsp;·&nbsp; No commitment required
+          <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/40">
+            No commitment required
           </motion.p>
         </motion.div>
       </section>
