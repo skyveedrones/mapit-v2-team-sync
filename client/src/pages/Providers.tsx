@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, X, Check, Link2, Tablet, Layers, Ruler } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -41,6 +41,45 @@ const valueProps = [
   },
 ];
 
+const oldWay = [
+  "Client needs specific GIS software installed",
+  "Downloads take hours on a job-site connection",
+  "Client is confused by raw data formats",
+  "Pilot wastes hours doing tech support",
+  "Files get lost in email threads",
+];
+
+const mapitWay = [
+  "Instant browser access on any device",
+  "Client can interact with the map immediately",
+  "Measurements and annotations built in",
+  "Pilot looks like an enterprise agency",
+  "Secure, permanent link — always accessible",
+];
+
+const featureCards = [
+  {
+    icon: Link2,
+    title: "Zero-Friction Delivery",
+    body: "Send a URL, not a hard drive. Your client clicks once and they're inside an interactive digital twin of their site.",
+  },
+  {
+    icon: Tablet,
+    title: "Device Agnostic",
+    body: "Your clients can view their site on an iPad in the truck or a desktop in the office — no app, no login, no friction.",
+  },
+  {
+    icon: Layers,
+    title: "2-Point CAD Alignment",
+    body: "Overlay their utility drawings directly onto your map. Two reference points. Perfect alignment. Every time.",
+  },
+  {
+    icon: Ruler,
+    title: "Instant Measurements",
+    body: "Clients can measure distance and area without asking you to do it. They get answers. You get time back.",
+  },
+];
+
 export default function Providers() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
@@ -55,7 +94,6 @@ export default function Providers() {
 
       {/* ─── HERO ─── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Full-bleed video — same source as Home */}
         <video
           autoPlay
           loop
@@ -68,11 +106,9 @@ export default function Providers() {
             type="video/mp4"
           />
         </video>
-        {/* Overlays */}
         <div className="absolute inset-0 bg-black/60" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
 
-        {/* Hero content */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -120,6 +156,145 @@ export default function Providers() {
         </motion.div>
       </section>
 
+      {/* ─── BEFORE & AFTER ─── */}
+      <section className="py-32 px-6 bg-[#0D0D0D] border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 text-center mb-5"
+            >
+              The Business Case
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-16"
+            >
+              Two ways to deliver a job.
+            </motion.h2>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Old Way */}
+              <motion.div
+                variants={fadeInUp}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8"
+              >
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">The Old Way</p>
+                <h3 className="text-2xl font-bold text-white mb-6 leading-tight">Sending a 4GB GeoTIFF.</h3>
+                <ul className="space-y-4">
+                  {oldWay.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                        <X className="w-3 h-3 text-red-400" />
+                      </span>
+                      <span className="text-gray-400 text-sm leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              {/* MAPIT Way */}
+              <motion.div
+                variants={fadeInUp}
+                className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-8"
+              >
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60 mb-4">The MAPIT Way</p>
+                <h3 className="text-2xl font-bold text-white mb-6 leading-tight">Sending a MAPIT Link.</h3>
+                <ul className="space-y-4">
+                  {mapitWay.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-[#00C853]" />
+                      </span>
+                      <span className="text-gray-300 text-sm leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── ROI METRIC ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <motion.p
+            variants={fadeInUp}
+            className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-6"
+          >
+            The ROI
+          </motion.p>
+          <motion.h2
+            variants={fadeInUp}
+            className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8"
+          >
+            Pays for itself on the first flight.
+          </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto"
+          >
+            When you deliver an interactive digital twin instead of a raw file, you aren't just a drone operator anymore — you're a data consultant. Command higher retainer fees and win the bids your competitors lose.
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* ─── FEATURE CARDS ─── */}
+      <section className="py-32 px-6 bg-[#0D0D0D] border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 text-center mb-5"
+            >
+              Platform Capabilities
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-16"
+            >
+              Everything your clients need. Nothing they don't.
+            </motion.h2>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              {featureCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <motion.div
+                    key={card.title}
+                    variants={fadeInUp}
+                    className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-8 hover:border-white/15 hover:bg-white/[0.05] transition-all duration-300"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#00C853]/10 border border-[#00C853]/20 flex items-center justify-center mb-5">
+                      <Icon className="w-5 h-5 text-[#00C853]" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3 leading-tight">{card.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{card.body}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ─── VALUE PROPS ─── */}
       <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-5xl mx-auto">
@@ -156,7 +331,7 @@ export default function Providers() {
       </section>
 
       {/* ─── STATEMENT BLOCK ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0D0D0D] border-t border-white/5">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -181,7 +356,6 @@ export default function Providers() {
 
       {/* ─── SINGLE CTA ─── */}
       <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
-        {/* Subtle green ambient glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
         </div>
@@ -220,7 +394,6 @@ export default function Providers() {
       {/* ─── Footer ─── */}
       <Footer onContactClick={() => setShowContactModal(true)} />
 
-      {/* Contact Modal */}
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
