@@ -121,6 +121,14 @@ export default function Providers() {
             The client-handoff portal for drone service providers. Stop shipping hard drives. Start sending digital twins.
           </motion.p>
 
+          {/* Social proof pill */}
+          <motion.div variants={fadeInUp} className="flex justify-center mb-8">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-sm text-white/50 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] flex-shrink-0" />
+              Built for commercial operators.
+            </span>
+          </motion.div>
+
           <motion.div variants={fadeInUp}>
             <Button
               size="lg"
@@ -163,7 +171,12 @@ export default function Providers() {
                 variants={fadeInUp}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-10"
               >
-                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">The Old Way</p>
+                <div className="flex items-start justify-between mb-4">
+                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30">The Old Way</p>
+                  <span className="inline-flex items-center bg-red-500/10 backdrop-blur-md border border-red-500/10 rounded-full px-3 py-1 text-sm text-red-400 font-medium">
+                    ~4 hrs wasted
+                  </span>
+                </div>
                 <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a 4GB GeoTIFF.</h3>
                 <ul className="space-y-5">
                   {oldWay.map((item) => (
@@ -218,7 +231,7 @@ export default function Providers() {
             variants={fadeInUp}
             className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-6"
           >
-            The ROI
+            THE NUMBERS
           </motion.p>
           <motion.h2
             variants={fadeInUp}
