@@ -118,7 +118,7 @@ export default function Providers() {
             variants={fadeInUp}
             className="text-lg text-white/60 max-w-lg mx-auto mb-12 leading-relaxed"
           >
-            The client-handoff portal for drone service providers. Stop shipping hard drives. Start sending digital twins.
+            Stop shipping hard drives. Start sending digital twins.
           </motion.p>
 
           {/* Social proof pill */}
