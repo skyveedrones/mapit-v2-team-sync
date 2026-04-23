@@ -182,7 +182,12 @@ export default function Providers() {
                 variants={fadeInUp}
                 className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-10"
               >
-                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60 mb-4">The MAPIT Way</p>
+                <div className="flex items-start justify-between mb-4">
+                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60">The MAPIT Way</p>
+                  <span className="inline-flex items-center bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-sm text-emerald-400 font-medium">
+                    Save 3+ hours per job
+                  </span>
+                </div>
                 <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a MAPIT Link.</h3>
                 <ul className="space-y-5">
                   {mapitWay.map((item) => (
@@ -284,6 +289,12 @@ export default function Providers() {
           variants={stagger}
           className="max-w-4xl mx-auto text-center"
         >
+          <motion.p
+            variants={fadeInUp}
+            className="text-xs uppercase tracking-widest text-white/40 font-semibold mb-4"
+          >
+            The Results
+          </motion.p>
           <motion.h2
             variants={fadeInUp}
             className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8"
@@ -325,7 +336,7 @@ export default function Providers() {
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => setLocation("/pricing")}
             >
-              See Pilot Plans
+              Start Your First Map Free
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
