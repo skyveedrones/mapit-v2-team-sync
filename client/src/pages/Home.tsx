@@ -110,7 +110,7 @@ export default function Home() {
 
           <motion.p
             variants={fadeInUp}
-            className="text-xl text-gray-300 max-w-xl mx-auto mb-12 leading-relaxed"
+            className="text-xl text-white/60 max-w-xl mx-auto mb-12 leading-relaxed"
           >
             MAPIT turns drone footage into interactive maps, GPS exports, and utility overlays — automatically.
           </motion.p>
@@ -134,9 +134,6 @@ export default function Home() {
             </Button>
             <p className="text-sm text-white/40 mt-6 text-center">No account required. Experience the live demo instantly.</p>
           </motion.div>
-          <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/40 text-center">
-            Drop one photo. See your map. Your 14-day trial starts instantly. No credit card required.
-          </motion.p>
         </motion.div>
       </section>
 
@@ -369,7 +366,7 @@ export default function Home() {
             </Button>
           </motion.div>
 
-          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
+          <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/25">
             No credit card required &nbsp;·&nbsp; Works with any drone
           </motion.p>
         </motion.div>
