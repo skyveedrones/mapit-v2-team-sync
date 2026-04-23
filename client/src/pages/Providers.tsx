@@ -171,9 +171,9 @@ export default function Providers() {
                 variants={fadeInUp}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-10"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between mb-4">
                   <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30">The Old Way</p>
-                  <span className="inline-flex items-center bg-red-500/10 backdrop-blur-md border border-red-500/10 rounded-full px-3 py-1 text-sm text-red-400 font-medium">
+                  <span className="inline-flex items-center whitespace-nowrap w-fit bg-red-500/10 backdrop-blur-md border border-red-500/10 rounded-full px-3 py-1 text-sm text-red-400 font-medium">
                     ~4 hrs wasted
                   </span>
                 </div>
@@ -195,9 +195,9 @@ export default function Providers() {
                 variants={fadeInUp}
                 className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-10"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between mb-4">
                   <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60">The MAPIT Way</p>
-                  <span className="inline-flex items-center bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-sm text-emerald-400 font-medium">
+                  <span className="inline-flex items-center whitespace-nowrap w-fit bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-sm text-emerald-400 font-medium">
                     Save 3+ hours per job
                   </span>
                 </div>
