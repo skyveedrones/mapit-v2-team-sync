@@ -135,7 +135,7 @@ export const GlobalHamburgerHeader = () => {
                   className="bg-black text-white font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
                   style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
                 >
-                  Get Started
+                  Choose Your Plan
                 </button>
               </>
             )

@@ -334,6 +334,14 @@ export default function Municipal() {
           <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/40">
             No commitment required
           </motion.p>
+          <motion.div variants={fadeInUp} className="mt-4">
+            <a
+              href="/pricing"
+              className="text-sm text-white/40 hover:text-white/70 transition-colors underline underline-offset-4"
+            >
+              View pricing →
+            </a>
+          </motion.div>
         </motion.div>
       </section>
 
