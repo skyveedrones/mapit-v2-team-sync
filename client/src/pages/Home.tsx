@@ -141,7 +141,7 @@ export default function Home() {
       </section>
 
       {/* ─── 3-STEP WORKFLOW ─── */}
-      <section className="py-32 px-6 bg-[#0A0A0A]">
+      <section className="py-40 px-6 bg-[#0A0A0A]">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
@@ -176,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* ─── MUNICIPAL GATEWAY ─── */}
-      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
@@ -195,10 +195,9 @@ export default function Home() {
 
             <motion.p
               variants={fadeInUp}
-              className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12"
+              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
             >
-              MAPIT gives municipal teams a live digital record of every project — roads, utilities,
-              infrastructure — updated from the air. No consultants. No delays. No excuses.
+              Live aerial records for roads, utilities, and infrastructure. No consultants. No delays.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="mt-12">
@@ -214,7 +213,7 @@ export default function Home() {
       </section>
 
       {/* ─── PILOT PERSONA ─── */}
-      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
@@ -231,9 +230,9 @@ export default function Home() {
 
             <motion.p
               variants={fadeInUp}
-              className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12"
+              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
             >
-              Stop handing clients massive raw files they can't open. MAPIT transforms your drone data into a professional, interactive handoff portal. Look like an enterprise agency and win the bid, every time.
+              Transform raw drone data into a professional client portal. Look like an enterprise agency. Win the bid.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="mt-12">
@@ -249,7 +248,7 @@ export default function Home() {
       </section>
 
       {/* ─── 3-CARD FEATURE GRID ─── */}
-      <section id="features" className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -268,7 +267,7 @@ export default function Home() {
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Perfect clarity.</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">Interactive maps built with centimeter-level accuracy, ready to share in minutes.</p>
+                  <p className="text-white/50 text-sm leading-relaxed">Centimeter-level accuracy. Ready to share in minutes.</p>
                 </div>
               </motion.div>
 
@@ -282,7 +281,7 @@ export default function Home() {
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">Seamless GIS and CAD integration. Export to Esri/ArcGIS or CAD in one click. KML, CSV, GeoJSON, and GPX—supported natively.</p>
+                  <p className="text-white/50 text-sm leading-relaxed">Export to Esri, ArcGIS, or CAD in one click. KML, CSV, GeoJSON, GPX — all native.</p>
                 </div>
               </motion.div>
 
@@ -296,7 +295,7 @@ export default function Home() {
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Plans meet reality.</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Align them with two points.</p>
+                  <p className="text-white/50 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Two reference points. Perfect alignment.</p>
                 </div>
               </motion.div>
             </div>
@@ -305,7 +304,7 @@ export default function Home() {
       </section>
 
       {/* ─── GOVERNMENT TRUST SIGNALS ─── */}
-      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -331,7 +330,7 @@ export default function Home() {
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            className="text-lg text-gray-400 leading-relaxed max-w-xl mx-auto"
+            className="text-lg text-white/50 leading-relaxed max-w-xl mx-auto"
           >
             Secure cloud infrastructure. Immutable audit trails for capital projects. Public Works ready.
           </motion.p>

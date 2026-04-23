@@ -1,7 +1,7 @@
 /**
  * MAPIT — Providers Page ("For Pilots")
  * B2B landing page for drone service providers.
- * Design: Same Jobsian system as Home.tsx — #0A0A0A, stark white, MAPIT Green CTAs only.
+ * Design: Jobsian — #0A0A0A, stark white, MAPIT Green CTAs only.
  */
 
 import { Button } from "@/components/ui/button";
@@ -27,17 +27,17 @@ const valueProps = [
   {
     number: "01",
     headline: "Share a link. Not a file.",
-    body: "Stop crashing client inboxes with 4GB GeoTIFFs. Send a secure, interactive web link in seconds.",
+    body: "Send a secure, interactive web link. No downloads, no inbox crashes.",
   },
   {
     number: "02",
     headline: "No GIS degree required.",
-    body: "Your clients want answers, not software tutorials. Give them an intuitive 3D environment they can explore instantly.",
+    body: "Your clients get an intuitive 3D environment they can explore instantly.",
   },
   {
     number: "03",
     headline: "Win more bids.",
-    body: "Differentiate your agency. Delivering a live MAPIT dashboard makes you look like an enterprise firm, securing repeat contracts.",
+    body: "A live MAPIT dashboard makes you look like an enterprise firm.",
   },
 ];
 
@@ -51,7 +51,7 @@ const oldWay = [
 
 const mapitWay = [
   "Instant browser access on any device",
-  "Client can interact with the map immediately",
+  "Client interacts with the map immediately",
   "Measurements and annotations built in",
   "Pilot looks like an enterprise agency",
   "Secure, permanent link — always accessible",
@@ -61,22 +61,22 @@ const featureCards = [
   {
     icon: Link2,
     title: "Zero-Friction Delivery",
-    body: "Send a URL, not a hard drive. Your client clicks once and they're inside an interactive digital twin of their site.",
+    body: "Send a URL, not a hard drive. One click — they're inside a live digital twin.",
   },
   {
     icon: Tablet,
     title: "Device Agnostic",
-    body: "Your clients can view their site on an iPad in the truck or a desktop in the office — no app, no login, no friction.",
+    body: "iPad in the truck. Desktop in the office. No app. No login. No friction.",
   },
   {
     icon: Layers,
     title: "2-Point CAD Alignment",
-    body: "Overlay their utility drawings directly onto your map. Two reference points. Perfect alignment. Every time.",
+    body: "Overlay utility drawings onto your map. Two reference points. Perfect alignment.",
   },
   {
     icon: Ruler,
     title: "Instant Measurements",
-    body: "Clients can measure distance and area without asking you to do it. They get answers. You get time back.",
+    body: "Clients measure distance and area themselves. They get answers. You get time back.",
   },
 ];
 
@@ -134,9 +134,9 @@ export default function Providers() {
 
           <motion.p
             variants={fadeInUp}
-            className="text-xl text-gray-300 max-w-xl mx-auto mb-12 leading-relaxed"
+            className="text-lg text-white/60 max-w-lg mx-auto mb-12 leading-relaxed"
           >
-            MAPIT is the ultimate client-handoff portal for drone service providers. Stop shipping hard drives and start sending interactive digital twins.
+            The client-handoff portal for drone service providers. Stop shipping hard drives. Start sending digital twins.
           </motion.p>
 
           <motion.div variants={fadeInUp}>
@@ -150,15 +150,11 @@ export default function Providers() {
             </Button>
             <p className="text-sm text-white/40 mt-3 text-center">No account required. Experience the live demo instantly.</p>
           </motion.div>
-
-          <motion.p variants={fadeInUp} className="mt-4 text-sm text-white/40 text-center">
-            No credit card required. Works with any drone.
-          </motion.p>
         </motion.div>
       </section>
 
       {/* ─── BEFORE & AFTER ─── */}
-      <section className="py-32 px-6 bg-[#0D0D0D] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0D0D0D] border-t border-white/5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
@@ -174,7 +170,7 @@ export default function Providers() {
             </motion.p>
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-16"
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
             >
               Two ways to deliver a job.
             </motion.h2>
@@ -183,17 +179,17 @@ export default function Providers() {
               {/* Old Way */}
               <motion.div
                 variants={fadeInUp}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8"
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-10"
               >
                 <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">The Old Way</p>
-                <h3 className="text-2xl font-bold text-white mb-6 leading-tight">Sending a 4GB GeoTIFF.</h3>
-                <ul className="space-y-4">
+                <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a 4GB GeoTIFF.</h3>
+                <ul className="space-y-5">
                   {oldWay.map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
                         <X className="w-3 h-3 text-red-400" />
                       </span>
-                      <span className="text-gray-400 text-sm leading-relaxed">{item}</span>
+                      <span className="text-white/50 text-sm leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -202,17 +198,17 @@ export default function Providers() {
               {/* MAPIT Way */}
               <motion.div
                 variants={fadeInUp}
-                className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-8"
+                className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-10"
               >
                 <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60 mb-4">The MAPIT Way</p>
-                <h3 className="text-2xl font-bold text-white mb-6 leading-tight">Sending a MAPIT Link.</h3>
-                <ul className="space-y-4">
+                <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a MAPIT Link.</h3>
+                <ul className="space-y-5">
                   {mapitWay.map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
                         <Check className="w-3 h-3 text-[#00C853]" />
                       </span>
-                      <span className="text-gray-300 text-sm leading-relaxed">{item}</span>
+                      <span className="text-white/70 text-sm leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -223,7 +219,7 @@ export default function Providers() {
       </section>
 
       {/* ─── ROI METRIC ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -245,15 +241,15 @@ export default function Providers() {
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto"
+            className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto"
           >
-            When you deliver an interactive digital twin instead of a raw file, you aren't just a drone operator anymore — you're a data consultant. Command higher retainer fees and win the bids your competitors lose.
+            Deliver a digital twin instead of a raw file and you're no longer a drone operator — you're a data consultant. Command higher fees. Win the bids your competitors lose.
           </motion.p>
         </motion.div>
       </section>
 
       {/* ─── FEATURE CARDS ─── */}
-      <section className="py-32 px-6 bg-[#0D0D0D] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0D0D0D] border-t border-white/5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
@@ -269,9 +265,10 @@ export default function Providers() {
             </motion.p>
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-16"
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
             >
-              Everything your clients need. Nothing they don't.
+              <span className="block">Everything your clients need.</span>
+              <span className="block">Nothing they don't.</span>
             </motion.h2>
 
             <div className="grid sm:grid-cols-2 gap-6">
@@ -281,13 +278,13 @@ export default function Providers() {
                   <motion.div
                     key={card.title}
                     variants={fadeInUp}
-                    className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-8 hover:border-white/15 hover:bg-white/[0.05] transition-all duration-300"
+                    className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-10 hover:border-white/15 hover:bg-white/[0.05] transition-all duration-300"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#00C853]/10 border border-[#00C853]/20 flex items-center justify-center mb-5">
+                    <div className="w-10 h-10 rounded-xl bg-[#00C853]/10 border border-[#00C853]/20 flex items-center justify-center mb-6">
                       <Icon className="w-5 h-5 text-[#00C853]" />
                     </div>
                     <h3 className="text-xl font-bold text-white mb-3 leading-tight">{card.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{card.body}</p>
+                    <p className="text-white/50 text-sm leading-relaxed">{card.body}</p>
                   </motion.div>
                 );
               })}
@@ -297,7 +294,7 @@ export default function Providers() {
       </section>
 
       {/* ─── VALUE PROPS ─── */}
-      <section className="py-32 px-6 bg-[#0A0A0A] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
@@ -307,12 +304,12 @@ export default function Providers() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-24"
             >
               Your work, beautifully delivered.
             </motion.h2>
 
-            <div className="grid md:grid-cols-3 gap-16">
+            <div className="grid md:grid-cols-3 gap-20">
               {valueProps.map((vp) => (
                 <motion.div
                   key={vp.number}
@@ -323,7 +320,7 @@ export default function Providers() {
                     {vp.number}
                   </p>
                   <h3 className="text-2xl font-bold text-white mb-4 leading-tight">{vp.headline}</h3>
-                  <p className="text-gray-400 text-base leading-relaxed">{vp.body}</p>
+                  <p className="text-white/50 text-base leading-relaxed">{vp.body}</p>
                 </motion.div>
               ))}
             </div>
@@ -332,7 +329,7 @@ export default function Providers() {
       </section>
 
       {/* ─── STATEMENT BLOCK ─── */}
-      <section className="py-40 px-6 bg-[#0D0D0D] border-t border-white/5">
+      <section className="py-48 px-6 bg-[#0D0D0D] border-t border-white/5">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -348,15 +345,15 @@ export default function Providers() {
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            className="text-xl sm:text-2xl text-gray-300 leading-relaxed max-w-2xl mx-auto"
+            className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto"
           >
-            Give them a live, interactive map they can explore on any device — no downloads, no logins, no confusion.
+            Give them a live, interactive map on any device — no downloads, no logins, no confusion.
           </motion.p>
         </motion.div>
       </section>
 
       {/* ─── SINGLE CTA ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
+      <section className="py-48 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
         </div>
