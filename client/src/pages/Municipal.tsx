@@ -25,13 +25,13 @@ const ACCOUNTABILITY_IMG =
 
 // APWA Uniform Color Code palette
 const APWA_COLORS = [
-  { label: "Potable Water",    hex: "#0057FF", name: "Blue"   },
-  { label: "Sewers / Drain",   hex: "#00CC44", name: "Green"  },
+  { label: "Survey",           hex: "#FF1493", name: "Pink"   },
+  { label: "Excavation",       hex: "#FFFFFF", name: "White"  },
   { label: "Electric",         hex: "#FF2222", name: "Red"    },
   { label: "Gas / Oil",        hex: "#FFE500", name: "Yellow" },
   { label: "Comm / Signal",    hex: "#FF8C00", name: "Orange" },
-  { label: "Survey",           hex: "#FF1493", name: "Pink"   },
-  { label: "Excavation",       hex: "#FFFFFF", name: "White"  },
+  { label: "Potable Water",    hex: "#0057FF", name: "Blue"   },
+  { label: "Sewers / Drain",   hex: "#00CC44", name: "Green"  },
   { label: "Reclaimed Water",  hex: "#A020F0", name: "Purple" },
 ];
 
