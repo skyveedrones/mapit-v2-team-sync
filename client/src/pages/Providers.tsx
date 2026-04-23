@@ -23,24 +23,6 @@ const stagger = {
   visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
-const valueProps = [
-  {
-    number: "01",
-    headline: "Share a link. Not a file.",
-    body: "Send a secure, interactive web link. No downloads, no inbox crashes.",
-  },
-  {
-    number: "02",
-    headline: "No GIS degree required.",
-    body: "Your clients get an intuitive 3D environment they can explore instantly.",
-  },
-  {
-    number: "03",
-    headline: "Win more bids.",
-    body: "A live MAPIT dashboard makes you look like an enterprise firm.",
-  },
-];
-
 const oldWay = [
   "Client needs specific GIS software installed",
   "Downloads take hours on a job-site connection",
@@ -288,41 +270,6 @@ export default function Providers() {
                   </motion.div>
                 );
               })}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── VALUE PROPS ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-24"
-            >
-              Your work, beautifully delivered.
-            </motion.h2>
-
-            <div className="grid md:grid-cols-3 gap-20">
-              {valueProps.map((vp) => (
-                <motion.div
-                  key={vp.number}
-                  variants={fadeInUp}
-                  className="text-center"
-                >
-                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">
-                    {vp.number}
-                  </p>
-                  <h3 className="text-2xl font-bold text-white mb-4 leading-tight">{vp.headline}</h3>
-                  <p className="text-white/50 text-base leading-relaxed">{vp.body}</p>
-                </motion.div>
-              ))}
             </div>
           </motion.div>
         </div>
