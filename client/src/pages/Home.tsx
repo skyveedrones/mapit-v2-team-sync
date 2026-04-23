@@ -115,6 +115,14 @@ export default function Home() {
             MAPIT turns drone footage into interactive maps, GPS exports, and utility overlays — automatically.
           </motion.p>
 
+          {/* Social proof pill */}
+          <motion.div variants={fadeInUp} className="flex justify-center mb-10">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-sm text-white/50 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] flex-shrink-0" />
+              Over 1,500 utility assets mapped.
+            </span>
+          </motion.div>
+
           <motion.div variants={fadeInUp}>
             <Button
               size="lg"
@@ -124,6 +132,7 @@ export default function Home() {
               Start Mapping Free
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
+            <p className="text-sm text-white/40 mt-3 text-center">No account required. Experience the live demo instantly.</p>
           </motion.div>
           <motion.p variants={fadeInUp} className="mt-4 text-sm text-white/40 text-center">
             Drop one photo. See your map. Your 14-day trial starts instantly. No credit card required.

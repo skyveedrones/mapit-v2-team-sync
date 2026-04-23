@@ -148,6 +148,7 @@ export default function Providers() {
               Start Mapping Free
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
+            <p className="text-sm text-white/40 mt-3 text-center">No account required. Experience the live demo instantly.</p>
           </motion.div>
 
           <motion.p variants={fadeInUp} className="mt-4 text-sm text-white/40 text-center">

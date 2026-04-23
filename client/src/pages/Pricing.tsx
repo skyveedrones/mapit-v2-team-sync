@@ -195,10 +195,10 @@ export default function Pricing() {
       <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
         <button
           onClick={() => setLocation("/")}
-          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors duration-200 text-sm font-medium"
+          className="flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-200 text-sm font-semibold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          ← Back to MAPIT
         </button>
         <div className="w-16" />
         <div className="w-16" />
