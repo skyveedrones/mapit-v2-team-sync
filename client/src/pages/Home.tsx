@@ -260,7 +260,7 @@ export default function Home() {
                   className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  1cm
+                  Exact.
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Perfect clarity.</h3>
@@ -288,7 +288,7 @@ export default function Home() {
                   className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  2-Point.
+                  Aligned.
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Plans meet reality.</h3>
