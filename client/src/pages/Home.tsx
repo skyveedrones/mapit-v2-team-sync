@@ -257,7 +257,7 @@ export default function Home() {
               {/* Card 1 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
+                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -271,7 +271,7 @@ export default function Home() {
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
+                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
@@ -285,7 +285,7 @@ export default function Home() {
               {/* Card 3 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-none mb-8 bg-clip-text text-transparent"
+                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
