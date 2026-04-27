@@ -217,8 +217,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "starter",
     name: "Experience",
     description: "Full access to the MAPIT engine. Create your first digital twin and master the terrain.",
-    monthlyPriceId: "price_1T6Xu3GEMT6mikKwPibBZGCg",
-    annualPriceId: "price_1T6Xu4GEMT6mikKwqmc0MCVL",
+    monthlyPriceId: "price_1TEhGLFY0MJy267nhoeWOHRG",
+    annualPriceId: "price_1TEhGKFY0MJy267njMe7iATP",
     monthlyPrice: 49,
     annualPrice: 499.80, // 15% off: $41.65/mo
     limits: PLAN_LIMITS.starter,
@@ -227,8 +227,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "professional",
     name: "Precision",
     description: "For the dedicated engineer. Unlimited projects, advanced APWA utility overlays.",
-    monthlyPriceId: "price_1T6Xu4GEMT6mikKwINYKHcuI",
-    annualPriceId: "price_1T6Xu4GEMT6mikKwqgE63wB7",
+    monthlyPriceId: "price_1TEhGLFY0MJy267nPDaXRmgc",
+    annualPriceId: "price_1TEhGLFY0MJy267nIy2dOIwV",
     monthlyPrice: 149,
     annualPrice: 1519.80, // 15% off: $126.65/mo
     limits: PLAN_LIMITS.professional,
@@ -237,8 +237,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "business",
     name: "Scale",
     description: "Global scale. Unlimited stakeholder viewing, API access, and priority processing.",
-    monthlyPriceId: "price_1T6Xu5GEMT6mikKwaxgTw2dy",
-    annualPriceId: "price_1T6Xu5GEMT6mikKwCUBCrmlB",
+    monthlyPriceId: "price_1TEhGLFY0MJy267neXSemGb5",
+    annualPriceId: "price_1TEhGKFY0MJy267nNUiqaxJ3",
     monthlyPrice: 349,
     annualPrice: 3559.80, // 15% off: $296.65/mo
     limits: PLAN_LIMITS.business,

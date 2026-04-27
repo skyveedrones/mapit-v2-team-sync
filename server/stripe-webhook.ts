@@ -11,14 +11,14 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
  */
 const PRICE_TO_TIER: Record<string, "starter" | "professional" | "business"> = {
   // Experience tier (internal: starter)
-  "price_1T6Xu3GEMT6mikKwPibBZGCg": "starter",  // monthly
-  "price_1T6Xu4GEMT6mikKwqmc0MCVL": "starter",  // annual
+  "price_1TEhGLFY0MJy267nhoeWOHRG": "starter",  // monthly
+  "price_1TEhGKFY0MJy267njMe7iATP": "starter",  // annual
   // Precision tier (internal: professional)
-  "price_1T6Xu4GEMT6mikKwINYKHcuI": "professional",  // monthly
-  "price_1T6Xu4GEMT6mikKwqgE63wB7": "professional",  // annual
+  "price_1TEhGLFY0MJy267nPDaXRmgc": "professional",  // monthly
+  "price_1TEhGLFY0MJy267nIy2dOIwV": "professional",  // annual
   // Scale tier (internal: business)
-  "price_1T6Xu5GEMT6mikKwaxgTw2dy": "business",  // monthly
-  "price_1T6Xu5GEMT6mikKwCUBCrmlB": "business",  // annual
+  "price_1TEhGLFY0MJy267neXSemGb5": "business",  // monthly
+  "price_1TEhGKFY0MJy267nNUiqaxJ3": "business",  // annual
   // Civic (enterprise) uses custom pricing — no price IDs
 };
 

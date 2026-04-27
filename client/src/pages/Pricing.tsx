@@ -16,9 +16,9 @@ import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
 const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
-  experience: { monthly: "price_1T6Xu3GEMT6mikKwPibBZGCg", annual: "price_1T6Xu4GEMT6mikKwqmc0MCVL" },
-  precision:  { monthly: "price_1T6Xu4GEMT6mikKwINYKHcuI", annual: "price_1T6Xu4GEMT6mikKwqgE63wB7" },
-  scale:      { monthly: "price_1T6Xu5GEMT6mikKwaxgTw2dy", annual: "price_1T6Xu5GEMT6mikKwCUBCrmlB" },
+  experience: { monthly: "price_1TEhGLFY0MJy267nhoeWOHRG", annual: "price_1TEhGKFY0MJy267njMe7iATP" },
+  precision:  { monthly: "price_1TEhGLFY0MJy267nPDaXRmgc", annual: "price_1TEhGLFY0MJy267nIy2dOIwV" },
+  scale:      { monthly: "price_1TEhGLFY0MJy267neXSemGb5", annual: "price_1TEhGKFY0MJy267nNUiqaxJ3" },
   civic:      null,
 };
 
