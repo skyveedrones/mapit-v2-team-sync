@@ -627,7 +627,7 @@ export const appRouter = router({
               },
             },
             allow_promotion_codes: true,
-            success_url: `${ctx.req.headers.origin || "http://localhost:3000"}/dashboard?payment=success`,
+            success_url: `${ctx.req.headers.origin || "http://localhost:3000"}/checkout-success?plan=${encodeURIComponent(input.planName || input.planId)}`,
             cancel_url: `${ctx.req.headers.origin || "http://localhost:3000"}/pricing?payment=cancelled`,
             customer_email: ctx.user.email,
             client_reference_id: ctx.user.id.toString(),

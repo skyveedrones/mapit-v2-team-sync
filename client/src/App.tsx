@@ -29,6 +29,7 @@ import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Billing from "./pages/Billing";
 import Account from "./pages/Account";
 import Trash from "./pages/Trash";
@@ -261,6 +262,7 @@ function Router() {
       <Route path="/checkout-redirect">
         {() => <ProtectedRoute component={CheckoutRedirect} />}
       </Route>
+      <Route path="/checkout-success" component={CheckoutSuccess} />
       <Route path="/account">
         {() => <ProtectedRoute component={Account} />}
       </Route>

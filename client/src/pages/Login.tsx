@@ -1,13 +1,30 @@
 /**
  * Login Page — Clerk SignIn
  * Wraps Clerk's <SignIn /> in the existing MAPIT dark glassmorphism shell.
+ * If a checkoutIntent is stored in sessionStorage, redirects to /checkout-redirect
+ * after successful login instead of /dashboard.
  */
 
 import { SignIn } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { motion } from "framer-motion";
 
+function getPostLoginRedirect(): string {
+  try {
+    const intent = sessionStorage.getItem("checkoutIntent");
+    if (intent) {
+      const parsed = JSON.parse(intent);
+      if (parsed?.priceId) return "/checkout-redirect";
+    }
+  } catch {
+    // ignore
+  }
+  return "/dashboard";
+}
+
 export default function Login() {
+  const redirectUrl = getPostLoginRedirect();
+
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0A]">
       {/* Ambient glow */}
@@ -27,6 +44,18 @@ export default function Login() {
         />
       </div>
 
+      {/* Checkout intent context pill */}
+      {redirectUrl === "/checkout-redirect" && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative z-10 mb-6 px-4 py-2 rounded-full text-sm font-medium text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md"
+        >
+          Sign in to continue to your selected plan
+        </motion.div>
+      )}
+
       {/* Clerk SignIn card */}
       <motion.div
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
@@ -38,7 +67,7 @@ export default function Login() {
           routing="path"
           path="/login"
           signUpUrl="/signup"
-          forceRedirectUrl="/dashboard"
+          forceRedirectUrl={redirectUrl}
           appearance={{
             baseTheme: dark,
             variables: {
