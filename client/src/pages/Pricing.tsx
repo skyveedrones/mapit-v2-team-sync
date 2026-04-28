@@ -142,8 +142,21 @@ export default function Pricing() {
       return;
     }
     if (!user) {
-      // Anonymous visitor → OAuth signup
-      window.location.href = getLoginUrl();
+      // Anonymous visitor → store checkout intent, then route to /signup
+      const priceIds = TIER_PRICE_IDS[tier.id];
+      if (priceIds) {
+        const priceId = annual ? priceIds.annual : priceIds.monthly;
+        sessionStorage.setItem(
+          "checkoutIntent",
+          JSON.stringify({
+            priceId,
+            planId: tier.id,
+            planName: tier.hook,
+            billingPeriod: annual ? "annual" : "monthly",
+          })
+        );
+      }
+      setLocation("/signup");
       return;
     }
     // Current plan — no-op

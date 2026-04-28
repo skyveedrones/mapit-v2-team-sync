@@ -1,12 +1,25 @@
 /**
  * Signup Page — Clerk SignUp
  * Wraps Clerk's <SignUp /> in the MAPIT dark glassmorphism shell.
+ * Preserves checkout intent: if a priceId is stored in sessionStorage,
+ * redirects to /checkout-redirect after signup instead of /dashboard.
  */
 
 import { SignUp } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function SignupPage() {
+  const [redirectUrl, setRedirectUrl] = useState("/dashboard");
+
+  useEffect(() => {
+    // Check if there's a checkout intent stored before the auth flow
+    const checkoutIntent = sessionStorage.getItem("checkoutIntent");
+    if (checkoutIntent) {
+      setRedirectUrl("/checkout-redirect");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0A]">
       {/* Ambient glow */}
@@ -32,6 +45,15 @@ export default function SignupPage() {
         </span>
       </div>
 
+      {/* Plan context pill — shown when checkout intent is present */}
+      {redirectUrl === "/checkout-redirect" && (
+        <div className="absolute top-6 right-8 z-10">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-sm text-emerald-400 font-medium">
+            Creating account to start your trial
+          </div>
+        </div>
+      )}
+
       {/* Clerk SignUp card */}
       <motion.div
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
@@ -43,7 +65,7 @@ export default function SignupPage() {
           routing="path"
           path="/signup"
           signInUrl="/login"
-          forceRedirectUrl="/dashboard"
+          forceRedirectUrl={redirectUrl}
           appearance={{
             variables: {
               colorPrimary: "#10b981",

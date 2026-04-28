@@ -28,6 +28,7 @@ import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
+import CheckoutRedirect from "./pages/CheckoutRedirect";
 import Billing from "./pages/Billing";
 import Account from "./pages/Account";
 import Trash from "./pages/Trash";
@@ -257,6 +258,9 @@ function Router() {
       <Route path="/login/:rest*" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
+      <Route path="/checkout-redirect">
+        {() => <ProtectedRoute component={CheckoutRedirect} />}
+      </Route>
       <Route path="/account">
         {() => <ProtectedRoute component={Account} />}
       </Route>
