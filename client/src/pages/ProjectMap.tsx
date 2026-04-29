@@ -803,7 +803,9 @@ export default function ProjectMap() {
                 transition={{ delay: 0.3, duration: 0.5 }}
                 className="text-white/65 text-base leading-relaxed mb-10"
               >
-                Now that you've explored our vision, it's time to build yours. Start your complimentary 14-day trial to preserve your data and unlock the complete platform.
+                {isSampleProject
+                  ? "See how easy that was? Start your free 14-day trial to upload your own drone data and build your first live map."
+                  : "Don't lose your map! Start your free 14-day trial to save, share, and export this project."}
               </motion.p>
               {/* CTA */}
               <button
