@@ -416,3 +416,45 @@ export async function sendClientWelcomeEmail(params: {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+
+/**
+ * Send trial subscription welcome email
+ */
+export async function sendTrialWelcomeEmail(params: {
+  to: string;
+  userName?: string;
+  planName: string;
+  trialEndDate: string;
+  dashboardUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { to, userName, planName, trialEndDate, dashboardUrl } = params;
+  try {
+    const displayName = userName ? `${userName},` : 'Welcome,';
+    const html = generateEmailTemplate({
+      preheader: `Your ${planName} trial is active`,
+      title: `Welcome to Mapit ${planName}`,
+      body: `<p>${displayName}</p><p>Your <strong>${planName}</strong> plan trial is now active. You have full access to all platform features for the next 14 days.</p><p><strong>Trial ends:</strong> ${trialEndDate}</p><p>Start mapping your first project and experience the power of interactive drone intelligence.</p>`,
+      ctaText: 'Enter Your Dashboard',
+      ctaUrl: dashboardUrl,
+      footer: 'Questions? Contact our support team at support@skyveedrones.com',
+    });
+    const { error } = await resend.emails.send({
+      from: 'Mapit <noreply@skyveedrones.com>',
+      to: [to],
+      replyTo: 'support@skyveedrones.com',
+      subject: `Welcome to Mapit ${planName} - Your 14-day trial is active`,
+      html,
+      headers: getEmailHeaders(),
+    });
+    if (error) {
+      console.error('[Email] Failed to send trial welcome email to', to, ':', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[Email] Trial welcome email sent to', to);
+    return { success: true };
+  } catch (err) {
+    console.error('[Email] Exception sending trial welcome email:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

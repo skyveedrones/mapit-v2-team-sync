@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { sendTrialWelcomeEmail } from "./email";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
@@ -111,6 +112,30 @@ async function handleCheckoutSessionCompleted(
     console.log(
       `[Webhook] Updated user ${userId} to ${tier} tier (subscription: ${subscription.id})`
     );
+    
+    // Send welcome email
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const user = userResult.length > 0 ? userResult[0] : null;
+    if (user && user.email) {
+      const trialEndDate = new Date(
+        (subscription as any).current_period_end * 1000
+      ).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      
+      const planNameMap: Record<string, string> = {
+        starter: 'Experience',
+        professional: 'Precision',
+        business: 'Scale',
+      };
+      const planName = planNameMap[tier] || tier;
+      
+      await sendTrialWelcomeEmail({
+        to: user.email,
+        userName: user.name || undefined,
+        planName,
+        trialEndDate,
+        dashboardUrl: `${process.env.VITE_FRONTEND_URL || 'https://mapit.skyveedrones.com'}/dashboard`,
+      });
+    }
   } catch (error) {
     console.error("[Webhook] Error processing checkout.session.completed:", error);
     throw error;
