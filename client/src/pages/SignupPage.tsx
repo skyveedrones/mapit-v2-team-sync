@@ -27,32 +27,9 @@ export default function SignupPage() {
         <div className="w-[600px] h-[600px] rounded-full bg-emerald-950/30 blur-[120px]" />
       </div>
 
-      {/* Top-left branding */}
-      <div className="absolute top-6 left-8 z-10 flex items-center gap-2">
-        <img
-          src="/images/mapit-logo.webp"
-          alt="MAPIT"
-          className="h-8 w-auto"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
-        <span
-          className="text-white text-xl font-bold tracking-widest"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          MAP<span className="text-emerald-400">i</span>T
-        </span>
-      </div>
+      {/* Top-left branding — removed per UI spec */}
 
-      {/* Plan context pill — shown when checkout intent is present */}
-      {redirectUrl === "/checkout-redirect" && (
-        <div className="absolute top-6 right-8 z-10">
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-sm text-emerald-400 font-medium">
-            Creating account to start your trial
-          </div>
-        </div>
-      )}
+      {/* Plan context pill — removed per UI spec */}
 
       {/* Clerk SignUp card */}
       <motion.div
@@ -80,19 +57,29 @@ export default function SignupPage() {
             elements: {
               card: "bg-transparent shadow-none border-0",
               headerTitle: "text-white font-bold",
+              cardBox: "[&_img]:h-16 [&_img]:w-auto",
               headerSubtitle: "text-white/50",
               formButtonPrimary:
                 "bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-semibold",
               formFieldInput:
                 "bg-white/5 border border-white/10 text-white placeholder-white/25 focus:border-emerald-500/50 focus:ring-emerald-500/10",
               formFieldLabel: "text-white/60 text-xs uppercase tracking-wider",
+              logoImage: "h-16 w-auto",
               footerActionLink: "text-emerald-400 hover:text-emerald-300",
               dividerLine: "bg-white/10",
+              cardHeader: "[&_img]:h-16 [&_img]:w-auto",
+              imageElement: "h-16 w-auto",
               dividerText: "text-white/30",
+              headerImage: "h-16 w-auto",
+              organizationSwitcherTrigger: "[&_img]:h-16 [&_img]:w-auto",
               socialButtonsBlockButton:
-                "bg-white/5 border border-white/12 text-white/80 hover:bg-white/9 hover:text-white",
-              socialButtonsBlockButtonText: "text-white/80",
+                "bg-white/5 border border-white/12 text-white/60 hover:bg-white/9 hover:text-white/80",
+              socialButtonsBlockButtonText: "text-white/60 text-xs uppercase tracking-wider font-semibold",
               alert: "bg-red-900/30 border border-red-500/30 text-red-300",
+              internal: {
+                formButtonPrimary__loader: "text-emerald-400",
+                cards__cardBox: "[&_img]:h-16 [&_img]:w-auto",
+              },
             },
           }}
         />
