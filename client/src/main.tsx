@@ -2,6 +2,7 @@ import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { initializeVersionCheck, startPeriodicVersionCheck } from "@/lib/versionCheck";
+import { initializePostHog } from "@/lib/posthog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -124,6 +125,8 @@ function AppWithClerkToken() {
     </trpc.Provider>
   );
 }
+
+initializePostHog();
 
 // DISABLED: Initialize version checking on app load
 // This was causing cycling popups every 5 seconds

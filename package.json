@@ -1,6 +1,6 @@
 {
   "name": "dronemapp-v2",
-  "version": "2.4.9",
+  "version": "2.4.10",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -99,6 +99,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-to-png-converter": "^3.14.0",
     "piexifjs": "^1.0.6",
+    "posthog-js": "^1.372.5",
     "puppeteer": "^24.36.1",
     "puppeteer-core": "^24.36.1",
     "rate-limit-redis": "^4.3.1",
