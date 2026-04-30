@@ -6,11 +6,14 @@
  */
 
 import { SignUp } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 
 export default function SignupPage() {
   const [redirectUrl, setRedirectUrl] = useState("/dashboard");
+  const { user } = useUser();
 
   useEffect(() => {
     // Check if there's a checkout intent stored before the auth flow
@@ -19,6 +22,20 @@ export default function SignupPage() {
       setRedirectUrl("/checkout-redirect");
     }
   }, []);
+
+  // Identify user in PostHog after successful signup
+  useEffect(() => {
+    if (user && user.id) {
+      posthog.identify(
+        user.id,
+        {
+          email: user.primaryEmailAddress?.emailAddress,
+          is_trial_user: true,
+          signup_date: new Date().toISOString()
+        }
+      );
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0A]">

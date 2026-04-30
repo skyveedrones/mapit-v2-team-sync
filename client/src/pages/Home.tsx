@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import posthog from "posthog-js";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 32 },
@@ -127,7 +128,13 @@ export default function Home() {
             <Button
               size="lg"
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setLocation("/welcome")}
+              onClick={() => {
+                posthog.capture('demo_started', { 
+                  location: 'homepage_hero',
+                  version: 'v1_demo' 
+                });
+                setLocation("/welcome");
+              }}
             >
               Build Your Map
               <ChevronRight className="ml-2 h-5 w-5" />

@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trpc as trpcClient } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
+import posthog from "posthog-js";
 
 // ── Coordinate helpers ────────────────────────────────────────────────────────
 // DB stores "lat, lng"; Mapbox needs [lng, lat]
@@ -529,6 +530,10 @@ export default function ProjectMap() {
                 setTimeout(() => flybyRef.current?.startFlyby(), 400);
               }}
               onClose={() => {
+                posthog.capture('demo_completed', { 
+                  assets_mapped: 5,
+                  processing_time_seconds: 12
+                });
                 setShowTour(false);
                 setIsTourActive(false);
                 // Small delay so the tour card fully fades before the pill appears
