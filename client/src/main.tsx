@@ -2,15 +2,18 @@ import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { initializeVersionCheck, startPeriodicVersionCheck } from "@/lib/versionCheck";
-import { initializePostHog } from "@/lib/posthog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import { useMemo } from "react";
 import superjson from "superjson";
+import { initializePostHog } from "@/lib/posthog";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+
+// Initialize PostHog analytics
+initializePostHog();
 
 // Suppress ResizeObserver errors from VList virtualization library
 // These are harmless notifications that occur after component unmount
@@ -125,8 +128,6 @@ function AppWithClerkToken() {
     </trpc.Provider>
   );
 }
-
-initializePostHog();
 
 // DISABLED: Initialize version checking on app load
 // This was causing cycling popups every 5 seconds
