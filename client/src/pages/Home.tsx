@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import LandscapeNudge from "@/components/LandscapeNudge";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -70,6 +71,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
+      <LandscapeNudge />
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
