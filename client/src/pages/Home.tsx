@@ -344,44 +344,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ─── SINGLE CTA ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
-        {/* Subtle green ambient glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
-        </div>
-
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="relative z-10 max-w-3xl mx-auto text-center"
-        >
-          <motion.h2
-            variants={fadeInUp}
-            className="text-5xl sm:text-6xl font-bold tracking-tight mb-12"
-          >
-            The map is waiting.
-          </motion.h2>
-
-          <motion.div variants={fadeInUp}>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setLocation("/pricing")}
-            >
-              Choose Your Plan
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-
-          <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/25">
-            No credit card required &nbsp;·&nbsp; Works with any drone
-          </motion.p>
-        </motion.div>
-      </section>
-
       {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-black py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         {/* Subtle background glow */}
