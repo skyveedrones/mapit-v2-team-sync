@@ -382,6 +382,41 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
+      <section className="relative bg-black py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+            Magically precise.<br />
+            <span className="text-slate-400">Profoundly simple.</span>
+          </h2>
+          
+          <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
+            Experience the new standard of site intelligence. <br className="hidden md:block" />
+            Start your 14-day free trial today.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-transform duration-300"
+              onClick={() => setLocation("/pricing")}
+            >
+              Start Free Trial
+            </Button>
+            <p className="text-sm text-slate-500 sm:hidden mt-2">No credit card required.</p>
+          </div>
+          
+          <p className="hidden sm:block text-sm text-slate-500 mt-6">
+            No credit card required. Works with any standard drone.
+          </p>
+        </div>
+      </section>
+
       {/* ─── Footer ─── */}
       <Footer onContactClick={() => setShowContactModal(true)} />
 
