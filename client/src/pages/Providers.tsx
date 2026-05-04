@@ -135,7 +135,7 @@ export default function Providers() {
               className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => setLocation("/welcome")}
             >
-              Build Your Map
+              Start Free Trial
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
             <p className="text-sm text-white/40 mt-6 text-center">No account required. Experience the live demo instantly.</p>
