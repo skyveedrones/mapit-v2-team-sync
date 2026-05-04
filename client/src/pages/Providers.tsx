@@ -340,7 +340,7 @@ export default function Providers() {
             variants={fadeInUp}
             className="text-4xl md:text-5xl font-bold tracking-tight mb-12"
           >
-            Ready to look like a pro?
+            Expertly flown. Magically processed.
           </motion.h2>
 
           <motion.div variants={fadeInUp}>
@@ -354,7 +354,11 @@ export default function Providers() {
             </Button>
           </motion.div>
 
-          <motion.p variants={fadeInUp} className="mt-8 text-sm text-white/25">
+          <motion.p variants={fadeInUp} className="mt-8 text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-8">
+            Stop sharing raw files. Deliver an interactive client portal that wins bids and wows clients. Start your 14-day free trial today.
+          </motion.p>
+
+          <motion.p variants={fadeInUp} className="text-sm text-white/25">
             No credit card required &nbsp;·&nbsp; Works with any drone
           </motion.p>
         </motion.div>
