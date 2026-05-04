@@ -345,7 +345,7 @@ export default function Home() {
       </section>
 
       {/* ─── JOBSIAN BOTTOM CTA ─── */}
-      <section className="relative bg-black py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+      <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         {/* Subtle background glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
