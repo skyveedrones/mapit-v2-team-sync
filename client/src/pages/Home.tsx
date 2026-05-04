@@ -370,11 +370,11 @@ export default function Home() {
             >
               Start Free Trial
             </Button>
-            <p className="text-sm text-slate-500 sm:hidden mt-2">No credit card required.</p>
+            <p className="text-sm text-slate-500 sm:hidden mt-2">Upload your first site photo. We'll build your map. Your project saves automatically — no credit card needed.</p>
           </div>
           
           <p className="hidden sm:block text-sm text-slate-500 mt-6">
-            No credit card required. Works with any standard drone.
+            Upload your first site photo. We'll build your map. Your project saves automatically — no credit card needed.
           </p>
         </div>
       </section>
