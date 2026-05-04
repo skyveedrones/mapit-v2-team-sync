@@ -263,11 +263,11 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
-            <div className="grid md:grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/5 border border-white/5 rounded-2xl">
               {/* Card 1 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-4 sm:p-6 md:p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -279,9 +279,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 2 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-4 sm:p-6 md:p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
@@ -293,9 +293,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 3 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-4 sm:p-6 md:p-10 flex flex-col justify-between overflow-hidden">
                 <p
-                  className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
