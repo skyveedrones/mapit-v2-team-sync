@@ -232,14 +232,14 @@ export default function Home() {
               variants={fadeInUp}
               className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-8"
             >
-              Elevate your deliverables.
+              You fly the mission. We build the intelligence.
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
             >
-              Transform raw drone data into a professional client portal. Look like an enterprise agency. Win the bid.
+              Transform raw drone data into a professional client portal. Look like an enterprise agency and win the bid.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="mt-12">
