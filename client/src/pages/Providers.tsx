@@ -81,15 +81,16 @@ export default function Providers() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover -z-10"
         >
           <source
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
             type="video/mp4"
           />
         </video>
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
+        <div className="absolute inset-0 bg-black/60 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A] -z-10" />
 
         <motion.div
           initial="hidden"
