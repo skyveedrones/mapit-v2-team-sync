@@ -1,355 +1,390 @@
 /**
- * Municipal Solutions Landing Page — Jobsian Rewrite
- * Design: Pure black (#0A0A0A), stark white, MAPIT Green (#00C853) reserved for CTA + product name only.
- * Copy: Jobs-style — name the pain, deliver the promise, one door.
+ * Municipal Solutions — Jobsian Vertical Scroll-Story
+ * Design: Pure black (#0A0A0A), white text, slate-gray secondary, green #00e676 accents
+ * Structure: 7 sections building a narrative arc from problem to solution to action
  */
 
-import { Button } from "@/components/ui/button";
-import { PilotProgramModal } from "@/components/PilotProgramModal";
-import Footer from "@/components/Footer";
-import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Building2, Users, Shield } from "lucide-react";
 import { useState } from "react";
+import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import Footer from "@/components/Footer";
+import { useLocation } from "wouter";
 
 const HERO_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/municipal-hero-aerial_0ce36c3a.jpg";
-const TRENCH_IMG =
+const INFRASTRUCTURE_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-subsurface-XheCyMcVLXCFkjdcG9yGnT.webp";
-const DIGITAL_TWIN_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-interdept-3mR7B9wUkt5ZFwjKKdLgCB.webp";
-const GIS_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-overlay-3nmwWrVxQ8Zqmu4hBtuZ8r.webp";
-const ACCOUNTABILITY_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/muni-card-accountability-QNNJ3wMUutMTCmeXaRCJqc.webp";
-
-// APWA Uniform Color Code palette
-const APWA_COLORS = [
-  { label: "Survey",           hex: "#FF1493", name: "Pink"   },
-  { label: "Excavation",       hex: "#FFFFFF", name: "White"  },
-  { label: "Electric",         hex: "#FF2222", name: "Red"    },
-  { label: "Gas / Oil",        hex: "#FFE500", name: "Yellow" },
-  { label: "Comm / Signal",    hex: "#FF8C00", name: "Orange" },
-  { label: "Potable Water",    hex: "#0057FF", name: "Blue"   },
-  { label: "Sewers / Drain",   hex: "#00CC44", name: "Green"  },
-  { label: "Reclaimed Water",  hex: "#A020F0", name: "Purple" },
-];
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const stagger = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
-};
-
-const outcomeCards = [
-  {
-    headline: "Every department. One map.",
-    body: "Public Works, Engineering, and City Council all see the same aerial record — in real time. No data silos. No version conflicts.",
-    image: DIGITAL_TWIN_IMG,
-  },
-  {
-    headline: "No utility strike goes undocumented.",
-    body: "Overlay your existing utility drawings on live drone imagery. Know exactly what's there before you dig.",
-    image: TRENCH_IMG,
-  },
-  {
-    headline: "Plans meet reality.",
-    body: "Verify construction alignment against design plans with centimeter-level precision using our 2-point calibration engine.",
-    image: GIS_IMG,
-  },
-  {
-    headline: "Your record. Forever.",
-    body: "Every flight is archived. Every project has a before, during, and after. Admissible in court. Presentable to City Council.",
-    image: ACCOUNTABILITY_IMG,
-  },
-];
 
 export default function Municipal() {
-  const [contactOpen, setContactOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
+    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
       <GlobalHamburgerHeader />
 
-      {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0A0A0A]">
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 1: HERO — "Your entire city. Live from above."
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section
+        className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${HERO_IMG})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/50" />
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
-          style={{ paddingTop: '60px' }}
-        >
-          <motion.p
-            variants={fadeInUp}
-            className="text-sm font-semibold tracking-[0.25em] uppercase text-white/50 mb-8"
-          >
-            For Municipal Leaders
-          </motion.p>
+        {/* Green glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[800px] h-[800px] bg-[#00e676] opacity-[0.02] blur-[150px] rounded-full" />
+        </div>
 
+        {/* Content */}
+        <div className="relative z-10 text-center px-6 max-w-4xl">
           <motion.h1
-            variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="font-bold text-white mb-6"
+            style={{
+              fontSize: "clamp(2.5rem, 8vw, 4.5rem)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.15,
+            }}
           >
-            Your city.{" "}
-            <span className="text-[#00C853]">Documented.</span>
+            Your entire city.
             <br />
-            From above.
+            <span className="text-slate-400">Live from above.</span>
           </motion.h1>
 
           <motion.p
-            variants={fadeInUp}
-            className="text-xl text-white/60 max-w-xl mx-auto mb-12 leading-relaxed"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-slate-300 text-lg md:text-xl mb-8"
           >
-            MAPIT provides every department with a live aerial record of every project—roads, utilities, and infrastructure—updated directly from the sky.
+            Real-time aerial intelligence for every department. One platform. One source of truth.
           </motion.p>
 
-          <motion.div variants={fadeInUp}>
-            <a
-              href="/#map-begins-here"
-              className="inline-flex items-center gap-2 bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20 transition-colors"
-            >
-              See Your City From Above
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </a>
-          </motion.div>
-
-          {/* Passive flyby preview */}
-          <motion.div
-            variants={fadeInUp}
-            className="mt-16 mx-auto max-w-3xl w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60 aspect-video bg-[#0d0d0d] flex items-center justify-center"
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            onClick={() => setLocation("/pricing")}
+            className="inline-flex items-center gap-2 bg-[#00e676] text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-[#00b548] transition-all duration-300 shadow-lg shadow-[#00e676]/20"
           >
-            <video
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/MunicipalHeroVideo_5da11711.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover rounded-xl"
-            />
-          </motion.div>
-        </motion.div>
+            Start Municipal Pilot
+            <ChevronRight className="w-5 h-5" />
+          </motion.button>
+        </div>
       </section>
 
-      {/* ─── APWA COLORIZATION ─── */}
-      <section className="w-full bg-[#0A0A0A] py-32 px-6 overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 2: THE CONTRAST — "The Old Way" vs "The MAPIT Way"
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-32 px-6 bg-[#0A0A0A]">
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
           >
-            {/* Headline */}
-            <motion.div variants={fadeInUp} className="mb-20 max-w-3xl">
-              <p className="text-sm font-semibold tracking-[0.25em] uppercase text-[#00C853]/70 mb-6">
-                New Feature
-              </p>
-              <h2 className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight mb-8">
-                Black and white
-                <br />
-                is dead.
-              </h2>
-              <p className="text-xl text-white/60 leading-relaxed max-w-2xl">
-                One click. Every pipe, wire, and trench instantly translated from a faded PDF into the APWA Uniform Color
-                Code. Just glowing, unmistakable truth.
-              </p>
-            </motion.div>
+            The Problem. The Solution.
+          </motion.h2>
 
-            {/* APWA Color Palette — edge-to-edge swatches */}
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* The Old Way */}
             <motion.div
-              variants={stagger}
-              className="grid grid-cols-4 sm:grid-cols-8 gap-0 rounded-2xl overflow-hidden border border-white/5"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl border border-red-500/20 bg-red-500/5"
             >
-              {APWA_COLORS.map((color) => (
-                <motion.div
-                  key={color.hex}
-                  variants={fadeInUp}
-                  className="group relative flex flex-col items-center justify-end py-8 px-2 cursor-default transition-all duration-300"
-                  style={{ backgroundColor: color.hex === "#FFFFFF" ? "#1a1a1a" : `${color.hex}18` }}
-                >
-                  {/* Glow bar at top */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-1 transition-all duration-300 group-hover:h-2"
-                    style={{ backgroundColor: color.hex }}
-                  />
-                  {/* Color dot */}
-                  <div
-                    className="w-10 h-10 rounded-full mb-4 shadow-lg transition-transform duration-300 group-hover:scale-125"
-                    style={{
-                      backgroundColor: color.hex,
-                      boxShadow: `0 0 20px ${color.hex}60`,
-                    }}
-                  />
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-white/80 text-center leading-tight">
-                    {color.label}
-                  </p>
-                </motion.div>
-              ))}
+              <h3 className="text-2xl font-bold text-red-400 mb-6">The Old Way</h3>
+              <ul className="space-y-4 text-slate-300">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 font-bold mt-1">✕</span>
+                  <span>Departments work in silos with outdated maps</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 font-bold mt-1">✕</span>
+                  <span>Manual data entry and spreadsheet chaos</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 font-bold mt-1">✕</span>
+                  <span>Delays in emergency response and planning</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 font-bold mt-1">✕</span>
+                  <span>No real-time visibility into infrastructure</span>
+                </li>
+              </ul>
             </motion.div>
 
-            {/* Supporting statement */}
-            <motion.p
-              variants={fadeInUp}
-              className="mt-12 text-sm text-white/30 tracking-wide text-center"
+            {/* The MAPIT Way */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl border border-[#00e676]/30 bg-[#00e676]/5"
             >
-              APWA Uniform Color Code — the industry standard for underground utility identification
-            </motion.p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── THE PAIN ─── */}
-      <section className="py-32 px-6 bg-[#0A0A0A]">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-12"
-            >
-              Your city has $40M in underground utilities.
-              <br />
-              <span className="text-white/40">You're managing them with a PDF from 2009.</span>
-            </motion.h2>
-
-            <motion.div variants={fadeInUp} className="border-t border-white/10 pt-12">
-              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
-                When a crew hits an unmarked utility line, it costs $50,000 and two weeks. Every time. Most
-                municipalities rely on fragmented data and aging paper plans — and nobody in City Hall knows it until
-                something goes wrong. MAPIT is a live aerial map of your active projects, overlaid with your utility
-                drawings, accessible by every department. Updated after every flight. No consultants. No delays. No excuses.
-              </p>
+              <h3 className="text-2xl font-bold text-[#00e676] mb-6">The MAPIT Way</h3>
+              <ul className="space-y-4 text-slate-300">
+                <li className="flex items-start gap-3">
+                  <span className="text-[#00e676] font-bold mt-1">✓</span>
+                  <span>One unified map. All departments. Real-time.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-[#00e676] font-bold mt-1">✓</span>
+                  <span>Automatic data capture and verification</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-[#00e676] font-bold mt-1">✓</span>
+                  <span>Faster response times. Better coordination.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-[#00e676] font-bold mt-1">✓</span>
+                  <span>Complete infrastructure visibility at your fingertips</span>
+                </li>
+              </ul>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ─── OUTCOME CARDS ─── */}
-      <section id="outcomes" className="py-24 px-6 bg-[#0A0A0A]">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.p
-              variants={fadeInUp}
-              className="text-sm font-semibold tracking-[0.25em] uppercase text-white/30 mb-16"
-            >
-              What MAPIT Does
-            </motion.p>
-
-            <div className="grid md:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
-              {outcomeCards.map((card) => (
-                <motion.div
-                  key={card.headline}
-                  variants={fadeInUp}
-                  className="group bg-[#0A0A0A] p-0 overflow-hidden relative"
-                >
-                  {/* Image */}
-                  <div className="h-56 overflow-hidden">
-                    <img
-                      src={card.image}
-                      alt={card.headline}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-70 group-hover:opacity-90"
-                    />
-                  </div>
-                  {/* Text */}
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold text-white mb-3 leading-tight">{card.headline}</h3>
-                    <p className="text-white/50 leading-relaxed">{card.body}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── COMPLIANCE — quiet, below the desire ─── */}
-      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.p variants={fadeInUp} className="text-sm text-white/25 tracking-widest uppercase mb-6">
-              Built for Government Standards
-            </motion.p>
-            <motion.p variants={fadeInUp} className="text-white/40 text-base leading-relaxed">
-              US-based cloud storage &nbsp;·&nbsp; ArcGIS / AutoCAD export &nbsp;·&nbsp; Part 107 certified pilots
-              &nbsp;·&nbsp; FAA compliant &nbsp;·&nbsp; Comprehensive liability insurance
-            </motion.p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── ENCAPSULATION + CTA ─── */}
-      <section className="py-40 px-6 bg-[#0A0A0A] relative overflow-hidden">
-        {/* Subtle green ambient glow */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 3: THE IMPACT — "50% Cost Reduction"
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center overflow-hidden">
+        {/* Green glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.04] blur-[120px] rounded-full" />
         </div>
 
         <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="relative z-10 max-w-4xl mx-auto text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="relative z-10 text-center max-w-3xl"
         >
-          <motion.h2
-            variants={fadeInUp}
-            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-12"
+          <p className="text-slate-400 text-lg mb-4">The Impact</p>
+          <h2
+            className="text-[#00e676] font-bold mb-6"
+            style={{
+              fontSize: "clamp(3rem, 12vw, 6rem)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
+            }}
           >
-            MAPIT is the first time a city director can open a laptop and see exactly what is happening on every job
-            site —{" "}
-            <span className="text-[#00C853]">right now.</span>
-          </motion.h2>
-
-          <motion.div variants={fadeInUp}>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setContactOpen(true)}
-            >
-              Start Municipal Pilot
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-
-          <motion.p variants={fadeInUp} className="mt-6 text-sm text-white/40">
-            No commitment required
-          </motion.p>
-          <motion.div variants={fadeInUp} className="mt-4">
-            <a
-              href="/pricing"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors underline underline-offset-4"
-            >
-              View pricing →
-            </a>
-          </motion.div>
+            50% Cost
+            <br />
+            Reduction
+          </h2>
+          <p className="text-slate-300 text-xl">
+            Do more with less. Redirect human capital to high-value analysis.
+          </p>
         </motion.div>
       </section>
 
-      {/* ─── Footer ─── */}
-      <Footer onContactClick={() => setContactOpen(true)} />
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 4: THE RECORD — Bleed Image Layout
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left: Text */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-slate-400 text-sm uppercase tracking-widest mb-4">Infrastructure Record</p>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Monitor roads and bridges with profound simplicity.
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed mb-8">
+                Every pothole. Every crack. Every bridge inspection. Captured, verified, and accessible to every stakeholder in real-time.
+              </p>
+              <button
+                onClick={() => setLocation("/pricing")}
+                className="inline-flex items-center gap-2 text-[#00e676] font-bold hover:gap-3 transition-all"
+              >
+                Learn more
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </motion.div>
 
-      {/* ─── Modal ─── */}
-      <PilotProgramModal open={contactOpen} onOpenChange={setContactOpen} />
+            {/* Right: Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="relative h-96 md:h-full rounded-2xl overflow-hidden"
+            >
+              <img
+                src={INFRASTRUCTURE_IMG}
+                alt="Infrastructure monitoring"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 5: THE ECOSYSTEM — Three-Column Grid
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-6xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
+          >
+            Built for Every Department
+          </motion.h2>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Public Works */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+            >
+              <Building2 className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-3">Public Works</h3>
+              <p className="text-slate-400">
+                Manage infrastructure, track maintenance, and coordinate projects in real-time.
+              </p>
+            </motion.div>
+
+            {/* Urban Planning */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+            >
+              <Users className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-3">Urban Planning</h3>
+              <p className="text-slate-400">
+                Visualize growth patterns, plan development, and engage stakeholders transparently.
+              </p>
+            </motion.div>
+
+            {/* Public Safety */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+            >
+              <Shield className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-3">Public Safety</h3>
+              <p className="text-slate-400">
+                Respond faster with complete situational awareness and real-time data access.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 6: THE VALIDATION — Premium Quote Section
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center">
+        {/* Green glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full" />
+        </div>
+
+        <motion.blockquote
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="relative z-10 text-center max-w-4xl"
+        >
+          <p
+            className="text-white italic font-light"
+            style={{
+              fontSize: "clamp(1.8rem, 5vw, 3rem)",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.3,
+            }}
+          >
+            "Visibility is the first step toward absolute efficiency in modern governance."
+          </p>
+        </motion.blockquote>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 7: FINAL CTA — Jobsian Style
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        {/* Green glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full" />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8"
+          >
+            City-wide scale.
+            <br />
+            <span className="text-slate-400">Profoundly simple.</span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="text-xl md:text-2xl text-slate-300 font-light mb-12"
+          >
+            Start your municipal pilot today. No credit card required.
+          </motion.p>
+
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            onClick={() => setLocation("/pricing")}
+            className="inline-flex items-center gap-2 bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+          >
+            Start Municipal Pilot
+            <ChevronRight className="w-5 h-5" />
+          </motion.button>
+
+          <p className="text-sm text-slate-500 mt-6">
+            Join 50+ municipalities already using MAPIT.
+          </p>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }
