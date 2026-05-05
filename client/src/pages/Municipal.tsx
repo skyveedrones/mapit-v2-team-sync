@@ -42,6 +42,7 @@ export default function Municipal() {
           loop
           muted
           playsInline
+          preload="auto"
           className="absolute inset-0 w-full h-full object-cover -z-10"
         >
           <source src="/manus-storage/MunicipalHeroVideo_06b3bcdd.mp4" type="video/mp4" />
@@ -86,7 +87,7 @@ export default function Municipal() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            onClick={() => setLocation("/pricing")}
+            onClick={() => setLocation("/contact?program=municipal")}
             className="inline-flex items-center gap-2 bg-[#00e676] text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-[#00b548] transition-all duration-300 shadow-lg shadow-[#00e676]/20"
           >
             Start Municipal Pilot
