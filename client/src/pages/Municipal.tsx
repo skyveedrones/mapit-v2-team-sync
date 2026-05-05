@@ -272,20 +272,27 @@ export default function Municipal() {
               </p>
             </motion.div>
 
-            {/* Right: Image with Parallax */}
+            {/* Right: Demo Video with Premium Styling */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="relative h-96 md:h-full rounded-2xl overflow-hidden"
+              className="relative h-96 md:h-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-[#00e676]/10"
               style={{ y: imageY }}
             >
-              <img
-                src={INFRASTRUCTURE_IMG}
-                alt="Infrastructure monitoring"
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
                 className="w-full h-full object-cover"
-              />
+              >
+                <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4" type="video/mp4" />
+              </video>
+              {/* Subtle overlay for premium feel */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
         </div>
