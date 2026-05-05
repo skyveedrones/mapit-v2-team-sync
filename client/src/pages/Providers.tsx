@@ -323,45 +323,38 @@ export default function Providers() {
         </motion.div>
       </section>
 
-      {/* ─── SINGLE CTA ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] relative overflow-hidden border-t border-white/5">
+      {/* Jobsian Bottom CTA Section */}
+      <section className="relative py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        
+        {/* Subtle background glow to draw the eye to the center */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-[#00C853]/5 blur-[120px]" />
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
         </div>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="relative z-10 max-w-3xl mx-auto text-center"
-        >
-          <motion.h2
-            variants={fadeInUp}
-            className="text-4xl md:text-5xl font-bold tracking-tight mb-12"
-          >
-            Expertly flown. Magically processed.
-          </motion.h2>
-
-          <motion.div variants={fadeInUp}>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-12 py-7 text-lg rounded-full shadow-lg shadow-[#00C853]/20"
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+            Expertly flown.<br />
+            <span className="text-slate-400">Magically processed.</span>
+          </h2>
+          
+          <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
+            Stop sharing raw files. Deliver an interactive client portal that wins bids and wows clients.<br className="hidden md:block" />
+            Start your 14-day free trial today.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button 
               onClick={() => setLocation("/pricing")}
+              className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
             >
               Start Free Trial
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-
-          <motion.p variants={fadeInUp} className="mt-8 text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-8">
-            Stop sharing raw files. Deliver an interactive client portal that wins bids and wows clients. Start your 14-day free trial today.
-          </motion.p>
-
-          <motion.p variants={fadeInUp} className="text-sm text-white/25">
-            No credit card required &nbsp;·&nbsp; Works with any drone
-          </motion.p>
-        </motion.div>
+            </button>
+          </div>
+          
+          <p className="text-sm text-slate-500 mt-6">
+            No credit card required. Works with any standard drone.
+          </p>
+        </div>
       </section>
 
       {/* ─── Footer ─── */}
