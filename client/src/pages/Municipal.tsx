@@ -36,20 +36,20 @@ export default function Municipal() {
       <section
         className="relative w-full h-screen flex items-center justify-center overflow-hidden"
       >
-        {/* Video Background */}
+        {/* Full-bleed video */}
         <video
           autoPlay
           loop
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover -z-10"
+          className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/manus-storage/MunicipalHeroVideo_06b3bcdd.mp4" type="video/mp4" />
+          <source src="/manus-storage/4062991-uhd_3840_2160_30fps_4b70a116.mp4" type="video/mp4" />
         </video>
-
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/50" />
+        {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
 
         {/* Green glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
