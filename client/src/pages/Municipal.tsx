@@ -202,9 +202,51 @@ export default function Municipal() {
             <br />
             Reduction
           </h2>
-          <p className="text-slate-300 text-xl">
+          <p className="text-slate-300 text-xl mb-12">
             Do more with less. Redirect human capital to high-value analysis.
           </p>
+
+          {/* 3-Column Metric Blocks */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            {/* Metric 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="text-5xl md:text-6xl font-bold text-[#00e676] mb-2">85%</div>
+              <p className="text-slate-300 font-semibold mb-1">Faster</p>
+              <p className="text-slate-500 text-sm">Data capture in hours, not weeks</p>
+            </motion.div>
+
+            {/* Metric 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="text-5xl md:text-6xl font-bold text-[#00e676] mb-2">1</div>
+              <p className="text-slate-300 font-semibold mb-1">Pilot</p>
+              <p className="text-slate-500 text-sm">Replaces multi-person field crews</p>
+            </motion.div>
+
+            {/* Metric 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="text-5xl md:text-6xl font-bold text-[#00e676] mb-2">Zero</div>
+              <p className="text-slate-300 font-semibold mb-1">Risk</p>
+              <p className="text-slate-500 text-sm">Autonomous flights remove traffic hazards</p>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
