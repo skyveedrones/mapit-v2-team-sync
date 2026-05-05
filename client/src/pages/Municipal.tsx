@@ -252,6 +252,100 @@ export default function Municipal() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 4.5: APWA UTILITY COLOR CODING
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Subtle background glow */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.02] blur-[120px] rounded-full"></div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="relative z-10"
+          >
+            {/* Heading */}
+            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+              Beneath the surface.<br />
+              <span className="text-slate-400">Perfectly mapped.</span>
+            </h2>
+
+            {/* Subtext */}
+            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16">
+              Full APWA color-coded utility overlays. Prevent strikes, eliminate guesswork, and know exactly what lies beneath before you dig.
+            </p>
+
+            {/* APWA Color Indicators */}
+            <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+              {/* Red - Electric */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-red-600 shadow-lg shadow-red-600/50 flex items-center justify-center border border-red-500/30"></div>
+                <span className="text-sm font-medium text-slate-300">Electric</span>
+              </motion.div>
+
+              {/* Yellow - Gas */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50 flex items-center justify-center border border-yellow-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Gas</span>
+              </motion.div>
+
+              {/* Blue - Water */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50 flex items-center justify-center border border-blue-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Water</span>
+              </motion.div>
+
+              {/* Orange - Communications */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-orange-500 shadow-lg shadow-orange-500/50 flex items-center justify-center border border-orange-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Communications</span>
+              </motion.div>
+
+              {/* Green - Sewer */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-green-600 shadow-lg shadow-green-600/50 flex items-center justify-center border border-green-500/30"></div>
+                <span className="text-sm font-medium text-slate-300">Sewer</span>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
           SECTION 5: THE ECOSYSTEM — Three-Column Grid
           ═══════════════════════════════════════════════════════════════════════ */}
       <section className="relative py-32 px-6 bg-[#0A0A0A]">
