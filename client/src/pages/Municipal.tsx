@@ -83,16 +83,16 @@ export default function Municipal() {
             Real-time aerial intelligence for every department.<br className="hidden md:block" /> One platform. One unified source of truth.
           </motion.p>
 
-          <motion.button
+          <motion.a
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            onClick={() => setLocation("/contact?program=municipal")}
+            href="mailto:hello@mapit.com?subject=MAPIT%20Municipal%20Pilot%20Request&body=Hi%20MAPIT%20team,%0A%0AI%20am%20interested%20in%20learning%20more%20about%20deploying%20a%20MAPIT%20digital%20twin%20pilot%20for%20our%20municipality.%20Please%20let%20me%20know%20the%20best%20next%20steps."
             className="inline-flex items-center gap-2 bg-[#00e676] text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-[#00b548] transition-all duration-300 shadow-lg shadow-[#00e676]/20"
           >
             Start Municipal Pilot
             <ChevronRight className="w-5 h-5" />
-          </motion.button>
+          </motion.a>
         </div>
       </section>
 
@@ -526,17 +526,17 @@ export default function Municipal() {
             Start your municipal pilot today. No credit card required.
           </motion.p>
 
-          <motion.button
+          <motion.a
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            onClick={() => setLocation("/pricing")}
+            href="mailto:hello@mapit.com?subject=MAPIT%20Municipal%20Pilot%20Request&body=Hi%20MAPIT%20team,%0A%0AI%20am%20interested%20in%20learning%20more%20about%20deploying%20a%20MAPIT%20digital%20twin%20pilot%20for%20our%20municipality.%20Please%20let%20me%20know%20the%20best%20next%20steps."
             className="inline-flex items-center gap-2 bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
           >
             Start Municipal Pilot
             <ChevronRight className="w-5 h-5" />
-          </motion.button>
+          </motion.a>
 
           <p className="text-sm text-slate-500 mt-6">
             Dedicated municipal onboarding and training included.
