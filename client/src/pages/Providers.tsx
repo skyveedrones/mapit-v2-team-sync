@@ -71,11 +71,11 @@ export default function Providers() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
+    <div className="text-white overflow-y-auto">
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full min-h-screen overflow-hidden bg-transparent">
+      <section className="relative w-full h-screen overflow-hidden bg-transparent">
         {/* Background Video */}
         <video
           src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-city-network-31580-large.mp4"
