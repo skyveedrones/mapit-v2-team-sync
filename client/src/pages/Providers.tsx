@@ -75,63 +75,75 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#0A0A0A] via-[#0D0D0D] to-[#0A0A0A]">
-        {/* Subtle accent glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[800px] h-[800px] bg-[#00e676] opacity-[0.02] blur-[150px] rounded-full"></div>
-        </div>
-
-        {/* Content Container */}
-        <div className="relative z-10 w-full h-full flex items-center justify-center">
+      <section className="relative w-full h-screen overflow-hidden">
+        {/* 1. THE VIDEO LAYER */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-city-network-31580-large.mp4" 
+          className="absolute top-0 left-0 w-full h-full object-cover -z-20" 
+        />
+        
+        {/* 2. THE TRANSPARENT OVERLAY */}
+        <div className="absolute top-0 left-0 w-full h-full bg-black/70 -z-10" />
+        
+        {/* 3. THE CONTENT LAYER */}
+        <div className="relative z-10 flex flex-col items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="max-w-3xl mx-auto px-6 text-center"
-            style={{ paddingTop: "60px" }}
           >
-          <motion.p
-            variants={fadeInUp}
-            className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40 mb-8"
-          >
-            For Drone Service Providers
-          </motion.p>
-
-          <motion.h1
-            variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8 text-white"
-            style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
-          >
-            <span className="block">Deliver intelligence.</span>
-            <span className="block">Not just images.</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg text-white/60 max-w-lg mx-auto mb-12 leading-relaxed"
-          >
-            Stop shipping hard drives. Start sending digital twins.
-          </motion.p>
-
-          {/* Social proof pill */}
-          <motion.div variants={fadeInUp} className="flex justify-center mb-8">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-sm text-white/50 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] flex-shrink-0" />
-              Built for commercial operators.
-            </span>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
-              onClick={() => setLocation("/welcome")}
+            <motion.p
+              variants={fadeInUp}
+              className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40 mb-8"
             >
-              Start Free Trial
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-            <p className="text-sm text-white/60 -mt-2 text-center">No account required. Experience the live demo instantly.</p>
-          </motion.div>
+              For Drone Service Providers
+            </motion.p>
+
+            <motion.h1
+              variants={fadeInUp}
+              className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8 text-white"
+              style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
+            >
+              <span className="block">Deliver intelligence.</span>
+              <span className="block">Not just images.</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl text-white/60 mt-6"
+            >
+              Stop shipping hard drives. Start sending digital twins.
+            </motion.p>
+            
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl text-white/60 mt-2"
+            >
+              No account required. Experience the live demo instantly.
+            </motion.p>
+
+            {/* Social proof pill */}
+            <motion.div variants={fadeInUp} className="flex justify-center mb-8 mt-8">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-sm text-white/50 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] flex-shrink-0" />
+                Built for commercial operators.
+              </span>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Button
+                size="lg"
+                className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
+                onClick={() => setLocation("/welcome")}
+              >
+                Start Free Trial
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -144,216 +156,155 @@ export default function Providers() {
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
+            className="mb-20"
           >
-            <motion.p
-              variants={fadeInUp}
-              className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 text-center mb-5"
-            >
-              The Business Case
-            </motion.p>
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-5xl font-bold text-white mb-4"
             >
-              Two ways to deliver a job.
+              The Old Way vs. The MAPIT Way
             </motion.h2>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Old Way */}
-              <motion.div
-                variants={fadeInUp}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-10"
-              >
-                <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between mb-4">
-                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30">The Old Way</p>
-                  <span className="inline-flex items-center whitespace-nowrap w-fit bg-red-500/10 backdrop-blur-md border border-red-500/10 rounded-full px-3 py-1 text-sm text-red-400 font-medium">
-                    ~4 hrs wasted
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a 4GB GeoTIFF.</h3>
-                <ul className="space-y-5">
-                  {oldWay.map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                        <X className="w-3 h-3 text-red-400" />
-                      </span>
-                      <span className="text-white/50 text-sm leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-
-              {/* MAPIT Way */}
-              <motion.div
-                variants={fadeInUp}
-                className="rounded-2xl border border-[#00C853]/20 bg-[#00C853]/[0.04] p-10"
-              >
-                <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between mb-4">
-                  <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#00C853]/60">The MAPIT Way</p>
-                  <span className="inline-flex items-center whitespace-nowrap w-fit bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-sm text-emerald-400 font-medium">
-                    Save 3+ hours per job
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-8 leading-tight">Sending a MAPIT Link.</h3>
-                <ul className="space-y-5">
-                  {mapitWay.map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-[#00C853]" />
-                      </span>
-                      <span className="text-white/70 text-sm leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            </div>
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-white/60 max-w-2xl"
+            >
+              See how MAPIT transforms your workflow and client experience.
+            </motion.p>
           </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* OLD WAY */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={stagger}
+              className="space-y-6"
+            >
+              <h3 className="text-2xl font-bold text-red-400">The Old Way</h3>
+              {oldWay.map((item, i) => (
+                <motion.div key={i} variants={fadeInUp} className="flex gap-4">
+                  <X className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
+                  <p className="text-white/70">{item}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* MAPIT WAY */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={stagger}
+              className="space-y-6"
+            >
+              <h3 className="text-2xl font-bold text-[#00C853]">The MAPIT Way</h3>
+              {mapitWay.map((item, i) => (
+                <motion.div key={i} variants={fadeInUp} className="flex gap-4">
+                  <Check className="w-6 h-6 text-[#00C853] flex-shrink-0 mt-1" />
+                  <p className="text-white/70">{item}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ─── ROI METRIC ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="max-w-4xl mx-auto text-center"
-        >
-          <motion.p
-            variants={fadeInUp}
-            className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-6"
-          >
-            THE NUMBERS
-          </motion.p>
-          <motion.h2
-            variants={fadeInUp}
-            className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8"
-          >
-            Pays for itself on the first flight.
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto"
-          >
-            Deliver a digital twin instead of a raw file and you're no longer a drone operator — you're a data consultant. Command higher fees. Win the bids your competitors lose.
-          </motion.p>
-        </motion.div>
-      </section>
-
       {/* ─── FEATURE CARDS ─── */}
-      <section className="py-40 px-6 bg-[#0D0D0D] border-t border-white/5">
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
+            className="mb-20"
           >
-            <motion.p
-              variants={fadeInUp}
-              className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 text-center mb-5"
-            >
-              Platform Capabilities
-            </motion.p>
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-5xl font-bold text-white"
             >
-              <span className="block">Everything your clients need.</span>
-              <span className="block">Nothing they don't.</span>
+              Built for Your Workflow
             </motion.h2>
-
-            <div className="grid sm:grid-cols-2 gap-6">
-              {featureCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <motion.div
-                    key={card.title}
-                    variants={fadeInUp}
-                    className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-10 hover:border-white/15 hover:bg-white/[0.05] transition-all duration-300"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-[#00C853]/10 border border-[#00C853]/20 flex items-center justify-center mb-6">
-                      <Icon className="w-5 h-5 text-[#00C853]" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-3 leading-tight">{card.title}</h3>
-                    <p className="text-white/50 text-sm leading-relaxed">{card.body}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
           </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {featureCards.map((card, i) => {
+              const Icon = card.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-80px" }}
+                  variants={fadeInUp}
+                  className="p-8 rounded-lg border border-white/10 bg-white/[0.02] hover:border-[#00C853]/50 transition-colors"
+                >
+                  <Icon className="w-8 h-8 text-[#00C853] mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-3">{card.title}</h3>
+                  <p className="text-white/60">{card.body}</p>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* ─── STATEMENT BLOCK ─── */}
-      <section className="py-48 px-6 bg-[#0D0D0D] border-t border-white/5">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={stagger}
-          className="max-w-4xl mx-auto text-center"
-        >
-          <motion.p
-            variants={fadeInUp}
-            className="text-xs uppercase tracking-widest text-white/40 font-semibold mb-4"
-          >
-            The Results
-          </motion.p>
-          <motion.h2
-            variants={fadeInUp}
-            className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8"
-          >
-            Your clients deserve better than a Dropbox link.
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto"
-          >
-            Give them a live, interactive map on any device — no downloads, no logins, no confusion.
-          </motion.p>
-        </motion.div>
-      </section>
-
-      {/* Jobsian Bottom CTA Section */}
-      <section className="relative py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        
-        {/* Subtle background glow to draw the eye to the center */}
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
+      <section className="relative py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-[#0A0A0A]">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
-            Expertly flown.<br />
-            <span className="text-slate-400">Magically processed.</span>
-          </h2>
-          
-          <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
-            Stop sharing raw files. Deliver an interactive client portal.<br className="hidden md:block" />
-            Start your 14-day free trial today.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button 
-              onClick={() => setLocation("/pricing")}
-              className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8"
             >
-              Start Free Trial
-            </button>
-          </div>
-          
-          <p className="text-sm text-slate-500 mt-6">
-            No credit card required. Works with any standard drone.
-          </p>
+              Expertly flown.<br />
+              <span className="text-slate-400">Magically processed.</span>
+            </motion.h2>
+            
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl md:text-2xl text-slate-300 font-light mb-12 max-w-3xl mx-auto"
+            >
+              Stop sharing raw files. Deliver an interactive client portal.<br className="hidden md:block" />
+              Start your 14-day free trial today.
+            </motion.p>
+            
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button 
+                onClick={() => setLocation("/pricing")}
+                className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+              >
+                Start Free Trial
+              </button>
+            </motion.div>
+            
+            <motion.p
+              variants={fadeInUp}
+              className="text-sm text-slate-500 mt-6"
+            >
+              No credit card required. Works with any standard drone.
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
-      {/* ─── Footer ─── */}
-      <Footer onContactClick={() => setShowContactModal(true)} />
+      {/* FOOTER */}
+      <Footer />
 
-      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
+      {/* CONTACT MODAL */}
+      {showContactModal && (
+        <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
+      )}
     </div>
   );
 }
