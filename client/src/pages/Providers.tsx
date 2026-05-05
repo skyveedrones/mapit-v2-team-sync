@@ -75,7 +75,7 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full h-screen overflow-hidden">
+      <section className="relative w-full h-screen overflow-hidden bg-transparent">
         {/* 1. THE VIDEO LAYER */}
         <video 
           autoPlay 
