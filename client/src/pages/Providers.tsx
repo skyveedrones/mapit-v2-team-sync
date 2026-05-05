@@ -87,7 +87,7 @@ export default function Providers() {
         />
         
         {/* 2. THE TRANSPARENT OVERLAY */}
-        <div className="absolute top-0 left-0 w-full h-full bg-black/70 -z-10" />
+        <div className="absolute top-0 left-0 w-full h-full bg-black/40 -z-10" />
         
         {/* 3. THE CONTENT LAYER */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
