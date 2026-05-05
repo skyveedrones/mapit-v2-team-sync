@@ -379,7 +379,7 @@ export default function Municipal() {
           </motion.button>
 
           <p className="text-sm text-slate-500 mt-6">
-            Join 50+ municipalities already using MAPIT.
+            Dedicated municipal onboarding and training included.
           </p>
         </div>
       </section>
