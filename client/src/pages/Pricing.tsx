@@ -218,26 +218,32 @@ export default function Pricing() {
       </nav>
 
       {/* ── Hero ── */}
-      <div className="text-center pb-10 px-6" style={{ paddingTop: 'calc(4rem + 60px)' }}>
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="font-bold text-white mb-4"
-          style={{ fontSize: "clamp(1.9rem, 4.5vw, 2.8rem)", letterSpacing: "-0.03em", lineHeight: 1.1 }}
-        >
-          Precision mapping for every scale
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.14 }}
-          className="text-center max-w-lg mx-auto space-y-1"
-        >
-          <p className="text-white text-base leading-relaxed">Experience the complete platform.</p>
-          <p className="text-white text-base leading-relaxed">Your first 14 days are complimentary.</p>
-          <p className="text-white text-base leading-relaxed">No credit card required.</p>
-        </motion.div>
+      <div className="relative text-center pb-10 px-6 overflow-hidden" style={{ paddingTop: 'calc(4rem + 60px)' }}>
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
+        </div>
+
+        <div className="relative z-10">
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+            className="font-bold text-white mb-6"
+            style={{ fontSize: "clamp(2.5rem, 6vw, 3.5rem)", letterSpacing: "-0.03em", lineHeight: 1.2 }}
+          >
+            Infinite scale.<br />
+            <span className="text-slate-400">Simple pricing.</span>
+          </motion.h1>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.14 }}
+            className="text-center max-w-2xl mx-auto"
+          >
+            <p className="text-white/70 text-lg leading-relaxed">Experience the complete platform risk-free. Your first 14 days are on us.</p>
+          </motion.div>
+        </div>
 
         {/* Monthly / Annual Toggle */}
         <motion.div
@@ -331,24 +337,40 @@ export default function Pricing() {
                 ) : (
                   <>
                     <AnimatePresence mode="wait">
-                      <motion.p
-                        key={annual ? "annual" : "monthly"}
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        transition={{ duration: 0.18 }}
-                        className="text-white font-extrabold"
-                        style={{ fontSize: "2.1rem", letterSpacing: "-0.04em", lineHeight: 1 }}
-                      >
-                        ${annual ? tier.annualMonthly!.toFixed(2) : tier.monthlyPrice}
-                        <span className="text-white/35 text-sm font-normal ml-1">/mo</span>
-                      </motion.p>
+                      {annual ? (
+                        <motion.div
+                          key="annual"
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          transition={{ duration: 0.18 }}
+                        >
+                          <p
+                            className="text-white font-extrabold"
+                            style={{ fontSize: "2.1rem", letterSpacing: "-0.04em", lineHeight: 1 }}
+                          >
+                            ${tier.annualTotal!.toFixed(2)}
+                            <span className="text-white/35 text-sm font-normal ml-1">/yr</span>
+                          </p>
+                          <p className="text-emerald-400 text-sm font-semibold mt-2">
+                            Save ${(tier.monthlyPrice! * 12 - tier.annualTotal!).toFixed(2)}/yr
+                          </p>
+                        </motion.div>
+                      ) : (
+                        <motion.p
+                          key="monthly"
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          transition={{ duration: 0.18 }}
+                          className="text-white font-extrabold"
+                          style={{ fontSize: "2.1rem", letterSpacing: "-0.04em", lineHeight: 1 }}
+                        >
+                          ${tier.monthlyPrice}
+                          <span className="text-white/35 text-sm font-normal ml-1">/mo</span>
+                        </motion.p>
+                      )}
                     </AnimatePresence>
-                    {annual && tier.annualTotal && (
-                      <p className="text-white/30 text-xs mt-1">
-                        Billed ${tier.annualTotal.toFixed(2)}/yr
-                      </p>
-                    )}
                   </>
                 )}
               </div>
