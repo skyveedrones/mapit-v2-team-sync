@@ -211,16 +211,9 @@ export default function Municipal() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                 Monitor roads and bridges with profound simplicity.
               </h2>
-              <p className="text-slate-300 text-lg leading-relaxed mb-8">
+              <p className="text-slate-300 text-lg leading-relaxed">
                 Every pothole. Every crack. Every bridge inspection. Captured, verified, and accessible to every stakeholder in real-time.
               </p>
-              <button
-                onClick={() => setLocation("/pricing")}
-                className="inline-flex items-center gap-2 text-[#00e676] font-bold hover:gap-3 transition-all"
-              >
-                Learn more
-                <ChevronRight className="w-5 h-5" />
-              </button>
             </motion.div>
 
             {/* Right: Image */}
