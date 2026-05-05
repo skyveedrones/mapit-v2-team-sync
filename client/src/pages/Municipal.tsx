@@ -5,8 +5,9 @@
  */
 
 import { motion } from "framer-motion";
-import { ChevronRight, Building2, Users, Shield } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, Building2, Users, Shield, ChevronDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { useScroll, useTransform } from "framer-motion";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import Footer from "@/components/Footer";
 import { useLocation } from "wouter";
@@ -18,6 +19,12 @@ const INFRASTRUCTURE_IMG =
 
 export default function Municipal() {
   const [, setLocation] = useLocation();
+  const infrastructureRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: infrastructureRef,
+    offset: ["start end", "end start"],
+  });
+  const imageY = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
@@ -197,7 +204,7 @@ export default function Municipal() {
       {/* ═══════════════════════════════════════════════════════════════════════
           SECTION 4: THE RECORD — Bleed Image Layout
           ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-32 px-6 bg-[#0A0A0A]">
+      <section ref={infrastructureRef} className="relative py-32 px-6 bg-[#0A0A0A]">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Left: Text */}
@@ -216,13 +223,14 @@ export default function Municipal() {
               </p>
             </motion.div>
 
-            {/* Right: Image */}
+            {/* Right: Image with Parallax */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
               className="relative h-96 md:h-full rounded-2xl overflow-hidden"
+              style={{ y: imageY }}
             >
               <img
                 src={INFRASTRUCTURE_IMG}
@@ -232,6 +240,15 @@ export default function Municipal() {
             </motion.div>
           </div>
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          className="flex justify-center mt-16"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <ChevronDown className="w-6 h-6 text-slate-500" />
+        </motion.div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -252,11 +269,11 @@ export default function Municipal() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Public Works */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0 }}
-              viewport={{ once: true }}
-              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+              transition={{ duration: 0.7, delay: 0, ease: "easeOut" }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center hover:bg-[#00e676]/10 transition-colors duration-300"
             >
               <Building2 className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-3">Public Works</h3>
@@ -267,11 +284,11 @@ export default function Municipal() {
 
             {/* Urban Planning */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+              transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center hover:bg-[#00e676]/10 transition-colors duration-300"
             >
               <Users className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-3">Urban Planning</h3>
@@ -282,11 +299,11 @@ export default function Municipal() {
 
             {/* Public Safety */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center"
+              transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center hover:bg-[#00e676]/10 transition-colors duration-300"
             >
               <Shield className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-3">Public Safety</h3>
