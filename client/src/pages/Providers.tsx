@@ -75,22 +75,26 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full h-screen overflow-hidden bg-transparent">
-        {/* 1. THE VIDEO LAYER */}
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          src="/manus-storage/ShorterConstruction_7e042e5b.mp4" 
-          className="absolute top-0 left-0 w-full h-full object-cover -z-20" 
-        />
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Full-bleed video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source
+            src="/manus-storage/ShorterConstruction_7e042e5b.mp4"
+            type="video/mp4"
+          />
+        </video>
+        {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
         
-        {/* 2. THE TRANSPARENT OVERLAY */}
-        <div className="absolute top-0 left-0 w-full h-full bg-black/40 -z-10" />
-        
-        {/* 3. THE CONTENT LAYER */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
+        {/* Content layer */}
+        <div className="relative z-20 max-w-3xl mx-auto px-6 text-center" style={{ paddingTop: '60px' }}>
           <motion.div
             initial="hidden"
             animate="visible"
