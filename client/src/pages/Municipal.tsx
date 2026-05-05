@@ -69,18 +69,18 @@ export default function Municipal() {
               lineHeight: 1.15,
             }}
           >
-            Your entire city.
+            A perfect digital twin.
             <br />
-            <span className="text-slate-400">Live from above.</span>
+            <span className="text-slate-400">Of your entire city.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-slate-300 text-lg md:text-xl mb-8"
+            className="text-slate-300 text-lg md:text-xl mb-8 max-w-3xl mx-auto"
           >
-            Real-time aerial intelligence for every department. One platform. One source of truth.
+            Real-time aerial intelligence for every department.<br className="hidden md:block" /> One platform. One unified source of truth.
           </motion.p>
 
           <motion.button
