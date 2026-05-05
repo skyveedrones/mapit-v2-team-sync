@@ -89,8 +89,9 @@ export default function Providers() {
             type="video/mp4"
           />
         </video>
-        <div className="absolute inset-0 bg-black/60 -z-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A] -z-10" />
+        {/* Heavy dark overlay for text legibility */}
+        <div className="absolute inset-0 bg-black/75 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-[#0A0A0A] -z-10" />
 
         <motion.div
           initial="hidden"
