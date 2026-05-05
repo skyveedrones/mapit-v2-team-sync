@@ -75,18 +75,11 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full h-screen overflow-hidden bg-transparent">
-        {/* Background Video */}
-        <video
-          src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-city-network-31580-large.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover -z-20"
-        />
-        {/* Dark overlay for text legibility */}
-        <div className="absolute top-0 left-0 w-full h-full bg-black/60 -z-10" />
+      <section className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#0A0A0A] via-[#0D0D0D] to-[#0A0A0A]">
+        {/* Subtle accent glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[800px] h-[800px] bg-[#00e676] opacity-[0.02] blur-[150px] rounded-full"></div>
+        </div>
 
         {/* Content Container */}
         <div className="relative z-10 w-full h-full flex items-center justify-center">
