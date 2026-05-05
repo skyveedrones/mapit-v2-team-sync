@@ -35,12 +35,18 @@ export default function Municipal() {
           ═══════════════════════════════════════════════════════════════════════ */}
       <section
         className="relative w-full h-screen flex items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url(${HERO_IMG})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
       >
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover -z-10"
+        >
+          <source src="/manus-storage/MunicipalHeroVideo_06b3bcdd.mp4" type="video/mp4" />
+        </video>
+
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/50" />
 
