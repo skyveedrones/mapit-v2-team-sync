@@ -338,7 +338,7 @@ export default function Providers() {
           </h2>
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
-            Stop sharing raw files. Deliver an interactive client portal that wins bids and wows clients.<br className="hidden md:block" />
+            Stop sharing raw files. Deliver an interactive client portal.<br className="hidden md:block" />
             Start your 14-day free trial today.
           </p>
           
