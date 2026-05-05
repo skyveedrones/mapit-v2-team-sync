@@ -75,32 +75,28 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-transparent">
+      <section className="relative w-full min-h-screen overflow-hidden bg-transparent">
         {/* Background Video */}
         <video
+          src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-city-network-31580-large.mp4"
           autoPlay
           loop
           muted
           playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover -z-20"
-        >
-          <source
-            src="https://videos.pexels.com/video-files/3571467/3571467-sd_640_360_30fps.mp4"
-            type="video/mp4"
-          />
-        </video>
-        {/* Heavy dark overlay for text legibility */}
-        <div className="absolute inset-0 bg-black/75 -z-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-[#0A0A0A] -z-10" />
+          className="absolute top-0 left-0 w-full h-full object-cover -z-20"
+        />
+        {/* Dark overlay for text legibility */}
+        <div className="absolute top-0 left-0 w-full h-full bg-black/60 -z-10" />
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="relative z-20 max-w-3xl mx-auto px-6 text-center"
-          style={{ paddingTop: "60px" }}
-        >
+        {/* Content Container */}
+        <div className="relative z-10 w-full h-full flex items-center justify-center">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={stagger}
+            className="max-w-3xl mx-auto px-6 text-center"
+            style={{ paddingTop: "60px" }}
+          >
           <motion.p
             variants={fadeInUp}
             className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40 mb-8"
@@ -143,7 +139,8 @@ export default function Providers() {
             </Button>
             <p className="text-sm text-white/40 mt-6 text-center">No account required. Experience the live demo instantly.</p>
           </motion.div>
-        </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {/* ─── BEFORE & AFTER ─── */}
