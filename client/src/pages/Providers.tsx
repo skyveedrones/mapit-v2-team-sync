@@ -82,7 +82,7 @@ export default function Providers() {
           loop 
           muted 
           playsInline 
-          src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-city-network-31580-large.mp4" 
+          src="/manus-storage/ShorterConstruction_7e042e5b.mp4" 
           className="absolute top-0 left-0 w-full h-full object-cover -z-20" 
         />
         
