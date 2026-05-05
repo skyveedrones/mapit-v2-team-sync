@@ -5,7 +5,7 @@
  */
 
 import { motion } from "framer-motion";
-import { ChevronRight, Building2, Users, Shield, ChevronDown } from "lucide-react";
+import { ChevronRight, Building2, Users, Shield, ChevronDown, Hammer } from "lucide-react";
 import { useState, useRef } from "react";
 import { useScroll, useTransform } from "framer-motion";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
@@ -384,10 +384,10 @@ export default function Municipal() {
               viewport={{ once: true, margin: "-100px" }}
               className="p-8 rounded-2xl border border-[#00e676]/20 bg-[#00e676]/5 text-center hover:bg-[#00e676]/10 transition-colors duration-300"
             >
-              <Users className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-3">Urban Planning</h3>
+              <Hammer className="w-12 h-12 text-[#00e676] mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-3">Engineering</h3>
               <p className="text-slate-400">
-                Visualize growth patterns, plan development, and engage stakeholders transparently.
+                Design with precision, validate site conditions, and optimize project planning with real-time data.
               </p>
             </motion.div>
 
