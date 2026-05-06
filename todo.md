@@ -2779,7 +2779,19 @@
 - [ ] Test batch file upload with edge cases (empty rows, invalid formats)
 - [ ] Test map preview rendering with large datasets (1000+ points)
 
-## Current Priority: Homepage & Conversion Funnel Optimization
+## CURRENT TOP PRIORITY: State Plane Coordinate Converter Backend
+- [x] Install Proj4js and file upload dependencies (xlsx, papaparse)
+- [x] Create coordinate converter service with Proj4js integration (EPSG:2276 default, dynamic CRS)
+- [x] Build tRPC procedures for single and batch coordinate conversion
+- [x] Implement CSV/Excel file parsing for batch operations (max 1000 rows, 5MB)
+- [x] Add validation and error handling for all conversion operations
+- [x] Write unit tests for conversion logic and edge cases
+- [ ] Test with sample Texas North Central (EPSG:2276) coordinates
+- [ ] Create frontend UI components for converter tool
+- [ ] Implement map preview with marker rendering
+- [ ] Add layer export and project storage integration
+
+## BACKLOG: Homepage & Conversion Funnel Optimization (Deferred)
 - [x] Update Municipal hero with polished copy and video background
 - [x] Add APWA utility color coding section to Municipal page
 - [x] Implement scroll animations and parallax effects on Municipal page
@@ -2787,8 +2799,27 @@
 - [x] Add "Cost of the old way" stat section to Providers page
 - [x] Link Municipal CTAs to MunicipalBriefingForm modal
 - [x] Link Providers CTAs to Pricing page
-- [ ] Add customer testimonials carousel to Municipal page
-- [ ] Add customer testimonials carousel to Providers page
-- [ ] Create FAQ accordion section on Pricing page
-- [ ] Test all pages on mobile landscape for text clipping
-- [ ] Test conversion funnel end-to-end (hero → pricing → checkout)
+- [ ] Add customer testimonials carousel to Municipal page (DEFERRED)
+- [ ] Add customer testimonials carousel to Providers page (DEFERRED)
+- [ ] Create FAQ accordion section on Pricing page (DEFERRED)
+- [ ] Test all pages on mobile landscape for text clipping (DEFERRED)
+- [ ] Test conversion funnel end-to-end (hero → pricing → checkout) (DEFERRED)
+
+
+## DEPENDENT TASK: Update Website Copy for Coordinate Converter (BLOCKED - Waiting for Feature Completion)
+**BLOCKER:** Do NOT implement until Coordinate Converter feature is 100% complete and fully operational
+
+### Homepage Copy Block
+- [ ] Add to main Features grid or "Why MAPIT" section
+- [ ] Headline: "Grid to Ground. Like Magic."
+- [ ] Body: "Instantly translate local State Plane coordinates from construction documents into real-world GPS points. No heavy GIS software required. Upload your points, enter your scale factor, and watch them snap perfectly onto your project map."
+
+### Providers Page Copy Block
+- [ ] Add to section focused on tools, workflows, or saving time
+- [ ] Headline: "The Rosetta Stone for Surveyors and Engineers"
+- [ ] Body: "Stop bouncing between AutoCAD, clunky web converters, and your field maps. MAPIT's built-in conversion engine automatically handles US Survey Feet, NAD83 realizations, and your exact Combined Scale Factor. Upload thousands of points at once, verify them visually, and drop them instantly into your project layer. Uncompromising accuracy, zero friction."
+
+### Municipal Page Copy Block
+- [ ] Add to section focused on record-keeping or modernizing archives
+- [ ] Headline: "Bring Historical Plans into the Modern Era"
+- [ ] Body: "City records are full of utility plats and site plans mapped on local state plane grids. MAPIT makes it incredibly easy for city staff to upload those local coordinates and instantly visualize them on a modern aerial map. Bridge the gap between your physical archives and your digital GIS environment with a single click."
