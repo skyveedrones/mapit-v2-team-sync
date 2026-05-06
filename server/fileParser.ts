@@ -166,16 +166,42 @@ function parseExcel(buffer: Buffer): {
 }
 
 /**
+ * Detect actual file type based on extension (handles double extensions like .csv.xlsx)
+ */
+function detectFileType(fileName: string): 'csv' | 'excel' | 'unknown' {
+  const lowerName = fileName.toLowerCase();
+  
+  // Check for .xlsx or .xls first (most specific)
+  if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+    return 'excel';
+  }
+  
+  // Check for .csv (handles .csv.xlsx by checking if it's actually an xlsx that was named with .csv)
+  if (lowerName.endsWith('.csv')) {
+    // If it ends with .csv but also has .xlsx before it, it's likely an Excel file
+    if (lowerName.includes('.csv.xlsx') || lowerName.includes('.csv.xls')) {
+      return 'excel';
+    }
+    return 'csv';
+  }
+  
+  return 'unknown';
+}
+
+/**
  * Parse coordinate file (CSV or Excel)
  * Automatically detects column headers and extracts coordinates
  */
 export async function parseCoordinateFile(
-  fileBuffer: Buffer,
+  fileBuffer: Buffer | Uint8Array,
   fileName: string
 ): Promise<ParseFileResult> {
   try {
+    // Convert Uint8Array to Buffer if needed
+    const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+    
     // Validate file size (5MB limit)
-    const fileSizeMB = fileBuffer.length / (1024 * 1024);
+    const fileSizeMB = buffer.length / (1024 * 1024);
     if (fileSizeMB > 5) {
       return {
         success: false,
@@ -193,13 +219,15 @@ export async function parseCoordinateFile(
     let rows: Record<string, any>[] = [];
 
     // Determine file type and parse accordingly
-    if (fileName.toLowerCase().endsWith('.csv')) {
-      const content = fileBuffer.toString('utf-8');
+    const fileType = detectFileType(fileName);
+    
+    if (fileType === 'csv') {
+      const content = buffer.toString('utf-8');
       const parsed = await parseCSV(content);
       headers = parsed.headers;
       rows = parsed.rows;
-    } else if (fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls')) {
-      const parsed = parseExcel(fileBuffer);
+    } else if (fileType === 'excel') {
+      const parsed = parseExcel(buffer);
       headers = parsed.headers;
       rows = parsed.rows;
     } else {
@@ -235,6 +263,10 @@ export async function parseCoordinateFile(
     const identifierMatch = findMatchingColumn(headers, HEADER_PATTERNS.identifier);
 
     if (!eastingMatch || !northingMatch) {
+      const missingColumns = [];
+      if (!eastingMatch) missingColumns.push('Easting');
+      if (!northingMatch) missingColumns.push('Northing');
+      
       return {
         success: false,
         rows: [],
@@ -243,7 +275,7 @@ export async function parseCoordinateFile(
           northingColumn: '',
         },
         warnings: [],
-        error: `Could not find coordinate columns. Expected headers like: ${HEADER_PATTERNS.easting.join(', ')} and ${HEADER_PATTERNS.northing.join(', ')}`,
+        error: `Could not find ${missingColumns.join('/')} headers. Please check your file. Found columns: ${headers.join(', ')}`,
       };
     }
 

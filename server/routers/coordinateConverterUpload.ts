@@ -14,7 +14,11 @@ import { convertCoordinateBatch, type CoordinateSystemKey } from '../coordinateC
  */
 const FileUploadInputSchema = z.object({
   fileName: z.string().min(1),
-  fileBuffer: z.instanceof(Buffer),
+  fileBuffer: z.union([
+    z.instanceof(Buffer),
+    z.instanceof(Uint8Array),
+    z.array(z.number()).transform(arr => Buffer.from(arr)),
+  ]),
   systemKey: z.enum(['TX_NORTH_CENTRAL', 'TX_SOUTH_CENTRAL', 'TX_NORTH']).optional().default('TX_NORTH_CENTRAL'),
   combinedScaleFactor: z.number().positive().optional().default(1.0),
 });

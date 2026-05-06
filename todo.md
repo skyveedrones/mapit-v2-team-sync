@@ -2775,9 +2775,12 @@
 - [ ] Write unit tests for geodetic conversion logic
 - [ ] Write unit tests for batch processing and CSV parsing
 - [ ] Test with sample Texas North Central (EPSG:2276) coordinates
-- [ ] Test coordinate conversion accuracy against known geodetic pairs
-- [ ] Test batch file upload with edge cases (empty rows, invalid formats)
-- [ ] Test map preview rendering with large datasets (1000+ points)
+- [x] Test coordinate conversion accuracy against known geodetic pairs
+- [x] Test batch file upload with edge cases (empty rows, invalid formats)
+- [x] Test map preview rendering with large datasets (1000+ points)
+- [x] Fix file parser to handle double extensions (.csv.xlsx)
+- [x] Improve error messages for missing Northing/Easting headers
+- [x] Handle Uint8Array to Buffer conversion in file upload
 
 ## CURRENT TOP PRIORITY: State Plane Coordinate Converter Backend
 - [x] Install Proj4js and file upload dependencies (xlsx, papaparse)
