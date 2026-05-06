@@ -11,6 +11,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminRouter } from "./routers/admin";
 import { coordinateConverterRouter } from "./routers/coordinateConverter";
+import { coordinateConverterUploadRouter } from "./routers/coordinateConverterUpload";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   acceptProjectInvitation,
@@ -451,6 +452,7 @@ export const appRouter = router({
   system: systemRouter,
   admin: adminRouter,
   coordinateConverter: coordinateConverterRouter,
+  coordinateConverterUpload: coordinateConverterUploadRouter,
   
   users: router({
     getOwnerUsers: protectedProcedure.query(async ({ ctx }) => {

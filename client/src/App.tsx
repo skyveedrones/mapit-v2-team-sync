@@ -47,6 +47,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CoordinateConverter from "./pages/CoordinateConverter";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -259,6 +260,7 @@ function Router() {
       <Route path="/login/:rest*" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
+      <Route path="/converter" component={CoordinateConverter} />
       <Route path="/checkout-redirect">
         {() => <ProtectedRoute component={CheckoutRedirect} />}
       </Route>
