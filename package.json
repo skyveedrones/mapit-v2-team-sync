@@ -96,10 +96,12 @@
     "nanoid": "^5.1.5",
     "next-themes": "^0.4.6",
     "p-limit": "^7.3.0",
+    "papaparse": "^5.5.3",
     "pdf-lib": "^1.17.1",
     "pdf-to-png-converter": "^3.14.0",
     "piexifjs": "^1.0.6",
     "posthog-js": "^1.372.5",
+    "proj4": "^2.20.8",
     "puppeteer": "^24.36.1",
     "puppeteer-core": "^24.36.1",
     "rate-limit-redis": "^4.3.1",
@@ -124,6 +126,7 @@
     "vaul": "^1.1.2",
     "virtua": "^0.48.8",
     "wouter": "^3.3.5",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -134,6 +137,7 @@
     "@types/express": "4.17.21",
     "@types/mapbox-gl": "^3.5.0",
     "@types/node": "^24.7.0",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
     "@types/sharp": "^0.32.0",

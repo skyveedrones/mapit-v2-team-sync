@@ -2761,3 +2761,34 @@
 - [ ] Add History feed below Notes box in media modal
 - [ ] Add Corrective Actions Report generation to Project Documents area
 - [ ] Add Punchlist Report generation to Project Documents area
+
+## State Plane Coordinate to GPS Converter (All Users)
+- [x] Install Proj4js and file upload dependencies (xlsx, papaparse)
+- [ ] Create backend tRPC procedures for coordinate conversion (SPCS to WGS84)
+- [ ] Build coordinate system selector component with EPSG code mapping
+- [ ] Create converter UI form (single point and batch modes)
+- [ ] Implement CSV/Excel file upload with validation (max 1000 rows, 5MB)
+- [ ] Add Combined Scale Factor (CSF) input field for precision
+- [ ] Implement map preview with converted coordinate markers
+- [ ] Add "Save as Layer" functionality to integrate with project storage
+- [ ] Build as reusable service for future Project Upload workflow integration
+- [ ] Write unit tests for geodetic conversion logic
+- [ ] Write unit tests for batch processing and CSV parsing
+- [ ] Test with sample Texas North Central (EPSG:2276) coordinates
+- [ ] Test coordinate conversion accuracy against known geodetic pairs
+- [ ] Test batch file upload with edge cases (empty rows, invalid formats)
+- [ ] Test map preview rendering with large datasets (1000+ points)
+
+## Current Priority: Homepage & Conversion Funnel Optimization
+- [x] Update Municipal hero with polished copy and video background
+- [x] Add APWA utility color coding section to Municipal page
+- [x] Implement scroll animations and parallax effects on Municipal page
+- [x] Update Providers hero with custom video background
+- [x] Add "Cost of the old way" stat section to Providers page
+- [x] Link Municipal CTAs to MunicipalBriefingForm modal
+- [x] Link Providers CTAs to Pricing page
+- [ ] Add customer testimonials carousel to Municipal page
+- [ ] Add customer testimonials carousel to Providers page
+- [ ] Create FAQ accordion section on Pricing page
+- [ ] Test all pages on mobile landscape for text clipping
+- [ ] Test conversion funnel end-to-end (hero → pricing → checkout)
