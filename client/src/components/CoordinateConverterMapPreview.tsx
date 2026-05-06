@@ -1,22 +1,16 @@
 /**
  * Coordinate Converter Map Preview Component
- * Displays converted coordinates on Google Maps with clustering
+ * Displays converted coordinates on Mapbox GL with native clustering
  * Supports export to project layers
  */
 
 import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { MapPin, Download, Save, Loader2 } from 'lucide-react';
-
-declare global {
-  interface Window {
-    google: any;
-    MarkerClusterer: any;
-    SuperClusterAlgorithm: any;
-  }
-}
 
 interface ConvertedPoint {
   latitude: number;
@@ -40,114 +34,201 @@ export function CoordinateConverterMapPreview({
   isExporting = false,
   projectId,
 }: CoordinateConverterMapPreviewProps) {
-  const mapRef = useRef<any>(null);
-  const [map, setMap] = useState<any>(null);
-  const [markers, setMarkers] = useState<any[]>([]);
-  const [markerClusterer, setMarkerClusterer] = useState<any>(null);
-  const [bounds, setBounds] = useState<any>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
-  // Initialize map
-  const handleMapReady = (mapInstance: any) => {
-    setMap(mapInstance);
-  };
-
-  // Initialize Google Map on component mount
+  // Initialize Mapbox map
   useEffect(() => {
-    if (!mapRef.current || map) return;
+    if (!mapContainer.current || map.current) return;
 
-    const initMap = () => {
-      const mapInstance = new window.google.maps.Map(mapRef.current, {
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        center: [-96.7283, 32.7157], // Default to Texas
         zoom: 12,
-        center: { lat: 32.7157, lng: -96.7283 }, // Default to Texas
-        mapTypeId: 'terrain',
       });
-      setMap(mapInstance);
-    };
 
-    if (window.google) {
-      initMap();
+      map.current.on('load', () => {
+        setIsMapReady(true);
+      });
+
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        toast.error('Failed to load map');
+      });
+    } catch (error) {
+      console.error('Failed to initialize map:', error);
+      toast.error('Failed to initialize map');
     }
+
+    return () => {
+      // Don't destroy map on unmount to preserve state
+    };
   }, []);
 
-  // Add markers to map
+  // Add points as GeoJSON source with clustering
   useEffect(() => {
-    if (!map || points.length === 0) return;
+    if (!map.current || !isMapReady || points.length === 0) return;
 
-    // Clear existing markers
-    markers.forEach((marker) => marker.setMap(null));
-
-    // Create new markers
-    const newMarkers = points.map((point, idx) => {
-      const marker = new window.google.maps.Marker({
-        position: {
-          lat: point.latitude,
-          lng: point.longitude,
+    const geojsonData: GeoJSON.FeatureCollection<GeoJSON.Point> = {
+      type: 'FeatureCollection',
+      features: points.map((point) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [point.longitude, point.latitude],
         },
-        map: map,
-        title: point.identifier || `Point ${idx + 1}`,
-        label: {
-          text: String(idx + 1),
-          color: '#ffffff',
-          fontSize: '12px',
-          fontWeight: 'bold',
+        properties: {
+          id: point.identifier || `Point ${point.index + 1}`,
+          index: point.index,
+          easting: point.easting,
+          northing: point.northing,
+          latitude: point.latitude,
+          longitude: point.longitude,
         },
-      });
+      })),
+    };
 
-      // Add info window
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div style="padding: 8px; font-size: 12px;">
-            <strong>${point.identifier || `Point ${idx + 1}`}</strong><br/>
-            Lat: ${point.latitude.toFixed(8)}<br/>
-            Lon: ${point.longitude.toFixed(8)}<br/>
-            ${point.easting ? `Easting: ${point.easting.toFixed(2)}<br/>` : ''}
-            ${point.northing ? `Northing: ${point.northing.toFixed(2)}<br/>` : ''}
-          </div>
-        `,
-      });
+    // Remove existing source if present
+    if (map.current.getSource('converted-points')) {
+      map.current.removeSource('converted-points');
+    }
 
-      marker.addListener('click', () => {
-        // Close all other info windows
-        markers.forEach((m) => {
-          if (m.infoWindow) {
-            m.infoWindow.close();
-          }
-        });
-        infoWindow.open(map, marker);
-      });
-
-      marker.infoWindow = infoWindow;
-      return marker;
+    // Remove existing layers if present
+    ['clusters', 'cluster-count', 'unclustered-point'].forEach((layerId) => {
+      if (map.current?.getLayer(layerId)) {
+        map.current.removeLayer(layerId);
+      }
     });
 
-    setMarkers(newMarkers);
+    // Add source with clustering
+    map.current.addSource('converted-points', {
+      type: 'geojson',
+      data: geojsonData,
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
+    });
 
-    // Create marker clusterer
-    if (newMarkers.length > 0) {
-      // Remove old clusterer if exists
-      if (markerClusterer) {
-        markerClusterer.clearMarkers();
-      }
+    // Add cluster layer
+    map.current.addLayer({
+      id: 'clusters',
+      type: 'circle',
+      source: 'converted-points',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': '#10b981',
+        'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
+        'circle-opacity': 0.8,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#059669',
+      },
+    });
 
-      // Create new clusterer (if available)
-      if (window.MarkerClusterer) {
-        const clusterer = new window.MarkerClusterer({
-          map,
-          markers: newMarkers,
-          algorithm: window.SuperClusterAlgorithm ? new window.SuperClusterAlgorithm({ maxZoom: 15 }) : undefined,
-        });
-        setMarkerClusterer(clusterer);
-      }
+    // Add cluster count layer
+    map.current.addLayer({
+      id: 'cluster-count',
+      type: 'symbol',
+      source: 'converted-points',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count'],
+        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+        'text-size': 12,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    });
 
-      // Fit bounds to all markers
-      const newBounds = new window.google.maps.LatLngBounds();
-      newMarkers.forEach((marker) => {
-        newBounds.extend(marker.getPosition());
+    // Add unclustered point layer
+    map.current.addLayer({
+      id: 'unclustered-point',
+      type: 'circle',
+      source: 'converted-points',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': '#3b82f6',
+        'circle-radius': 6,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#1e40af',
+        'circle-opacity': 0.8,
+      },
+    });
+
+    // Add click handler for clusters
+    map.current.on('click', 'clusters', (e) => {
+      const features = map.current?.querySourceFeatures('converted-points', {
+        sourceLayer: 'converted-points',
       });
-      map.fitBounds(newBounds);
-      setBounds(newBounds);
+      if (features && features.length > 0) {
+        const clusterId = features[0].properties?.cluster_id;
+        const zoom = map.current?.getZoom() || 12;
+        if (clusterId !== undefined) {
+          const source = map.current?.getSource('converted-points') as any;
+          if (source?.getClusterExpansionZoom) {
+            source.getClusterExpansionZoom(clusterId, (err: Error | null, expansionZoom: number) => {
+              if (err) return;
+              const geometry = features[0].geometry as GeoJSON.Point;
+              map.current?.easeTo({
+                center: geometry.coordinates as [number, number],
+                zoom: expansionZoom,
+                duration: 500,
+              });
+            });
+          }
+        }
+      }
+    });
+
+    // Add click handler for individual points
+    map.current.on('click', 'unclustered-point', (e) => {
+      const coordinates = (e.features?.[0]?.geometry as GeoJSON.Point)?.coordinates as [number, number];
+      const props = e.features?.[0]?.properties;
+
+      if (coordinates && props) {
+        new mapboxgl.Popup({ offset: 25 })
+          .setLngLat(coordinates)
+          .setHTML(
+            `
+            <div style="padding: 8px; font-size: 12px;">
+              <strong>${props.id}</strong><br/>
+              Lat: ${props.latitude.toFixed(8)}<br/>
+              Lon: ${props.longitude.toFixed(8)}<br/>
+              ${props.easting ? `Easting: ${props.easting.toFixed(2)}<br/>` : ''}
+              ${props.northing ? `Northing: ${props.northing.toFixed(2)}<br/>` : ''}
+            </div>
+          `
+          )
+          .addTo(map.current!);
+      }
+    });
+
+    // Change cursor on hover
+    map.current.on('mouseenter', 'clusters', () => {
+      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+    });
+    map.current.on('mouseleave', 'clusters', () => {
+      if (map.current) map.current.getCanvas().style.cursor = '';
+    });
+    map.current.on('mouseenter', 'unclustered-point', () => {
+      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+    });
+    map.current.on('mouseleave', 'unclustered-point', () => {
+      if (map.current) map.current.getCanvas().style.cursor = '';
+    });
+
+    // Fit bounds to all points
+    if (points.length > 0) {
+      const bounds = new mapboxgl.LngLatBounds();
+      points.forEach((point) => {
+        bounds.extend([point.longitude, point.latitude]);
+      });
+      map.current.fitBounds(bounds, { padding: 50, duration: 500 });
     }
-  }, [map, points]);
+  }, [points, isMapReady]);
 
   // Handle export
   const handleExport = async () => {
@@ -234,7 +315,11 @@ export function CoordinateConverterMapPreview({
     <div className="space-y-4">
       {/* Map Container */}
       <Card className="overflow-hidden">
-        <div style={{ width: '100%', height: '400px' }} ref={mapRef} />
+        <div
+          ref={mapContainer}
+          style={{ width: '100%', height: '400px' }}
+          className="mapbox-container"
+        />
       </Card>
 
       {/* Stats */}

@@ -2788,8 +2788,9 @@
 - [x] Write unit tests for conversion logic and edge cases
 - [x] Test with sample Texas North Central (EPSG:2276) coordinates
 - [x] Create frontend UI components for converter tool
-- [x] Implement map preview with marker rendering
+- [x] Implement map preview with marker rendering (Mapbox GL JS with native clustering)
 - [x] Add layer export and project storage integration
+- [x] Refactor map preview from Google Maps to Mapbox GL JS (native clustering, seamless Mapbox layer integration)
 
 ## BACKLOG: Homepage & Conversion Funnel Optimization (Deferred)
 - [x] Update Municipal hero with polished copy and video background
