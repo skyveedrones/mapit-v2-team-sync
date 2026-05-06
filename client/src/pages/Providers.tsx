@@ -142,7 +142,7 @@ export default function Providers() {
               <Button
                 size="lg"
                 className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
-                onClick={() => setLocation("/welcome")}
+                onClick={() => setLocation("/pricing")}
               >
                 Start Free Trial
                 <ChevronRight className="ml-2 h-5 w-5" />
@@ -250,6 +250,63 @@ export default function Providers() {
                 </motion.div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── COST OF THE OLD WAY ─── */}
+      <section className="relative py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">The Real Cost of the Old Way</h2>
+            <p className="text-slate-400 text-lg">Every project delayed is revenue lost.</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Stat 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-red-500/20 bg-red-500/5 text-center"
+            >
+              <div className="text-5xl font-bold text-red-500 mb-3">8+</div>
+              <p className="text-white font-semibold mb-2">Hours Per Project</p>
+              <p className="text-slate-400 text-sm">Wasted on post-processing and manual data entry</p>
+            </motion.div>
+
+            {/* Stat 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-red-500/20 bg-red-500/5 text-center"
+            >
+              <div className="text-5xl font-bold text-red-500 mb-3">3x</div>
+              <p className="text-white font-semibold mb-2">More Support Requests</p>
+              <p className="text-slate-400 text-sm">Clients confused by raw files and formats</p>
+            </motion.div>
+
+            {/* Stat 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="p-8 rounded-2xl border border-red-500/20 bg-red-500/5 text-center"
+            >
+              <div className="text-5xl font-bold text-red-500 mb-3">Lost</div>
+              <p className="text-white font-semibold mb-2">Competitive Edge</p>
+              <p className="text-slate-400 text-sm">Competitors look more professional and win bids</p>
+            </motion.div>
           </div>
         </div>
       </section>
