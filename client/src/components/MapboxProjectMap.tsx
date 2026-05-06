@@ -43,6 +43,8 @@ import {
   X,
   MapPin,
   Navigation,
+  Calculator,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -83,6 +85,36 @@ export interface MapboxProjectMapHandle {
   isMapLoaded: () => boolean;
   startEditingOverlay: (overlay: OverlayData) => void;
   openSidebar: () => void;
+}
+
+interface ConvertedCoordinatePoint {
+  latitude: number;
+  longitude: number;
+  identifier?: string;
+  index: number;
+  easting?: number;
+  northing?: number;
+}
+
+interface ConversionResult {
+  easting?: number;
+  northing?: number;
+  latitude?: number;
+  longitude?: number;
+  systemKey?: string;
+  combinedScaleFactor?: number;
+  success: boolean;
+  error?: string;
+  identifier?: string;
+}
+
+interface BatchResult {
+  totalRows: number;
+  successfulRows: number;
+  failedRows: number;
+  results: Array<ConversionResult & { index: number; identifier?: string }>;
+  errors: Array<{ row: number; error: string }>;
+  warnings?: string[];
 }
 
 interface MapboxProjectMapProps {
@@ -182,6 +214,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const rotationMarkerRef = useRef<mapboxgl.Marker | null>(null);
     const snapMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const measureMarkersRef = useRef<mapboxgl.Marker[]>([]);
+    const converterFileInputRef = useRef<HTMLInputElement | null>(null);
     // Tracks whether markers have been placed for the current sortedMedia set
     const markersRenderedForRef = useRef<string>("");
 
@@ -225,11 +258,29 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // PDF Converter state
     const [showPdfConverter, setShowPdfConverter] = useState(false);
 
+    // Coordinate Converter state
+    const [coordinateConverterExpanded, setCoordinateConverterExpanded] = useState(false);
+    const [coordinateConverterTab, setCoordinateConverterTab] = useState<"single" | "batch">("single");
+    const [singleEasting, setSingleEasting] = useState("");
+    const [singleNorthing, setSingleNorthing] = useState("");
+    const [singleCRS, setSingleCRS] = useState("TX_NORTH_CENTRAL");
+    const [singleCSF, setSingleCSF] = useState("1.0");
+    const [singleResult, setSingleResult] = useState<ConversionResult | null>(null);
+    const [batchFile, setBatchFile] = useState<File | null>(null);
+    const [batchCRS, setBatchCRS] = useState("TX_NORTH_CENTRAL");
+    const [batchCSF, setBatchCSF] = useState("1.0");
+    const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
+    const [batchLoading, setBatchLoading] = useState(false);
+    const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
+
     // ── Selected overlay for alignment tools ────────────────────────────────
     const [selectedOverlayId, setSelectedOverlayId] = useState<number | null>(null);
 
     const updateOverlayOpacity = trpc.project.updateOverlayOpacity.useMutation();
     const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
+    const convertSingleMutation = trpc.coordinateConverter.convertSingle.useMutation();
+    const parseAndConvertMutation = trpc.coordinateConverterUpload.parseAndConvert.useMutation();
+    const availableSystemsQuery = trpc.coordinateConverter.getAvailableSystems.useQuery();
 
     // ── Fetch media (skipped when initialMedia is provided) ─────────────────
     const { data: mediaList } = isDemoProject
@@ -1334,6 +1385,181 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       };
     }, [measureMode, mapLoaded]);
 
+    // ── Coordinate converter map layer ────────────────────────────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+
+      const sourceId = "coordinate-converter-src";
+      const circleLayerId = "coordinate-converter-points";
+      const labelLayerId = "coordinate-converter-labels";
+
+      const data = {
+        type: "FeatureCollection" as const,
+        features: converterPoints.map((pt) => ({
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [pt.longitude, pt.latitude],
+          },
+          properties: {
+            label: pt.identifier || `Point ${pt.index + 1}`,
+            easting: pt.easting ?? null,
+            northing: pt.northing ?? null,
+          },
+        })),
+      };
+
+      if (map.getSource(sourceId)) {
+        (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(data);
+      } else {
+        map.addSource(sourceId, { type: "geojson", data });
+        map.addLayer({
+          id: circleLayerId,
+          type: "circle",
+          source: sourceId,
+          paint: {
+            "circle-radius": 7,
+            "circle-color": "#f97316",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.95,
+          },
+        });
+        map.addLayer({
+          id: labelLayerId,
+          type: "symbol",
+          source: sourceId,
+          layout: {
+            "text-field": ["get", "label"],
+            "text-size": 11,
+            "text-offset": [0, 1.35],
+            "text-anchor": "top",
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "#0f172a",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
+      if (converterPoints.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        converterPoints.forEach((pt) => bounds.extend([pt.longitude, pt.latitude]));
+        map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 900 });
+      }
+    }, [converterPoints, mapLoaded]);
+
+    const handleSingleCoordinateConvert = useCallback(async () => {
+      const easting = parseFloat(singleEasting);
+      const northing = parseFloat(singleNorthing);
+      const combinedScaleFactor = parseFloat(singleCSF || "1");
+
+      if (!Number.isFinite(easting) || !Number.isFinite(northing)) {
+        toast.error("Enter valid easting and northing values.");
+        return;
+      }
+      if (!Number.isFinite(combinedScaleFactor) || combinedScaleFactor <= 0) {
+        toast.error("Enter a valid Combined Scale Factor.");
+        return;
+      }
+
+      try {
+        const result = await convertSingleMutation.mutateAsync({
+          easting,
+          northing,
+          systemKey: singleCRS as any,
+          combinedScaleFactor,
+        });
+        setSingleResult(result as ConversionResult);
+
+        if (result.success && typeof result.latitude === "number" && typeof result.longitude === "number") {
+          setConverterPoints([{
+            latitude: result.latitude,
+            longitude: result.longitude,
+            index: 0,
+            identifier: "Converted Point",
+            easting,
+            northing,
+          }]);
+          toast.success("Coordinate converted and added to the project map.");
+        } else {
+          toast.error(result.error || "Conversion failed.");
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Conversion failed.");
+      }
+    }, [singleEasting, singleNorthing, singleCSF, singleCRS, convertSingleMutation]);
+
+    const handleConverterFile = useCallback((file: File) => {
+      const lowerName = file.name.toLowerCase();
+      if (!lowerName.endsWith(".csv") && !lowerName.endsWith(".xlsx") && !lowerName.endsWith(".xls")) {
+        toast.error("Please upload a CSV or Excel file.");
+        return;
+      }
+      setBatchFile(file);
+      toast.success(`File selected: ${file.name}`);
+    }, []);
+
+    const handleBatchCoordinateConvert = useCallback(async () => {
+      if (!batchFile) {
+        toast.error("Select a CSV or Excel file first.");
+        return;
+      }
+
+      const combinedScaleFactor = parseFloat(batchCSF || "1");
+      if (!Number.isFinite(combinedScaleFactor) || combinedScaleFactor <= 0) {
+        toast.error("Enter a valid Combined Scale Factor.");
+        return;
+      }
+
+      setBatchLoading(true);
+      try {
+        const buffer = await batchFile.arrayBuffer();
+        const result = await parseAndConvertMutation.mutateAsync({
+          fileName: batchFile.name,
+          fileBuffer: new Uint8Array(buffer) as any,
+          systemKey: batchCRS as any,
+          combinedScaleFactor,
+        });
+
+        const typedResult = result as BatchResult;
+        setBatchResult(typedResult);
+        const successfulPoints = typedResult.results
+          .filter((r) => r.success && typeof r.latitude === "number" && typeof r.longitude === "number")
+          .map((r, idx) => ({
+            latitude: r.latitude!,
+            longitude: r.longitude!,
+            identifier: r.identifier || `Point ${r.index + 1}`,
+            index: idx,
+            easting: r.easting,
+            northing: r.northing,
+          }));
+
+        if (successfulPoints.length > 0) {
+          setConverterPoints(successfulPoints);
+          toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
+        } else {
+          setConverterPoints([]);
+          toast.warning("No valid coordinates were converted.");
+        }
+        typedResult.warnings?.forEach((warning) => toast.info(warning));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Batch conversion failed.");
+      } finally {
+        setBatchLoading(false);
+      }
+    }, [batchFile, batchCSF, batchCRS, parseAndConvertMutation]);
+
+    const clearConvertedCoordinates = useCallback(() => {
+      setConverterPoints([]);
+      setSingleResult(null);
+      setBatchResult(null);
+      toast.info("Converted coordinate layer cleared from the map.");
+    }, []);
+
     // ── Snap step labels ────────────────────────────────────────────────────
     const snapStepLabel: Record<string, string> = {
       anchorA: "Click blueprint: place Anchor A",
@@ -1691,6 +1917,195 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           <Layers size={16} className="text-orange-400" />
                           <span className="text-sm font-medium">Add Map Overlay</span>
                         </button>
+
+                        {/* Coordinate Converter */}
+                        <div className="rounded-xl bg-slate-800/70 border border-slate-700 overflow-hidden">
+                          <button
+                            onClick={() => setCoordinateConverterExpanded((v) => !v)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-all"
+                          >
+                            <Calculator size={16} className="text-emerald-400" />
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">Coordinate Converter</span>
+                              <span className="text-[10px] text-slate-400">SPCS to GPS on this map</span>
+                            </div>
+                            {converterPoints.length > 0 && (
+                              <span className="text-[10px] rounded-full bg-orange-500/20 text-orange-300 px-2 py-0.5">
+                                {converterPoints.length}
+                              </span>
+                            )}
+                            <ChevronRight
+                              size={16}
+                              className={`text-slate-400 transition-transform ${coordinateConverterExpanded ? "rotate-90" : ""}`}
+                            />
+                          </button>
+
+                          {coordinateConverterExpanded && (
+                            <div className="border-t border-slate-700 p-3 space-y-3">
+                              <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-900 p-1">
+                                <button
+                                  onClick={() => setCoordinateConverterTab("single")}
+                                  className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${coordinateConverterTab === "single" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"}`}
+                                >
+                                  Single
+                                </button>
+                                <button
+                                  onClick={() => setCoordinateConverterTab("batch")}
+                                  className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${coordinateConverterTab === "batch" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"}`}
+                                >
+                                  Batch
+                                </button>
+                              </div>
+
+                              {coordinateConverterTab === "single" ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
+                                    <select
+                                      value={singleCRS}
+                                      onChange={(e) => setSingleCRS(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    >
+                                      {availableSystemsQuery.data?.map((system) => (
+                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Easting</label>
+                                      <input
+                                        type="number"
+                                        value={singleEasting}
+                                        onChange={(e) => setSingleEasting(e.target.value)}
+                                        placeholder="2000000"
+                                        className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Northing</label>
+                                      <input
+                                        type="number"
+                                        value={singleNorthing}
+                                        onChange={(e) => setSingleNorthing(e.target.value)}
+                                        placeholder="500000"
+                                        className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Combined Scale Factor</label>
+                                    <input
+                                      type="number"
+                                      step="0.00001"
+                                      value={singleCSF}
+                                      onChange={(e) => setSingleCSF(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={handleSingleCoordinateConvert}
+                                    disabled={convertSingleMutation.isPending}
+                                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
+                                  >
+                                    <MapPin size={14} />
+                                    {convertSingleMutation.isPending ? "Converting..." : "Convert & Add to Map"}
+                                  </button>
+                                  {singleResult?.success && (
+                                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs">
+                                      <p className="text-emerald-300 font-semibold mb-1">Conversion Result</p>
+                                      <p className="font-mono text-slate-200">Lat: {singleResult.latitude?.toFixed(8)}</p>
+                                      <p className="font-mono text-slate-200">Lng: {singleResult.longitude?.toFixed(8)}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
+                                    <select
+                                      value={batchCRS}
+                                      onChange={(e) => setBatchCRS(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    >
+                                      {availableSystemsQuery.data?.map((system) => (
+                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Combined Scale Factor</label>
+                                    <input
+                                      type="number"
+                                      step="0.00001"
+                                      value={batchCSF}
+                                      onChange={(e) => setBatchCSF(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                  <div
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      const file = e.dataTransfer.files?.[0];
+                                      if (file) handleConverterFile(file);
+                                    }}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onClick={() => converterFileInputRef.current?.click()}
+                                    className="cursor-pointer rounded-lg border border-dashed border-slate-600 bg-slate-950/70 p-4 text-center hover:border-emerald-500 transition-colors"
+                                  >
+                                    <Upload className="mx-auto mb-2 text-slate-400" size={18} />
+                                    <p className="text-xs font-medium text-slate-200">{batchFile ? batchFile.name : "Drop or select CSV/XLSX"}</p>
+                                    <p className="text-[10px] text-slate-500 mt-1">Max 1,000 rows and 5MB</p>
+                                    <input
+                                      ref={converterFileInputRef}
+                                      type="file"
+                                      accept=".csv,.xlsx,.xls"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.currentTarget.files?.[0];
+                                        if (file) handleConverterFile(file);
+                                      }}
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={handleBatchCoordinateConvert}
+                                    disabled={!batchFile || batchLoading}
+                                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
+                                  >
+                                    <Upload size={14} />
+                                    {batchLoading ? "Processing..." : "Convert Batch & Add to Map"}
+                                  </button>
+                                  {batchResult && (
+                                    <div className="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs space-y-2">
+                                      <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div><p className="text-slate-500">Total</p><p className="font-semibold text-white">{batchResult.totalRows}</p></div>
+                                        <div><p className="text-slate-500">Added</p><p className="font-semibold text-emerald-300">{batchResult.successfulRows}</p></div>
+                                        <div><p className="text-slate-500">Failed</p><p className="font-semibold text-red-300">{batchResult.failedRows}</p></div>
+                                      </div>
+                                      {batchResult.errors.length > 0 && (
+                                        <div className="border-t border-slate-800 pt-2 text-red-300">
+                                          {batchResult.errors.slice(0, 3).map((error, idx) => (
+                                            <p key={idx}>Row {error.row}: {error.error}</p>
+                                          ))}
+                                          {batchResult.errors.length > 3 && <p>...and {batchResult.errors.length - 3} more errors</p>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {converterPoints.length > 0 && (
+                                <button
+                                  onClick={clearConvertedCoordinates}
+                                  className="w-full rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                                >
+                                  Clear Converted Layer ({converterPoints.length})
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
 
 
                       </div>
