@@ -15,6 +15,7 @@ import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
 import { MediaGallery } from "@/components/MediaGallery";
 import { ProjectDocuments } from "@/components/ProjectDocuments";
+import { ProjectSurveyTools } from "@/components/ProjectSurveyTools";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { NewFlightDialog } from "@/components/NewFlightDialog";
 import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
@@ -534,26 +535,39 @@ export default function ProjectDetail() {
                 </CardContent>
               </Card>
             </motion.div>
-            {/* Project Map Section — Unified Mapbox Engine */}
+            {/* Project Map Section — Unified Mapbox Engine + Project Survey Tools */}
             <motion.div variants={fadeInUp} className="mb-8" id="project-map-section">
-              <LazyMapWrapper height="500px" rootMargin="300px">
-                <MapboxProjectMap
-                  ref={mapRef}
-                  projectId={project.id}
-                  projectName={project.name}
-                  isDemoProject={isDemoProject}
-                  overlays={overlays}
-                  onOverlayUpdated={() => {
-                    if (isDemoProject) {
-                      demoProjectQuery.refetch();
-                    } else {
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
+                <LazyMapWrapper height="500px" rootMargin="300px">
+                  <MapboxProjectMap
+                    ref={mapRef}
+                    projectId={project.id}
+                    projectName={project.name}
+                    isDemoProject={isDemoProject}
+                    overlays={overlays}
+                    onOverlayUpdated={() => {
+                      if (isDemoProject) {
+                        demoProjectQuery.refetch();
+                      } else {
+                        normalProjectQuery.refetch();
+                      }
+                    }}
+                    onOverlayButtonClick={handleOverlayClick}
+                    projectLocation={(project as any)?.location}
+                  />
+                </LazyMapWrapper>
+                {!isDemoProject && (
+                  <ProjectSurveyTools
+                    projectId={project.id}
+                    disabled={!demoCanEdit}
+                    className="xl:sticky xl:top-4"
+                    onSurveyOverlayAdded={() => {
                       normalProjectQuery.refetch();
-                    }
-                  }}
-                  onOverlayButtonClick={handleOverlayClick}
-                  projectLocation={(project as any)?.location}
-                />
-              </LazyMapWrapper>
+                      mapRef.current?.openSidebar();
+                    }}
+                  />
+                )}
+              </div>
             </motion.div>
 
             {/* Flights Section */}

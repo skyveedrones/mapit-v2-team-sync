@@ -1052,6 +1052,101 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Save converted survey marks as a project-scoped overlay layer
+    saveSurveyMarks: protectedProcedure
+      .input(
+        z.object({
+          projectId: z.number(),
+          label: z.string().min(1).max(100).optional(),
+          source: z.string().max(255).optional(),
+          points: z.array(z.object({
+            identifier: z.string().max(255).optional(),
+            easting: z.number(),
+            northing: z.number(),
+            latitude: z.number(),
+            longitude: z.number(),
+            systemKey: z.string().optional(),
+            combinedScaleFactor: z.number().optional(),
+          })).min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+        const ownedProject = await getUserProject(input.projectId, ctx.user.id);
+        const sharedProject = !ownedProject ? await getProjectWithAccess(input.projectId, ctx.user.id) : null;
+        if (!ownedProject && !sharedProject && ctx.user.role !== "webmaster" && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "No access to this project" });
+        }
+
+        const existingOverlays = await db
+          .select({ id: projectOverlays.id })
+          .from(projectOverlays)
+          .where(eq(projectOverlays.projectId, input.projectId));
+
+        const versionNumber = existingOverlays.length + 1;
+        const now = new Date().toISOString();
+        const featureCollection = {
+          type: "FeatureCollection",
+          kind: "survey-marks",
+          source: input.source ?? "forney-coordinate-converter",
+          createdAt: now,
+          features: input.points.map((point, index) => ({
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [point.longitude, point.latitude],
+            },
+            properties: {
+              id: point.identifier || `SP-${index + 1}`,
+              identifier: point.identifier || `SP-${index + 1}`,
+              easting: point.easting,
+              northing: point.northing,
+              latitude: point.latitude,
+              longitude: point.longitude,
+              systemKey: point.systemKey,
+              combinedScaleFactor: point.combinedScaleFactor,
+              source: input.source ?? "forney-coordinate-converter",
+            },
+          })),
+        };
+
+        await db.insert(projectOverlays).values({
+          projectId: input.projectId,
+          fileUrl: "mapit://survey-marks/forney",
+          opacity: "1.00",
+          coordinates: featureCollection,
+          originalCoordinates: featureCollection,
+          isActive: 1,
+          label: input.label ?? `Forney Survey Points (${input.points.length})`,
+          versionNumber,
+          rotation: "0",
+        } as any);
+
+        const insertedOverlay = await db
+          .select({
+            id: projectOverlays.id,
+            projectId: projectOverlays.projectId,
+            fileUrl: projectOverlays.fileUrl,
+            coordinates: projectOverlays.coordinates,
+            opacity: projectOverlays.opacity,
+            isActive: projectOverlays.isActive,
+            label: projectOverlays.label,
+            versionNumber: projectOverlays.versionNumber,
+            rotation: projectOverlays.rotation,
+            originalCoordinates: projectOverlays.originalCoordinates,
+            createdAt: projectOverlays.createdAt,
+          })
+          .from(projectOverlays)
+          .where(eq(projectOverlays.projectId, input.projectId))
+          .orderBy(desc(projectOverlays.id))
+          .limit(1)
+          .then((rows) => rows[0]);
+
+        return { success: true, overlayId: insertedOverlay?.id, overlay: insertedOverlay, pointCount: input.points.length };
+      }),
+
     // Update overlay opacity
     updateOverlayOpacity: protectedProcedure
       .input(

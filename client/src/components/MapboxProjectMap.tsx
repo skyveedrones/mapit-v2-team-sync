@@ -4,7 +4,7 @@
  * Combines:
  *   1. GPS Pins (numbered markers with photo/video distinction)
  *   2. Flight Path (GeoJSON LineString layer) with toggle
- *   3. Overlay Editor (image source with 4-corner drag, rotation, 2-point snap)
+ *   3. Overlay Editor (image source with 4-corner drag, rotation, multi-point alignment)
  *   4. Enhanced Overlay Manager sidebar:
  *      - Overlay rename (inline edit)
  *      - Opacity slider (persisted)
@@ -14,7 +14,7 @@
  *      - Lock overlay position
  *      - Fit to overlay bounds
  *      - Fullscreen map mode
- *      - Edit Alignment / 2-Point Snap / Reset / Delete
+ *      - Edit Alignment / Multi-Point Alignment / Reset / Delete
  */
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -71,7 +71,6 @@ import {
   rotatePoint,
   applyRotation,
   topCenter,
-  calculateTwoPointTransform,
   type OverlayData,
 } from "./MapboxOverlayView";
 
@@ -150,6 +149,67 @@ function formatAreaFeet(sqMeters: number): string {
   return `${(sqFeet / 43560).toFixed(2)} acres`;
 }
 
+type SnapPoint = { lng: number; lat: number };
+type SnapPair = { anchor: SnapPoint; target: SnapPoint };
+
+function isSurveyMarksOverlay(overlay: OverlayData): boolean {
+  const coordinates = overlay.coordinates as any;
+  return overlay.fileUrl?.startsWith("mapit://survey-marks") || coordinates?.kind === "survey-marks" || coordinates?.type === "FeatureCollection";
+}
+
+function getSurveyFeatureCollection(overlay: OverlayData): GeoJSON.FeatureCollection<GeoJSON.Point> | null {
+  if (!isSurveyMarksOverlay(overlay)) return null;
+  const coordinates = overlay.coordinates as any;
+  if (!coordinates || coordinates.type !== "FeatureCollection" || !Array.isArray(coordinates.features)) return null;
+  return coordinates as GeoJSON.FeatureCollection<GeoJSON.Point>;
+}
+
+function calculateMultiPointTransform(pairs: SnapPair[], corners: [number, number][]): [number, number][] {
+  if (pairs.length === 0) return corners;
+
+  if (pairs.length === 1) {
+    const dx = pairs[0].target.lng - pairs[0].anchor.lng;
+    const dy = pairs[0].target.lat - pairs[0].anchor.lat;
+    return corners.map(([lng, lat]) => [lng + dx, lat + dy]);
+  }
+
+  const sourceCentroid = pairs.reduce(
+    (sum, pair) => ({ lng: sum.lng + pair.anchor.lng / pairs.length, lat: sum.lat + pair.anchor.lat / pairs.length }),
+    { lng: 0, lat: 0 }
+  );
+  const targetCentroid = pairs.reduce(
+    (sum, pair) => ({ lng: sum.lng + pair.target.lng / pairs.length, lat: sum.lat + pair.target.lat / pairs.length }),
+    { lng: 0, lat: 0 }
+  );
+
+  let a = 0;
+  let b = 0;
+  let denom = 0;
+  for (const pair of pairs) {
+    const sx = pair.anchor.lng - sourceCentroid.lng;
+    const sy = pair.anchor.lat - sourceCentroid.lat;
+    const tx = pair.target.lng - targetCentroid.lng;
+    const ty = pair.target.lat - targetCentroid.lat;
+    a += sx * tx + sy * ty;
+    b += sx * ty - sy * tx;
+    denom += sx * sx + sy * sy;
+  }
+
+  if (denom === 0) return corners;
+  const scale = Math.sqrt(a * a + b * b) / denom;
+  const rotation = Math.atan2(b, a);
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+
+  return corners.map(([lng, lat]) => {
+    const x = lng - sourceCentroid.lng;
+    const y = lat - sourceCentroid.lat;
+    const transformedLng = targetCentroid.lng + scale * (x * cos - y * sin);
+    const transformedLat = targetCentroid.lat + scale * (x * sin + y * cos);
+    return [transformedLng, transformedLat];
+  });
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProjectMapProps>(
@@ -202,13 +262,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [visibilityMap, setVisibilityMap] = useState<Record<number, boolean>>({});
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 2-Point Snap state
+    // Multi-point alignment state
     const [snapMode, setSnapMode] = useState(false);
-    const [snapStep, setSnapStep] = useState<"anchorA" | "targetA" | "anchorB" | "targetB" | "ready">("anchorA");
-    const [anchorA, setAnchorA] = useState<{ lng: number; lat: number } | null>(null);
-    const [targetA, setTargetA] = useState<{ lng: number; lat: number } | null>(null);
-    const [anchorB, setAnchorB] = useState<{ lng: number; lat: number } | null>(null);
-    const [targetB, setTargetB] = useState<{ lng: number; lat: number } | null>(null);
+    const [snapStep, setSnapStep] = useState<"anchor" | "target" | "ready">("anchor");
+    const [snapPairs, setSnapPairs] = useState<SnapPair[]>([]);
+    const [pendingAnchor, setPendingAnchor] = useState<SnapPoint | null>(null);
 
     // ── NEW: Enhanced overlay controls state ──
     const [flightPathVisible, setFlightPathVisible] = useState(false);
@@ -267,6 +325,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Active overlays ─────────────────────────────────────────────────────
     const activeOverlays = useMemo(() => overlays.filter((o) => o.isActive), [overlays]);
+    const activeImageOverlays = useMemo(() => activeOverlays.filter((o) => !isSurveyMarksOverlay(o)), [activeOverlays]);
+    const activeSurveyOverlays = useMemo(() => activeOverlays.filter(isSurveyMarksOverlay), [activeOverlays]);
 
     // Init overlay opacity/visibility from props
     useEffect(() => {
@@ -672,14 +732,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const map = mapRef.current;
       if (!map || !mapLoaded) return;
 
-      for (const ov of activeOverlays) {
+      for (const ov of activeImageOverlays) {
         const srcId = `overlay-src-${ov.id}`;
         const layerId = `overlay-layer-${ov.id}`;
         if (map.getLayer(layerId)) map.removeLayer(layerId);
         if (map.getSource(srcId)) map.removeSource(srcId);
       }
 
-      for (const ov of activeOverlays) {
+      for (const ov of activeImageOverlays) {
         const coords = parseCoords(ov.coordinates);
         if (!coords || coords.length < 4) continue;
 
@@ -714,7 +774,70 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeOverlays, mapLoaded, visibilityMap, opacityMap]);
+    }, [activeImageOverlays, mapLoaded, visibilityMap, opacityMap]);
+
+    // ── Render survey mark overlays as shared Mapbox layers ───────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+
+      for (const ov of activeSurveyOverlays) {
+        const srcId = `survey-overlay-src-${ov.id}`;
+        const circleLayerId = `survey-overlay-circle-${ov.id}`;
+        const labelLayerId = `survey-overlay-label-${ov.id}`;
+        if (map.getLayer(labelLayerId)) map.removeLayer(labelLayerId);
+        if (map.getLayer(circleLayerId)) map.removeLayer(circleLayerId);
+        if (map.getSource(srcId)) map.removeSource(srcId);
+      }
+
+      for (const ov of activeSurveyOverlays) {
+        const geojson = getSurveyFeatureCollection(ov);
+        if (!geojson) continue;
+
+        const visible = visibilityMap[ov.id] ?? true;
+        const opacity = opacityMap[ov.id] ?? 1;
+        const srcId = `survey-overlay-src-${ov.id}`;
+        const circleLayerId = `survey-overlay-circle-${ov.id}`;
+        const labelLayerId = `survey-overlay-label-${ov.id}`;
+
+        try {
+          map.addSource(srcId, { type: "geojson", data: geojson });
+          map.addLayer({
+            id: circleLayerId,
+            type: "circle",
+            source: srcId,
+            paint: {
+              "circle-radius": 6,
+              "circle-color": "#ec4899",
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-width": 2,
+              "circle-opacity": visible ? opacity : 0,
+              "circle-stroke-opacity": visible ? opacity : 0,
+            },
+          });
+          map.addLayer({
+            id: labelLayerId,
+            type: "symbol",
+            source: srcId,
+            layout: {
+              "text-field": ["coalesce", ["get", "identifier"], ["get", "id"]],
+              "text-size": 11,
+              "text-offset": [0, 1.1],
+              "text-anchor": "top",
+              "text-allow-overlap": true,
+            },
+            paint: {
+              "text-color": "#fce7f3",
+              "text-halo-color": "#0f172a",
+              "text-halo-width": 1.5,
+              "text-opacity": visible ? opacity : 0,
+            },
+          });
+        } catch (err) {
+          console.error("[MapboxProjectMap] Failed to add survey overlay", ov.id, err);
+        }
+      }
+    }, [activeSurveyOverlays, mapLoaded, visibilityMap, opacityMap]);
 
     // ── Overlay helpers ─────────────────────────────────────────────────────
 
@@ -725,6 +848,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       const layerId = `overlay-layer-${ovId}`;
       if (map.getLayer(layerId)) {
         map.setPaintProperty(layerId, "raster-opacity", value);
+      }
+      const surveyCircleLayerId = `survey-overlay-circle-${ovId}`;
+      const surveyLabelLayerId = `survey-overlay-label-${ovId}`;
+      if (map.getLayer(surveyCircleLayerId)) {
+        map.setPaintProperty(surveyCircleLayerId, "circle-opacity", value);
+        map.setPaintProperty(surveyCircleLayerId, "circle-stroke-opacity", value);
+      }
+      if (map.getLayer(surveyLabelLayerId)) {
+        map.setPaintProperty(surveyLabelLayerId, "text-opacity", value);
       }
     }, []);
 
@@ -740,10 +872,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setVisibilityMap((prev) => {
         const next = { ...prev, [ovId]: !prev[ovId] };
         const map = mapRef.current;
+        const opacity = opacityMap[ovId] ?? 0.7;
         if (map) {
           const layerId = `overlay-layer-${ovId}`;
           if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "raster-opacity", next[ovId] ? (opacityMap[ovId] ?? 0.7) : 0);
+            map.setPaintProperty(layerId, "raster-opacity", next[ovId] ? opacity : 0);
+          }
+          const surveyCircleLayerId = `survey-overlay-circle-${ovId}`;
+          const surveyLabelLayerId = `survey-overlay-label-${ovId}`;
+          if (map.getLayer(surveyCircleLayerId)) {
+            map.setPaintProperty(surveyCircleLayerId, "circle-opacity", next[ovId] ? opacity : 0);
+            map.setPaintProperty(surveyCircleLayerId, "circle-stroke-opacity", next[ovId] ? opacity : 0);
+          }
+          if (map.getLayer(surveyLabelLayerId)) {
+            map.setPaintProperty(surveyLabelLayerId, "text-opacity", next[ovId] ? opacity : 0);
           }
         }
         return next;
@@ -766,9 +908,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       if (!map) return;
       const srcId = `overlay-src-${ovId}`;
       const layerId = `overlay-layer-${ovId}`;
+      const surveySrcId = `survey-overlay-src-${ovId}`;
+      const surveyCircleLayerId = `survey-overlay-circle-${ovId}`;
+      const surveyLabelLayerId = `survey-overlay-label-${ovId}`;
       try {
         if (map.getLayer(layerId)) map.removeLayer(layerId);
         if (map.getSource(srcId)) map.removeSource(srcId);
+        if (map.getLayer(surveyLabelLayerId)) map.removeLayer(surveyLabelLayerId);
+        if (map.getLayer(surveyCircleLayerId)) map.removeLayer(surveyCircleLayerId);
+        if (map.getSource(surveySrcId)) map.removeSource(surveySrcId);
       } catch (err) {
         console.warn(`[MapboxProjectMap] Error removing overlay ${ovId}:`, err);
       }
@@ -994,10 +1142,14 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editMode, editCorners?.length, editingOverlayId, mapLoaded, aspectLocked]);
 
-    // ── 2-Point Snap ────────────────────────────────────────────────────────
+    // ── Multi-point alignment ────────────────────────────────────────────────
     const startSnapMode = useCallback((ov: OverlayData) => {
       if (overlayLocked[ov.id]) {
         toast.error("Overlay is locked. Unlock it first.");
+        return;
+      }
+      if (isSurveyMarksOverlay(ov)) {
+        toast.error("Survey point layers do not need raster alignment.");
         return;
       }
       const coords = parseCoords(ov.coordinates);
@@ -1006,34 +1158,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setEditCorners([...coords]);
       setEditMode(true);
       setSnapMode(true);
-      setSnapStep("anchorA");
-      setAnchorA(null);
-      setTargetA(null);
-      setAnchorB(null);
-      setTargetB(null);
+      setSnapStep("anchor");
+      setSnapPairs([]);
+      setPendingAnchor(null);
       setSidebarOpen(false);
     }, [overlayLocked]);
 
     const cancelSnapMode = useCallback(() => {
       setSnapMode(false);
-      setSnapStep("anchorA");
-      setAnchorA(null);
-      setTargetA(null);
-      setAnchorB(null);
-      setTargetB(null);
+      setSnapStep("anchor");
+      setSnapPairs([]);
+      setPendingAnchor(null);
       snapMarkersRef.current.forEach((m) => m.remove());
       snapMarkersRef.current = [];
     }, []);
 
-    // Snap click handler
+    // Multi-point alignment click handler. Each pair is blueprint anchor → real map target.
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !mapLoaded || !snapMode) return;
 
-      const addSnapMarker = (lngLat: { lng: number; lat: number }, color: string, label: string) => {
+      const addSnapMarker = (lngLat: SnapPoint, color: string, label: string) => {
         const el = document.createElement("div");
         el.style.cssText = `
-          width: 20px; height: 20px; border-radius: 50%;
+          width: 22px; height: 22px; border-radius: 50%;
           background: ${color}; border: 2px solid white;
           box-shadow: 0 2px 6px rgba(0,0,0,0.4);
           display: flex; align-items: center; justify-content: center;
@@ -1046,22 +1194,29 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
       const handleClick = (e: mapboxgl.MapMouseEvent) => {
         const pt = { lng: e.lngLat.lng, lat: e.lngLat.lat };
-        setSnapStep((prev) => {
-          if (prev === "anchorA") { setAnchorA(pt); addSnapMarker(pt, "#ef4444", "A"); return "targetA"; }
-          if (prev === "targetA") { setTargetA(pt); addSnapMarker(pt, "#3b82f6", "A'"); return "anchorB"; }
-          if (prev === "anchorB") { setAnchorB(pt); addSnapMarker(pt, "#ef4444", "B"); return "targetB"; }
-          if (prev === "targetB") { setTargetB(pt); addSnapMarker(pt, "#3b82f6", "B'"); return "ready"; }
-          return prev;
+        setPendingAnchor((currentAnchor) => {
+          if (!currentAnchor) {
+            const nextPairNumber = snapPairs.length + 1;
+            addSnapMarker(pt, "#ef4444", `A${nextPairNumber}`);
+            setSnapStep("target");
+            return pt;
+          }
+
+          const nextPairNumber = snapPairs.length + 1;
+          addSnapMarker(pt, "#3b82f6", `T${nextPairNumber}`);
+          setSnapPairs((prev) => [...prev, { anchor: currentAnchor, target: pt }]);
+          setSnapStep("ready");
+          return null;
         });
       };
 
       map.on("click", handleClick);
       return () => { map.off("click", handleClick); };
-    }, [snapMode, mapLoaded]);
+    }, [snapMode, mapLoaded, snapPairs.length]);
 
     const executeSnap = useCallback(async () => {
-      if (!anchorA || !targetA || !anchorB || !targetB || !editCorners || editingOverlayId == null) return;
-      const transformed = calculateTwoPointTransform(anchorA, targetA, anchorB, targetB, editCorners);
+      if (snapPairs.length === 0 || !editCorners || editingOverlayId == null) return;
+      const transformed = calculateMultiPointTransform(snapPairs, editCorners);
       setEditCorners(transformed);
       updateOverlaySource(editingOverlayId, transformed);
 
@@ -1074,7 +1229,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setIsSaving(false);
 
       if (success) {
-        toast.success("2-Point Snap applied and saved!");
+        toast.success(`Multi-point alignment applied with ${snapPairs.length} control pair${snapPairs.length === 1 ? "" : "s"}.`);
         cancelSnapMode();
         clearEditMarkers();
         setEditMode(false);
@@ -1083,7 +1238,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         setEditRotation(0);
         onOverlayUpdated?.();
       }
-    }, [anchorA, targetA, anchorB, targetB, editCorners, editingOverlayId, editRotation, updateOverlaySource, saveCoordinates, cancelSnapMode, clearEditMarkers, onOverlayUpdated]);
+    }, [snapPairs, editCorners, editingOverlayId, editRotation, updateOverlaySource, saveCoordinates, cancelSnapMode, clearEditMarkers, onOverlayUpdated]);
 
     // ── Reset overlay ───────────────────────────────────────────────────────
     const handleReset = async (ov: OverlayData) => {
@@ -1334,13 +1489,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       };
     }, [measureMode, mapLoaded]);
 
-    // ── Snap step labels ────────────────────────────────────────────────────
+    // ── Alignment step labels ───────────────────────────────────────────────
     const snapStepLabel: Record<string, string> = {
-      anchorA: "Click blueprint: place Anchor A",
-      targetA: "Click map: place Target A'",
-      anchorB: "Click blueprint: place Anchor B",
-      targetB: "Click map: place Target B'",
-      ready: "Ready to snap!",
+      anchor: `Click blueprint/source position for control pair ${snapPairs.length + 1}`,
+      target: `Click real-world map target for control pair ${snapPairs.length + 1}`,
+      ready: `Ready with ${snapPairs.length} control pair${snapPairs.length === 1 ? "" : "s"}. Click another source point to add a pair, or apply alignment.`,
     };
 
        // ── Loading state ───────────────────────────────────────────────
@@ -1529,29 +1682,27 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 </div>
               )}
 
-              {/* 2-Point Snap toolbar */}
+              {/* Multi-point alignment toolbar */}
               {snapMode && (
                 <div className="absolute top-3 left-3 right-3 z-[20] flex items-center gap-2 bg-black/80 backdrop-blur-md rounded-lg px-4 py-3">
                   <Crosshair className="h-5 w-5 text-blue-400 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">2-Point Snap Alignment</p>
+                    <p className="text-sm font-semibold text-white">Multi-Point Alignment</p>
                     <p className="text-xs text-slate-300">{snapStepLabel[snapStep]}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex gap-1">
-                      <span className={`w-2 h-2 rounded-full ${anchorA ? "bg-red-500" : "bg-slate-600"}`} title="Anchor A" />
-                      <span className={`w-2 h-2 rounded-full ${targetA ? "bg-blue-500" : "bg-slate-600"}`} title="Target A'" />
-                      <span className={`w-2 h-2 rounded-full ${anchorB ? "bg-red-500" : "bg-slate-600"}`} title="Anchor B" />
-                      <span className={`w-2 h-2 rounded-full ${targetB ? "bg-blue-500" : "bg-slate-600"}`} title="Target B'" />
+                    <div className="text-xs text-slate-300 whitespace-nowrap">
+                      {snapPairs.length} pair{snapPairs.length === 1 ? "" : "s"} captured
+                      {pendingAnchor && <span className="text-blue-300 ml-1">&bull; target needed</span>}
                     </div>
-                    {snapStep === "ready" && (
+                    {snapPairs.length > 0 && !pendingAnchor && (
                       <Button
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={executeSnap}
                         disabled={isSaving}
                       >
-                        {isSaving ? "Snapping..." : "Snap!"}
+                        {isSaving ? "Aligning..." : "Apply Alignment"}
                       </Button>
                     )}
                     <Button
@@ -1837,6 +1988,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           ? activeOverlays.find((o) => o.id === selectedOverlayId) ?? null
                           : null;
                         const noSelection = selectedOv == null;
+                        const selectedIsSurveyLayer = selectedOv ? isSurveyMarksOverlay(selectedOv) : false;
                         return (
                           <div className="pt-2 border-t border-slate-700 space-y-2">
                             <div className="flex items-center justify-between">
@@ -1848,13 +2000,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                             {/* Edit Alignment */}
                             <button
-                              disabled={noSelection}
+                              disabled={noSelection || selectedIsSurveyLayer}
                               onClick={() => {
                                 if (editMode) { handleCancelEdit(); }
                                 else if (selectedOv) { handleStartEdit(selectedOv); setSidebarOpen(false); }
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                                noSelection
+                                noSelection || selectedIsSurveyLayer
                                   ? "bg-slate-800/40 opacity-40 cursor-not-allowed"
                                   : editMode && !snapMode
                                     ? "bg-blue-600 shadow-lg shadow-blue-900/40"
@@ -1865,20 +2017,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                               <div className="text-left">
                                 <span className="text-sm font-medium block">{editMode && !snapMode ? "Stop Editing" : "Edit Alignment"}</span>
                                 <span className="text-[10px] text-slate-400">
-                                  {noSelection ? "Select an overlay first" : "Drag corners to resize & rotate"}
+                                  {noSelection ? "Select an overlay first" : selectedIsSurveyLayer ? "Survey point layers are already georeferenced" : "Drag corners to resize & rotate"}
                                 </span>
                               </div>
                             </button>
 
-                            {/* 2-Point Snap */}
+                            {/* Multi-point alignment */}
                             <button
-                              disabled={noSelection}
+                              disabled={noSelection || selectedIsSurveyLayer}
                               onClick={() => {
                                 if (snapMode) { cancelSnapMode(); handleCancelEdit(); }
                                 else if (selectedOv) { startSnapMode(selectedOv); }
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                                noSelection
+                                noSelection || selectedIsSurveyLayer
                                   ? "bg-slate-800/40 opacity-40 cursor-not-allowed"
                                   : snapMode
                                     ? "bg-blue-600 shadow-lg shadow-blue-900/40"
@@ -1887,9 +2039,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                             >
                               <Crosshair size={16} />
                               <div className="text-left">
-                                <span className="text-sm font-medium block">{snapMode ? "Cancel Snap" : "2-Point Snap"}</span>
+                                <span className="text-sm font-medium block">{snapMode ? "Cancel Alignment" : "Multi-Point Alignment"}</span>
                                 <span className="text-[10px] text-slate-400">
-                                  {noSelection ? "Select an overlay first" : "Match 2 points for precise alignment"}
+                                  {noSelection ? "Select an overlay first" : selectedIsSurveyLayer ? "Survey points are map-native layers" : "Capture one or more control point pairs"}
                                 </span>
                               </div>
                             </button>
