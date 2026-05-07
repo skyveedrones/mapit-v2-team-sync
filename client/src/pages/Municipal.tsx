@@ -291,7 +291,7 @@ export default function Municipal() {
                 preload="auto"
                 className="w-full h-full object-cover"
               >
-                <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4" type="video/mp4" />
+                <source src="/MunicipalHeroVideo.mp4" type="video/mp4" />
               </video>
               {/* Subtle overlay for premium feel */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
