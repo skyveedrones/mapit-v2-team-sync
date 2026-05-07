@@ -1918,7 +1918,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           <span className="text-sm font-medium">Add Map Overlay</span>
                         </button>
 
-                        {/* Coordinate Converter */}
+                        {/* Import Survey Points */}
                         <div className="rounded-xl bg-slate-800/70 border border-slate-700 overflow-hidden">
                           <button
                             onClick={() => setCoordinateConverterExpanded((v) => !v)}
@@ -1926,8 +1926,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           >
                             <Calculator size={16} className="text-emerald-400" />
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">Coordinate Converter</span>
-                              <span className="text-[10px] text-slate-400">SPCS to GPS on this map</span>
+                              <span className="text-sm font-medium block">Import Survey Points</span>
+                              <span className="text-[10px] text-slate-400">Convert SPCS to GPS on this map</span>
                             </div>
                             {converterPoints.length > 0 && (
                               <span className="text-[10px] rounded-full bg-orange-500/20 text-orange-300 px-2 py-0.5">
