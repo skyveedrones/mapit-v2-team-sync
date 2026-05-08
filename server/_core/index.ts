@@ -49,12 +49,9 @@ async function startServer() {
   const server = createServer(app);
 
   // --- CORS MUST be the VERY FIRST middleware ---
-  const corsOrigin = process.env.CORS_ORIGIN || 'https://mapit.skyveedrones.com';
-  console.log(`[CORS] Using origin: ${corsOrigin}`);
-  
   const corsOptions: cors.CorsOptions = {
     origin: [
-      corsOrigin,
+      'https://mapit.skyveedrones.com',
       'https://dac77afc.mapit-skyveedrones.pages.dev',
       'http://localhost:3000',
       'http://localhost:5173',
