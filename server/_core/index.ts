@@ -67,8 +67,15 @@ async function startServer() {
     maxAge: 86400,
   }));
   
-  // Explicit OPTIONS handler for preflight requests
-  app.options('*', cors());
+  // Explicit OPTIONS handler for preflight requests - MUST use custom config, not default
+  app.options('*', cors({
+    origin: 'https://mapit.skyveedrones.com',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Length', 'X-JSON-Response'],
+    maxAge: 86400,
+  }));
   
   // CORS logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
