@@ -44,6 +44,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  const DEFAULT_PORT = 3000;
   const app = express();
   const server = createServer(app);
 
