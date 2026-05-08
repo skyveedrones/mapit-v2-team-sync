@@ -219,7 +219,9 @@ async function startServer() {
 
   // Always prefer the host-provided PORT when available (Railway).
   // Fall back to local scanning only when PORT is not set.
-  const configuredPort = Number.parseInt(process.env.PORT ?? "", 10);
+  const configuredPort = process.env.PORT
+    ? Number.parseInt(process.env.PORT, 10)
+    : Number.NaN;
   const port = Number.isInteger(configuredPort) && configuredPort > 0
     ? configuredPort
     : await findAvailablePort(3000);
