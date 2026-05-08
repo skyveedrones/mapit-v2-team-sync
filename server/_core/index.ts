@@ -218,18 +218,12 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // Always prefer the host-provided PORT when available (Railway).
-  // Fall back to local scanning only when PORT is not set.
-  const configuredPort = process.env.PORT
-    ? Number.parseInt(process.env.PORT, 10)
-    : Number.NaN;
-  if (process.env.PORT && (!Number.isInteger(configuredPort) || configuredPort <= 0)) {
-    console.warn(`[Server] Invalid PORT value "${process.env.PORT}", falling back to local port discovery from ${DEFAULT_PORT}`);
-  }
-  const port = Number.isInteger(configuredPort) && configuredPort > 0
-    ? configuredPort
-    : await findAvailablePort(DEFAULT_PORT);
-  console.log(`[Server] Using port ${port} (NODE_ENV=${process.env.NODE_ENV}, PORT env=${process.env.PORT})`);
+  // In production (Railway), bind to port 8080 (matches Railway Target Port setting).
+  // In development, scan for an available port starting from PORT env var.
+  const port = process.env.NODE_ENV === 'production'
+    ? 8080
+    : await findAvailablePort(parseInt(process.env.PORT || "3000"));
+  console.log(`[Server] Using port ${port} (NODE_ENV=${process.env.NODE_ENV})`);
 
   // Set global request timeout to 120 seconds for PDF generation
   server.setTimeout(120000);
