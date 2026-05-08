@@ -226,14 +226,16 @@ export function validateCoordinates(easting: number, northing: number) {
     errors.push('Northing must be a valid number');
   }
 
-  // Basic sanity check for Texas coordinates (in feet)
-  // Texas SPCS coordinates typically range from 1.2M to 2.3M feet
-  if (easting < 1000000 || easting > 3000000) {
-    errors.push('Easting appears out of range for Texas (expected 1M-3M feet)');
+  // Sanity check for Texas SPCS coordinates in US Survey Feet.
+  // False easting is 1,500,000 ft for all TX zones; valid Easting range ~500k-3.5M ft.
+  // Northing origin is 0 (y_0=0) for all TX zones; valid Northing range 0-20M ft
+  // (TX North zone 4201 northing can reach ~18M ft at the northern boundary).
+  if (easting < 500000 || easting > 3500000) {
+    errors.push('Easting appears out of range for Texas (expected 500k-3.5M feet)');
   }
 
-  if (northing < 0 || northing > 3000000) {
-    errors.push('Northing appears out of range for Texas (expected 0-3M feet)');
+  if (northing < 0 || northing > 20000000) {
+    errors.push('Northing appears out of range for Texas (expected 0-20M feet)');
   }
 
   return {
