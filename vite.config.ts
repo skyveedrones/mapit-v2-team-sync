@@ -5,7 +5,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
-import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -157,68 +156,6 @@ const plugins = [
   jsxLocPlugin(),
   vitePluginManusRuntime(),
   vitePluginManusDebugCollector(),
-  VitePWA({
-    registerType: 'autoUpdate',
-    includeAssets: [],
-    manifest: {
-      name: 'MapIt - Drone Mapping Platform',
-      short_name: 'MapIt',
-      description: 'Professional drone mapping and project management platform',
-      theme_color: '#10b981',
-      icons: []
-    },
-    workbox: {
-      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB limit — skip huge chunks
-      // Only precache HTML, CSS, fonts, and small JS. Large JS bundles (mapbox, index) are
-      // fetched fresh on each visit — precaching them bloats the SW install to 5+ MB and
-      // causes deployment timeouts.
-      globPatterns: ['**/*.{css,html,woff,woff2}', '**/*.js'],
-      // Exclude all icon/image files AND large vendor bundles from precache.
-      globIgnores: [
-        '**/favicon.ico', '**/favicon/**', '**/*.png', '**/*.ico', '**/*.svg',
-        '**/mapbox-*.js',       // ~1.7 MB — too large to precache
-        '**/index-*.js',        // ~1.9 MB — too large to precache
-        '**/MediaUploadDialog-*.js', // ~244 KB
-        '**/ProjectDetail-*.js',     // ~194 KB
-      ],
-      navigateFallbackDenylist: [/^\/api\//],
-      runtimeCaching: [
-        {
-          // Block Workbox from ever trying to cache manuscdn.com or cloudfront CDN favicon redirects
-          urlPattern: /^https:\/\/(files\.manuscdn\.com|d2xsxph8kpxj0f\.cloudfront\.net)\/.*/i,
-          handler: 'NetworkOnly',
-        },
-        {
-          urlPattern: /^https:\/\/api\..+\/api\/trpc\/.*/i,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-cache',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 // 24 hours
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        },
-        {
-          urlPattern: /^https:\/\/.+\.cloudfront\.net\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'media-cache',
-            expiration: {
-              maxEntries: 200,
-              maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        }
-      ]
-    }
-  })
 ];
 
 export default defineConfig({

@@ -224,12 +224,13 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
+   // In production (Railway), bind to exact PORT env var — no port scanning.
+  // Port scanning causes Railway's proxy to get a 502 because the app binds
+  // to a different port than Railway expects.
+  const port = process.env.NODE_ENV === 'production'
+    ? parseInt(process.env.PORT || "3000")
+    : await findAvailablePort(parseInt(process.env.PORT || "3000"));
+  console.log(`[Server] Using port ${port} (NODE_ENV=${process.env.NODE_ENV}, PORT env=${process.env.PORT})`);
 
   // Set global request timeout to 120 seconds for PDF generation
   server.setTimeout(120000);

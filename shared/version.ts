@@ -3,15 +3,15 @@
  *
  * AUTOMATICALLY UPDATED — do not edit manually.
  * Updated by: scripts/generate-version.mjs
- * Last updated: 2026-05-08T12:17:50.637Z
+ * Last updated: 2026-05-08T13:55:50.771Z
  */
 
 export const APP_VERSION = {
-  version: '2.4.14',
-  commit: '78aa0eca',
+  version: '2.4.15',
+  commit: 'b6c28e50',
   branch: 'main',
   buildDate: new Date().toISOString(),
-  buildTimestamp: 1778242670637,
+  buildTimestamp: 1778248550771,
 };
 
 /** Format: v2.4.3 (edc19a79) - Apr 12, 2026 */
