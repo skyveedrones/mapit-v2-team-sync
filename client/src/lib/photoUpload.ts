@@ -4,6 +4,8 @@
  * Preserves full metadata and HD quality without compression
  */
 
+import { apiUrl } from "./apiBase";
+
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
 
 export interface UploadProgress {
@@ -38,7 +40,7 @@ export async function uploadChunkToServer(
   chunkData: ArrayBuffer,
   uploadId?: string
 ): Promise<ChunkUploadResponse> {
-  const response = await fetch("/api/photo-upload/chunk", {
+  const response = await fetch(apiUrl("/api/photo-upload/chunk"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -115,7 +117,7 @@ export async function uploadPhotoToS3(
     }
 
     // Finalize upload
-    const finalizeResponse = await fetch("/api/photo-upload/finalize", {
+    const finalizeResponse = await fetch(apiUrl("/api/photo-upload/finalize"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

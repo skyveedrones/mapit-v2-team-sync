@@ -1,5 +1,6 @@
 import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { trpc } from "@/lib/trpc";
+import { apiUrl } from "@/lib/apiBase";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { initializeVersionCheck, startPeriodicVersionCheck } from "@/lib/versionCheck";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -100,7 +101,7 @@ function buildTrpcClient(getToken: () => Promise<string | null>) {
   return trpc.createClient({
     links: [
       httpBatchLink({
-        url: "/api/trpc",
+        url: apiUrl("/api/trpc"),
         transformer: superjson,
         async headers() {
           const token = await getToken();

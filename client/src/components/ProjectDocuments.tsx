@@ -1,3 +1,4 @@
+import { apiUrl } from "@/lib/apiBase";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,7 +188,7 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
         const formData = new FormData();
         formData.append("file", file);
         formData.append("projectId", String(projectId));
-        const res = await fetch("/api/document/upload", {
+        const res = await fetch(apiUrl("/api/document/upload"), {
           method: "POST",
           credentials: "include",
           body: formData,

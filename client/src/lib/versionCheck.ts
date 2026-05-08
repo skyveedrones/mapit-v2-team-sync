@@ -4,6 +4,8 @@
  * by checking for updates on app load and periodically
  */
 
+import { apiUrl } from "./apiBase";
+
 const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
 const VERSION_STORAGE_KEY = 'mapit_deployed_version';
 const LAST_CHECK_KEY = 'mapit_last_version_check';
@@ -19,7 +21,7 @@ export interface VersionInfo {
  */
 export async function fetchLatestVersion(): Promise<VersionInfo | null> {
   try {
-    const response = await fetch('/api/version', {
+    const response = await fetch(apiUrl('/api/version'), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

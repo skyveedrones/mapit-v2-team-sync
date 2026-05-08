@@ -17,6 +17,7 @@
  *      - Edit Alignment / 2-Point Snap / Reset / Delete
  */
 
+import { apiUrl } from "@/lib/apiBase";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -828,7 +829,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // ── Save coordinates (blocking PUT) ─────────────────────────────────────
     const saveCoordinates = useCallback(async (ovId: number, corners: [number, number][], rotation?: number): Promise<boolean> => {
       try {
-        const resp = await fetch(`/api/projects/${projectId}/overlays/${ovId}`, {
+        const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ovId}`), {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -1144,7 +1145,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
       if (!confirm("Reset overlay to its original GPS-derived position?")) return;
       try {
-        const resp = await fetch(`/api/projects/${projectId}/overlays/${ov.id}/reset`, {
+        const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}/reset`), {
           method: "POST",
           credentials: "include",
         });
@@ -1164,7 +1165,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       if (!confirm("Delete this overlay? This cannot be undone.")) return;
       setIsDeleting(true);
       try {
-        const resp = await fetch(`/api/projects/${projectId}/overlays/${ov.id}`, {
+        const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}`), {
           method: "DELETE",
           credentials: "include",
         });

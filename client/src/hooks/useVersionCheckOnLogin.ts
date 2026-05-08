@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { apiUrl } from '@/lib/apiBase';
 import { APP_VERSION } from '@shared/version';
 import { toast } from 'sonner';
 
@@ -80,7 +81,7 @@ export function useVersionCheckOnLogin() {
 
         // Also check backend version if available
         try {
-          const backendResponse = await fetch('/api/trpc/version.getInfo', {
+          const backendResponse = await fetch(apiUrl('/api/trpc/version.getInfo'), {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache',

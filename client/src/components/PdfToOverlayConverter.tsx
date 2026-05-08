@@ -4,6 +4,7 @@
  * with preview and direct save to project media
  */
 
+import { apiUrl } from "@/lib/apiBase";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -90,7 +91,7 @@ export function PdfToOverlayConverter({
       formData.append("dpi", dpi.toString());
 
       // Send to backend conversion endpoint
-      const response = await fetch("/api/convert-pdf-overlay", {
+      const response = await fetch(apiUrl("/api/convert-pdf-overlay"), {
         method: "POST",
         body: formData,
       });
@@ -133,7 +134,7 @@ export function PdfToOverlayConverter({
     setIsSaving(true);
     try {
       // Create overlay in project media
-      const response = await fetch("/api/create-overlay", {
+      const response = await fetch(apiUrl("/api/create-overlay"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

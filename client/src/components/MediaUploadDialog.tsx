@@ -5,6 +5,7 @@
  * auto thumbnail extraction, resumable uploads with localStorage persistence
  */
 
+import { apiUrl } from "@/lib/apiBase";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -858,7 +859,7 @@ export function MediaUploadDialog({
       const file = fileItem.file;
       
       const upload = new tus.Upload(file, {
-        endpoint: "/api/video-upload",
+        endpoint: apiUrl("/api/video-upload"),
         retryDelays: [0, 1000, 3000, 5000, 10000],
         chunkSize: 5 * 1024 * 1024, // 5MB chunks
         metadata: {
@@ -901,7 +902,7 @@ export function MediaUploadDialog({
             const uploadId = uploadUrl.split("/").pop();
             
             // Get metadata from server
-            const response = await fetch(`/api/video-upload-metadata/${uploadId}`);
+            const response = await fetch(apiUrl(`/api/video-upload-metadata/${uploadId}`));
             if (!response.ok) {
               throw new Error("Failed to get upload metadata");
             }

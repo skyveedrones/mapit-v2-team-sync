@@ -1,3 +1,4 @@
+import { apiUrl } from "@/lib/apiBase";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -47,7 +48,7 @@ export function DocumentToOverlayDialog({
   const handleConvert = async () => {
     setIsConverting(true);
     try {
-      const response = await fetch("/api/convert-pdf-overlay", {
+      const response = await fetch(apiUrl("/api/convert-pdf-overlay"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -64,7 +65,7 @@ export function DocumentToOverlayDialog({
       const data = await response.json();
       
       // Create overlay from converted PNG
-      const overlayResponse = await fetch("/api/create-overlay", {
+      const overlayResponse = await fetch(apiUrl("/api/create-overlay"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
