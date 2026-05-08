@@ -44,6 +44,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  const DEFAULT_PORT = 3000;
   const app = express();
   const server = createServer(app);
 
@@ -222,9 +223,12 @@ async function startServer() {
   const configuredPort = process.env.PORT
     ? Number.parseInt(process.env.PORT, 10)
     : Number.NaN;
+  if (process.env.PORT && (!Number.isInteger(configuredPort) || configuredPort <= 0)) {
+    console.warn(`[Server] Invalid PORT value "${process.env.PORT}", falling back to local port discovery from ${DEFAULT_PORT}`);
+  }
   const port = Number.isInteger(configuredPort) && configuredPort > 0
     ? configuredPort
-    : await findAvailablePort(3000);
+    : await findAvailablePort(DEFAULT_PORT);
   console.log(`[Server] Using port ${port} (NODE_ENV=${process.env.NODE_ENV}, PORT env=${process.env.PORT})`);
 
   // Set global request timeout to 120 seconds for PDF generation
