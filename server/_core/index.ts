@@ -48,28 +48,31 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Trust proxy for accurate rate limiting behind reverse proxy (Manus deployment)
-  app.set('trust proxy', 1);
+  // --- CORS MUST be the VERY FIRST middleware ---
+  const corsOrigin = process.env.CORS_ORIGIN || 'https://mapit.skyveedrones.com';
+  console.log(`[CORS] Using origin: ${corsOrigin}`);
   
-  // Configure CORS to allow requests from Cloudflare Pages and other origins
   const corsOptions: cors.CorsOptions = {
     origin: [
-      'https://mapit.skyveedrones.com',
+      corsOrigin,
       'https://dac77afc.mapit-skyveedrones.pages.dev',
       'http://localhost:3000',
       'http://localhost:5173',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
     exposedHeaders: ['Content-Length', 'X-JSON-Response'],
     maxAge: 86400,
   };
 
-  // Handle preflight OPTIONS requests first (must come before other middleware)
+  // Explicit OPTIONS preflight handler — MUST be first
   app.options('*', cors(corsOptions));
-
+  // Apply CORS to all routes
   app.use(cors(corsOptions));
+
+  // Trust proxy for accurate rate limiting behind reverse proxy
+  app.set('trust proxy', 1);
   
   // CORS logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
