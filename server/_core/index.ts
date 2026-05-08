@@ -22,6 +22,8 @@ import createOverlayRouter from "../routes/create-overlay";
 import { registerStorageProxy } from "./storageProxy";
 import cors from "cors";
 
+// Force rebuild trigger - CORS fix deployed
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
