@@ -51,24 +51,24 @@ async function startServer() {
   app.set('trust proxy', 1);
   
   // Configure CORS to allow requests from Cloudflare Pages and other origins
-  const allowedOrigins = [
-    'https://mapit.skyveedrones.com',
-    'https://dac77afc.mapit-skyveedrones.pages.dev',
-    'http://localhost:3000',
-    'http://localhost:5173',
-  ];
-  
-  app.use(cors({
-    origin: true,
+  const corsOptions: cors.CorsOptions = {
+    origin: [
+      'https://mapit.skyveedrones.com',
+      'https://dac77afc.mapit-skyveedrones.pages.dev',
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Length', 'X-JSON-Response'],
     maxAge: 86400,
-  }));
-  
-  // Explicit OPTIONS handler for preflight requests
-  app.options('*', cors());
+  };
+
+  // Handle preflight OPTIONS requests with the same CORS config (must come before other middleware)
+  app.options('*', cors(corsOptions));
+
+  app.use(cors(corsOptions));
   
   // CORS logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
