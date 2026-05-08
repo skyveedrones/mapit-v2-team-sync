@@ -62,8 +62,17 @@ async function startServer() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Length', 'X-JSON-Response'],
-    maxAge: 86400, // 24 hours
+    maxAge: 86400,
   }));
+  
+  // Explicit OPTIONS handler for preflight requests
+  app.options('*', cors());
+  
+  // CORS logging middleware
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[CORS] ${req.method} ${req.path} from ${req.get('origin')}`);
+    next();
+  });
   
   // Initialize version system
   initializeVersion();
