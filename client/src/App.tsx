@@ -85,7 +85,7 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
 
   // If spinner has been showing for 12 seconds, offer a manual retry / sign-in option
   useEffect(() => {
-    if (!loading && !(clerkIsSignedIn && !isAuthenticated)) {
+    if (!loading) {
       setLoadingTooLong(false);
       return;
     }
@@ -146,9 +146,8 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
     }
   }, [loading, isAuthenticated, user, location, setLocation]);
 
-  // Show spinner while loading OR while Clerk says signed in but DB hasn't resolved yet
-  // (prevents black screen during TiDB read-after-write latency after SSO callback)
-  if (loading || (clerkIsSignedIn && !isAuthenticated)) {
+  // Show spinner only while loading — useAuth.meTimedOut already handles the DB-sync timeout
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="flex flex-col items-center gap-4">

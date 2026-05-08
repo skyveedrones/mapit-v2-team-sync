@@ -57,14 +57,15 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   // Hard timeout: if Clerk is signed in but auth.me never resolves within
-  // 10 seconds, stop showing the spinner so ProtectedRoute can redirect.
+  // 5 seconds, stop showing the spinner and treat the user as authenticated
+  // so ProtectedRoute renders the dashboard instead of hanging forever.
   const [meTimedOut, setMeTimedOut] = useState(false);
   useEffect(() => {
     if (!isSignedIn || meQuery.data || meQuery.isError) {
       setMeTimedOut(false);
       return;
     }
-    const t = setTimeout(() => setMeTimedOut(true), 10000);
+    const t = setTimeout(() => setMeTimedOut(true), 5000);
     return () => clearTimeout(t);
   }, [isSignedIn, meQuery.data, meQuery.isError]);
 
@@ -83,7 +84,8 @@ export function useAuth(options?: UseAuthOptions) {
       user,
       loading,
       error: meQuery.error ?? null,
-      isAuthenticated: Boolean(isSignedIn) && Boolean(user),
+      // If DB sync timed out, treat Clerk session as authenticated so the dashboard renders
+      isAuthenticated: Boolean(isSignedIn) && (Boolean(user) || meTimedOut),
     };
   }, [effectivelyLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading, meTimedOut]);
 
