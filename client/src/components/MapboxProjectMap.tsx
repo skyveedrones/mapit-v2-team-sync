@@ -291,7 +291,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // Using isPending (not mediaList===undefined) prevents the skeleton from covering the map
     // when a batch mutation causes a transient cache invalidation.
     const isLoading = !initialMedia && mediaIsPending;
-
+    // DEBUG: trace isLoading and mediaList changes
+    if (typeof window !== 'undefined') {
+      console.log('[MAPIT-DEBUG] render', { isLoading, mediaIsPending, mediaListLen: mediaList?.length, initialMediaLen: initialMedia?.length });
+    }
     const mediaWithGPS = useMemo(() => {
       if (initialMedia && initialMedia.length > 0) {
         return initialMedia.filter((m) => m.latitude && m.longitude);
@@ -1390,6 +1393,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // ── Coordinate converter map layer ────────────────────────────────────────
     useEffect(() => {
       const map = mapRef.current;
+      console.log('[MAPIT-DEBUG] converterPoints useEffect fired', { count: converterPoints.length, mapLoaded, hasMap: !!map });
       if (!map || !mapLoaded) return;
 
       const sourceId = "coordinate-converter-src";
@@ -1552,6 +1556,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
 
       setBatchLoading(true);
+      console.log('[MAPIT-DEBUG] batch handler start, batchLoading=true');
       try {
         const buffer = await batchFile.arrayBuffer();
         const result = await parseAndConvertMutation.mutateAsync({
