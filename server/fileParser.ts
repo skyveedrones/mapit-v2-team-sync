@@ -86,20 +86,41 @@ function normalizeHeader(header: string): string {
 }
 
 /**
- * Find matching column header
+ * Find matching column header.
+ *
+ * Uses a two-pass strategy to avoid false positives:
+ *  Pass 1 – exact match only (e.g. 'Easting' === 'easting').
+ *  Pass 2 – substring match, but ONLY for patterns longer than 2 chars so that
+ *            single-letter patterns like 'e', 'n', 'x', 'y' never accidentally
+ *            match words that contain those letters (e.g. 'n' inside 'Northing'
+ *            must NOT match the easting column).
  */
 function findMatchingColumn(
   headers: string[],
   patterns: string[]
 ): { column: string; index: number } | null {
+  const normalizedPatterns = patterns.map(normalizeHeader);
+
+  // Pass 1: exact match
   for (const header of headers) {
     const normalized = normalizeHeader(header);
-    for (const pattern of patterns) {
-      if (normalized === normalizeHeader(pattern) || normalized.includes(normalizeHeader(pattern))) {
+    for (const pattern of normalizedPatterns) {
+      if (normalized === pattern) {
         return { column: header, index: headers.indexOf(header) };
       }
     }
   }
+
+  // Pass 2: substring match — only for patterns longer than 2 chars
+  for (const header of headers) {
+    const normalized = normalizeHeader(header);
+    for (const pattern of normalizedPatterns) {
+      if (pattern.length > 2 && normalized.includes(pattern)) {
+        return { column: header, index: headers.indexOf(header) };
+      }
+    }
+  }
+
   return null;
 }
 
