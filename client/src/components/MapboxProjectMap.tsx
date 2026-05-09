@@ -1448,13 +1448,24 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
       if (converterPoints.length > 0) {
         const bounds = new mapboxgl.LngLatBounds();
-        converterPoints.forEach((pt) => bounds.extend([pt.longitude, pt.latitude]));
-        // duration:0 prevents the animated pan from interrupting tile loading (black map bug)
-        map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
-        // Force repaint immediately so the canvas doesn't go black on large batches
-        map.triggerRepaint();
-        // Belt-and-suspenders: resize after DOM has fully settled (handles batch size lag)
-        setTimeout(() => { map.resize(); map.triggerRepaint(); }, 200);
+        let validCount = 0;
+        converterPoints.forEach((pt) => {
+          // Skip header row or any point with NaN/zero/missing coordinates
+          if (
+            !pt.longitude || !pt.latitude ||
+            isNaN(pt.longitude) || isNaN(pt.latitude)
+          ) return;
+          bounds.extend([pt.longitude, pt.latitude]);
+          validCount++;
+        });
+        if (validCount > 0) {
+          // duration:0 prevents the animated pan from interrupting tile loading (black map bug)
+          map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
+          // Force repaint immediately so the canvas doesn't go black on large batches
+          map.triggerRepaint();
+          // Belt-and-suspenders: resize after DOM has fully settled (handles batch size lag)
+          setTimeout(() => { map.resize(); map.triggerRepaint(); }, 200);
+        }
       }
     }, [converterPoints, mapLoaded]);
 
