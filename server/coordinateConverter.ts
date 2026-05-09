@@ -18,7 +18,7 @@ export const COORDINATE_SYSTEMS = {
     zone: 'NAD83',
     units: 'us-ft',
     description: 'State Plane Coordinate System Zone 4202 (Texas North Central)',
-    proj4String: '+proj=lcc +lat_1=32.13333333333333 +lat_2=33.96666666666667 +lat_0=31.66666666666667 +lon_0=-98.5 +x_0=1500000.0001016001 +y_0=0 +ellps=GRS80 +units=us-ft +no_defs',
+    proj4String: '+proj=lcc +lat_1=32.13333333333333 +lat_2=33.96666666666667 +lat_0=31.66666666666667 +lon_0=-98.5 +x_0=600000.0 +y_0=2000000.0001016002 +ellps=GRS80 +units=us-ft +no_defs',
   },
   'TX_SOUTH_CENTRAL': {
     name: 'Texas South Central - NAD83 - US Survey Feet',
@@ -26,7 +26,7 @@ export const COORDINATE_SYSTEMS = {
     zone: 'NAD83',
     units: 'us-ft',
     description: 'State Plane Coordinate System Zone 4203 (Texas South Central)',
-    proj4String: '+proj=lcc +lat_1=30.28333333333333 +lat_2=31.88333333333333 +lat_0=29.66666666666667 +lon_0=-100.3333333333333 +x_0=1500000.0001016001 +y_0=0 +ellps=GRS80 +units=us-ft +no_defs',
+    proj4String: '+proj=lcc +lat_1=28.38333333333333 +lat_2=30.28333333333333 +lat_0=27.83333333333333 +lon_0=-99.0 +x_0=600000.0 +y_0=4000000.0 +ellps=GRS80 +units=us-ft +no_defs',
   },
   'TX_NORTH': {
     name: 'Texas North - NAD83 - US Survey Feet',
@@ -34,7 +34,7 @@ export const COORDINATE_SYSTEMS = {
     zone: 'NAD83',
     units: 'us-ft',
     description: 'State Plane Coordinate System Zone 4201 (Texas North)',
-    proj4String: '+proj=lcc +lat_1=33.96666666666667 +lat_2=36.18333333333333 +lat_0=34.36666666666667 +lon_0=-101.5 +x_0=1500000.0001016001 +y_0=0 +ellps=GRS80 +units=us-ft +no_defs',
+    proj4String: '+proj=lcc +lat_1=33.96666666666667 +lat_2=36.18333333333333 +lat_0=34.36666666666667 +lon_0=-101.5 +x_0=200000.0001016002 +y_0=1000000.0001016002 +ellps=GRS80 +units=us-ft +no_defs',
   },
 } as const;
 
@@ -226,16 +226,17 @@ export function validateCoordinates(easting: number, northing: number) {
     errors.push('Northing must be a valid number');
   }
 
-  // Sanity check for Texas SPCS coordinates in US Survey Feet.
-  // False easting is 1,500,000 ft for all TX zones; valid Easting range ~500k-3.5M ft.
-  // Northing origin is 0 (y_0=0) for all TX zones; valid Northing range 0-20M ft
-  // (TX North zone 4201 northing can reach ~18M ft at the northern boundary).
-  if (easting < 500000 || easting > 3500000) {
-    errors.push('Easting appears out of range for Texas (expected 500k-3.5M feet)');
+  // Sanity check for Texas SPCS coordinates in US Survey Feet (NAD83 EPSG values).
+  // Zone 4201 (TX North):         x_0=200000,  y_0=1000000  -> Easting ~100k-600k,   Northing ~500k-2M
+  // Zone 4202 (TX North Central): x_0=600000,  y_0=2000000  -> Easting ~100k-1.5M,  Northing ~1.5M-3.5M
+  // Zone 4203 (TX South Central): x_0=600000,  y_0=4000000  -> Easting ~100k-1.5M,  Northing ~3.5M-5.5M
+  // Use wide permissive ranges to cover all zones without false rejections.
+  if (easting < 50000 || easting > 4000000) {
+    errors.push('Easting appears out of range for Texas (expected 50k-4M feet)');
   }
 
-  if (northing < 0 || northing > 20000000) {
-    errors.push('Northing appears out of range for Texas (expected 0-20M feet)');
+  if (northing < 500000 || northing > 20000000) {
+    errors.push('Northing appears out of range for Texas (expected 500k-20M feet)');
   }
 
   return {
