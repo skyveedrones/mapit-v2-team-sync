@@ -1459,13 +1459,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           validCount++;
         });
         if (validCount > 0) {
+          // Force resize + repaint immediately so the map isn't stuck in a stale render state
+          map.resize();
+          map.triggerRepaint();
           // Defer fitBounds to the next animation frame so WebGL finishes processing
           // the new source data (setData/addSource) before the camera moves.
-          // Firing fitBounds synchronously after setData blacks the map on large batches.
           requestAnimationFrame(() => {
             if (!mapRef.current) return;
-            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
+            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 18, duration: 0 });
             mapRef.current.triggerRepaint();
+            // Belt-and-suspenders: resize + repaint after DOM has fully settled
             setTimeout(() => {
               if (!mapRef.current) return;
               mapRef.current.resize();
