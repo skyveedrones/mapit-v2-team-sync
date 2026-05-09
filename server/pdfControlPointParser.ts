@@ -2,7 +2,7 @@
  * PDF Control Point Table Parser
  *
  * Extracts CONTROL POINT tables from survey/engineering PDFs.
- * Uses pdftotext (poppler-utils) with -layout flag for accurate column alignment.
+ * Uses pdfjs-dist (pure Node.js, no system binaries required).
  *
  * STRICT VALIDATION RULES:
  * - Column headers must be explicitly identified before any data is extracted.
@@ -10,15 +10,6 @@
  * - Northing and Easting values are range-validated for US State Plane Survey Feet.
  * - If column order is ambiguous, the parser fails gracefully with a descriptive error.
  */
-
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, unlink } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { randomBytes } from 'crypto';
-
-const execFileAsync = promisify(execFile);
 
 export interface ControlPoint {
   pointId: string;
@@ -37,68 +28,6 @@ export interface PdfParseResult {
   error?: string;
 }
 
-// ── Column header patterns (normalized, lowercase, no spaces) ──────────────
-const HEADER_PATTERNS = {
-  pointId:     ['controlpoint', 'point', 'ptid', 'pt', 'id', 'no', 'number', 'marker', 'station'],
-  northing:    ['northing', 'north'],
-  easting:     ['easting', 'east'],
-  elevation:   ['elevation', 'elev', 'elv', 'height'],
-  description: ['description', 'desc', 'note', 'notes', 'type', 'monument'],
-};
-
-function normalizeHeader(h: string): string {
-  return h.toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
-/**
- * Two-pass column matcher: exact first, then substring (patterns > 2 chars only).
- */
-function matchColumnIndex(normalized: string, patterns: string[]): boolean {
-  const normalizedPatterns = patterns.map(normalizeHeader);
-  if (normalizedPatterns.includes(normalized)) return true;
-  for (const p of normalizedPatterns) {
-    if (p.length > 2 && normalized.includes(p)) return true;
-  }
-  return false;
-}
-
-interface ColumnMap {
-  pointId: number;
-  northing: number;
-  easting: number;
-  elevation: number | null;
-  description: number | null;
-}
-
-function identifyColumns(headers: string[]): ColumnMap | null {
-  const normalized = headers.map(normalizeHeader);
-
-  const find = (patterns: string[]): number => {
-    for (let i = 0; i < normalized.length; i++) {
-      if (matchColumnIndex(normalized[i], patterns)) return i;
-    }
-    return -1;
-  };
-
-  const pointIdIdx   = find(HEADER_PATTERNS.pointId);
-  const northingIdx  = find(HEADER_PATTERNS.northing);
-  const eastingIdx   = find(HEADER_PATTERNS.easting);
-  const elevationIdx = find(HEADER_PATTERNS.elevation);
-  const descIdx      = find(HEADER_PATTERNS.description);
-
-  if (pointIdIdx === -1 || northingIdx === -1 || eastingIdx === -1) return null;
-  if (northingIdx === eastingIdx) return null;
-  if (elevationIdx !== -1 && (elevationIdx === northingIdx || elevationIdx === eastingIdx)) return null;
-
-  return {
-    pointId:     pointIdIdx,
-    northing:    northingIdx,
-    easting:     eastingIdx,
-    elevation:   elevationIdx === -1 ? null : elevationIdx,
-    description: descIdx === -1 ? null : descIdx,
-  };
-}
-
 function parseNum(s: string): number | null {
   const cleaned = s.replace(/,/g, '').trim();
   const n = parseFloat(cleaned);
@@ -106,157 +35,139 @@ function parseNum(s: string): number | null {
 }
 
 function validateCoordinates(northing: number, easting: number): string | null {
-  if (northing < 0 || northing > 12_000_000) {
-    return `Northing ${northing} is outside plausible US Survey Feet range (0–12,000,000)`;
+  if (northing < 0 || northing > 20_000_000) {
+    return `Northing ${northing} is outside plausible US Survey Feet range (0–20,000,000)`;
   }
-  if (easting < 100_000 || easting > 5_000_000) {
-    return `Easting ${easting} is outside plausible US Survey Feet range (100,000–5,000,000)`;
+  if (easting < 0 || easting > 5_000_000) {
+    return `Easting ${easting} is outside plausible US Survey Feet range (0–5,000,000)`;
   }
   return null;
 }
 
 /**
- * Parse CONTROL POINT tables from the raw text output of pdftotext -layout.
- * The -layout flag preserves column spacing, making it possible to split on whitespace.
+ * Extract text from a PDF buffer using pdfjs-dist (pure Node.js).
+ * pdfjs returns individual text runs joined with spaces per page.
  */
-function parseControlPointTable(text: string): { points: ControlPoint[]; warnings: string[]; tablesFound: number } {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const points: ControlPoint[] = [];
-  const warnings: string[] = [];
-  let tablesFound = 0;
+async function extractPdfText(pdfBuffer: Buffer): Promise<{ text: string; pages: number }> {
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as string) as any;
+  const data = new Uint8Array(pdfBuffer);
+  const doc = await pdfjsLib.getDocument({
+    data,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  }).promise;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const normalized = normalizeHeader(line);
-
-    // Detect a header line: must contain both 'northing' and 'easting'
-    if (!normalized.includes('northing') || !normalized.includes('easting')) continue;
-
-    // Split header on 2+ spaces or tabs
-    const headerTokens = line.split(/\s{2,}|\t/).map(t => t.trim()).filter(t => t.length > 0);
-    if (headerTokens.length < 3) continue;
-
-    const colMap = identifyColumns(headerTokens);
-    if (!colMap) {
-      warnings.push(`Found potential header but could not map columns: "${line}"`);
-      continue;
-    }
-
-    tablesFound++;
-    const tablePoints: ControlPoint[] = [];
-
-    let consecutiveSkips = 0;
-    const MAX_SKIPS = 5; // allow up to 5 non-data lines between data rows (e.g. title block bleed-through)
-
-    for (let j = i + 1; j < lines.length; j++) {
-      const dataLine = lines[j];
-
-      // Hard stop: another header or end of section
-      if (!dataLine || dataLine.length < 5) { consecutiveSkips++; if (consecutiveSkips > MAX_SKIPS) break; continue; }
-      if (normalizeHeader(dataLine).includes('northing') && normalizeHeader(dataLine).includes('easting')) break;
-
-      const tokens = dataLine.split(/\s{2,}|\t/).map(t => t.trim()).filter(t => t.length > 0);
-
-      // Need at least enough tokens to reach all required columns
-      if (tokens.length <= Math.max(colMap.pointId, colMap.northing, colMap.easting)) {
-        consecutiveSkips++;
-        if (consecutiveSkips > MAX_SKIPS) break;
-        continue;
-      }
-
-      // Try to extract data using the column map, with optional offset for rows
-      // that have extra leading tokens (e.g. drawing callout labels like 'CP3').
-      let resolvedTokens = tokens;
-      let northing = parseNum(tokens[colMap.northing]);
-      let easting  = parseNum(tokens[colMap.easting]);
-
-      // If northing/easting are non-numeric or fail validation, try shifting by +1
-      // to handle rows where an extra label token precedes the data columns.
-      if ((northing === null || easting === null) ||
-          validateCoordinates(northing!, easting!) !== null) {
-        // Slice off the extra leading token so indices align with the column map
-        const sliced = tokens.slice(1);
-        const shiftedNorthing = parseNum(sliced[colMap.northing]);
-        const shiftedEasting  = parseNum(sliced[colMap.easting]);
-        if (shiftedNorthing !== null && shiftedEasting !== null &&
-            validateCoordinates(shiftedNorthing, shiftedEasting) === null) {
-          resolvedTokens = sliced;
-          northing = shiftedNorthing;
-          easting  = shiftedEasting;
-        }
-      }
-
-      // Skip non-numeric rows (e.g. address lines bleeding through from title block)
-      if (northing === null || easting === null) {
-        consecutiveSkips++;
-        if (consecutiveSkips > MAX_SKIPS) break;
-        continue;
-      }
-
-      const validationError = validateCoordinates(northing, easting);
-      if (validationError) {
-        warnings.push(`Row "${dataLine}" skipped: ${validationError}`);
-        consecutiveSkips++;
-        if (consecutiveSkips > MAX_SKIPS) break;
-        continue;
-      }
-
-      consecutiveSkips = 0; // reset on successful data row
-
-      const elevation = colMap.elevation !== null && resolvedTokens[colMap.elevation]
-        ? parseNum(resolvedTokens[colMap.elevation])
-        : null;
-
-      const description = colMap.description !== null && resolvedTokens[colMap.description]
-        ? resolvedTokens[colMap.description]
-        : '';
-
-      const pointId = resolvedTokens[colMap.pointId] || String(tablePoints.length + 1);
-      tablePoints.push({ pointId, northing, easting, elevation, description });
-    }
-
-    if (tablePoints.length > 0) {
-      points.push(...tablePoints);
-    } else {
-      warnings.push(`Header detected at line ${i + 1} but no valid data rows found.`);
-      tablesFound--;
-    }
+  let allText = '';
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item: any) => ('str' in item ? item.str : ''))
+      .join(' ');
+    allText += pageText + '\n';
   }
 
-  return { points, warnings, tablesFound };
+  return { text: allText, pages: doc.numPages };
 }
 
 /**
- * Extract text from a PDF buffer using pdftotext -layout.
- * Writes to a temp file, runs pdftotext, then cleans up.
+ * Parse CONTROL POINT table from pdfjs text output.
+ *
+ * pdfjs produces a flat space-separated string per page, e.g.:
+ * "CONTROL POINT   NORTHING   EASTING   ELEVATION   DESCRIPTION 1   6,966,282.50   2,589,191.79   411.43   XCUT/INLET  2 ..."
+ *
+ * Strategy: find the header, then tokenize the data section by splitting on 2+ spaces,
+ * and group tokens into rows of (id, northing, easting, elevation, description).
  */
-async function extractPdfText(pdfBuffer: Buffer): Promise<{ text: string; pages: number }> {
-  const tmpId = randomBytes(8).toString('hex');
-  const tmpPdf = join(tmpdir(), `mapit-pdf-${tmpId}.pdf`);
-  const tmpTxt = join(tmpdir(), `mapit-pdf-${tmpId}.txt`);
+function parseControlPointTable(text: string): { points: ControlPoint[]; warnings: string[]; tablesFound: number } {
+  const warnings: string[] = [];
+  const points: ControlPoint[] = [];
 
-  try {
-    await writeFile(tmpPdf, pdfBuffer);
-    await execFileAsync('pdftotext', ['-layout', tmpPdf, tmpTxt]);
+  // Find the CONTROL POINT header with NORTHING and EASTING
+  const headerIdx = text.search(/CONTROL\s+POINT\s+NORTHING\s+EASTING/i);
+  if (headerIdx < 0) {
+    return { points, warnings: ['No CONTROL POINT table with NORTHING/EASTING headers found.'], tablesFound: 0 };
+  }
 
-    const { readFile } = await import('fs/promises');
-    const text = await readFile(tmpTxt, 'utf-8');
+  const hasElevation = /ELEVATION/i.test(text.substring(headerIdx, headerIdx + 200));
 
-    // Get page count via pdfinfo
-    let pages = 1;
-    try {
-      const { stdout } = await execFileAsync('pdfinfo', [tmpPdf]);
-      const match = stdout.match(/Pages:\s+(\d+)/);
-      if (match) pages = parseInt(match[1], 10);
-    } catch {
-      // pdfinfo not critical
+  // Extract text after the header
+  const afterHeader = text.substring(headerIdx);
+  // Skip past the header tokens to the first digit (start of data)
+  const dataStartMatch = afterHeader.match(/\d/);
+  if (!dataStartMatch || dataStartMatch.index === undefined) {
+    return { points, warnings: ['Header found but no data rows detected.'], tablesFound: 0 };
+  }
+  const dataText = afterHeader.substring(dataStartMatch.index);
+
+  // Tokenize by splitting on 2+ spaces
+  const normalized = dataText.replace(/\s{2,}/g, '|').trim();
+  const tokens = normalized.split('|').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
+
+  // Column count: id(1) + northing(1) + easting(1) + elevation(0|1) + description(1)
+  const colCount = hasElevation ? 5 : 4;
+
+  let i = 0;
+  while (i < tokens.length) {
+    const token = tokens[i];
+
+    // Determine if this token is a point ID (1-4 digit integer)
+    let pointId: string | null = null;
+    let offset = 0;
+
+    if (/^\d{1,4}$/.test(token)) {
+      pointId = token;
+      offset = 1;
+    } else if (/^[A-Za-z]+\d+$/.test(token)) {
+      // Label like "CP3" — skip and use next token as point ID
+      const next = tokens[i + 1];
+      if (next && /^\d{1,4}$/.test(next)) {
+        pointId = next;
+        offset = 2;
+      } else {
+        i++;
+        continue;
+      }
+    } else {
+      i++;
+      continue;
     }
 
-    return { text, pages };
-  } finally {
-    await unlink(tmpPdf).catch(() => {});
-    await unlink(tmpTxt).catch(() => {});
+    const northingToken = tokens[i + offset];
+    const eastingToken  = tokens[i + offset + 1];
+    const elevToken     = hasElevation ? tokens[i + offset + 2] : null;
+    const descToken     = tokens[i + offset + (hasElevation ? 3 : 2)];
+
+    if (!northingToken || !eastingToken) { i++; continue; }
+
+    const northing = parseNum(northingToken);
+    const easting  = parseNum(eastingToken);
+
+    if (northing === null || easting === null) { i++; continue; }
+
+    const validationError = validateCoordinates(northing, easting);
+    if (validationError) {
+      warnings.push(`Point ${pointId}: ${validationError} — skipped.`);
+      i += offset + colCount;
+      continue;
+    }
+
+    // Sanity: northing should be > easting for TX State Plane (northing ~6.9M, easting ~2.5M)
+    if (northing < easting) {
+      warnings.push(`Point ${pointId}: Northing (${northing}) < Easting (${easting}) — values may be swapped. Skipping.`);
+      i += offset + colCount;
+      continue;
+    }
+
+    const elevation   = elevToken ? parseNum(elevToken) : null;
+    const description = descToken || '';
+
+    points.push({ pointId, northing, easting, elevation, description });
+    i += offset + colCount;
   }
+
+  return { points, warnings, tablesFound: points.length > 0 ? 1 : 0 };
 }
 
 /**
