@@ -1451,8 +1451,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         converterPoints.forEach((pt) => bounds.extend([pt.longitude, pt.latitude]));
         // duration:0 prevents the animated pan from interrupting tile loading (black map bug)
         map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
-        // After the map settles, force a resize to ensure tiles fill the canvas
-        map.once('idle', () => { map.resize(); });
+        // Force repaint immediately so the canvas doesn't go black on large batches
+        map.triggerRepaint();
+        // Belt-and-suspenders: resize after DOM has fully settled (handles batch size lag)
+        setTimeout(() => { map.resize(); map.triggerRepaint(); }, 200);
       }
     }, [converterPoints, mapLoaded]);
 
