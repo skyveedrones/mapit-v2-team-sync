@@ -418,6 +418,40 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         // Force one final resize after the first frame to ensure canvas fills container
         map.on("load", () => {
           mapRef.current = map;
+          // Pre-register the coordinate converter source + layers immediately on load.
+          // This means the useEffect that handles converterPoints will ALWAYS use setData
+          // (never addSource/addLayer), preventing style recompiles from blacking the map.
+          const emptyFC = { type: "FeatureCollection" as const, features: [] };
+          map.addSource("coordinate-converter-src", { type: "geojson", data: emptyFC });
+          map.addLayer({
+            id: "coordinate-converter-points",
+            type: "circle",
+            source: "coordinate-converter-src",
+            paint: {
+              "circle-radius": 7,
+              "circle-color": "#f97316",
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-width": 2,
+              "circle-opacity": 0.95,
+            },
+          });
+          map.addLayer({
+            id: "coordinate-converter-labels",
+            type: "symbol",
+            source: "coordinate-converter-src",
+            layout: {
+              "text-field": ["get", "label"],
+              "text-size": 11,
+              "text-offset": [0, 1.35],
+              "text-anchor": "top",
+              "text-allow-overlap": false,
+            },
+            paint: {
+              "text-color": "#ffffff",
+              "text-halo-color": "#0f172a",
+              "text-halo-width": 1.5,
+            },
+          });
           setMapLoaded(true);
           requestAnimationFrame(() => map.resize());
         });
@@ -1416,47 +1450,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         })),
       };
 
+      // Source and layers are pre-registered on map load — always just setData.
       if (map.getSource(sourceId)) {
-        // Source already exists — just update the data
         (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(data);
-      } else {
-        // First time: defer addSource+addLayer to the next animation frame so the
-        // style recompile doesn't fire synchronously during a React render cycle,
-        // which would interrupt tile loading and black the map.
-        requestAnimationFrame(() => {
-          const m = mapRef.current;
-          if (!m || m.getSource(sourceId)) return;
-          m.addSource(sourceId, { type: "geojson", data });
-          m.addLayer({
-            id: circleLayerId,
-            type: "circle",
-            source: sourceId,
-            paint: {
-              "circle-radius": 7,
-              "circle-color": "#f97316",
-              "circle-stroke-color": "#ffffff",
-              "circle-stroke-width": 2,
-              "circle-opacity": 0.95,
-            },
-          });
-          m.addLayer({
-            id: labelLayerId,
-            type: "symbol",
-            source: sourceId,
-            layout: {
-              "text-field": ["get", "label"],
-              "text-size": 11,
-              "text-offset": [0, 1.35],
-              "text-anchor": "top",
-              "text-allow-overlap": false,
-            },
-            paint: {
-              "text-color": "#ffffff",
-              "text-halo-color": "#0f172a",
-              "text-halo-width": 1.5,
-            },
-          });
-        });
       }
 
       if (converterPoints.length > 0) {
