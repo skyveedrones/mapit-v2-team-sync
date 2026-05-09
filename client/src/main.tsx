@@ -4,7 +4,7 @@ import { apiUrl } from "@/lib/apiBase";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { initializeVersionCheck, startPeriodicVersionCheck } from "@/lib/versionCheck";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, TRPCClientError } from "@trpc/client";
+import { httpLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import { useMemo } from "react";
 import superjson from "superjson";
@@ -100,7 +100,7 @@ queryClient.getMutationCache().subscribe(event => {
 function buildTrpcClient(getToken: () => Promise<string | null>) {
   return trpc.createClient({
     links: [
-      httpBatchLink({
+      httpLink({
         url: apiUrl("/api/trpc"),
         transformer: superjson,
         async headers() {
