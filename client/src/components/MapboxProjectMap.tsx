@@ -291,10 +291,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // Using isPending (not mediaList===undefined) prevents the skeleton from covering the map
     // when a batch mutation causes a transient cache invalidation.
     const isLoading = !initialMedia && mediaIsPending;
-    // DEBUG: trace isLoading and mediaList changes
-    if (typeof window !== 'undefined') {
-      console.log('[MAPIT-DEBUG] render', { isLoading, mediaIsPending, mediaListLen: mediaList?.length, initialMediaLen: initialMedia?.length });
-    }
     const mediaWithGPS = useMemo(() => {
       if (initialMedia && initialMedia.length > 0) {
         return initialMedia.filter((m) => m.latitude && m.longitude);
@@ -1423,11 +1419,21 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         map.doubleClickZoom.enable();
       };
     }, [measureMode, mapLoaded]);
-
-    // ── Coordinate converter map layer ────────────────────────────────────────
+    // ── Sidebar open: resize map so canvas fills the narrowed viewport ────────────────
     useEffect(() => {
       const map = mapRef.current;
-      console.log('[MAPIT-DEBUG] converterPoints useEffect fired', { count: converterPoints.length, mapLoaded, hasMap: !!map });
+      if (!map || !mapLoaded) return;
+      // When sidebar opens/closes, the visible map area changes.
+      // Call resize so Mapbox recalculates canvas dimensions before any fitBounds.
+      const id = requestAnimationFrame(() => {
+        map.resize();
+        map.triggerRepaint();
+      });
+      return () => cancelAnimationFrame(id);
+    }, [sidebarOpen, mapLoaded]);
+    // ── Coordinate converter map layer ─────────────────────────────────────────
+    useEffect(() => {
+      const map = mapRef.current;
       if (!map || !mapLoaded) return;
 
       const sourceId = "coordinate-converter-src";
@@ -1475,9 +1481,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           // the new source data (setData/addSource) before the camera moves.
           requestAnimationFrame(() => {
             if (!mapRef.current) return;
-            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 18, duration: 0 });
+            // When sidebar (w-80 = 320px) is open, add extra right padding so
+            // fitBounds doesn't compute a near-zero or negative effective viewport.
+            const rightPad = sidebarOpen ? 340 : 80;
+            mapRef.current.fitBounds(bounds, {
+              padding: { top: 80, bottom: 80, left: 80, right: rightPad },
+              maxZoom: 18,
+              duration: 0,
+            });
             mapRef.current.triggerRepaint();
-            // Belt-and-suspenders: resize + repaint after DOM has fully settled
             setTimeout(() => {
               if (!mapRef.current) return;
               mapRef.current.resize();
@@ -1552,7 +1564,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
 
       setBatchLoading(true);
-      console.log('[MAPIT-DEBUG] batch handler start, batchLoading=true');
       try {
         const buffer = await batchFile.arrayBuffer();
         const result = await parseAndConvertMutation.mutateAsync({
