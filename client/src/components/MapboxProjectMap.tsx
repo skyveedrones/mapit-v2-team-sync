@@ -1459,12 +1459,19 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           validCount++;
         });
         if (validCount > 0) {
-          // duration:0 prevents the animated pan from interrupting tile loading (black map bug)
-          map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
-          // Force repaint immediately so the canvas doesn't go black on large batches
-          map.triggerRepaint();
-          // Belt-and-suspenders: resize after DOM has fully settled (handles batch size lag)
-          setTimeout(() => { map.resize(); map.triggerRepaint(); }, 200);
+          // Defer fitBounds to the next animation frame so WebGL finishes processing
+          // the new source data (setData/addSource) before the camera moves.
+          // Firing fitBounds synchronously after setData blacks the map on large batches.
+          requestAnimationFrame(() => {
+            if (!mapRef.current) return;
+            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
+            mapRef.current.triggerRepaint();
+            setTimeout(() => {
+              if (!mapRef.current) return;
+              mapRef.current.resize();
+              mapRef.current.triggerRepaint();
+            }, 200);
+          });
         }
       }
     }, [converterPoints, mapLoaded]);
