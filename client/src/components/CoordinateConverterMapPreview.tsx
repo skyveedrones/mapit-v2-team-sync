@@ -43,6 +43,12 @@ export function CoordinateConverterMapPreview({
     if (!mapContainer.current || map.current) return;
 
     try {
+      const token = import.meta.env.VITE_MAPBOX_TOKEN;
+      if (!token) {
+        console.error('[CoordinateConverterMapPreview] VITE_MAPBOX_TOKEN is not set');
+        return;
+      }
+      mapboxgl.accessToken = token;
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
