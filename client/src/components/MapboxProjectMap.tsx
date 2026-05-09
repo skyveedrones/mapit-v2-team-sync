@@ -285,8 +285,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // ── Fetch media (skipped when initialMedia is provided) ─────────────────
     const { data: mediaList } = isDemoProject
-      ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: !initialMedia })
-      : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !initialMedia });
+      ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: !initialMedia, staleTime: Infinity, refetchOnWindowFocus: false })
+      : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !initialMedia, staleTime: Infinity, refetchOnWindowFocus: false });
 
     // isLoading: false immediately when initialMedia is provided; otherwise wait for tRPC
     const isLoading = !initialMedia && mediaList === undefined;
