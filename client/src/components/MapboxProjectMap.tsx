@@ -46,6 +46,8 @@ import {
   Navigation,
   Calculator,
   Upload,
+  FileSearch,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -262,7 +264,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
     // Coordinate Converter state
     const [coordinateConverterExpanded, setCoordinateConverterExpanded] = useState(false);
-    const [coordinateConverterTab, setCoordinateConverterTab] = useState<"single" | "batch">("single");
+    const [coordinateConverterTab, setCoordinateConverterTab] = useState<"single" | "batch" | "pdf">("single");
     const [singleEasting, setSingleEasting] = useState("");
     const [singleNorthing, setSingleNorthing] = useState("");
     const [singleCRS, setSingleCRS] = useState("TX_NORTH_CENTRAL");
@@ -275,6 +277,24 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [batchLoading, setBatchLoading] = useState(false);
     const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
 
+    // PDF Extract state
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfCRS, setPdfCRS] = useState("TX_NORTH_CENTRAL");
+    const [pdfCSF, setPdfCSF] = useState("1.0");
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const [pdfReviewPoints, setPdfReviewPoints] = useState<Array<{
+      pointId: string;
+      northing: number;
+      easting: number;
+      elevation: number | null;
+      description: string;
+      latitude: number | null;
+      longitude: number | null;
+      conversionSuccess: boolean;
+      conversionError: string | null;
+    }> | null>(null);
+    const pdfFileInputRef = useRef<HTMLInputElement | null>(null);
+
     // ── Selected overlay for alignment tools ────────────────────────────────
     const [selectedOverlayId, setSelectedOverlayId] = useState<number | null>(null);
 
@@ -282,6 +302,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const renameOverlayMutation = trpc.project.renameOverlay.useMutation();
     const convertSingleMutation = trpc.coordinateConverter.convertSingle.useMutation();
     const parseAndConvertMutation = trpc.coordinateConverterUpload.parseAndConvert.useMutation();
+    const parsePDFMutation = trpc.coordinateConverterUpload.parsePDF.useMutation();
     const availableSystemsQuery = trpc.coordinateConverter.getAvailableSystems.useQuery();
 
     // ── Fetch media (skipped when initialMedia is provided) ─────────────────
@@ -1513,6 +1534,51 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       toast.info("Converted coordinate layer cleared from the map.");
     }, []);
 
+    // ── PDF Extract handler ────────────────────────────────────────────────
+    const handlePdfExtract = useCallback(async () => {
+      if (!pdfFile) return;
+      setPdfLoading(true);
+      setPdfReviewPoints(null);
+      try {
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const fileBuffer = Array.from(new Uint8Array(arrayBuffer));
+        const result = await parsePDFMutation.mutateAsync({
+          fileName: pdfFile.name,
+          fileBuffer,
+          systemKey: pdfCRS as 'TX_NORTH_CENTRAL' | 'TX_SOUTH_CENTRAL' | 'TX_NORTH',
+          combinedScaleFactor: parseFloat(pdfCSF) || 1.0,
+        });
+        setPdfReviewPoints(result.reviewPoints);
+        toast.success(`Extracted ${result.totalPoints} control point${result.totalPoints !== 1 ? 's' : ''} from ${result.totalPages}-page PDF.`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'PDF extraction failed.');
+      } finally {
+        setPdfLoading(false);
+      }
+    }, [pdfFile, pdfCRS, pdfCSF, parsePDFMutation]);
+
+    const handleAddPdfPointsToMap = useCallback(() => {
+      if (!pdfReviewPoints) return;
+      const successPoints = pdfReviewPoints.filter(p => p.conversionSuccess && p.latitude !== null && p.longitude !== null);
+      if (successPoints.length === 0) {
+        toast.error('No valid GPS coordinates to add to the map.');
+        return;
+      }
+      const newPoints: ConvertedCoordinatePoint[] = successPoints.map((p, i) => ({
+        latitude: p.latitude!,
+        longitude: p.longitude!,
+        identifier: p.pointId,
+        index: converterPoints.length + i,
+        easting: p.easting,
+        northing: p.northing,
+      }));
+      markersRenderedForRef.current = '';
+      setConverterPoints(prev => [...prev, ...newPoints]);
+      setPdfReviewPoints(null);
+      setPdfFile(null);
+      toast.success(`Added ${newPoints.length} survey point${newPoints.length !== 1 ? 's' : ''} to the map.`);
+    }, [pdfReviewPoints, converterPoints.length]);
+
     // ── Snap step labels ────────────────────────────────────────────────────
     const snapStepLabel: Record<string, string> = {
       anchorA: "Click blueprint: place Anchor A",
@@ -1895,7 +1961,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                           {coordinateConverterExpanded && (
                             <div className="border-t border-slate-700 p-3 space-y-3">
-                              <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-900 p-1">
+                              <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-900 p-1">
                                 <button
                                   onClick={() => setCoordinateConverterTab("single")}
                                   className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${coordinateConverterTab === "single" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"}`}
@@ -1907,6 +1973,12 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                   className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${coordinateConverterTab === "batch" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"}`}
                                 >
                                   Batch
+                                </button>
+                                <button
+                                  onClick={() => setCoordinateConverterTab("pdf")}
+                                  className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${coordinateConverterTab === "pdf" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"}`}
+                                >
+                                  PDF
                                 </button>
                               </div>
 
@@ -2062,6 +2134,98 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                           {batchResult.errors.length > 3 && <p>...and {batchResult.errors.length - 3} more errors</p>}
                                         </div>
                                       )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {coordinateConverterTab === "pdf" && (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
+                                    <select
+                                      value={pdfCRS}
+                                      onChange={(e) => setPdfCRS(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    >
+                                      {availableSystemsQuery.data?.map((system) => (
+                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Combined Scale Factor</label>
+                                    <input
+                                      type="number"
+                                      step="0.00001"
+                                      value={pdfCSF}
+                                      onChange={(e) => setPdfCSF(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                  <div
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      const file = e.dataTransfer.files?.[0];
+                                      if (file && file.name.toLowerCase().endsWith('.pdf')) setPdfFile(file);
+                                      else toast.error('Please drop a PDF file.');
+                                    }}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onClick={() => pdfFileInputRef.current?.click()}
+                                    className="cursor-pointer rounded-lg border border-dashed border-slate-600 bg-slate-950/70 p-4 text-center hover:border-emerald-500 transition-colors"
+                                  >
+                                    <FileSearch className="mx-auto mb-2 text-slate-400" size={18} />
+                                    <p className="text-xs font-medium text-slate-200">{pdfFile ? pdfFile.name : 'Drop or select PDF'}</p>
+                                    <p className="text-[10px] text-slate-500 mt-1">Survey plats, engineering docs — max 20MB</p>
+                                    <input
+                                      ref={pdfFileInputRef}
+                                      type="file"
+                                      accept=".pdf"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.currentTarget.files?.[0];
+                                        if (file) setPdfFile(file);
+                                      }}
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={handlePdfExtract}
+                                    disabled={!pdfFile || pdfLoading}
+                                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
+                                  >
+                                    <FileSearch size={14} />
+                                    {pdfLoading ? 'Scanning PDF...' : 'Scan & Extract Points'}
+                                  </button>
+                                  {pdfReviewPoints && (
+                                    <div className="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-slate-400 font-semibold">Review — {pdfReviewPoints.length} point{pdfReviewPoints.length !== 1 ? 's' : ''} found</span>
+                                        <span className="text-emerald-400">{pdfReviewPoints.filter(p => p.conversionSuccess).length} valid</span>
+                                      </div>
+                                      <div className="max-h-40 overflow-y-auto space-y-1">
+                                        {pdfReviewPoints.map((pt) => (
+                                          <div key={pt.pointId} className={`flex items-start gap-2 rounded p-1.5 ${pt.conversionSuccess ? 'bg-slate-900' : 'bg-red-950/30'}`}>
+                                            <span className={`mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${pt.conversionSuccess ? 'bg-orange-500 text-white' : 'bg-red-500 text-white'}`}>
+                                              {pt.conversionSuccess ? pt.pointId : '!'}
+                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-slate-200 font-medium truncate">#{pt.pointId} {pt.description}</p>
+                                              {pt.conversionSuccess ? (
+                                                <p className="text-slate-500">{pt.latitude?.toFixed(6)}, {pt.longitude?.toFixed(6)} · elev {pt.elevation?.toFixed(2) ?? 'N/A'}</p>
+                                              ) : (
+                                                <p className="text-red-400">{pt.conversionError}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <button
+                                        onClick={handleAddPdfPointsToMap}
+                                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-600 hover:bg-orange-700 px-3 py-2 text-xs font-semibold text-white transition-colors"
+                                      >
+                                        <MapPin size={14} />
+                                        Add {pdfReviewPoints.filter(p => p.conversionSuccess).length} Points to Map
+                                      </button>
                                     </div>
                                   )}
                                 </div>

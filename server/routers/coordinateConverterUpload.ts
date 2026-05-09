@@ -1,6 +1,7 @@
 /**
  * Coordinate Converter File Upload Router
- * Handles CSV and Excel file uploads for batch coordinate conversion
+ * Handles CSV and Excel file uploads for batch coordinate conversion,
+ * and PDF control point table extraction.
  */
 
 import { z } from 'zod';
@@ -8,6 +9,7 @@ import { TRPCError } from '@trpc/server';
 import { publicProcedure, router } from '../_core/trpc';
 import { parseCoordinateFile, validateParsedFile } from '../fileParser';
 import { convertCoordinateBatch, type CoordinateSystemKey } from '../coordinateConverter';
+import { parsePdfControlPoints } from '../pdfControlPointParser';
 
 /**
  * File upload input schema
@@ -28,7 +30,7 @@ const FileUploadInputSchema = z.object({
  */
 export const coordinateConverterUploadRouter = router({
   /**
-   * Parse and convert coordinates from uploaded file
+   * Parse and convert coordinates from uploaded CSV/Excel file
    */
   parseAndConvert: publicProcedure
     .input(FileUploadInputSchema)
@@ -78,6 +80,81 @@ export const coordinateConverterUploadRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'File processing failed',
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Parse a PDF and extract CONTROL POINT table, then convert to GPS coordinates.
+   * Returns a review list of points for user confirmation before mapping.
+   */
+  parsePDF: publicProcedure
+    .input(
+      z.object({
+        fileName: z.string().min(1),
+        fileBuffer: z.union([
+          z.instanceof(Buffer),
+          z.instanceof(Uint8Array),
+          z.array(z.number()).transform(arr => Buffer.from(arr)),
+        ]),
+        systemKey: z.enum(['TX_NORTH_CENTRAL', 'TX_SOUTH_CENTRAL', 'TX_NORTH']).optional().default('TX_NORTH_CENTRAL'),
+        combinedScaleFactor: z.number().positive().optional().default(1.0),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Step 1: Extract control points from PDF
+        const pdfResult = await parsePdfControlPoints(input.fileBuffer as Buffer, input.fileName);
+
+        if (!pdfResult.success || pdfResult.points.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: pdfResult.error || 'No control points found in PDF.',
+          });
+        }
+
+        // Step 2: Convert northing/easting to GPS lat/lng
+        const conversionResult = convertCoordinateBatch(
+          pdfResult.points.map((pt) => ({ easting: pt.easting, northing: pt.northing })),
+          input.systemKey as CoordinateSystemKey,
+          input.combinedScaleFactor
+        );
+
+        // Step 3: Merge conversion results with PDF metadata
+        const reviewPoints = pdfResult.points.map((pt, i) => {
+          const conv = conversionResult.results[i];
+          return {
+            pointId: pt.pointId,
+            northing: pt.northing,
+            easting: pt.easting,
+            elevation: pt.elevation,
+            description: pt.description,
+            latitude: conv?.success ? conv.latitude : null,
+            longitude: conv?.success ? conv.longitude : null,
+            conversionSuccess: conv?.success ?? false,
+            conversionError: conv?.error ?? null,
+          };
+        });
+
+        const successCount = reviewPoints.filter(p => p.conversionSuccess).length;
+
+        return {
+          success: true,
+          totalPages: pdfResult.totalPages,
+          tablesFound: pdfResult.tablesFound,
+          totalPoints: pdfResult.points.length,
+          successfulPoints: successCount,
+          failedPoints: pdfResult.points.length - successCount,
+          reviewPoints,
+          warnings: pdfResult.warnings,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'PDF processing failed',
           cause: error,
         });
       }
