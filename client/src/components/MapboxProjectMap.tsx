@@ -484,9 +484,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
       markersRenderedForRef.current = newKey;
 
-      // Clear old flight path and media pins layer
+      // Clear old flight path, media pins, and survey labels
       if (map.getLayer("flight-path")) map.removeLayer("flight-path");
       if (map.getSource("flight-path-src")) map.removeSource("flight-path-src");
+      if (map.getLayer("survey-labels")) map.removeLayer("survey-labels");
       if (map.getLayer("media-pins")) map.removeLayer("media-pins");
       if (map.getSource("media-source")) map.removeSource("media-source");
 
@@ -564,6 +565,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         },
       });
 
+      // ── Survey point labels — identifier text above each orange pin ──
+      if (!map.getLayer('survey-labels')) {
+        map.addLayer({
+          id: 'survey-labels',
+          type: 'symbol',
+          source: 'media-source',
+          filter: ['==', ['get', 'isSurveyPoint'], true],
+          layout: {
+            'text-field': ['get', 'filename'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 11,
+            'text-anchor': 'bottom',
+            'text-offset': [0, -2.6],
+            'text-allow-overlap': true,
+            'text-ignore-placement': true,
+          },
+          paint: {
+            'text-color': '#ffffff',
+            'text-halo-color': '#000000',
+            'text-halo-width': 1.5,
+          },
+        });
+      }
+
       // ── Click Handler — photo popup vs survey popup ──
       const handleMediaPinClick = (e: mapboxgl.MapMouseEvent) => {
         const features = map.queryRenderedFeatures({ layers: ['media-pins'] });
@@ -584,16 +609,17 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
         if (props.isSurveyPoint) {
           // Survey point popup — show identifier + coordinates + easting/northing
+          const surveyLabel = props.filename || `Survey Point ${Math.abs(props.id)}`;
           const popupHtml = `
-            <div style="max-width:220px;font-family:system-ui,sans-serif">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                <div style="width:10px;height:10px;border-radius:50%;background:#f97316;flex-shrink:0"></div>
-                <div style="font-size:13px;font-weight:700;color:#fff">${props.filename}</div>
+            <div style="max-width:240px;font-family:system-ui,sans-serif">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #334155">
+                <div style="width:11px;height:11px;border-radius:50%;background:#f97316;flex-shrink:0"></div>
+                <div style="font-size:13px;font-weight:700;color:#fff">Survey Marker Point #${surveyLabel}</div>
               </div>
               <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lat: ${parseFloat(props.latitude).toFixed(7)}</div>
               <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lng: ${parseFloat(props.longitude).toFixed(7)}</div>
-              ${props.easting ? `<div style="font-size:11px;color:#fb923c;margin-top:4px">E: ${parseFloat(props.easting).toFixed(3)}</div>` : ''}
-              ${props.northing ? `<div style="font-size:11px;color:#fb923c">N: ${parseFloat(props.northing).toFixed(3)}</div>` : ''}
+              ${props.easting ? `<div style="font-size:11px;color:#fb923c;margin-top:5px">Easting: ${parseFloat(props.easting).toFixed(3)}</div>` : ''}
+              ${props.northing ? `<div style="font-size:11px;color:#fb923c">Northing: ${parseFloat(props.northing).toFixed(3)}</div>` : ''}
             </div>
           `;
           new mapboxgl.Popup({ offset: 25, closeButton: true, maxWidth: '260px', className: 'mapbox-media-popup' })
@@ -1948,6 +1974,25 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 </div>
                               ) : (
                                 <div className="space-y-3">
+                                  {/* Required headers info */}
+                                  <div className="rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2.5 space-y-1.5">
+                                    <p className="text-[10px] uppercase tracking-wide text-orange-400 font-bold">Required Column Headers</p>
+                                    <div className="space-y-1">
+                                      <div className="flex items-start gap-1.5">
+                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Point / Identifier</span> — name of the point (e.g. id, name, label)</span>
+                                      </div>
+                                      <div className="flex items-start gap-1.5">
+                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Easting / X</span> — state plane easting coordinate</span>
+                                      </div>
+                                      <div className="flex items-start gap-1.5">
+                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Northing / Y</span> — state plane northing coordinate</span>
+                                      </div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-700">File must be <span className="text-slate-300">.csv</span> or <span className="text-slate-300">.xlsx</span> with headers in the first row.</p>
+                                  </div>
                                   <div>
                                     <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
                                     <select
