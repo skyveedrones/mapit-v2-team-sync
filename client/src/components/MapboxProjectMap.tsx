@@ -1574,18 +1574,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           }));
 
         if (successfulPoints.length > 0) {
-          // Add points one at a time so the WebGL pipeline processes each point
-          // individually rather than receiving a large GeoJSON payload all at once.
-          // This mirrors the single-point path which always renders correctly.
-          setConverterPoints([]);
-          successfulPoints.forEach((pt, i) => {
-            setTimeout(() => {
-              setConverterPoints((prev) => [...prev, pt]);
-              if (i === successfulPoints.length - 1) {
-                toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
-              }
-            }, i * 80);
-          });
+          // Mirror the single-point path exactly: one setConverterPoints call with the
+          // full array. No reset, no loop. The useEffect handles setData in one shot.
+          setConverterPoints(successfulPoints);
+          toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
         } else {
           setConverterPoints([]);
           toast.warning("No valid coordinates were converted.");
