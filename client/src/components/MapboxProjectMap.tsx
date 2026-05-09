@@ -271,16 +271,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [singleCSF, setSingleCSF] = useState("1.0");
     const [singleResult, setSingleResult] = useState<ConversionResult | null>(null);
     const [batchFile, setBatchFile] = useState<File | null>(null);
-    const [batchCRS, setBatchCRS] = useState("TX_NORTH_CENTRAL");
-    const [batchCSF, setBatchCSF] = useState("1.0");
+    // Shared CRS/CSF used by both Batch and PDF tabs
+    const [sharedCRS, setSharedCRS] = useState("TX_NORTH_CENTRAL");
+    const [sharedCSF, setSharedCSF] = useState("1.0");
+    // Aliases so existing mutation call-sites keep working without changes
+    const batchCRS = sharedCRS;
+    const batchCSF = sharedCSF;
     const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
     const [batchLoading, setBatchLoading] = useState(false);
     const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
 
     // PDF Extract state
     const [pdfFile, setPdfFile] = useState<File | null>(null);
-    const [pdfCRS, setPdfCRS] = useState("TX_NORTH_CENTRAL");
-    const [pdfCSF, setPdfCSF] = useState("1.0");
+    const pdfCRS = sharedCRS;
+    const pdfCSF = sharedCSF;
     const [pdfLoading, setPdfLoading] = useState(false);
     const [pdfReviewPoints, setPdfReviewPoints] = useState<Array<{
       pointId: string;

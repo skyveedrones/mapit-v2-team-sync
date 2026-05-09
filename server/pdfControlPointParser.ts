@@ -5,7 +5,8 @@
  * Uses pdfjs-dist (pure Node.js, no system binaries required).
  *
  * STRICT VALIDATION RULES:
- * - Column headers must be explicitly identified before any data is extracted.
+ * - Column headers are located by their x-position in the PDF coordinate space.
+ * - Each data cell is assigned to a column by proximity to the header x-position.
  * - Elevation MUST NOT be confused with Northing or Easting.
  * - Northing and Easting values are range-validated for US State Plane Survey Feet.
  * - If column order is ambiguous, the parser fails gracefully with a descriptive error.
@@ -28,6 +29,12 @@ export interface PdfParseResult {
   error?: string;
 }
 
+interface TextItem {
+  str: string;
+  x: number;
+  y: number;
+}
+
 function parseNum(s: string): number | null {
   const cleaned = s.replace(/,/g, '').trim();
   const n = parseFloat(cleaned);
@@ -45,10 +52,9 @@ function validateCoordinates(northing: number, easting: number): string | null {
 }
 
 /**
- * Extract text from a PDF buffer using pdfjs-dist (pure Node.js).
- * pdfjs returns individual text runs joined with spaces per page.
+ * Extract text items with x/y positions from all pages of a PDF buffer.
  */
-async function extractPdfText(pdfBuffer: Buffer): Promise<{ text: string; pages: number }> {
+async function extractPdfItems(pdfBuffer: Buffer): Promise<{ items: TextItem[][]; pages: number }> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as string) as any;
   const data = new Uint8Array(pdfBuffer);
   const doc = await pdfjsLib.getDocument({
@@ -58,113 +64,175 @@ async function extractPdfText(pdfBuffer: Buffer): Promise<{ text: string; pages:
     useSystemFonts: true,
   }).promise;
 
-  let allText = '';
+  const allPageItems: TextItem[][] = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => ('str' in item ? item.str : ''))
-      .join(' ');
-    allText += pageText + '\n';
+    const items: TextItem[] = content.items
+      .filter((item: any) => 'str' in item && item.str.trim().length > 0)
+      .map((item: any) => ({
+        str: item.str.trim(),
+        x: Math.round(item.transform[4]),
+        y: item.transform[5],
+      }));
+    allPageItems.push(items);
   }
 
-  return { text: allText, pages: doc.numPages };
+  return { items: allPageItems, pages: doc.numPages };
 }
 
 /**
- * Parse CONTROL POINT table from pdfjs text output.
- *
- * pdfjs produces a flat space-separated string per page, e.g.:
- * "CONTROL POINT   NORTHING   EASTING   ELEVATION   DESCRIPTION 1   6,966,282.50   2,589,191.79   411.43   XCUT/INLET  2 ..."
- *
- * Strategy: find the header, then tokenize the data section by splitting on 2+ spaces,
- * and group tokens into rows of (id, northing, easting, elevation, description).
+ * Group text items into rows by y-coordinate with a tolerance of ±4 units.
+ * Returns rows sorted top-to-bottom (descending y in PDF space).
  */
-function parseControlPointTable(text: string): { points: ControlPoint[]; warnings: string[]; tablesFound: number } {
+function groupIntoRows(items: TextItem[], yTolerance = 4): TextItem[][] {
+  const rows: { centerY: number; items: TextItem[] }[] = [];
+
+  for (const item of items) {
+    const existing = rows.find(r => Math.abs(r.centerY - item.y) <= yTolerance);
+    if (existing) {
+      existing.items.push(item);
+      // Update center y as average
+      existing.centerY = existing.items.reduce((s, i) => s + i.y, 0) / existing.items.length;
+    } else {
+      rows.push({ centerY: item.y, items: [item] });
+    }
+  }
+
+  // Sort rows top-to-bottom (higher y = higher on page in PDF space)
+  rows.sort((a, b) => b.centerY - a.centerY);
+  return rows.map(r => r.items.sort((a, b) => a.x - b.x));
+}
+
+/**
+ * Find the CONTROL POINT header row and extract column x-positions.
+ */
+function findHeaderColumns(rows: TextItem[][]): {
+  headerRowIdx: number;
+  cols: { pointId: number; northing: number; easting: number; elevation: number | null; description: number };
+} | null {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const texts = row.map(item => item.str.toUpperCase());
+
+    const hasControlPoint = texts.some(t => t.includes('CONTROL') || t.includes('POINT'));
+    const hasNorthing = texts.some(t => t.includes('NORTHING'));
+    const hasEasting = texts.some(t => t.includes('EASTING'));
+
+    if (hasControlPoint && hasNorthing && hasEasting) {
+      // Find x positions of each column header
+      const findX = (keyword: string) => {
+        const item = row.find(it => it.str.toUpperCase().includes(keyword));
+        return item ? item.x : null;
+      };
+
+      const pointIdX = findX('CONTROL') ?? findX('POINT') ?? row[0]?.x;
+      const northingX = findX('NORTHING');
+      const eastingX = findX('EASTING');
+      const elevationX = findX('ELEVATION') ?? findX('ELEV');
+      const descriptionX = findX('DESCRIPTION') ?? findX('DESC');
+
+      if (pointIdX == null || northingX == null || eastingX == null) return null;
+
+      return {
+        headerRowIdx: i,
+        cols: {
+          pointId: pointIdX,
+          northing: northingX,
+          easting: eastingX,
+          elevation: elevationX,
+          description: descriptionX ?? eastingX + 200,
+        },
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Assign a text item to the nearest column based on x-position.
+ */
+function assignToColumn(
+  x: number,
+  cols: { pointId: number; northing: number; easting: number; elevation: number | null; description: number },
+): 'pointId' | 'northing' | 'easting' | 'elevation' | 'description' | null {
+  const candidates: Array<{ col: string; dist: number }> = [
+    { col: 'pointId', dist: Math.abs(x - cols.pointId) },
+    { col: 'northing', dist: Math.abs(x - cols.northing) },
+    { col: 'easting', dist: Math.abs(x - cols.easting) },
+    { col: 'description', dist: Math.abs(x - cols.description) },
+  ];
+  if (cols.elevation != null) {
+    candidates.push({ col: 'elevation', dist: Math.abs(x - cols.elevation) });
+  }
+
+  candidates.sort((a, b) => a.dist - b.dist);
+  // Only assign if within 80 units of a column center
+  if (candidates[0].dist > 80) return null;
+  return candidates[0].col as any;
+}
+
+/**
+ * Parse CONTROL POINT table from pdfjs items using column-based extraction.
+ */
+function parseControlPointTable(
+  pageItems: TextItem[],
+): { points: ControlPoint[]; warnings: string[]; tablesFound: number } {
   const warnings: string[] = [];
   const points: ControlPoint[] = [];
 
-  // Find the CONTROL POINT header with NORTHING and EASTING
-  const headerIdx = text.search(/CONTROL\s+POINT\s+NORTHING\s+EASTING/i);
-  if (headerIdx < 0) {
+  const rows = groupIntoRows(pageItems);
+  const headerInfo = findHeaderColumns(rows);
+
+  if (!headerInfo) {
     return { points, warnings: ['No CONTROL POINT table with NORTHING/EASTING headers found.'], tablesFound: 0 };
   }
 
-  const hasElevation = /ELEVATION/i.test(text.substring(headerIdx, headerIdx + 200));
+  const { headerRowIdx, cols } = headerInfo;
 
-  // Extract text after the header
-  const afterHeader = text.substring(headerIdx);
-  // Skip past the header tokens to the first digit (start of data)
-  const dataStartMatch = afterHeader.match(/\d/);
-  if (!dataStartMatch || dataStartMatch.index === undefined) {
-    return { points, warnings: ['Header found but no data rows detected.'], tablesFound: 0 };
-  }
-  const dataText = afterHeader.substring(dataStartMatch.index);
+  // Process data rows after the header
+  for (let ri = headerRowIdx + 1; ri < rows.length; ri++) {
+    const row = rows[ri];
 
-  // Tokenize by splitting on 2+ spaces
-  const normalized = dataText.replace(/\s{2,}/g, '|').trim();
-  const tokens = normalized.split('|').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
+    // Build a cell map for this row
+    const cells: Record<string, string[]> = {
+      pointId: [], northing: [], easting: [], elevation: [], description: [],
+    };
 
-  // Column count: id(1) + northing(1) + easting(1) + elevation(0|1) + description(1)
-  const colCount = hasElevation ? 5 : 4;
-
-  let i = 0;
-  while (i < tokens.length) {
-    const token = tokens[i];
-
-    // Determine if this token is a point ID (1-4 digit integer)
-    let pointId: string | null = null;
-    let offset = 0;
-
-    if (/^\d{1,4}$/.test(token)) {
-      pointId = token;
-      offset = 1;
-    } else if (/^[A-Za-z]+\d+$/.test(token)) {
-      // Label like "CP3" — skip and use next token as point ID
-      const next = tokens[i + 1];
-      if (next && /^\d{1,4}$/.test(next)) {
-        pointId = next;
-        offset = 2;
-      } else {
-        i++;
-        continue;
-      }
-    } else {
-      i++;
-      continue;
+    for (const item of row) {
+      const col = assignToColumn(item.x, cols);
+      if (col) cells[col].push(item.str);
     }
 
-    const northingToken = tokens[i + offset];
-    const eastingToken  = tokens[i + offset + 1];
-    const elevToken     = hasElevation ? tokens[i + offset + 2] : null;
-    const descToken     = tokens[i + offset + (hasElevation ? 3 : 2)];
+    const pointIdStr = cells.pointId.join(' ').trim();
+    const northingStr = cells.northing.join('').trim();
+    const eastingStr = cells.easting.join('').trim();
+    const elevStr = cells.elevation.join('').trim();
+    const descStr = cells.description.join(' ').trim();
 
-    if (!northingToken || !eastingToken) { i++; continue; }
+    // Point ID must be a short integer or alphanumeric code
+    if (!pointIdStr || !/^\d{1,4}$/.test(pointIdStr)) continue;
 
-    const northing = parseNum(northingToken);
-    const easting  = parseNum(eastingToken);
+    const northing = parseNum(northingStr);
+    const easting = parseNum(eastingStr);
 
-    if (northing === null || easting === null) { i++; continue; }
+    if (northing === null || easting === null) continue;
 
     const validationError = validateCoordinates(northing, easting);
     if (validationError) {
-      warnings.push(`Point ${pointId}: ${validationError} — skipped.`);
-      i += offset + colCount;
+      warnings.push(`Point ${pointIdStr}: ${validationError} — skipped.`);
       continue;
     }
 
-    // Sanity: northing should be > easting for TX State Plane (northing ~6.9M, easting ~2.5M)
+    // Sanity: northing should be > easting for TX State Plane
     if (northing < easting) {
-      warnings.push(`Point ${pointId}: Northing (${northing}) < Easting (${easting}) — values may be swapped. Skipping.`);
-      i += offset + colCount;
+      warnings.push(`Point ${pointIdStr}: Northing (${northing}) < Easting (${easting}) — values may be swapped. Skipping.`);
       continue;
     }
 
-    const elevation   = elevToken ? parseNum(elevToken) : null;
-    const description = descToken || '';
+    const elevation = elevStr ? parseNum(elevStr) : null;
 
-    points.push({ pointId, northing, easting, elevation, description });
-    i += offset + colCount;
+    points.push({ pointId: pointIdStr, northing, easting, elevation, description: descStr });
   }
 
   return { points, warnings, tablesFound: points.length > 0 ? 1 : 0 };
@@ -177,12 +245,12 @@ export async function parsePdfControlPoints(
   pdfBuffer: Buffer,
   _fileName: string,
 ): Promise<PdfParseResult> {
-  let text: string;
+  let allPageItems: TextItem[][];
   let totalPages = 1;
 
   try {
-    const result = await extractPdfText(pdfBuffer);
-    text = result.text;
+    const result = await extractPdfItems(pdfBuffer);
+    allPageItems = result.items;
     totalPages = result.pages;
   } catch (err) {
     return {
@@ -195,7 +263,7 @@ export async function parsePdfControlPoints(
     };
   }
 
-  if (!text || text.trim().length === 0) {
+  if (allPageItems.every(p => p.length === 0)) {
     return {
       success: false,
       points: [],
@@ -206,24 +274,34 @@ export async function parsePdfControlPoints(
     };
   }
 
-  const { points, warnings, tablesFound } = parseControlPointTable(text);
+  // Try each page until we find a table
+  let bestResult: { points: ControlPoint[]; warnings: string[]; tablesFound: number } = {
+    points: [], warnings: [], tablesFound: 0,
+  };
 
-  if (tablesFound === 0) {
+  for (const pageItems of allPageItems) {
+    const result = parseControlPointTable(pageItems);
+    if (result.points.length > bestResult.points.length) {
+      bestResult = result;
+    }
+  }
+
+  if (bestResult.tablesFound === 0) {
     return {
       success: false,
       points: [],
       totalPages,
       tablesFound: 0,
-      warnings,
+      warnings: bestResult.warnings,
       error: 'No CONTROL POINT table found in this PDF. Ensure the table has NORTHING and EASTING column headers.',
     };
   }
 
   return {
     success: true,
-    points,
+    points: bestResult.points,
     totalPages,
-    tablesFound,
-    warnings,
+    tablesFound: bestResult.tablesFound,
+    warnings: bestResult.warnings,
   };
 }
