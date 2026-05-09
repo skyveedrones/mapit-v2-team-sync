@@ -1449,7 +1449,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       if (converterPoints.length > 0) {
         const bounds = new mapboxgl.LngLatBounds();
         converterPoints.forEach((pt) => bounds.extend([pt.longitude, pt.latitude]));
-        map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 900 });
+        // duration:0 prevents the animated pan from interrupting tile loading (black map bug)
+        map.fitBounds(bounds, { padding: 80, maxZoom: 19, duration: 0 });
+        // After the map settles, force a resize to ensure tiles fill the canvas
+        map.once('idle', () => { map.resize(); });
       }
     }, [converterPoints, mapLoaded]);
 
