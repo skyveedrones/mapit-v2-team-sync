@@ -216,6 +216,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const snapMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const measureMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const converterFileInputRef = useRef<HTMLInputElement | null>(null);
+    const converterMarkersRef = useRef<mapboxgl.Marker[]>([]); // DOM markers for converted survey points
     // Tracks whether markers have been placed for the current sortedMedia set
     const markersRenderedForRef = useRef<string>("");
 
@@ -393,12 +394,12 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
         // POLLING CHECK: Ensure container has physical pixels before creating WebGL context
         if (container.clientHeight === 0) {
-          console.log("[Mapbox] Container height is 0, polling next frame...");
+
           animationFrameId = requestAnimationFrame(initializeMap);
           return;
         }
 
-        console.log(`[Mapbox] Container size confirmed (${container.clientWidth}x${container.clientHeight}). Initializing WebGL...`);
+
 
         const map = new mapboxgl.Map({
           container,
@@ -414,40 +415,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         // Force one final resize after the first frame to ensure canvas fills container
         map.on("load", () => {
           mapRef.current = map;
-          // Pre-register the coordinate converter source + layers immediately on load.
-          // This means the useEffect that handles converterPoints will ALWAYS use setData
-          // (never addSource/addLayer), preventing style recompiles from blacking the map.
-          const emptyFC = { type: "FeatureCollection" as const, features: [] };
-          map.addSource("coordinate-converter-src", { type: "geojson", data: emptyFC });
-          map.addLayer({
-            id: "coordinate-converter-points",
-            type: "circle",
-            source: "coordinate-converter-src",
-            paint: {
-              "circle-radius": 7,
-              "circle-color": "#f97316",
-              "circle-stroke-color": "#ffffff",
-              "circle-stroke-width": 2,
-              "circle-opacity": 0.95,
-            },
-          });
-          map.addLayer({
-            id: "coordinate-converter-labels",
-            type: "symbol",
-            source: "coordinate-converter-src",
-            layout: {
-              "text-field": ["get", "label"],
-              "text-size": 11,
-              "text-offset": [0, 1.35],
-              "text-anchor": "top",
-              "text-allow-overlap": false,
-            },
-            paint: {
-              "text-color": "#ffffff",
-              "text-halo-color": "#0f172a",
-              "text-halo-width": 1.5,
-            },
-          });
           setMapLoaded(true);
           requestAnimationFrame(() => map.resize());
         });
@@ -470,50 +437,52 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // ← Run once on mount only
 
-    // ── Data Watcher: Add GPS markers + flight path ─────────────────────────
-    // This effect fires whenever sortedMedia OR mapLoaded changes.
-    // It handles the race condition where data may arrive before or after the map.
-    // A stable key (sorted IDs) prevents redundant re-renders.
+    // ── Data Watcher: Add GPS markers + flight path + survey points ─────────────────────────
+    // This effect fires whenever sortedMedia, converterPoints, OR mapLoaded changes.
+    // Survey points are merged into the same GeoJSON source as photo pins,
+    // using an orange pin image to distinguish them visually.
     useEffect(() => {
       const map = mapRef.current;
-      if (!map || !mapLoaded || sortedMedia.length === 0) return;
+      if (!map || !mapLoaded || (sortedMedia.length === 0 && converterPoints.length === 0)) return;
 
-      // Build a stable key from sorted media IDs to avoid re-rendering if data hasn't changed
-      const newKey = sortedMedia.map((m) => m.id).join(",");
+      // Build a stable key from sorted media IDs + survey point identifiers
+      const surveyKey = converterPoints.map((p) => p.identifier || p.index).join("|");
+      const newKey = sortedMedia.map((m) => m.id).join(",") + "||" + surveyKey;
       if (markersRenderedForRef.current === newKey) {
-        // Data hasn't changed, but we still need to update the GeoJSON source in case visibility changed
-        const mediaGeoJSON = {
-          type: 'FeatureCollection' as const,
-          features: sortedMedia.map((media) => ({
+        // Data hasn't changed — just refresh the GeoJSON source data in place
+        const allFeatures = [
+          ...sortedMedia.map((media) => ({
             type: 'Feature' as const,
-            geometry: {
-              type: 'Point' as const,
-              coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)],
-            },
+            geometry: { type: 'Point' as const, coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)] },
             properties: {
-              id: media.id,
-              filename: media.filename,
-              latitude: media.latitude,
-              longitude: media.longitude,
-              altitude: media.altitude,
-              mediaType: media.mediaType,
-              thumbnailUrl: media.thumbnailUrl || media.url,
-              url: media.url,
+              id: media.id, filename: media.filename,
+              latitude: media.latitude, longitude: media.longitude,
+              altitude: media.altitude, mediaType: media.mediaType,
+              thumbnailUrl: media.thumbnailUrl || media.url, url: media.url,
+              isSurveyPoint: false,
             },
           })),
-        };
+          ...converterPoints
+            .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
+            .map((pt) => ({
+              type: 'Feature' as const,
+              geometry: { type: 'Point' as const, coordinates: [pt.longitude, pt.latitude] },
+              properties: {
+                id: -(pt.index + 1), filename: pt.identifier || `Survey Point ${pt.index + 1}`,
+                latitude: pt.latitude, longitude: pt.longitude,
+                altitude: null, mediaType: 'survey',
+                thumbnailUrl: null, url: null,
+                isSurveyPoint: true,
+                easting: pt.easting ?? null, northing: pt.northing ?? null,
+              },
+            })),
+        ];
         if (map.getSource('media-source')) {
-          (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
+          (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features: allFeatures });
         }
         return;
       }
       markersRenderedForRef.current = newKey;
-
-      console.log(`[MapboxProjectMap] Data watcher triggered: ${sortedMedia.length} GPS points, mapLoaded=${mapLoaded}. Using GeoJSON Symbol Layer.`);
-
-      // Clear old GPS markers (legacy - no longer used with GeoJSON layer)
-      // gpsMarkersRef.current.forEach((m) => m.remove());
-      // gpsMarkersRef.current = [];
 
       // Clear old flight path and media pins layer
       if (map.getLayer("flight-path")) map.removeLayer("flight-path");
@@ -521,196 +490,168 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       if (map.getLayer("media-pins")) map.removeLayer("media-pins");
       if (map.getSource("media-source")) map.removeSource("media-source");
 
-      // ── Flight Path (GeoJSON LineString) ──
-      const flightPathCoords = sortedMedia.map((m) => [
-        parseFloat(m.longitude!),
-        parseFloat(m.latitude!),
-      ]);
-
-      map.addSource("flight-path-src", {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: flightPathCoords,
-          },
-        },
-      });
-
-      map.addLayer({
-        id: "flight-path",
-        type: "line",
-        source: "flight-path-src",
-        paint: {
-          "line-color": "#10b981",
-          "line-width": 3,
-          "line-opacity": flightPathVisible ? 0.8 : 0,
-        },
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-      });
-
-      // ── Create and Load Slim Pin SVG (MAPIT Logo Style) ──
-      const SLIM_PIN_SVG = `
-        <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 42C16 42 32 26.2426 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.2426 16 42 16 42Z" fill="#50C878"/>
-          <circle cx="16" cy="16" r="6" fill="white"/>
-        </svg>
-      `;
-
-      const img = new Image(32, 42);
-      img.onload = () => {
-        if (!map.hasImage('skyvee-pin')) {
-          map.addImage('skyvee-pin', img);
-        }
-      };
-      img.src = 'data:image/svg+xml;base64,' + btoa(SLIM_PIN_SVG);
-
-      // ── Create GeoJSON Source for Media Points ──
-      const mediaGeoJSON = {
-        type: 'FeatureCollection' as const,
-        features: sortedMedia.map((media) => ({
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)],
-          },
-          properties: {
-            id: media.id,
-            filename: media.filename,
-            latitude: media.latitude,
-            longitude: media.longitude,
-            altitude: media.altitude,
-            mediaType: media.mediaType,
-            thumbnailUrl: media.thumbnailUrl || media.url,
-            url: media.url,
-          },
-        })),
-      };
-
-      // ── Add or Update Media Source and Symbol Layer ──
-      if (map.getSource('media-source')) {
-        (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData(mediaGeoJSON);
-      } else {
-        map.addSource('media-source', {
-          type: 'geojson',
-          data: mediaGeoJSON,
+      // ── Flight Path (GeoJSON LineString) — photo GPS only ──
+      if (sortedMedia.length > 0) {
+        const flightPathCoords = sortedMedia.map((m) => [
+          parseFloat(m.longitude!),
+          parseFloat(m.latitude!),
+        ]);
+        map.addSource("flight-path-src", {
+          type: "geojson",
+          data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: flightPathCoords } },
         });
-
         map.addLayer({
-          id: 'media-pins',
-          type: 'symbol',
-          source: 'media-source',
-          layout: {
-            'icon-image': 'skyvee-pin',
-            'icon-size': 0.45,           // Scaled down to be slim and needle-like
-            'icon-anchor': 'bottom',     // Pointy end on the coordinate
-            'icon-allow-overlap': true,
-          },
+          id: "flight-path", type: "line", source: "flight-path-src",
+          paint: { "line-color": "#10b981", "line-width": 3, "line-opacity": flightPathVisible ? 0.8 : 0 },
+          layout: { "line-join": "round", "line-cap": "round" },
         });
       }
 
-      // ── Click Handler for Media Pins ──
+      // ── Register pin images: green for photos, orange for survey points ──
+      const registerPinImage = (id: string, color: string) => {
+        if (map.hasImage(id)) return;
+        const svg = [
+          '<svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">',
+          `<path d="M16 42C16 42 32 26.2426 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.2426 16 42 16 42Z" fill="${color}"/>`,
+          '<circle cx="16" cy="16" r="6" fill="white"/>',
+          '</svg>',
+        ].join('');
+        const img = new Image(32, 42);
+        img.onload = () => { if (!map.hasImage(id)) map.addImage(id, img); };
+        img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+      };
+      registerPinImage('skyvee-pin', '#50C878');       // green — photo GPS
+      registerPinImage('survey-pin', '#f97316');       // orange — survey points
+
+      // ── Merge photo GPS + survey points into one GeoJSON source ──
+      const allFeatures = [
+        ...sortedMedia.map((media) => ({
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: [parseFloat(media.longitude!), parseFloat(media.latitude!)] },
+          properties: {
+            id: media.id, filename: media.filename,
+            latitude: media.latitude, longitude: media.longitude,
+            altitude: media.altitude, mediaType: media.mediaType,
+            thumbnailUrl: media.thumbnailUrl || media.url, url: media.url,
+            isSurveyPoint: false,
+          },
+        })),
+        ...converterPoints
+          .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
+          .map((pt) => ({
+            type: 'Feature' as const,
+            geometry: { type: 'Point' as const, coordinates: [pt.longitude, pt.latitude] },
+            properties: {
+              id: -(pt.index + 1), filename: pt.identifier || `Survey Point ${pt.index + 1}`,
+              latitude: pt.latitude, longitude: pt.longitude,
+              altitude: null, mediaType: 'survey',
+              thumbnailUrl: null, url: null,
+              isSurveyPoint: true,
+              easting: pt.easting ?? null, northing: pt.northing ?? null,
+            },
+          })),
+      ];
+
+      map.addSource('media-source', { type: 'geojson', data: { type: 'FeatureCollection', features: allFeatures } });
+      map.addLayer({
+        id: 'media-pins', type: 'symbol', source: 'media-source',
+        layout: {
+          // Switch pin image based on isSurveyPoint property
+          'icon-image': ['case', ['==', ['get', 'isSurveyPoint'], true], 'survey-pin', 'skyvee-pin'],
+          'icon-size': 0.45,
+          'icon-anchor': 'bottom',
+          'icon-allow-overlap': true,
+        },
+      });
+
+      // ── Click Handler — photo popup vs survey popup ──
       const handleMediaPinClick = (e: mapboxgl.MapMouseEvent) => {
         const features = map.queryRenderedFeatures({ layers: ['media-pins'] });
         if (!features || features.length === 0) return;
-
-        // If multiple features exist, find the one closest to the click point
         let feature = features[0];
         if (features.length > 1) {
           const clickLngLat = e.lngLat;
           let minDistance = Infinity;
-          
           for (const f of features) {
             const coords = (f.geometry as any).coordinates as [number, number];
             const dx = coords[0] - clickLngLat.lng;
             const dy = coords[1] - clickLngLat.lat;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < minDistance) {
-              minDistance = distance;
-              feature = f;
-            }
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDistance) { minDistance = dist; feature = f; }
           }
         }
-        
         const props = feature.properties as any;
 
-        setSelectedMedia({
-          id: props.id,
-          filename: props.filename,
-          latitude: parseFloat(props.latitude),
-          longitude: parseFloat(props.longitude),
-          altitude: props.altitude ? parseFloat(props.altitude) : null,
-          mediaType: props.mediaType,
-          thumbnailUrl: props.thumbnailUrl,
-          url: props.url,
-        } as any);
+        if (props.isSurveyPoint) {
+          // Survey point popup — show identifier + coordinates + easting/northing
+          const popupHtml = `
+            <div style="max-width:220px;font-family:system-ui,sans-serif">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                <div style="width:10px;height:10px;border-radius:50%;background:#f97316;flex-shrink:0"></div>
+                <div style="font-size:13px;font-weight:700;color:#fff">${props.filename}</div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lat: ${parseFloat(props.latitude).toFixed(7)}</div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lng: ${parseFloat(props.longitude).toFixed(7)}</div>
+              ${props.easting ? `<div style="font-size:11px;color:#fb923c;margin-top:4px">E: ${parseFloat(props.easting).toFixed(3)}</div>` : ''}
+              ${props.northing ? `<div style="font-size:11px;color:#fb923c">N: ${parseFloat(props.northing).toFixed(3)}</div>` : ''}
+            </div>
+          `;
+          new mapboxgl.Popup({ offset: 25, closeButton: true, maxWidth: '260px', className: 'mapbox-media-popup' })
+            .setLngLat((feature.geometry as any).coordinates as [number, number])
+            .setHTML(popupHtml)
+            .addTo(map);
+          return;
+        }
 
+        // Photo GPS popup
+        setSelectedMedia({
+          id: props.id, filename: props.filename,
+          latitude: parseFloat(props.latitude), longitude: parseFloat(props.longitude),
+          altitude: props.altitude ? parseFloat(props.altitude) : null,
+          mediaType: props.mediaType, thumbnailUrl: props.thumbnailUrl, url: props.url,
+        } as any);
         const thumbnailUrl = props.thumbnailUrl;
         const fullUrl = props.url || thumbnailUrl;
         const popupHtml = `
           <div style="max-width:220px;font-family:system-ui,sans-serif">
-            <img
-              src="${thumbnailUrl}"
-              data-fullurl="${fullUrl}"
-              data-filename="${props.filename}"
-              data-lat="${props.latitude}"
-              data-lng="${props.longitude}"
+            <img src="${thumbnailUrl}" data-fullurl="${fullUrl}" data-filename="${props.filename}"
+              data-lat="${props.latitude}" data-lng="${props.longitude}"
               style="width:100%;border-radius:6px;margin-bottom:8px;cursor:zoom-in"
-              title="Click to enlarge"
-              onerror="this.style.display='none'"
-            />
+              title="Click to enlarge" onerror="this.style.display='none'" />
             <div style="font-size:10px;color:#64748b;margin-bottom:6px;text-align:center">Click image to enlarge</div>
             <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff">${props.filename}</div>
             <div style="font-size:11px;color:#94a3b8">${parseFloat(props.latitude).toFixed(6)}, ${parseFloat(props.longitude).toFixed(6)}</div>
             ${props.altitude ? `<div style="font-size:11px;color:#94a3b8">Alt: ${parseFloat(props.altitude).toFixed(1)}m</div>` : ''}
           </div>
         `;
-
-        new mapboxgl.Popup({
-          offset: 25,
-          closeButton: true,
-          maxWidth: '260px',
-          className: 'mapbox-media-popup',
-        })
+        new mapboxgl.Popup({ offset: 25, closeButton: true, maxWidth: '260px', className: 'mapbox-media-popup' })
           .setLngLat((feature.geometry as any).coordinates as [number, number])
           .setHTML(popupHtml)
           .addTo(map);
       };
 
-      // ── Hover Cursor Changes ──
-      const handleMediaPinMouseEnter = () => {
-        map.getCanvas().style.cursor = 'pointer';
-      };
-
-      const handleMediaPinMouseLeave = () => {
-        map.getCanvas().style.cursor = '';
-      };
-
-      // Remove old event listeners if they exist
+      const handleMediaPinMouseEnter = () => { map.getCanvas().style.cursor = 'pointer'; };
+      const handleMediaPinMouseLeave = () => { map.getCanvas().style.cursor = ''; };
       map.off('click', 'media-pins', handleMediaPinClick);
       map.off('mouseenter', 'media-pins', handleMediaPinMouseEnter);
       map.off('mouseleave', 'media-pins', handleMediaPinMouseLeave);
-
-      // Add new event listeners
       map.on('click', 'media-pins', handleMediaPinClick);
       map.on('mouseenter', 'media-pins', handleMediaPinMouseEnter);
       map.on('mouseleave', 'media-pins', handleMediaPinMouseLeave);
 
-      // Fit bounds to all markers
-      if (sortedMedia.length > 1) {
+      // Fit bounds to all points (photo GPS + survey)
+      const allPoints = [
+        ...sortedMedia.map((m) => [parseFloat(m.longitude!), parseFloat(m.latitude!)] as [number, number]),
+        ...converterPoints
+          .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
+          .map((pt) => [pt.longitude, pt.latitude] as [number, number]),
+      ];
+      if (allPoints.length > 1) {
         const bounds = new mapboxgl.LngLatBounds();
-        sortedMedia.forEach((m) => {
-          bounds.extend([parseFloat(m.longitude!), parseFloat(m.latitude!)]);
-        });
+        allPoints.forEach((p) => bounds.extend(p));
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
       }
-    }, [sortedMedia, mapLoaded, setSelectedMedia]);
+    }, [sortedMedia, converterPoints, mapLoaded, setSelectedMedia, flightPathVisible]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
     useEffect(() => {
@@ -1431,74 +1372,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       });
       return () => cancelAnimationFrame(id);
     }, [sidebarOpen, mapLoaded]);
-    // ── Coordinate converter map layer ─────────────────────────────────────────
-    useEffect(() => {
-      const map = mapRef.current;
-      if (!map || !mapLoaded) return;
-
-      const sourceId = "coordinate-converter-src";
-      const circleLayerId = "coordinate-converter-points";
-      const labelLayerId = "coordinate-converter-labels";
-
-      const data = {
-        type: "FeatureCollection" as const,
-        features: converterPoints.map((pt) => ({
-          type: "Feature" as const,
-          geometry: {
-            type: "Point" as const,
-            coordinates: [pt.longitude, pt.latitude],
-          },
-          properties: {
-            label: pt.identifier || `Point ${pt.index + 1}`,
-            easting: pt.easting ?? null,
-            northing: pt.northing ?? null,
-          },
-        })),
-      };
-
-      // Source and layers are pre-registered on map load — always just setData.
-      if (map.getSource(sourceId)) {
-        (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(data);
-      }
-
-      if (converterPoints.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        let validCount = 0;
-        converterPoints.forEach((pt) => {
-          // Skip header row or any point with NaN/zero/missing coordinates
-          if (
-            !pt.longitude || !pt.latitude ||
-            isNaN(pt.longitude) || isNaN(pt.latitude)
-          ) return;
-          bounds.extend([pt.longitude, pt.latitude]);
-          validCount++;
-        });
-        if (validCount > 0) {
-          // Force resize + repaint immediately so the map isn't stuck in a stale render state
-          map.resize();
-          map.triggerRepaint();
-          // Defer fitBounds to the next animation frame so WebGL finishes processing
-          // the new source data (setData/addSource) before the camera moves.
-          requestAnimationFrame(() => {
-            if (!mapRef.current) return;
-            // When sidebar (w-80 = 320px) is open, add extra right padding so
-            // fitBounds doesn't compute a near-zero or negative effective viewport.
-            const rightPad = sidebarOpen ? 340 : 80;
-            mapRef.current.fitBounds(bounds, {
-              padding: { top: 80, bottom: 80, left: 80, right: rightPad },
-              maxZoom: 18,
-              duration: 0,
-            });
-            mapRef.current.triggerRepaint();
-            setTimeout(() => {
-              if (!mapRef.current) return;
-              mapRef.current.resize();
-              mapRef.current.triggerRepaint();
-            }, 200);
-          });
-        }
-      }
-    }, [converterPoints, mapLoaded]);
+    // Survey points are now merged into the GPS markers useEffect above.
+    // converterMarkersRef is kept for the clearConvertedCoordinates callback cleanup.
 
     const handleSingleCoordinateConvert = useCallback(async () => {
       const easting = parseFloat(singleEasting);
@@ -1604,6 +1479,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     }, [batchFile, batchCSF, batchCRS, parseAndConvertMutation]);
 
     const clearConvertedCoordinates = useCallback(() => {
+      // Reset the key so the GPS markers useEffect re-runs and removes survey points from the source
+      markersRenderedForRef.current = '';
       setConverterPoints([]);
       setSingleResult(null);
       setBatchResult(null);
