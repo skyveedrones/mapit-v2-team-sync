@@ -1566,8 +1566,18 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           }));
 
         if (successfulPoints.length > 0) {
-          setConverterPoints(successfulPoints);
-          toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
+          // Add points one at a time so the WebGL pipeline processes each point
+          // individually rather than receiving a large GeoJSON payload all at once.
+          // This mirrors the single-point path which always renders correctly.
+          setConverterPoints([]);
+          successfulPoints.forEach((pt, i) => {
+            setTimeout(() => {
+              setConverterPoints((prev) => [...prev, pt]);
+              if (i === successfulPoints.length - 1) {
+                toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
+              }
+            }, i * 80);
+          });
         } else {
           setConverterPoints([]);
           toast.warning("No valid coordinates were converted.");
