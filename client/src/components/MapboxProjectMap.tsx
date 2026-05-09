@@ -284,12 +284,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const availableSystemsQuery = trpc.coordinateConverter.getAvailableSystems.useQuery();
 
     // ── Fetch media (skipped when initialMedia is provided) ─────────────────
-    const { data: mediaList } = isDemoProject
+    const { data: mediaList, isPending: mediaIsPending } = isDemoProject
       ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: !initialMedia, staleTime: Infinity, refetchOnWindowFocus: false })
       : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !initialMedia, staleTime: Infinity, refetchOnWindowFocus: false });
-
-    // isLoading: false immediately when initialMedia is provided; otherwise wait for tRPC
-    const isLoading = !initialMedia && mediaList === undefined;
+    // isLoading: only true on the very first fetch — never during mutations or refetches.
+    // Using isPending (not mediaList===undefined) prevents the skeleton from covering the map
+    // when a batch mutation causes a transient cache invalidation.
+    const isLoading = !initialMedia && mediaIsPending;
 
     const mediaWithGPS = useMemo(() => {
       if (initialMedia && initialMedia.length > 0) {
