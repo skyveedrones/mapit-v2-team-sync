@@ -1858,7 +1858,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                       <ChevronRight size={20} />
                     </button>
 
-                    <div className="p-5 h-full overflow-y-auto flex flex-col gap-4">
+                    <div className="p-5 h-full overflow-y-auto flex flex-col gap-4 pb-24">
                       {/* Header */}
                       <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                         <div className="flex items-center gap-2">

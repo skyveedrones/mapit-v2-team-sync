@@ -71,9 +71,7 @@ export default function Municipal() {
               lineHeight: 1.15,
             }}
           >
-            A perfect digital twin.
-            <br />
-            <span className="text-slate-400">Of your entire city.</span>
+            A perfect digital twin of your entire city.
           </motion.h1>
 
           <motion.p

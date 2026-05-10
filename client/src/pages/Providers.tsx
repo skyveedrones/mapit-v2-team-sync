@@ -264,7 +264,7 @@ export default function Providers() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">The Real Cost of the Old Way</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 whitespace-nowrap sm:whitespace-normal">The Real Cost of the Old Way</h2>
             <p className="text-slate-400 text-lg">Every project delayed is revenue lost.</p>
           </motion.div>
 
