@@ -47,7 +47,7 @@ export default function Municipal() {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/manus-storage/4062991-uhd_3840_2160_30fps_4b70a116.mp4" type="video/mp4" />
+          <source src="/manus-storage/MunicipalHeroVideo_6ac18ae2.mp4" type="video/mp4" />
         </video>
         {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
         <div className="absolute inset-0 bg-black/55" />
@@ -289,7 +289,7 @@ export default function Municipal() {
                 preload="auto"
                 className="w-full h-full object-cover"
               >
-                <source src="/MunicipalHeroVideo.mp4" type="video/mp4" />
+                <source src="/manus-storage/US80WaterlineOverlayforLinkedIn_de48f059.mp4" type="video/mp4" />
               </video>
               {/* Subtle overlay for premium feel */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
