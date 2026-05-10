@@ -536,7 +536,7 @@ export default function Create() {
   // ── Sample Site Injector ────────────────────────────────────────────
   // Instant path: sets isSampleCloneRef so handleNameSubmit calls cloneSampleProject
   // instead of processFiles. No file download or upload needed.
-  const SAMPLE_DEFAULT_NAME = "Gail Wilson Ext 740 Intersection";
+  const SAMPLE_DEFAULT_NAME = "New School Rd";
 
   const loadSampleSite = useCallback(() => {
     isSampleCloneRef.current = true;
