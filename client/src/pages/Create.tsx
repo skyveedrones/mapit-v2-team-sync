@@ -819,18 +819,37 @@ export default function Create() {
             </form>
 
             {projectNameInput.trim().length > 0 && (
-              <p
-                className="mt-8 animate-pulse"
-                style={{
-                  fontSize: "clamp(1rem, 2.5vw, 1.35rem)",
-                  color: "rgba(255,255,255,0.55)",
-                  letterSpacing: "0.04em",
-                  fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-                  fontWeight: 400,
-                }}
-              >
-                Press Enter to continue →
-              </p>
+              <div className="mt-8 flex flex-col items-center gap-3">
+                {/* Tappable Enter button — prominent on mobile, subtle on desktop */}
+                <button
+                  type="button"
+                  onClick={() => handleNameSubmit()}
+                  className="flex items-center gap-2 px-8 py-3 rounded-full border border-white/30 bg-white/5 active:bg-white/15 transition-colors duration-150 select-none"
+                  style={{
+                    fontSize: "clamp(1rem, 2.5vw, 1.15rem)",
+                    color: "rgba(255,255,255,0.85)",
+                    letterSpacing: "0.06em",
+                    fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                    fontWeight: 500,
+                    WebkitTapHighlightColor: "transparent",
+                  }}
+                >
+                  Continue →
+                </button>
+                {/* Keyboard hint — hidden on touch devices */}
+                <p
+                  className="hidden md:block animate-pulse"
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.35)",
+                    letterSpacing: "0.04em",
+                    fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                    fontWeight: 400,
+                  }}
+                >
+                  or press Enter
+                </p>
+              </div>
             )}
           </motion.div>
         )}
