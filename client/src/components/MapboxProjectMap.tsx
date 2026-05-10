@@ -1965,6 +1965,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
                           {coordinateConverterExpanded && (
                             <div className="border-t border-slate-700 p-3 space-y-3">
+                              {/* Tab selector */}
                               <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-900 p-1">
                                 <button
                                   onClick={() => setCoordinateConverterTab("single")}
@@ -1984,6 +1985,24 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 >
                                   PDF
                                 </button>
+                              </div>
+                              {/* Tab description */}
+                              <div className="rounded-lg bg-slate-900/60 border border-slate-700/60 px-3 py-2">
+                                {coordinateConverterTab === "single" && (
+                                  <p className="text-[10px] text-slate-300 leading-relaxed">
+                                    <span className="font-semibold text-emerald-400">Single Point</span> — Type one State Plane (SPCS) Easting/Northing coordinate pair and instantly convert it to a GPS pin on the map. Best for quickly locating a known control point or benchmark.
+                                  </p>
+                                )}
+                                {coordinateConverterTab === "batch" && (
+                                  <p className="text-[10px] text-slate-300 leading-relaxed">
+                                    <span className="font-semibold text-emerald-400">Batch Upload</span> — Upload a <span className="text-white font-medium">.csv</span> or <span className="text-white font-medium">.xlsx</span> file containing a list of survey control points. All points are converted at once and plotted as orange markers on the map. Ideal for importing an entire survey network from your data collector or office software.
+                                  </p>
+                                )}
+                                {coordinateConverterTab === "pdf" && (
+                                  <p className="text-[10px] text-slate-300 leading-relaxed">
+                                    <span className="font-semibold text-emerald-400">PDF Extract</span> — Upload a survey plat or engineering PDF that contains a <span className="text-white font-medium">Control Point table</span>. The system scans the document, extracts the coordinates automatically, and lets you review them before adding to the map. No manual data entry required.
+                                  </p>
+                                )}
                               </div>
 
                               {coordinateConverterTab === "single" ? (
@@ -2050,30 +2069,12 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 </div>
                               ) : (
                                 <div className="space-y-3">
-                                  {/* Required headers info */}
-                                  <div className="rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2.5 space-y-1.5">
-                                    <p className="text-[10px] uppercase tracking-wide text-orange-400 font-bold">Required Column Headers</p>
-                                    <div className="space-y-1">
-                                      <div className="flex items-start gap-1.5">
-                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
-                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Point / Identifier</span> — name of the point (e.g. id, name, label)</span>
-                                      </div>
-                                      <div className="flex items-start gap-1.5">
-                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
-                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Easting / X</span> — state plane easting coordinate</span>
-                                      </div>
-                                      <div className="flex items-start gap-1.5">
-                                        <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
-                                        <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Northing / Y</span> — state plane northing coordinate</span>
-                                      </div>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-700">File must be <span className="text-slate-300">.csv</span> or <span className="text-slate-300">.xlsx</span> with headers in the first row.</p>
-                                  </div>
+                                  {/* Shared: Coordinate System + Combined Scale Factor */}
                                   <div>
                                     <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
                                     <select
-                                      value={batchCRS}
-                                      onChange={(e) => setBatchCRS(e.target.value)}
+                                      value={sharedCRS}
+                                      onChange={(e) => setSharedCRS(e.target.value)}
                                       className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                                     >
                                       {availableSystemsQuery.data?.map((system) => (
@@ -2086,44 +2087,102 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                     <input
                                       type="number"
                                       step="0.00001"
-                                      value={batchCSF}
-                                      onChange={(e) => setBatchCSF(e.target.value)}
+                                      value={sharedCSF}
+                                      onChange={(e) => setSharedCSF(e.target.value)}
                                       className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                                     />
                                   </div>
+
+                                  {/* Conditional instructions */}
+                                  {coordinateConverterTab === "batch" ? (
+                                    <div className="rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2.5 space-y-1.5">
+                                      <p className="text-[10px] uppercase tracking-wide text-orange-400 font-bold">Required Column Headers</p>
+                                      <div className="space-y-1">
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Point / Identifier</span> — name of the point (e.g. id, name, label)</span>
+                                        </div>
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Easting / X</span> — state plane easting coordinate</span>
+                                        </div>
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300"><span className="font-semibold text-white">Northing / Y</span> — state plane northing coordinate</span>
+                                        </div>
+                                      </div>
+                                      <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-700">File must be <span className="text-slate-300">.csv</span> or <span className="text-slate-300">.xlsx</span> — headers in first row.</p>
+                                    </div>
+                                  ) : (
+                                    <div className="rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2.5 space-y-1.5">
+                                      <p className="text-[10px] uppercase tracking-wide text-orange-400 font-bold">PDF Extract — How It Works</p>
+                                      <div className="space-y-1">
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300">Upload a survey plat or engineering PDF containing a <span className="font-semibold text-white">CONTROL POINT</span> table</span>
+                                        </div>
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300">Table must have columns: <span className="font-semibold text-white">Northing, Easting, Elevation, Description</span></span>
+                                        </div>
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-orange-400 text-[10px] mt-0.5">▸</span>
+                                          <span className="text-[10px] text-slate-300">Review extracted points before adding to map</span>
+                                        </div>
+                                      </div>
+                                      <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-700">Supports digital PDFs — max <span className="text-slate-300">20MB</span>.</p>
+                                    </div>
+                                  )}
+
+                                  {/* Single unified drop zone */}
                                   <div
                                     onDrop={(e) => {
                                       e.preventDefault();
                                       const file = e.dataTransfer.files?.[0];
-                                      if (file) handleConverterFile(file);
+                                      if (!file) return;
+                                      if (coordinateConverterTab === 'batch') {
+                                        handleConverterFile(file);
+                                      } else {
+                                        if (file.name.toLowerCase().endsWith('.pdf')) setPdfFile(file);
+                                        else toast.error('Please drop a PDF file.');
+                                      }
                                     }}
                                     onDragOver={(e) => e.preventDefault()}
-                                    onClick={() => converterFileInputRef.current?.click()}
+                                    onClick={() => coordinateConverterTab === 'batch' ? converterFileInputRef.current?.click() : pdfFileInputRef.current?.click()}
                                     className="cursor-pointer rounded-lg border border-dashed border-slate-600 bg-slate-950/70 p-4 text-center hover:border-emerald-500 transition-colors"
                                   >
-                                    <Upload className="mx-auto mb-2 text-slate-400" size={18} />
-                                    <p className="text-xs font-medium text-slate-200">{batchFile ? batchFile.name : "Drop or select CSV/XLSX"}</p>
-                                    <p className="text-[10px] text-slate-500 mt-1">Max 1,000 rows and 5MB</p>
-                                    <input
-                                      ref={converterFileInputRef}
-                                      type="file"
-                                      accept=".csv,.xlsx,.xls"
-                                      className="hidden"
-                                      onChange={(e) => {
-                                        const file = e.currentTarget.files?.[0];
-                                        if (file) handleConverterFile(file);
-                                      }}
-                                    />
+                                    {coordinateConverterTab === 'batch'
+                                      ? <Upload className="mx-auto mb-2 text-slate-400" size={18} />
+                                      : <FileSearch className="mx-auto mb-2 text-slate-400" size={18} />
+                                    }
+                                    <p className="text-xs font-medium text-slate-200">
+                                      {coordinateConverterTab === 'batch'
+                                        ? (batchFile ? batchFile.name : 'Drop or select CSV / XLSX')
+                                        : (pdfFile ? pdfFile.name : 'Drop or select PDF')
+                                      }
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                      {coordinateConverterTab === 'batch' ? 'Max 1,000 rows and 5MB' : 'Survey plats, engineering docs — max 20MB'}
+                                    </p>
+                                    <input ref={converterFileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => { const f = e.currentTarget.files?.[0]; if (f) handleConverterFile(f); }} />
+                                    <input ref={pdfFileInputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.currentTarget.files?.[0]; if (f) setPdfFile(f); }} />
                                   </div>
-                                  <button
-                                    onClick={handleBatchCoordinateConvert}
-                                    disabled={!batchFile || batchLoading}
-                                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
-                                  >
-                                    <Upload size={14} />
-                                    {batchLoading ? "Processing..." : "Convert Batch & Add to Map"}
-                                  </button>
-                                  {batchResult && (
+
+                                  {/* Action button */}
+                                  {coordinateConverterTab === 'batch' ? (
+                                    <button onClick={handleBatchCoordinateConvert} disabled={!batchFile || batchLoading} className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors">
+                                      <Upload size={14} />
+                                      {batchLoading ? 'Processing...' : 'Convert Batch & Add to Map'}
+                                    </button>
+                                  ) : (
+                                    <button onClick={handlePdfExtract} disabled={!pdfFile || pdfLoading} className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors">
+                                      <FileSearch size={14} />
+                                      {pdfLoading ? 'Scanning PDF...' : 'Scan & Extract Points'}
+                                    </button>
+                                  )}
+
+                                  {/* Batch results */}
+                                  {coordinateConverterTab === 'batch' && batchResult && (
                                     <div className="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs space-y-2">
                                       <div className="grid grid-cols-3 gap-2 text-center">
                                         <div><p className="text-slate-500">Total</p><p className="font-semibold text-white">{batchResult.totalRows}</p></div>
@@ -2140,67 +2199,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                       )}
                                     </div>
                                   )}
-                                </div>
-                              )}
 
-                              {coordinateConverterTab === "pdf" && (
-                                <div className="space-y-3">
-                                  <div>
-                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
-                                    <select
-                                      value={pdfCRS}
-                                      onChange={(e) => setPdfCRS(e.target.value)}
-                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                                    >
-                                      {availableSystemsQuery.data?.map((system) => (
-                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Combined Scale Factor</label>
-                                    <input
-                                      type="number"
-                                      step="0.00001"
-                                      value={pdfCSF}
-                                      onChange={(e) => setPdfCSF(e.target.value)}
-                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                                    />
-                                  </div>
-                                  <div
-                                    onDrop={(e) => {
-                                      e.preventDefault();
-                                      const file = e.dataTransfer.files?.[0];
-                                      if (file && file.name.toLowerCase().endsWith('.pdf')) setPdfFile(file);
-                                      else toast.error('Please drop a PDF file.');
-                                    }}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onClick={() => pdfFileInputRef.current?.click()}
-                                    className="cursor-pointer rounded-lg border border-dashed border-slate-600 bg-slate-950/70 p-4 text-center hover:border-emerald-500 transition-colors"
-                                  >
-                                    <FileSearch className="mx-auto mb-2 text-slate-400" size={18} />
-                                    <p className="text-xs font-medium text-slate-200">{pdfFile ? pdfFile.name : 'Drop or select PDF'}</p>
-                                    <p className="text-[10px] text-slate-500 mt-1">Survey plats, engineering docs — max 20MB</p>
-                                    <input
-                                      ref={pdfFileInputRef}
-                                      type="file"
-                                      accept=".pdf"
-                                      className="hidden"
-                                      onChange={(e) => {
-                                        const file = e.currentTarget.files?.[0];
-                                        if (file) setPdfFile(file);
-                                      }}
-                                    />
-                                  </div>
-                                  <button
-                                    onClick={handlePdfExtract}
-                                    disabled={!pdfFile || pdfLoading}
-                                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
-                                  >
-                                    <FileSearch size={14} />
-                                    {pdfLoading ? 'Scanning PDF...' : 'Scan & Extract Points'}
-                                  </button>
-                                  {pdfReviewPoints && (
+                                  {/* PDF review list */}
+                                  {coordinateConverterTab === 'pdf' && pdfReviewPoints && (
                                     <div className="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs space-y-2">
                                       <div className="flex items-center justify-between">
                                         <span className="text-slate-400 font-semibold">Review — {pdfReviewPoints.length} point{pdfReviewPoints.length !== 1 ? 's' : ''} found</span>
