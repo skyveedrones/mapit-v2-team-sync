@@ -126,7 +126,7 @@ export default function Home() {
                   location: 'homepage_hero',
                   version: 'v1_demo' 
                 });
-                setLocation("/welcome");
+                window.open('/create', '_blank');
               }}
             >
               Experience MAPIT
@@ -365,11 +365,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Footer ─── */}
       <Footer onContactClick={() => setShowContactModal(true)} />
-
-      {/* Contact Modal */}
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
+
+
     </div>
   );
 }
