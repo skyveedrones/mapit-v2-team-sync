@@ -1,22 +1,18 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+/**
+ * Storage helpers backed by Cloudinary.
+ * Drop-in replacement for the Manus forge storage proxy.
+ * All call sites (storagePut / storageGet / storageDownload / storageGetUploadUrl) work unchanged.
+ */
+import { v2 as cloudinary } from "cloudinary";
 
-import { ENV } from './_core/env';
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
-type StorageConfig = { baseUrl: string; apiKey: string };
-
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
-  }
-
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
-}
+// ─── helpers ────────────────────────────────────────────────────────────────
 
 /** Strip leading slashes */
 function normalizeKey(relKey: string): string {
@@ -24,174 +20,129 @@ function normalizeKey(relKey: string): string {
 }
 
 /**
- * Encode each path segment so spaces and special chars don't cause 400s from the proxy.
- * Preserves `/` separators.
- */
-function encodeKey(relKey: string): string {
-  return normalizeKey(relKey)
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/');
-}
-
-/**
- * Sanitize a filename for use as a storage key segment:
- * replaces spaces with hyphens and strips characters that are unsafe in S3 keys.
+ * Sanitize a filename for use as a storage key segment.
  */
 export function sanitizeFilename(name: string): string {
   return name
-    .replace(/\s+/g, '-')          // spaces → hyphens
-    .replace(/[^a-zA-Z0-9._\-]/g, '_'); // everything else unsafe → underscore
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._\-/]/g, "_");
 }
 
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", encodeKey(relKey));
-  return url;
+/** Derive a Cloudinary resource_type from a MIME type string. */
+function resourceTypeFromMime(mimeType: string): "image" | "video" | "raw" {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "video"; // Cloudinary treats audio as video
+  return "raw";
 }
 
-async function buildDownloadUrl(
-  baseUrl: string,
-  relKey: string,
-  apiKey: string
-): Promise<string> {
-  const downloadApiUrl = new URL(
-    "v1/storage/downloadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  // Encode each segment so spaces/special chars don't cause 400 from the proxy
-  downloadApiUrl.searchParams.set("path", encodeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  if (!response.ok) {
-    const msg = await response.text().catch(() => response.statusText);
-    throw new Error(`buildDownloadUrl: failed (${response.status}): ${msg}`);
-  }
-  return (await response.json()).url;
+/** Derive resource_type from file extension (used when MIME is unavailable). */
+function resourceTypeFromKey(key: string): "image" | "video" | "raw" {
+  const ext = key.split(".").pop()?.toLowerCase() ?? "";
+  if (["jpg", "jpeg", "png", "gif", "webp", "avif", "heic", "tiff", "bmp"].includes(ext)) return "image";
+  if (["mp4", "mov", "avi", "mkv", "webm", "flv", "m4v", "mp3", "wav", "aac", "m4a"].includes(ext)) return "video";
+  return "raw";
 }
 
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
+/**
+ * Build the canonical Cloudinary delivery URL for a public_id.
+ * Pure URL construction — no API call required.
+ */
+function buildCloudinaryUrl(publicId: string, resourceType: "image" | "video" | "raw"): string {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) throw new Error("CLOUDINARY_CLOUD_NAME is not set");
+  // For image/video Cloudinary appends the extension automatically; strip it from public_id
+  const pid = resourceType === "raw" ? publicId : publicId.replace(/\.[^/.]+$/, "");
+  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${pid}`;
 }
 
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
+// ─── public API ─────────────────────────────────────────────────────────────
 
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
-}
-
+/**
+ * Upload bytes to Cloudinary.
+ * Returns { key, url } — same contract as the forge proxy.
+ */
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
+  const resourceType = resourceTypeFromMime(contentType);
+
+  // Split key into folder + public_id
+  const lastSlash = key.lastIndexOf("/");
+  const folder = lastSlash >= 0 ? key.substring(0, lastSlash) : "";
+  const filename = lastSlash >= 0 ? key.substring(lastSlash + 1) : key;
+  // Remove extension from public_id — Cloudinary appends the correct one
+  const publicIdBase = filename.replace(/\.[^/.]+$/, "");
+  const publicId = folder ? `${folder}/${publicIdBase}` : publicIdBase;
+
+  const buffer = Buffer.isBuffer(data)
+    ? data
+    : Buffer.from(data as Uint8Array | string);
+
+  const result = await new Promise<any>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: resourceType,
+        public_id: publicId,
+        overwrite: true,
+        chunk_size: 20_000_000, // 20 MB — handles large drone videos
+      },
+      (error, result) => {
+        if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
+        else resolve(result);
+      }
+    );
+    uploadStream.end(buffer);
   });
 
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
-  }
-  const url = (await response.json()).url;
-  return { key, url };
-}
-
-export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+  return { key, url: result.secure_url as string };
 }
 
 /**
- * Download file bytes from storage through the authenticated proxy.
- * Use this instead of fetch(storageGet(...).url) to avoid 403/400 on CDN/presigned URLs.
- * Handles spaces and special characters in file keys automatically.
+ * Get a delivery URL for a stored key.
+ * Returns { key, url } — same contract as the forge proxy.
+ */
+export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
+  const key = normalizeKey(relKey);
+  const resourceType = resourceTypeFromKey(key);
+  const url = buildCloudinaryUrl(key, resourceType);
+  return { key, url };
+}
+
+/**
+ * Download file bytes from Cloudinary.
+ * Returns { buffer, contentType } — same contract as the forge proxy.
  */
 export async function storageDownload(relKey: string): Promise<{ buffer: Buffer; contentType: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-
-  // Step 1: get the presigned download URL.
-  // Pass the RAW key to searchParams.set — URLSearchParams encodes it once (spaces → +).
-  // Do NOT pre-encode with encodeKey() as that causes double-encoding (%20 → %2520).
-  const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(baseUrl));
-  downloadApiUrl.searchParams.set("path", key);
-  const urlResponse = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  if (!urlResponse.ok) {
-    const msg = await urlResponse.text().catch(() => urlResponse.statusText);
-    throw new Error(`storageDownload: failed to get download URL (${urlResponse.status}): ${msg}`);
+  const { url } = await storageGet(relKey);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`storageDownload: fetch failed (${response.status}) for key: ${relKey}`);
   }
-  const { url: rawPresignedUrl } = await urlResponse.json();
-
-  // Step 2: The proxy may return a CDN URL with literal spaces in the path.
-  // Encode spaces so the HTTP fetch doesn't fail with a malformed URL error.
-  const presignedUrl = rawPresignedUrl.replace(/ /g, '%20');
-  let fileResponse = await fetch(presignedUrl);
-  if (!fileResponse.ok) {
-    throw new Error(`storageDownload: fetch failed (${fileResponse.status}) for key: ${key}`);
-  }
-
-  const buffer = Buffer.from(await fileResponse.arrayBuffer());
-  const contentType = fileResponse.headers.get("content-type") || "application/octet-stream";
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const contentType = response.headers.get("content-type") || "application/octet-stream";
   return { buffer, contentType };
 }
 
-// Get a presigned URL for direct client-side uploads (bypasses server memory)
+/**
+ * Get an upload URL for direct client-side uploads.
+ * Returns { key, uploadUrl, publicUrl } — same contract as the forge proxy.
+ */
 export async function storageGetUploadUrl(
   relKey: string,
   contentType: string
 ): Promise<{ key: string; uploadUrl: string; publicUrl: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-
-  // Get presigned upload URL from the storage proxy
-  const presignUrl = new URL("v1/storage/presignUpload", ensureTrailingSlash(baseUrl));
-  presignUrl.searchParams.set("path", encodeKey(key));
-  presignUrl.searchParams.set("contentType", contentType);
-
-  const response = await fetch(presignUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(`Failed to get presigned URL (${response.status}): ${message}`);
-  }
-
-  const result = await response.json();
+  const resourceType = resourceTypeFromMime(contentType);
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) throw new Error("CLOUDINARY_CLOUD_NAME is not set");
+  const publicUrl = buildCloudinaryUrl(key, resourceType);
   return {
     key,
-    uploadUrl: result.uploadUrl,
-    publicUrl: result.url,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+    publicUrl,
   };
 }
