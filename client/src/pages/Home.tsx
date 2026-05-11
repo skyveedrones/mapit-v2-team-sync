@@ -82,16 +82,16 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover opacity-35"
         >
           <source
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
             type="video/mp4"
           />
         </video>
-        {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
-        <div className="absolute inset-0 bg-black/55" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0A0A0A]" />
+        {/* Overlay — heavy gradient for legibility */}
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black" />
 
         {/* Hero content — headline + single CTA, nothing else */}
         <motion.div
@@ -103,33 +103,23 @@ export default function Home() {
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-8 text-white"
+            className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-white text-center drop-shadow-2xl mb-6"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            <span className="block">Your job site.</span>
-            <span className="block">From above.</span>
-            <span className="block">In minutes.</span>
+            High-precision intelligence.<br />Zero complexity.
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
-            className="text-xl text-white/60 max-w-xl mx-auto mb-12 leading-relaxed"
+            className="text-lg md:text-2xl font-medium tracking-tight text-gray-400 max-w-3xl text-center mt-6 mb-10"
           >
-            MAPIT turns drone footage into interactive maps, GPS exports, and utility overlays — automatically.
+            The world is changing. Trade the fragmented workflows of the past for the speed of the future.
           </motion.p>
 
-          {/* Social proof pill */}
-          <motion.div variants={fadeInUp} className="flex justify-center mb-10">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-sm text-white/50 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] flex-shrink-0" />
-              Over 1,500 utility assets mapped.
-            </span>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 mt-10 justify-center items-center">
             <Button
               size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
+              className="bg-[#00C853] hover:bg-[#00b548] hover:scale-105 transition-transform text-black font-semibold px-8 py-4 rounded-full shadow-lg shadow-[#00C853]/20"
               onClick={() => {
                 posthog.capture('demo_started', { 
                   location: 'homepage_hero',
@@ -141,8 +131,14 @@ export default function Home() {
               Build Your Map
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
-            <p className="text-sm text-white/40 mt-6 text-center">No account required. Experience the live demo instantly.</p>
-            <p className="text-sm text-white/40 mt-2 text-center">Start your 14-day free trial. No credit card required.</p>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white bg-transparent hover:bg-white/10 px-8 py-4 rounded-full font-semibold"
+              onClick={() => setLocation("/municipal")}
+            >
+              Explore Municipal Solutions
+            </Button>
           </motion.div>
         </motion.div>
       </section>

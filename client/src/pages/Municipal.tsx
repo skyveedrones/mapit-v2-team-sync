@@ -47,7 +47,7 @@ export default function Municipal() {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/municipal_infrastructure_record.mp4" type="video/mp4" />
+          <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/municipal_hero.mp4" type="video/mp4" />
         </video>
         {/* Overlay — dark at top for nav legibility, fades to #0A0A0A at bottom */}
         <div className="absolute inset-0 bg-black/55" />
