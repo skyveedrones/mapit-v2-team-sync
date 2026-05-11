@@ -85,7 +85,7 @@ export default function Providers() {
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source
-            src="/manus-storage/12060119-hd_1920_1080_60fps_df43abf6.mp4"
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/UttlDBywMTTFVHle.mp4"
             type="video/mp4"
           />
         </video>
