@@ -82,7 +82,7 @@ export default function Providers() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-35"
+          className="absolute inset-0 w-full h-full object-cover"
         >
           <source
             src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/provider_hero.mp4"
@@ -91,7 +91,7 @@ export default function Providers() {
         </video>
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent" />
         
         {/* Content layer */}
         <div className="relative z-20 max-w-3xl mx-auto px-6 text-center" style={{ paddingTop: '60px' }}>
