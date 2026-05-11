@@ -120,7 +120,7 @@ export default function Home() {
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 mt-10 justify-center items-center">
             <Button
               size="lg"
-              className="bg-[#00C853] hover:bg-[#00b548] hover:scale-105 transition-transform text-black font-semibold px-8 py-4 rounded-full shadow-lg shadow-[#00C853]/20"
+              className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-semibold px-8 py-4 rounded-full shadow-xl"
               onClick={() => {
                 posthog.capture('demo_started', { 
                   location: 'homepage_hero',
@@ -129,17 +129,15 @@ export default function Home() {
                 setLocation("/welcome");
               }}
             >
-              Build Your Map
+              Experience MAPIT
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white bg-transparent hover:bg-white/10 px-8 py-4 rounded-full font-semibold"
+            <button
+              className="text-white font-medium hover:text-gray-300 transition-colors flex items-center gap-2"
               onClick={() => setLocation("/municipal")}
             >
-              Explore Municipal Solutions
-            </Button>
+              Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
+            </button>
           </motion.div>
         </motion.div>
       </section>
@@ -362,7 +360,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-transform duration-300"
+              className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
               onClick={() => setLocation("/pricing")}
             >
               Start Free Trial

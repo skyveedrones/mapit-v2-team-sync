@@ -141,7 +141,7 @@ export default function Providers() {
             <motion.div variants={fadeInUp}>
               <Button
                 size="lg"
-                className="bg-[#00C853] hover:bg-[#00b548] text-black font-bold px-10 py-6 text-base rounded-full shadow-lg shadow-[#00C853]/20"
+                className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-bold px-10 py-6 text-base rounded-full shadow-xl"
                 onClick={() => setLocation("/pricing")}
               >
                 Start Free Trial
@@ -328,7 +328,7 @@ export default function Providers() {
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
                 onClick={() => setLocation("/pricing")}
-                className="w-full sm:w-auto bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+                className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
               >
                 Start Free Trial
               </button>

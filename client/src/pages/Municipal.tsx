@@ -88,7 +88,7 @@ export default function Municipal() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             onClick={() => setBriefingFormOpen(true)}
-            className="inline-flex items-center gap-2 bg-[#00e676] text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-[#00b548] transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+            className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl"
           >
             Start Municipal Pilot
             <ChevronRight className="w-5 h-5" />
@@ -532,7 +532,7 @@ export default function Municipal() {
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
             onClick={() => setBriefingFormOpen(true)}
-            className="inline-flex items-center gap-2 bg-[#00e676] text-black px-10 py-4 rounded-full text-lg font-bold hover:bg-[#00b548] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00e676]/20"
+            className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
           >
             Start Municipal Pilot
             <ChevronRight className="w-5 h-5" />
