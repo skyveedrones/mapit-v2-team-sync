@@ -43,6 +43,15 @@ export default function MapView() {
   const [activeHud, setActiveHud] = useState<"layers" | "measure" | "share" | null>(null);
   const [fadeIn, setFadeIn] = useState(false);
 
+  // If a project was created, redirect to the full ProjectMap (has sidebar, GPS marker, Magic Windows)
+  useEffect(() => {
+    const storedId = sessionStorage.getItem("mapit_project_id");
+    if (storedId && !isNaN(parseInt(storedId, 10))) {
+      setLocation(`/project/${storedId}/map`);
+      return;
+    }
+  }, [setLocation]);
+
   // Trigger page fade-in on mount
   useEffect(() => {
     const t = setTimeout(() => setFadeIn(true), 50);
