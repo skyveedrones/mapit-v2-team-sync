@@ -188,18 +188,16 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-8"
+              className="text-3xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
             >
-              Cities don't have time
-              <br />
-              to wait for paper maps.
+              Manage the city. Not the maps.
             </motion.h2>
-
             <motion.p
               variants={fadeInUp}
-              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
+              className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
             >
-              Live aerial records for roads, utilities, and infrastructure. No consultants. No delays.
+              <span className="block">Live aerial records for roads, utilities, and infrastructure.</span>
+              <span className="block mt-1 md:mt-2">No consultants. No delays.</span>
             </motion.p>
 
             <motion.div variants={fadeInUp} className="mt-12">
