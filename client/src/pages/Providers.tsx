@@ -85,7 +85,7 @@ export default function Providers() {
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source
-            src="/manus-storage/ShorterConstruction_7e042e5b.mp4"
+            src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/provider_hero.mp4"
             type="video/mp4"
           />
         </video>
