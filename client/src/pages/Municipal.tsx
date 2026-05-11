@@ -544,6 +544,30 @@ export default function Municipal() {
         </div>
       </section>
 
+      {/* ─── GOVERNMENT TRUST SIGNALS ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <div className="inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-sm">
+            <svg className="w-4 h-4 text-white/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" />
+            </svg>
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/40">Trust &amp; Security</span>
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-white">
+            Built for the public trust.
+          </h2>
+          <p className="text-lg text-white/50 leading-relaxed max-w-xl mx-auto">
+            Secure cloud infrastructure. Immutable audit trails for capital projects. Public Works ready.
+          </p>
+        </motion.div>
+      </section>
+
       <Footer />
       
       {/* Municipal Briefing Form Modal */}
