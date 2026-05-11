@@ -303,6 +303,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════════════════════════════
+          PRODUCT REVEAL SECTION
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+            See the site before you step on it.
+          </h2>
+          <p className="text-xl text-gray-400">
+            Every measurement. Every utility line. Rendered in absolute clarity.
+          </p>
+        </div>
+
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(255,255,255,0.03)] bg-black">
+            {/* Temporary Placeholder Image - Will replace with MAPIT UI Mockup later */}
+            <img
+              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=3000&auto=format&fit=crop"
+              alt="MAPIT Dashboard Interface Placeholder"
+              className="w-full h-full aspect-video object-cover opacity-80"
+            />
+            {/* Cinematic bottom fade to blend into the page */}
+            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
+          </div>
+        </div>
+      </section>
+
         {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         {/* Subtle background glow */}
