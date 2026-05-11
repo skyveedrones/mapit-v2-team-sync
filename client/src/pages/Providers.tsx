@@ -75,14 +75,14 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center justify-center" style={{overflow: 'hidden'}}>
         {/* Full-bleed video */}
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         >
           <source
             src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/provider_hero.mp4"
@@ -90,8 +90,8 @@ export default function Providers() {
           />
         </video>
         {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#0A0A0A]" />
         
         {/* Content layer */}
         <div className="relative z-20 max-w-3xl mx-auto px-6 text-center" style={{ paddingTop: '60px' }}>
@@ -161,17 +161,17 @@ export default function Providers() {
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
-            className="mb-20"
+            className="mb-20 flex flex-col items-center text-center"
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight"
+              className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight text-center"
             >
               The Evolution of Delivery
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-lg text-white/50 max-w-2xl"
+              className="text-lg text-white/50 max-w-2xl text-center mx-auto"
             >
               Trade the complexity of the past for the speed of the future.
             </motion.p>

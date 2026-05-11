@@ -82,16 +82,16 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-35"
+          className="absolute inset-0 w-full h-full object-cover"
         >
           <source
             src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
             type="video/mp4"
           />
         </video>
-        {/* Overlay — heavy gradient for legibility */}
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#0A0A0A]" />
 
         {/* Hero content — headline + single CTA, nothing else */}
         <motion.div
@@ -103,7 +103,7 @@ export default function Home() {
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-white text-center drop-shadow-2xl mb-6"
+            className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tighter text-white text-center drop-shadow-2xl mb-6 max-w-5xl mx-auto"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
             High-precision intelligence.<br />Zero complexity.
