@@ -318,11 +318,10 @@ export default function Home() {
 
         <div className="w-full max-w-7xl mx-auto">
           <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(255,255,255,0.03)] bg-black">
-            {/* Temporary Placeholder Image - Will replace with MAPIT UI Mockup later */}
             <img
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=3000&auto=format&fit=crop"
-              alt="MAPIT Dashboard Interface Placeholder"
-              className="w-full h-full aspect-video object-cover opacity-80"
+              src="/manus-storage/mapit-hero-map_88ff242d.png"
+              alt="MAPIT Dashboard - GPS points on satellite map with Overlay Manager"
+              className="w-full h-full aspect-video object-cover"
             />
             {/* Cinematic bottom fade to blend into the page */}
             <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
