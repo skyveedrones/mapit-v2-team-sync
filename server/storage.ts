@@ -82,20 +82,24 @@ export async function storagePut(
     ? data
     : Buffer.from(data as Uint8Array | string);
 
+  const uploadOptions: any = {
+    resource_type: resourceType,
+    public_id: publicId,
+    overwrite: true,
+    chunk_size: 20_000_000, // 20 MB chunks
+  };
+
+  // upload_large bypasses the per-file size limit on free/starter Cloudinary plans
+  // by streaming in chunks. Use it for all files — it works for any size.
   const result = await new Promise<any>((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        resource_type: resourceType,
-        public_id: publicId,
-        overwrite: true,
-        chunk_size: 20_000_000, // 20 MB — handles large drone videos
-      },
-      (error, result) => {
+    cloudinary.uploader.upload_large(
+      buffer,
+      uploadOptions,
+      (error: any, result: any) => {
         if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
         else resolve(result);
       }
     );
-    uploadStream.end(buffer);
   });
 
   return { key, url: result.secure_url as string };
