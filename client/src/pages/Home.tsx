@@ -272,8 +272,7 @@ export default function Home() {
             >
               <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
             </video>
-            {/* Cinematic bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
+
           </div>
         </div>
       </section>
