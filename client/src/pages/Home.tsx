@@ -319,7 +319,7 @@ export default function Home() {
         <div className="w-full max-w-7xl mx-auto">
           <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(255,255,255,0.03)] bg-black">
             <img
-              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/nydvCgEifZDLquKS.png"
+              src="https://res.cloudinary.com/dp1fvan1x/image/upload/v1778601020/mapit-homepage/hero-map.png"
               alt="MAPIT Dashboard - GPS points on satellite map with Overlay Manager"
               className="w-full h-full aspect-video object-cover"
             />
