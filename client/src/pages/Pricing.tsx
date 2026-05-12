@@ -95,7 +95,11 @@ const TIERS = [
       "API Access",
       "Priority Processing",
       "Dedicated Account Manager",
+      "Smart Survey Integration",
     ],
+    specTooltips: {
+      "Smart Survey Integration": "Digitize engineering surveys instantly. Includes single point entry, batch CSV/XLS uploads, and PDF OCR data extraction.",
+    } as Record<string, string>,
     cta: "Start Your Trial",
     ctaStyle: "solid" as const,
     action: "trial",
@@ -382,12 +386,25 @@ export default function Pricing() {
 
               {/* Specs */}
               <ul className="flex-1 space-y-2.5 mb-7">
-                {tier.specs.map((spec) => (
-                  <li key={spec} className="flex items-start gap-2.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-white/62 text-sm">{spec}</span>
-                  </li>
-                ))}
+                {tier.specs.map((spec) => {
+                  const tooltip = (tier as any).specTooltips?.[spec];
+                  return (
+                    <li key={spec} className="flex items-start gap-2.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      {tooltip ? (
+                        <span className="text-white/62 text-sm group relative cursor-default">
+                          {spec}
+                          <span className="ml-1 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white/10 text-white/50 text-[9px] font-bold leading-none align-middle">i</span>
+                          <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-56 rounded-lg bg-[#1a1a1a] border border-white/10 px-3 py-2 text-xs text-white/70 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 shadow-xl">
+                            {tooltip}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-white/62 text-sm">{spec}</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* CTA */}
