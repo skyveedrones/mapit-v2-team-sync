@@ -309,10 +309,10 @@ export default function Home() {
       <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-            See the site before you step on it.
+            Your job site. From above.
           </h2>
           <p className="text-xl text-gray-400">
-            Every measurement. Every utility line. Rendered in absolute clarity.
+            Every GPS point. Every flight path. Every overlay — exactly where it belongs.
           </p>
         </div>
 
