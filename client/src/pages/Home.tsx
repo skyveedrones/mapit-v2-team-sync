@@ -188,7 +188,7 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
             >
               Manage the city. Not the maps.
             </motion.h2>
@@ -223,7 +223,7 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-8"
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
             >
               You fly the mission. We build the intelligence.
             </motion.h2>
@@ -244,6 +244,37 @@ export default function Home() {
               </a>
             </motion.div>
           </motion.div>
+        </div>
+      </section>
+
+       {/* ═══════════════════════════════════════════════════════════════════════
+          SMART SURVEY OCR SHOWCASE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
+        {/* Subtle Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
+        <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+            From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
+          </h2>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Stop manually plotting coordinates. Drop an engineering PDF into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
+          </p>
+        </div>
+        <div className="w-full max-w-5xl mx-auto relative z-10">
+          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
+            <video
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            >
+              <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
+            </video>
+            {/* Cinematic bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
+          </div>
         </div>
       </section>
 
@@ -300,37 +331,6 @@ export default function Home() {
               </motion.div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-       {/* ═══════════════════════════════════════════════════════════════════════
-          SMART SURVEY OCR SHOWCASE
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
-        {/* Subtle Background Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
-        <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
-          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-            From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Stop manually plotting coordinates. Drop an engineering PDF into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
-          </p>
-        </div>
-        <div className="w-full max-w-5xl mx-auto relative z-10">
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
-            <video
-              className="w-full h-full object-cover"
-              autoPlay
-              loop
-              muted
-              playsInline
-            >
-              <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
-            </video>
-            {/* Cinematic bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
-          </div>
         </div>
       </section>
 
