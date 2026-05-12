@@ -258,7 +258,7 @@ export default function Home() {
             From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Points Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
+            Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
           </p>
         </div>
         <div className="w-full max-w-5xl mx-auto relative z-10">
