@@ -534,20 +534,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
 
       // ── Register pin images: green for photos, orange for survey points ──
-      const registerPinImage = (id: string, color: string) => {
-        if (map.hasImage(id)) return;
-        const svg = [
-          '<svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">',
-          `<path d="M16 42C16 42 32 26.2426 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.2426 16 42 16 42Z" fill="${color}"/>`,
-          '<circle cx="16" cy="16" r="6" fill="white"/>',
-          '</svg>',
-        ].join('');
-        const img = new Image(32, 42);
-        img.onload = () => { if (!map.hasImage(id)) map.addImage(id, img); };
-        img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+      // Returns a Promise that resolves once the image is registered in the map sprite.
+      // This prevents the race condition where addLayer runs before the icon images
+      // are ready, causing Mapbox to silently drop all pins.
+      const registerPinImage = (id: string, color: string): Promise<void> => {
+        if (map.hasImage(id)) return Promise.resolve();
+        return new Promise((resolve) => {
+          const svg = [
+            '<svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">',
+            `<path d="M16 42C16 42 32 26.2426 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.2426 16 42 16 42Z" fill="${color}"/>`,
+            '<circle cx="16" cy="16" r="6" fill="white"/>',
+            '</svg>',
+          ].join('');
+          const img = new Image(32, 42);
+          img.onload = () => { if (!map.hasImage(id)) map.addImage(id, img); resolve(); };
+          img.onerror = () => resolve(); // don't block on error
+          img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+        });
       };
-      registerPinImage('skyvee-pin', '#50C878');       // green — photo GPS
-      registerPinImage('survey-pin', '#f97316');       // orange — survey points
+
+      // Wait for both pin images to load before adding source + layers
+      Promise.all([
+        registerPinImage('skyvee-pin', '#50C878'),   // green — photo GPS
+        registerPinImage('survey-pin', '#f97316'),   // orange — survey points
+      ]).then(() => {
 
       // ── Merge photo GPS + survey points into one GeoJSON source ──
       const allFeatures = [
@@ -702,6 +712,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         allPoints.forEach((p) => bounds.extend(p));
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
       }
+      }); // end Promise.all — closes the async pin-image wait
     }, [sortedMedia, converterPoints, mapLoaded, setSelectedMedia, flightPathVisible]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
