@@ -100,7 +100,7 @@ const statusLabels = {
 };
 
 export default function ProjectDetail() {
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
@@ -302,7 +302,7 @@ export default function ProjectDetail() {
   );
   const normalProjectQuery = trpc.project.get.useQuery(
     { id: projectId },
-    { enabled: !isDemoProject && projectId > 0 && !authLoading, retry: 3, retryDelay: 1000 }
+    { enabled: !isDemoProject && projectId > 0 && isAuthenticated, retry: 3, retryDelay: 1500 }
   );
   const { data: project, isLoading, error } = isDemoProject ? demoProjectQuery : normalProjectQuery;
 

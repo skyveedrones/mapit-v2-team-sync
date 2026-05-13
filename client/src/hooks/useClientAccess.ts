@@ -11,17 +11,18 @@ import { trpc } from "@/lib/trpc";
 export function useClientAccess(projectId?: number) {
   const { user } = useAuth();
   
-  // Query to check if user is the owner or collaborator of the project
-  const { data: project } = trpc.project.get.useQuery(
-    { id: projectId! },
-    { enabled: !!projectId && !!user }
-  );
+  // NOTE: Do NOT fire trpc.project.get here — ProjectDetail already fetches it
+  // and a duplicate query with an unstable `user` reference causes infinite loops.
+  // Instead, derive permissions purely from the user's role.
 
   // Query to get all projects owned by the user (for global client-only check)
   const { data: ownedProjects } = trpc.project.list.useQuery(
     undefined,
     { enabled: !projectId && !!user }
   );
+
+  // Stub — not used anymore but kept for type compatibility
+  const project: any = undefined;
 
   // If no projectId provided, check if user is client-only across all projects.
   // A user with ZERO projects is NOT client-only — they are a new owner who hasn't
@@ -42,7 +43,7 @@ export function useClientAccess(projectId?: number) {
     };
   }
 
-  if (!user || !project) {
+  if (!user) {
     return {
       isClientOnly: false,
       isOwner: false,
@@ -53,23 +54,17 @@ export function useClientAccess(projectId?: number) {
     };
   }
 
-  // Check if user is the owner
-  const isOwner = project.userId === user.id;
-
-  // Check if user has platform admin or webmaster role
+  // Derive permissions from role — no duplicate project query needed
   const isPlatformAdmin = user.role === 'admin' || user.role === 'webmaster';
-
-  // Check if user is a collaborator (would need to query collaborators)
-  // For now, we'll assume if they're not the owner but have access, they're a client user
-  // UNLESS they are a platform admin
-  const isClientOnly = !isOwner && !isPlatformAdmin;
+  const isClientRole = user.role === 'client';
+  const isClientOnly = isClientRole && !isPlatformAdmin;
 
   return {
     isClientOnly,
-    isOwner,
-    isCollaborator: false, // TODO: Implement collaborator check if needed
-    canEdit: isOwner || isPlatformAdmin, // Owner or platform admin can edit
-    canDelete: isOwner || isPlatformAdmin, // Owner or platform admin can delete
-    canView: true, // Everyone with access can view
+    isOwner: !isClientOnly,
+    isCollaborator: false,
+    canEdit: !isClientOnly,
+    canDelete: !isClientOnly,
+    canView: true,
   };
 }
