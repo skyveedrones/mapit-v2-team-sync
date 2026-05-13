@@ -153,7 +153,14 @@ export default function ProjectDetail() {
   type SidebarTab = 'media' | 'documents' | 'smart-survey' | 'reports';
   const [activeTab, setActiveTab] = useState<SidebarTab>('media');
   const [surveyPoints, setSurveyPoints] = useState<ConvertedCoordinatePoint[]>([]);
+  const [originalSurveyPoints, setOriginalSurveyPoints] = useState<ConvertedCoordinatePoint[]>([]);
   const [showSurveyPoints, setShowSurveyPoints] = useState(true);
+
+  // Capture originals when OCR data first arrives (or is replaced)
+  const handleConverterPointsChange = useCallback((pts: ConvertedCoordinatePoint[]) => {
+    setSurveyPoints(pts);
+    setOriginalSurveyPoints(pts.map(p => ({ ...p })));
+  }, []);
   const [mediaPage, setMediaPage] = useState(1);
   const MEDIA_PAGE_SIZE = 12;
 
@@ -640,7 +647,7 @@ export default function ProjectDetail() {
                   onOverlayButtonClick={handleOverlayClick}
                   projectLocation={(project as any)?.location}
                   showSurveyPoints={showSurveyPoints}
-                  onConverterPointsChange={setSurveyPoints}
+                  onConverterPointsChange={handleConverterPointsChange}
                 />
               </LazyMapWrapper>
             </motion.div>
@@ -881,22 +888,43 @@ export default function ProjectDetail() {
                         </thead>
                         <tbody>
                           {surveyPoints.map((pt, i) => {
-                            const editableCell = (field: keyof ConvertedCoordinatePoint, value: string | number | null | undefined, align: 'left' | 'right' = 'right') => {
+                            const orig = originalSurveyPoints[i];
+
+                            const isEdited = (field: 'northing' | 'easting' | 'elevation' | 'description'): boolean => {
+                              if (!orig) return false;
+                              const cur = pt[field];
+                              const orgVal = orig[field];
+                              if (cur == null && orgVal == null) return false;
+                              if (typeof cur === 'number' && typeof orgVal === 'number') {
+                                return Math.abs(cur - orgVal) > 0.0001;
+                              }
+                              return String(cur ?? '') !== String(orgVal ?? '');
+                            };
+
+                            const editableCell = (field: 'northing' | 'easting' | 'elevation' | 'description', value: string | number | null | undefined, align: 'left' | 'right' = 'right') => {
                               const cellId = `${i}-${field}`;
                               const isInvalid = invalidCells.has(cellId);
+                              const edited = isEdited(field);
                               return (
-                                <td className={`px-1 py-1 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+                                <td className={`px-1 py-1 ${align === 'right' ? 'text-right' : 'text-left'} relative group/cell`}>
                                   <input
                                     type="text"
                                     defaultValue={value != null ? String(value) : ''}
                                     onBlur={e => handleSurveyEdit(i, field, e.target.value)}
-                                    className={`w-full bg-transparent font-mono text-xs text-right px-1 py-0.5 rounded border ${
+                                    className={`w-full bg-transparent font-mono text-xs px-1 py-0.5 rounded border ${
                                       isInvalid
                                         ? 'border-red-500 text-red-400'
+                                        : edited
+                                        ? 'border-transparent text-amber-400 hover:border-amber-500/50 focus:border-amber-500'
                                         : 'border-transparent hover:border-border focus:border-orange-500'
                                     } focus:outline-none focus:bg-muted/30 transition-colors`}
                                     style={{ minWidth: field === 'description' ? '80px' : '70px', textAlign: align }}
                                   />
+                                  {edited && !isInvalid && (
+                                    <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 z-10 hidden group-hover/cell:flex items-center gap-1 whitespace-nowrap rounded bg-amber-900/90 px-2 py-1 text-[10px] text-amber-200 shadow-lg">
+                                      ✎ Manually Edited
+                                    </span>
+                                  )}
                                 </td>
                               );
                             };
