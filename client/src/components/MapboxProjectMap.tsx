@@ -90,7 +90,7 @@ export interface MapboxProjectMapHandle {
   openSidebar: () => void;
 }
 
-interface ConvertedCoordinatePoint {
+export interface ConvertedCoordinatePoint {
   latitude: number;
   longitude: number;
   identifier?: string;
@@ -140,6 +140,10 @@ interface MapboxProjectMapProps {
   hideHeader?: boolean;
   /** When true, user is unauthenticated/demo — lock Add Map Overlay and Show Flight Path with premium popups */
   isGuestUser?: boolean;
+  /** When false, survey control points are hidden from the map (default: true) */
+  showSurveyPoints?: boolean;
+  /** Called whenever the converterPoints array changes — used by parent to display Smart Survey tab */
+  onConverterPointsChange?: (points: ConvertedCoordinatePoint[]) => void;
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -205,6 +209,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       isGuestUser = false,
       hideHeader = false,
       isTourActive = false,
+      showSurveyPoints = true,
+      onConverterPointsChange,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -280,8 +286,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const batchCSF = sharedCSF;
     const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
     const [batchLoading, setBatchLoading] = useState(false);
-    const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
-
+     const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
+    // Notify parent whenever converterPoints changes (for Smart Survey tab)
+    useEffect(() => { onConverterPointsChange?.(converterPoints); }, [converterPoints, onConverterPointsChange]);
     // PDF Extract state
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const pdfCRS = sharedCRS;
@@ -488,7 +495,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               isSurveyPoint: false,
             },
           })),
-          ...converterPoints
+          ...(showSurveyPoints ? converterPoints
             .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
             .map((pt) => ({
               type: 'Feature' as const,
@@ -501,7 +508,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 isSurveyPoint: true,
                 easting: pt.easting ?? null, northing: pt.northing ?? null,
               },
-            })),
+            })) : []),
         ];
         if (map.getSource('media-source')) {
           (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features: allFeatures });
@@ -573,7 +580,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             isSurveyPoint: false,
           },
         })),
-        ...converterPoints
+        ...(showSurveyPoints ? converterPoints
           .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
           .map((pt) => ({
             type: 'Feature' as const,
@@ -586,7 +593,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               isSurveyPoint: true,
               easting: pt.easting ?? null, northing: pt.northing ?? null,
             },
-          })),
+          })) : []),
       ];
 
       map.addSource('media-source', { type: 'geojson', data: { type: 'FeatureCollection', features: allFeatures } });
@@ -704,9 +711,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       // Fit bounds to all points (photo GPS + survey)
       const allPoints = [
         ...sortedMedia.map((m) => [parseFloat(m.longitude!), parseFloat(m.latitude!)] as [number, number]),
-        ...converterPoints
+        ...(showSurveyPoints ? converterPoints
           .filter((pt) => pt.longitude && pt.latitude && !isNaN(pt.longitude) && !isNaN(pt.latitude))
-          .map((pt) => [pt.longitude, pt.latitude] as [number, number]),
+          .map((pt) => [pt.longitude, pt.latitude] as [number, number]) : []),
       ];
       if (allPoints.length > 1) {
         const bounds = new mapboxgl.LngLatBounds();
@@ -717,7 +724,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         map.flyTo({ center: allPoints[0], zoom: 18, pitch: 45, bearing: 0, duration: 2500, essential: true });
       }
       }); // end Promise.all — closes the async pin-image wait
-    }, [sortedMedia, converterPoints, mapLoaded, setSelectedMedia, flightPathVisible]);
+    }, [sortedMedia, converterPoints, mapLoaded, setSelectedMedia, flightPathVisible, showSurveyPoints]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
     // Uses a ref to track the Marker instance so it can be properly removed

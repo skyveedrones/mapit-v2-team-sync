@@ -9,7 +9,7 @@ import { useClientAccess } from "@/hooks/useClientAccess";
 import { BackToDashboard } from "@/components/BackToDashboard";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
-import { MapboxProjectMap, type MapboxProjectMapHandle } from "@/components/MapboxProjectMap";
+import { MapboxProjectMap, type MapboxProjectMapHandle, type ConvertedCoordinatePoint } from "@/components/MapboxProjectMap";
 import { LazyMapWrapper } from "@/components/LazyMapWrapper";
 import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { FlightCard } from "@/components/FlightCard";
@@ -59,8 +59,12 @@ import {
   Upload,
   User,
   Users,
+  ScanLine,
+  BarChart2,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -142,6 +146,14 @@ export default function ProjectDetail() {
   const [warrantyReminderDialogOpen, setWarrantyReminderDialogOpen] = useState(false);
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [sampleReportDialogOpen, setSampleReportDialogOpen] = useState(false);
+
+  // ── Horizontal tab state ──────────────────────────────────────────────────
+  type SidebarTab = 'media' | 'documents' | 'smart-survey' | 'reports';
+  const [activeTab, setActiveTab] = useState<SidebarTab>('media');
+  const [surveyPoints, setSurveyPoints] = useState<ConvertedCoordinatePoint[]>([]);
+  const [showSurveyPoints, setShowSurveyPoints] = useState(true);
+  const [mediaPage, setMediaPage] = useState(1);
+  const MEDIA_PAGE_SIZE = 12;
 
 
   // Fetch project details - always call both hooks, enable only the correct one
@@ -428,35 +440,16 @@ export default function ProjectDetail() {
                         <Plane className="h-4 w-4 mr-2 text-green-500" />
                         Hire a Pilot
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {/* Owner and editor actions */}
                       {demoCanEdit && (
-                        <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
-                          <Plane className="h-4 w-4 mr-2 text-sky-500" />
-                          New Flight
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setNewFlightDialogOpen(true)}>
+                            <Plane className="h-4 w-4 mr-2 text-sky-500" />
+                            New Flight
+                          </DropdownMenuItem>
+                        </>
                       )}
-                      <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
-                        <FileText className="h-4 w-4 mr-2 text-orange-500" />
-                        Generate Report
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setCorrectiveReportOpen(true)}>
-                        <FileText className="h-4 w-4 mr-2 text-red-500" />
-                        Corrective Actions Report
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setPunchlistReportOpen(true)}>
-                        <FileText className="h-4 w-4 mr-2 text-yellow-500" />
-                        Punchlist Report
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => isDemoProject ? null : setExportDialogOpen(true)}
-                        disabled={isDemoProject}
-                      >
-                        <Download className="h-4 w-4 mr-2 text-purple-500" />
-                        Export GPS Data {isDemoProject && '(Demo)'}
-                      </DropdownMenuItem>
-                      {/* Project Map Overlay moved to Overlay Manager sidebar */}
-                      {/* Owner-only actions */}
+                      {/* Owner-only admin actions */}
                       {isOwner && !isDemoProject && (
                         <>
                           <DropdownMenuSeparator />
@@ -470,13 +463,13 @@ export default function ProjectDetail() {
                             Edit Project
                           </DropdownMenuItem>
                           {(user?.role === 'admin' || user?.role === 'webmaster') && (
-                          <DropdownMenuItem
-                            onClick={() => setDeleteDialogOpen(true)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Project
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setDeleteDialogOpen(true)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Project
+                            </DropdownMenuItem>
                           )}
                         </>
                       )}
@@ -552,6 +545,8 @@ export default function ProjectDetail() {
                   }}
                   onOverlayButtonClick={handleOverlayClick}
                   projectLocation={(project as any)?.location}
+                  showSurveyPoints={showSurveyPoints}
+                  onConverterPointsChange={setSurveyPoints}
                 />
               </LazyMapWrapper>
             </motion.div>
@@ -593,81 +588,263 @@ export default function ProjectDetail() {
               </motion.div>
             )}
 
-            {/* Media Section */}
-            <motion.div variants={fadeInUp}>
-              <div className="flex items-center justify-between mb-4">
-                <h2
-                  className="text-lg font-semibold"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Project Media
-                </h2>
+            {/* ── 4-Tab Panel: Media / Documents / Smart Survey / Reports ── */}
+            <motion.div variants={fadeInUp} className="mt-2">
+              {/* Tab Bar */}
+              <div className="flex items-center border-b border-border mb-6 overflow-x-auto">
+                {([
+                  { id: 'media', label: 'Media', icon: Image },
+                  { id: 'documents', label: 'Documents', icon: FileText },
+                  { id: 'smart-survey', label: 'Smart Survey', icon: ScanLine },
+                  { id: 'reports', label: 'Reports', icon: BarChart2 },
+                ] as { id: SidebarTab; label: string; icon: React.ElementType }[]).map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                      activeTab === tab.id
+                        ? 'border-emerald-500 text-emerald-500'
+                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                    }`}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                    {tab.id === 'smart-survey' && surveyPoints.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-orange-500/20 text-orange-400">
+                        {surveyPoints.length}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {hasMedia ? (
-                <div id="media-gallery">
-                <MediaGallery
-                  isDemoProject={isDemoProject}
-                  projectId={projectId} 
-                  canEdit={canEdit}
-                  onUploadClick={() => setUploadDialogOpen(true)}
-                />
-                </div>
-              ) : (
-                <Card className="border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Image className="h-8 w-8 text-muted-foreground" />
+              {/* Media Tab */}
+              {activeTab === 'media' && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Upload drone photos and videos. Files with embedded GPS data automatically place a pin on the project map.
+                  </p>
+                  {hasMedia ? (
+                    <div id="media-gallery">
+                      <MediaGallery
+                        isDemoProject={isDemoProject}
+                        projectId={projectId}
+                        canEdit={canEdit}
+                        onUploadClick={() => setUploadDialogOpen(true)}
+                      />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      {demoCanEdit 
-                        ? "Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map."
-                        : "No media has been uploaded to this project yet."}
-                    </p>
-                    {demoCanEdit && (
-                      <Button
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => setUploadDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Upload Media
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                  ) : (
+                    <Card className="border-dashed">
+                      <CardContent className="py-12 text-center">
+                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                          <Image className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
+                        <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                          {demoCanEdit
+                            ? 'Upload drone photos and videos to this project. Media with GPS data will automatically appear on the map.'
+                            : 'No media has been uploaded to this project yet.'}
+                        </p>
+                        {demoCanEdit && (
+                          <Button
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                            onClick={() => setUploadDialogOpen(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Upload Media
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               )}
-            </motion.div>
 
-            {/* Project Documents */}
-            <motion.div variants={fadeInUp}>
-              <ProjectDocuments
-                projectId={projectId}
-                onOverlayAdded={(overlayId?: number, overlayData?: any) => {
-                  // Scroll to map section
-                  const mapElement = document.getElementById('project-map-section');
-                  if (mapElement) mapElement.scrollIntoView({ behavior: 'smooth' });
-                  // Refetch project data so the new overlay appears
-                  const refetchFn = isDemoProject ? demoProjectQuery.refetch : normalProjectQuery.refetch;
-                  refetchFn().then(() => {
-                    // After data is refreshed, auto-launch alignment editor for the new overlay
-                    if (overlayId != null && mapRef.current) {
-                      // Give the map a moment to render the new overlay source
-                      setTimeout(() => {
-                        // Build an OverlayData object from what convertDocumentToPng returned
-                        const freshOverlays: any[] = (isDemoProject
-                          ? (demoProjectQuery.data as any)?.overlays
-                          : (normalProjectQuery.data as any)?.overlays) ?? [];
-                        const targetOverlay = freshOverlays.find((o: any) => o.id === overlayId)
-                          ?? overlayData;
-                        if (targetOverlay) {
-                          mapRef.current?.startEditingOverlay(targetOverlay);
+              {/* Documents Tab */}
+              {activeTab === 'documents' && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Upload engineering PDFs, CAD files, and blueprints. PDF overlays can be pinned directly onto the project map.
+                  </p>
+                  <ProjectDocuments
+                    projectId={projectId}
+                    onOverlayAdded={(overlayId?: number, overlayData?: any) => {
+                      const mapElement = document.getElementById('project-map-section');
+                      if (mapElement) mapElement.scrollIntoView({ behavior: 'smooth' });
+                      const refetchFn = isDemoProject ? demoProjectQuery.refetch : normalProjectQuery.refetch;
+                      refetchFn().then(() => {
+                        if (overlayId != null && mapRef.current) {
+                          setTimeout(() => {
+                            const freshOverlays: any[] = (isDemoProject
+                              ? (demoProjectQuery.data as any)?.overlays
+                              : (normalProjectQuery.data as any)?.overlays) ?? [];
+                            const targetOverlay = freshOverlays.find((o: any) => o.id === overlayId) ?? overlayData;
+                            if (targetOverlay) mapRef.current?.startEditingOverlay(targetOverlay);
+                          }, 600);
                         }
-                      }, 600);
-                    }
-                  });
-                }}
-              />
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Smart Survey Tab */}
+              {activeTab === 'smart-survey' && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-semibold">Extracted Survey Control Points</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Points extracted from engineering PDFs via the OCR tool (Import Survey Points → PDF tab in the map sidebar).
+                      </p>
+                    </div>
+                    {surveyPoints.length > 0 && (
+                      <button
+                        onClick={() => setShowSurveyPoints((v) => !v)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          showSurveyPoints
+                            ? 'border-orange-500/40 bg-orange-500/10 text-orange-400'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {showSurveyPoints ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                        {showSurveyPoints ? 'Visible on Map' : 'Hidden from Map'}
+                      </button>
+                    )}
+                  </div>
+
+                  {surveyPoints.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="py-10 text-center">
+                        <ScanLine className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                        <h3 className="text-base font-semibold mb-1">No survey points extracted yet</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                          Use the <strong>Import Survey Points → PDF</strong> tab inside the map's Overlay Manager to scan an engineering PDF and extract PNEZD control points.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="overflow-x-auto rounded-lg border border-border">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border bg-muted/40">
+                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">#</th>
+                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Point ID</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Northing</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Easting</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lat</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lng</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {surveyPoints.map((pt, i) => (
+                            <tr key={pt.index} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${
+                              i % 2 === 0 ? '' : 'bg-muted/10'
+                            }`}>
+                              <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                              <td className="px-3 py-2 font-medium text-orange-400">{pt.identifier || `SP-${pt.index + 1}`}</td>
+                              <td className="px-3 py-2 text-right font-mono">{pt.northing != null ? pt.northing.toFixed(3) : '—'}</td>
+                              <td className="px-3 py-2 text-right font-mono">{pt.easting != null ? pt.easting.toFixed(3) : '—'}</td>
+                              <td className="px-3 py-2 text-right font-mono">{pt.latitude.toFixed(7)}</td>
+                              <td className="px-3 py-2 text-right font-mono">{pt.longitude.toFixed(7)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Reports Tab */}
+              {activeTab === 'reports' && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-5">
+                    Generate and export project reports. All reports are compiled from the current project data.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={() => setReportDialogOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Generate Report</p>
+                        <p className="text-xs text-muted-foreground">Full project summary PDF</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setCorrectiveReportOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-red-500/40 hover:bg-red-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Corrective Actions Report</p>
+                        <p className="text-xs text-muted-foreground">Document corrective actions</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setPunchlistReportOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-yellow-500/40 hover:bg-yellow-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Punchlist Report</p>
+                        <p className="text-xs text-muted-foreground">Track outstanding items</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => isDemoProject ? toast.info('Export disabled on demo project') : setExportDialogOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-purple-500/40 hover:bg-purple-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                        <Download className="h-5 w-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Export GPS Data</p>
+                        <p className="text-xs text-muted-foreground">KML, CSV, GeoJSON, GPX</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (surveyPoints.length === 0) {
+                          toast.info('No survey points to export. Extract points via the map\'s PDF tool first.');
+                          return;
+                        }
+                        const rows = ['Point ID,Northing,Easting,Latitude,Longitude'];
+                        surveyPoints.forEach((pt) => {
+                          rows.push(`${pt.identifier || 'SP-' + (pt.index + 1)},${pt.northing ?? ''},${pt.easting ?? ''},${pt.latitude},${pt.longitude}`);
+                        });
+                        const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${project.name}-survey-points.csv`; a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success('Survey points exported as CSV');
+                      }}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                        <ScanLine className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Export Smart Survey</p>
+                        <p className="text-xs text-muted-foreground">Download survey points as CSV</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Project Metadata */}
