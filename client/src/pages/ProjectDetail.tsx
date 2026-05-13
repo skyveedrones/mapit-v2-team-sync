@@ -1030,9 +1030,10 @@ export default function ProjectDetail() {
                           toast.info('No survey points to export. Extract points via the map\'s PDF tool first.');
                           return;
                         }
-                        const rows = ['Point ID,Northing,Easting,Latitude,Longitude'];
+                        const rows = ['Point ID,Northing,Easting,Elevation,Latitude,Longitude,Description'];
                         surveyPoints.forEach((pt) => {
-                          rows.push(`${pt.identifier || 'SP-' + (pt.index + 1)},${pt.northing ?? ''},${pt.easting ?? ''},${pt.latitude},${pt.longitude}`);
+                          const desc = (pt.description ?? '').replace(/,/g, ';'); // escape commas
+                          rows.push(`${pt.identifier || 'SP-' + (pt.index + 1)},${pt.northing ?? ''},${pt.easting ?? ''},${pt.elevation ?? ''},${pt.latitude},${pt.longitude},${desc}`);
                         });
                         const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
                         const url = URL.createObjectURL(blob);
