@@ -39,10 +39,11 @@ const isDemoRoute = () => {
   const onboardingFunnelPaths = ['/welcome', '/name', '/create', '/map', '/signup', '/login', '/pricing', '/municipal', '/referral'];
   if (onboardingFunnelPaths.includes(path)) return true;
   // Check for demo routes: /demo, /demo/*, /project/1, /project/1/*
+  // Also bypass all /project/* routes — the page handles its own auth/error state
+  // and retries after Clerk loads. We must not redirect before the retry fires.
   const isDemoPath = path === '/demo' || 
                      path.startsWith('/demo/') || 
-                     path === '/project/1' || 
-                     path.startsWith('/project/1/');
+                     path.startsWith('/project/');
   if (isDemoPath) return true;
   // Also bypass redirect for onboarding trial projects (unauthenticated users)
   // The project ID is stored in sessionStorage during the Create flow
