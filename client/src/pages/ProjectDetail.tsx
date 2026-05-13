@@ -732,8 +732,10 @@ export default function ProjectDetail() {
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Point ID</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Northing</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Easting</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Elev</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lat</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lng</th>
+                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Description</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -745,8 +747,10 @@ export default function ProjectDetail() {
                               <td className="px-3 py-2 font-medium text-orange-400">{pt.identifier || `SP-${pt.index + 1}`}</td>
                               <td className="px-3 py-2 text-right font-mono">{pt.northing != null ? pt.northing.toFixed(3) : '—'}</td>
                               <td className="px-3 py-2 text-right font-mono">{pt.easting != null ? pt.easting.toFixed(3) : '—'}</td>
+                              <td className="px-3 py-2 text-right font-mono">{pt.elevation != null ? pt.elevation.toFixed(3) : '—'}</td>
                               <td className="px-3 py-2 text-right font-mono">{pt.latitude.toFixed(7)}</td>
                               <td className="px-3 py-2 text-right font-mono">{pt.longitude.toFixed(7)}</td>
+                              <td className="px-3 py-2 text-muted-foreground">{pt.description || '—'}</td>
                             </tr>
                           ))}
                         </tbody>

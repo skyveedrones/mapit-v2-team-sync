@@ -97,6 +97,8 @@ export interface ConvertedCoordinatePoint {
   index: number;
   easting?: number;
   northing?: number;
+  elevation?: number | null;
+  description?: string;
 }
 
 interface ConversionResult {
@@ -1610,6 +1612,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         index: converterPoints.length + i,
         easting: p.easting,
         northing: p.northing,
+        elevation: p.elevation,
+        description: p.description,
       }));
       markersRenderedForRef.current = '';
       setConverterPoints(prev => [...prev, ...newPoints]);
