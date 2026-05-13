@@ -219,6 +219,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const measureMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const converterFileInputRef = useRef<HTMLInputElement | null>(null);
     const converterMarkersRef = useRef<mapboxgl.Marker[]>([]); // DOM markers for converted survey points
+    const primaryMarkerRef = useRef<mapboxgl.Marker | null>(null); // Primary project location marker
     // Tracks whether markers have been placed for the current sortedMedia set
     const markersRenderedForRef = useRef<string>("");
 
@@ -711,24 +712,40 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const bounds = new mapboxgl.LngLatBounds();
         allPoints.forEach((p) => bounds.extend(p));
         map.fitBounds(bounds, { padding: 60, maxZoom: 17 });
+      } else if (allPoints.length === 1) {
+        // Single point: fly directly to it at a close zoom
+        map.flyTo({ center: allPoints[0], zoom: 18, pitch: 45, bearing: 0, duration: 2500, essential: true });
       }
       }); // end Promise.all — closes the async pin-image wait
     }, [sortedMedia, converterPoints, mapLoaded, setSelectedMedia, flightPathVisible]);
 
     // ── Primary Project Marker — shown when projectLocation exists but no media GPS yet ──
+    // Uses a ref to track the Marker instance so it can be properly removed
+    // (calling .remove() on the DOM element alone leaves the Mapbox Marker on the map).
     useEffect(() => {
       const map = mapRef.current;
+
+      // When media GPS arrives, remove the primary marker and bail
+      if (mediaWithGPS.length > 0) {
+        if (primaryMarkerRef.current) {
+          primaryMarkerRef.current.remove();
+          primaryMarkerRef.current = null;
+        }
+        return;
+      }
+
       if (!map || !mapLoaded || !projectLocation) return;
-      if (mediaWithGPS.length > 0) return; // media markers take over
 
       // Parse "lat, lng" string
       const parts = projectLocation.split(',').map((s) => parseFloat(s.trim()));
       if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
       const [lat, lng] = parts;
 
-      // Remove existing primary marker if any
-      const existing = document.getElementById('primary-project-marker');
-      if (existing) existing.remove();
+      // Remove any existing primary marker before creating a new one
+      if (primaryMarkerRef.current) {
+        primaryMarkerRef.current.remove();
+        primaryMarkerRef.current = null;
+      }
 
       // Create bold white pin element
       const el = document.createElement('div');
@@ -738,11 +755,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         'background:none', 'border:none', 'padding:0',
       ].join(';');
       el.innerHTML = `<svg width="36" height="48" viewBox="0 0 36 48" fill="none" xmlns="http://www.w3.org/2000/svg">`
-        + `<path d="M18 48C18 48 36 30.2426 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 30.2426 18 48 18 48Z" fill="white"/>`
+        + `<path d="M18 48C18 48 36 30.2426 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 7.16344 0 18C0 30.2426 18 48 18 48Z" fill="white"/>`
         + `<circle cx="18" cy="18" r="7" fill="#10b981"/>`
         + `</svg>`;
 
-      new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+      primaryMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([lng, lat])
         .addTo(map);
     }, [mapLoaded, projectLocation, mediaWithGPS.length]);
