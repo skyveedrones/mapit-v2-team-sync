@@ -100,7 +100,7 @@ const statusLabels = {
 };
 
 export default function ProjectDetail() {
-  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const projectId = parseInt(params.id || "0", 10);
@@ -184,21 +184,25 @@ export default function ProjectDetail() {
 
   // tRPC mutation to persist survey points
   const updateSurveyPointsMutation = trpc.project.updateSurveyPoints.useMutation();
+  // Store mutation in a ref so persistSurveyPoints has a stable reference (avoids infinite loop)
+  const updateSurveyPointsMutationRef = useRef(updateSurveyPointsMutation);
+  useEffect(() => { updateSurveyPointsMutationRef.current = updateSurveyPointsMutation; });
   const [isSavingSurvey, setIsSavingSurvey] = useState(false);
   const surveyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced save helper — call whenever surveyPoints changes
+  // Uses a ref for the mutation so this callback never changes reference
   const persistSurveyPoints = useCallback((pts: ConvertedCoordinatePoint[]) => {
     if (isDemoProject || projectId <= 0) return;
     if (surveyDebounceRef.current) clearTimeout(surveyDebounceRef.current);
     setIsSavingSurvey(true);
     surveyDebounceRef.current = setTimeout(() => {
-      updateSurveyPointsMutation.mutate(
+      updateSurveyPointsMutationRef.current.mutate(
         { id: projectId, surveyPoints: JSON.stringify(pts) },
         { onSettled: () => setIsSavingSurvey(false) }
       );
     }, 800);
-  }, [isDemoProject, projectId, updateSurveyPointsMutation]);
+  }, [isDemoProject, projectId]);
 
   // Capture originals when OCR data first arrives (or is replaced)
   const handleConverterPointsChange = useCallback((pts: ConvertedCoordinatePoint[]) => {
@@ -302,7 +306,7 @@ export default function ProjectDetail() {
   );
   const normalProjectQuery = trpc.project.get.useQuery(
     { id: projectId },
-    { enabled: !isDemoProject && projectId > 0 && isAuthenticated, retry: 3, retryDelay: 1500 }
+    { enabled: !isDemoProject && projectId > 0 }
   );
   const { data: project, isLoading, error } = isDemoProject ? demoProjectQuery : normalProjectQuery;
 
