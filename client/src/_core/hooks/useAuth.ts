@@ -79,7 +79,6 @@ export function useAuth(options?: UseAuthOptions) {
     const meLoading = Boolean(isSignedIn) && meQuery.isLoading && !meTimedOut;
     const loading = !effectivelyLoaded || meLoading;
     const user = meQuery.data ?? null;
-    localStorage.setItem("manus-runtime-user-info", JSON.stringify(user));
     return {
       user,
       loading,
@@ -88,6 +87,11 @@ export function useAuth(options?: UseAuthOptions) {
       isAuthenticated: Boolean(isSignedIn) && (Boolean(user) || meTimedOut),
     };
   }, [effectivelyLoaded, isSignedIn, meQuery.data, meQuery.error, meQuery.isLoading, meTimedOut]);
+
+  // Side effect: persist user info to localStorage (must be outside useMemo)
+  useEffect(() => {
+    localStorage.setItem("manus-runtime-user-info", JSON.stringify(state.user));
+  }, [state.user]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
