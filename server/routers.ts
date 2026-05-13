@@ -143,6 +143,7 @@ const updateProjectSchema = z.object({
   dronePilot: z.string().max(255).nullable().optional(),
   faaLicenseNumber: z.string().max(100).nullable().optional(),
   laancAuthNumber: z.string().max(100).nullable().optional(),
+  defaultCrs: z.string().max(50).nullable().optional(),
 });
 
 // Helper function to extract EXIF GPS data from image buffer

@@ -259,6 +259,7 @@ export const projects = mysqlTable("projects", {
 	deletedAt: timestamp({ mode: 'string' }),
 	deletedBy: int(),
 	isPinned: tinyint({ unsigned: false }).default(0).notNull(),
+	defaultCrs: varchar({ length: 50 }),
 },
 (table) => [
 	index("idx_projects_deleted").on(table.deletedAt),

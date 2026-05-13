@@ -64,7 +64,9 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import proj4 from 'proj4';
+import { SPCS_STATES, SPCS_ZONE_BY_KEY, DEFAULT_SPCS_KEY } from '../../../shared/spcsZones';
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -155,6 +157,85 @@ export default function ProjectDetail() {
   const [mediaPage, setMediaPage] = useState(1);
   const MEDIA_PAGE_SIZE = 12;
 
+  // ── CRS cascading state ───────────────────────────────────────────────────
+  const [crsState, setCrsState] = useState<string>('TX'); // 2-letter abbr
+  const [crsZoneKey, setCrsZoneKey] = useState<string>(DEFAULT_SPCS_KEY);
+  const [invalidCells, setInvalidCells] = useState<Set<string>>(new Set());
+  const crsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derive zone list from selected state
+  const crsZones = useMemo(() => {
+    const found = SPCS_STATES.find(s => s.abbr === crsState);
+    return found ? found.zones : [];
+  }, [crsState]);
+
+  // When state changes, auto-select first zone
+  useEffect(() => {
+    if (crsZones.length > 0) {
+      setCrsZoneKey(crsZones[0].key);
+    }
+  }, [crsState, crsZones]);
+
+  // tRPC mutation to persist defaultCrs
+  const updateProjectMutation = trpc.project.update.useMutation();
+
+  // Client-side proj4 re-projection
+  const reprojectPoint = useCallback((northing: number, easting: number, zoneKey: string): { lat: number; lng: number } | null => {
+    try {
+      const zone = SPCS_ZONE_BY_KEY[zoneKey];
+      if (!zone) return null;
+      const WGS84 = '+proj=longlat +datum=WGS84 +no_defs';
+      const [lng, lat] = proj4(zone.proj4String, WGS84, [easting, northing]) as [number, number];
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      return { lat, lng };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Handle editable cell changes
+  const handleSurveyEdit = useCallback((index: number, field: keyof ConvertedCoordinatePoint, rawValue: string) => {
+    setSurveyPoints(prev => {
+      const updated = [...prev];
+      const pt = { ...updated[index] };
+      const cellId = `${index}-${field}`;
+
+      if (field === 'description') {
+        pt.description = rawValue;
+        setInvalidCells(s => { const n = new Set(s); n.delete(cellId); return n; });
+      } else if (field === 'elevation') {
+        const num = parseFloat(rawValue);
+        if (!Number.isFinite(num) && rawValue !== '' && rawValue !== '-') {
+          setInvalidCells(s => new Set(s).add(cellId));
+        } else {
+          pt.elevation = rawValue === '' ? null : num;
+          setInvalidCells(s => { const n = new Set(s); n.delete(cellId); return n; });
+        }
+      } else if (field === 'northing' || field === 'easting') {
+        const num = parseFloat(rawValue);
+        if (!Number.isFinite(num) && rawValue !== '' && rawValue !== '-') {
+          setInvalidCells(s => new Set(s).add(cellId));
+        } else {
+          if (field === 'northing') pt.northing = rawValue === '' ? undefined : num;
+          if (field === 'easting') pt.easting = rawValue === '' ? undefined : num;
+          setInvalidCells(s => { const n = new Set(s); n.delete(cellId); return n; });
+          // Re-project if both northing and easting are valid
+          const newNorthing = field === 'northing' ? num : (pt.northing ?? NaN);
+          const newEasting = field === 'easting' ? num : (pt.easting ?? NaN);
+          if (Number.isFinite(newNorthing) && Number.isFinite(newEasting)) {
+            const result = reprojectPoint(newNorthing, newEasting, crsZoneKey);
+            if (result) {
+              pt.latitude = result.lat;
+              pt.longitude = result.lng;
+            }
+          }
+        }
+      }
+      updated[index] = pt;
+      return updated;
+    });
+  }, [crsZoneKey, reprojectPoint]);
+
 
   // Fetch project details - always call both hooks, enable only the correct one
   const demoProjectQuery = trpc.project.getDemo.useQuery(
@@ -166,6 +247,19 @@ export default function ProjectDetail() {
     { enabled: !isDemoProject && projectId > 0 }
   );
   const { data: project, isLoading, error } = isDemoProject ? demoProjectQuery : normalProjectQuery;
+
+  // Seed CRS from project.defaultCrs when project loads
+  useEffect(() => {
+    const saved = (project as any)?.defaultCrs;
+    if (!saved) return;
+    for (const s of SPCS_STATES) {
+      if (s.zones.some(z => z.key === saved)) {
+        setCrsState(s.abbr);
+        setCrsZoneKey(saved);
+        break;
+      }
+    }
+  }, [(project as any)?.defaultCrs]);
 
   // Fetch media list - always call both hooks, enable only the correct one
   const demoMediaQuery = trpc.media.listDemo.useQuery(
@@ -691,7 +785,8 @@ export default function ProjectDetail() {
               {/* Smart Survey Tab */}
               {activeTab === 'smart-survey' && (
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  {/* Header row: title + map toggle */}
+                  <div className="flex items-center justify-between mb-3">
                     <div>
                       <h3 className="text-sm font-semibold">Extracted Survey Control Points</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -713,6 +808,52 @@ export default function ProjectDetail() {
                     )}
                   </div>
 
+                  {/* Cascading CRS dropdowns */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4 p-3 rounded-lg border border-border bg-muted/20">
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Coordinate System:</span>
+                    <select
+                      value={crsState}
+                      onChange={e => {
+                        setCrsState(e.target.value);
+                      }}
+                      className="text-xs bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    >
+                      {SPCS_STATES.map(s => (
+                        <option key={s.abbr} value={s.abbr}>{s.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={crsZoneKey}
+                      onChange={e => {
+                        const newKey = e.target.value;
+                        setCrsZoneKey(newKey);
+                        // Re-project all existing points with new zone
+                        setSurveyPoints(prev => prev.map(pt => {
+                          if (pt.northing != null && pt.easting != null) {
+                            const result = reprojectPoint(pt.northing, pt.easting, newKey);
+                            if (result) return { ...pt, latitude: result.lat, longitude: result.lng };
+                          }
+                          return pt;
+                        }));
+                        // Persist to project
+                        if (!isDemoProject && projectId > 0) {
+                          if (crsDebounceRef.current) clearTimeout(crsDebounceRef.current);
+                          crsDebounceRef.current = setTimeout(() => {
+                            updateProjectMutation.mutate({ id: projectId, defaultCrs: newKey });
+                          }, 800);
+                        }
+                      }}
+                      className="text-xs bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    >
+                      {crsZones.map(z => (
+                        <option key={z.key} value={z.key}>{z.name} (EPSG:{z.epsg})</option>
+                      ))}
+                    </select>
+                    {updateProjectMutation.isPending && (
+                      <span className="text-xs text-muted-foreground">Saving…</span>
+                    )}
+                  </div>
+
                   {surveyPoints.length === 0 ? (
                     <Card className="border-dashed">
                       <CardContent className="py-10 text-center">
@@ -728,33 +869,57 @@ export default function ProjectDetail() {
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-border bg-muted/40">
-                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">#</th>
-                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Point ID</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Northing</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Easting</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Elev</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lat</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Lng</th>
-                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Description</th>
+                            <th className="px-2 py-2 text-left font-semibold text-muted-foreground">#</th>
+                            <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Point ID</th>
+                            <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Northing</th>
+                            <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Easting</th>
+                            <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Elev</th>
+                            <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Lat</th>
+                            <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Lng</th>
+                            <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Description</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {surveyPoints.map((pt, i) => (
-                            <tr key={pt.index} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${
-                              i % 2 === 0 ? '' : 'bg-muted/10'
-                            }`}>
-                              <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
-                              <td className="px-3 py-2 font-medium text-orange-400">{pt.identifier || `SP-${pt.index + 1}`}</td>
-                              <td className="px-3 py-2 text-right font-mono">{pt.northing != null ? pt.northing.toFixed(3) : '—'}</td>
-                              <td className="px-3 py-2 text-right font-mono">{pt.easting != null ? pt.easting.toFixed(3) : '—'}</td>
-                              <td className="px-3 py-2 text-right font-mono">{pt.elevation != null ? pt.elevation.toFixed(3) : '—'}</td>
-                              <td className="px-3 py-2 text-right font-mono">{pt.latitude.toFixed(7)}</td>
-                              <td className="px-3 py-2 text-right font-mono">{pt.longitude.toFixed(7)}</td>
-                              <td className="px-3 py-2 text-muted-foreground">{pt.description || '—'}</td>
-                            </tr>
-                          ))}
+                          {surveyPoints.map((pt, i) => {
+                            const editableCell = (field: keyof ConvertedCoordinatePoint, value: string | number | null | undefined, align: 'left' | 'right' = 'right') => {
+                              const cellId = `${i}-${field}`;
+                              const isInvalid = invalidCells.has(cellId);
+                              return (
+                                <td className={`px-1 py-1 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+                                  <input
+                                    type="text"
+                                    defaultValue={value != null ? String(value) : ''}
+                                    onBlur={e => handleSurveyEdit(i, field, e.target.value)}
+                                    className={`w-full bg-transparent font-mono text-xs text-right px-1 py-0.5 rounded border ${
+                                      isInvalid
+                                        ? 'border-red-500 text-red-400'
+                                        : 'border-transparent hover:border-border focus:border-orange-500'
+                                    } focus:outline-none focus:bg-muted/30 transition-colors`}
+                                    style={{ minWidth: field === 'description' ? '80px' : '70px', textAlign: align }}
+                                  />
+                                </td>
+                              );
+                            };
+                            return (
+                              <tr key={pt.index} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${
+                                i % 2 === 0 ? '' : 'bg-muted/10'
+                              }`}>
+                                <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
+                                <td className="px-2 py-1 font-medium text-orange-400">{pt.identifier || `SP-${pt.index + 1}`}</td>
+                                {editableCell('northing', pt.northing != null ? pt.northing.toFixed(3) : '', 'right')}
+                                {editableCell('easting', pt.easting != null ? pt.easting.toFixed(3) : '', 'right')}
+                                {editableCell('elevation', pt.elevation != null ? pt.elevation.toFixed(3) : '', 'right')}
+                                <td className="px-2 py-1 text-right font-mono text-muted-foreground">{pt.latitude.toFixed(7)}</td>
+                                <td className="px-2 py-1 text-right font-mono text-muted-foreground">{pt.longitude.toFixed(7)}</td>
+                                {editableCell('description', pt.description || '', 'left')}
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
+                      <p className="text-xs text-muted-foreground px-3 py-2 border-t border-border/50">
+                        Click any Northing, Easting, Elev, or Description cell to edit. Lat/Lng update automatically when Northing or Easting changes.
+                      </p>
                     </div>
                   )}
                 </div>
