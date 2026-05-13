@@ -146,6 +146,8 @@ interface MapboxProjectMapProps {
   showSurveyPoints?: boolean;
   /** Called whenever the converterPoints array changes — used by parent to display Smart Survey tab */
   onConverterPointsChange?: (points: ConvertedCoordinatePoint[]) => void;
+  /** Called by Single/Batch imports to APPEND new points to the parent's surveyPoints (does not replace) */
+  onAppendSurveyPoints?: (points: ConvertedCoordinatePoint[]) => void;
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -213,6 +215,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       isTourActive = false,
       showSurveyPoints = true,
       onConverterPointsChange,
+      onAppendSurveyPoints,
     } = props;
 
     // ── Refs ──────────────────────────────────────────────────────────────────
@@ -276,6 +279,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [coordinateConverterTab, setCoordinateConverterTab] = useState<"single" | "batch" | "pdf">("single");
     const [singleEasting, setSingleEasting] = useState("");
     const [singleNorthing, setSingleNorthing] = useState("");
+    const [singlePointId, setSinglePointId] = useState("");
     const [singleCRS, setSingleCRS] = useState("TX_NORTH_CENTRAL");
     const [singleCSF, setSingleCSF] = useState("1.0");
     const [singleResult, setSingleResult] = useState<ConversionResult | null>(null);
@@ -1485,24 +1489,28 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           combinedScaleFactor,
         });
         setSingleResult(result as ConversionResult);
-
         if (result.success && typeof result.latitude === "number" && typeof result.longitude === "number") {
-          setConverterPoints([{
+          const newPt: ConvertedCoordinatePoint = {
             latitude: result.latitude,
             longitude: result.longitude,
-            index: 0,
-            identifier: "Converted Point",
+            index: Date.now(), // unique index
+            identifier: singlePointId.trim() || `SP-${Date.now()}`,
             easting,
             northing,
-          }]);
-          toast.success("Coordinate converted and added to the project map.");
+          };
+          if (onAppendSurveyPoints) {
+            onAppendSurveyPoints([newPt]);
+          } else {
+            setConverterPoints(prev => [...prev, newPt]);
+          }
+          toast.success("Point added to Smart Survey table and map.");
         } else {
           toast.error(result.error || "Conversion failed.");
         }
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Conversion failed.");
       }
-    }, [singleEasting, singleNorthing, singleCSF, singleCRS, convertSingleMutation]);
+    }, [singleEasting, singleNorthing, singleCSF, singleCRS, singlePointId, convertSingleMutation, onAppendSurveyPoints]);
 
     const handleConverterFile = useCallback((file: File) => {
       const lowerName = file.name.toLowerCase();
@@ -1550,12 +1558,13 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           }));
 
         if (successfulPoints.length > 0) {
-          // Mirror the single-point path exactly: one setConverterPoints call with the
-          // full array. No reset, no loop. The useEffect handles setData in one shot.
-          setConverterPoints(successfulPoints);
-          toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to the project map.`);
+          if (onAppendSurveyPoints) {
+            onAppendSurveyPoints(successfulPoints);
+          } else {
+            setConverterPoints(prev => [...prev, ...successfulPoints]);
+          }
+          toast.success(`Added ${successfulPoints.length} converted point${successfulPoints.length === 1 ? "" : "s"} to Smart Survey table and map.`);
         } else {
-          setConverterPoints([]);
           toast.warning("No valid coordinates were converted.");
         }
         typedResult.warnings?.forEach((warning) => toast.info(warning));
@@ -1564,7 +1573,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       } finally {
         setBatchLoading(false);
       }
-    }, [batchFile, batchCSF, batchCRS, parseAndConvertMutation]);
+    }, [batchFile, batchCSF, batchCRS, parseAndConvertMutation, onAppendSurveyPoints]);
 
     const clearConvertedCoordinates = useCallback(() => {
       // Reset the key so the GPS markers useEffect re-runs and removes survey points from the source
@@ -2058,6 +2067,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                       ))}
                                     </select>
                                   </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Point ID <span className="text-slate-600 normal-case">(optional)</span></label>
+                                    <input
+                                      type="text"
+                                      value={singlePointId}
+                                      onChange={(e) => setSinglePointId(e.target.value)}
+                                      placeholder="e.g. BM-01"
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div>
                                       <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Easting</label>
@@ -2096,7 +2115,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                     className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors"
                                   >
                                     <MapPin size={14} />
-                                    {convertSingleMutation.isPending ? "Converting..." : "Convert & Add to Map"}
+                                    {convertSingleMutation.isPending ? "Converting..." : "Convert & Add to Survey Table"}
                                   </button>
                                   {singleResult?.success && (
                                     <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs">
@@ -2211,7 +2230,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                   {coordinateConverterTab === 'batch' ? (
                                     <button onClick={handleBatchCoordinateConvert} disabled={!batchFile || batchLoading} className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors">
                                       <Upload size={14} />
-                                      {batchLoading ? 'Processing...' : 'Convert Batch & Add to Map'}
+                                      {batchLoading ? 'Processing...' : 'Convert Batch & Add to Survey Table'}
                                     </button>
                                   ) : (
                                     <button onClick={handlePdfExtract} disabled={!pdfFile || pdfLoading} className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-3 py-2 text-xs font-semibold text-white transition-colors">

@@ -161,6 +161,17 @@ export default function ProjectDetail() {
     setSurveyPoints(pts);
     setOriginalSurveyPoints(pts.map(p => ({ ...p })));
   }, []);
+
+  // Append points from Single/Batch imports — preserves existing PDF points
+  const handleAppendSurveyPoints = useCallback((newPts: ConvertedCoordinatePoint[]) => {
+    setSurveyPoints(prev => {
+      const nextIndex = prev.length;
+      const reindexed = newPts.map((p, i) => ({ ...p, index: nextIndex + i }));
+      return [...prev, ...reindexed];
+    });
+    // Do NOT overwrite originalSurveyPoints — only PDF OCR sets the baseline
+  }, []);
+
   const [mediaPage, setMediaPage] = useState(1);
   const MEDIA_PAGE_SIZE = 12;
 
@@ -648,6 +659,7 @@ export default function ProjectDetail() {
                   projectLocation={(project as any)?.location}
                   showSurveyPoints={showSurveyPoints}
                   onConverterPointsChange={handleConverterPointsChange}
+                  onAppendSurveyPoints={handleAppendSurveyPoints}
                 />
               </LazyMapWrapper>
             </motion.div>
