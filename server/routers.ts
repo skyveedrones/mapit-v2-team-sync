@@ -985,6 +985,15 @@ export const appRouter = router({
           ...restUpdates,
           ...(flightDate !== undefined ? { flightDate: flightDate ? (flightDate instanceof Date ? flightDate.toISOString() : String(flightDate)) : null } : {}),
         };
+        // WEBMASTER/ADMIN GLOBAL WRITE: bypass ownership check
+        if (ctx.user.role === 'webmaster' || ctx.user.role === 'admin') {
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+          await db.update(projects).set(updates as any).where(eq(projects.id, id));
+          const updated = await getProjectById(id);
+          if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+          return updated;
+        }
         const project = await updateProject(id, ctx.user.id, updates);
         if (!project) {
           throw new TRPCError({
@@ -1002,6 +1011,13 @@ export const appRouter = router({
         surveyPoints: z.string(), // JSON string of ConvertedCoordinatePoint[]
       }))
       .mutation(async ({ ctx, input }) => {
+        // WEBMASTER/ADMIN GLOBAL WRITE: bypass ownership check
+        if (ctx.user.role === 'webmaster' || ctx.user.role === 'admin') {
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+          await db.update(projects).set({ surveyPoints: input.surveyPoints }).where(eq(projects.id, input.id));
+          return { success: true };
+        }
         const project = await updateProject(input.id, ctx.user.id, {
           surveyPoints: input.surveyPoints,
         });
