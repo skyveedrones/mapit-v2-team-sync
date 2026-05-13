@@ -995,6 +995,24 @@ export const appRouter = router({
         return project;
       }),
 
+    // Update only the survey_points JSON for a project (isolated from all other project fields)
+    updateSurveyPoints: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        surveyPoints: z.string(), // JSON string of ConvertedCoordinatePoint[]
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await updateProject(input.id, ctx.user.id, {
+          surveyPoints: input.surveyPoints,
+        });
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have permission to update it",
+          });
+        }
+        return { success: true };
+      }),
     // Delete a project (soft-delete, admin/webmaster only)
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))

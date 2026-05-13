@@ -155,22 +155,7 @@ export default function ProjectDetail() {
   const [surveyPoints, setSurveyPoints] = useState<ConvertedCoordinatePoint[]>([]);
   const [originalSurveyPoints, setOriginalSurveyPoints] = useState<ConvertedCoordinatePoint[]>([]);
   const [showSurveyPoints, setShowSurveyPoints] = useState(true);
-
-  // Capture originals when OCR data first arrives (or is replaced)
-  const handleConverterPointsChange = useCallback((pts: ConvertedCoordinatePoint[]) => {
-    setSurveyPoints(pts);
-    setOriginalSurveyPoints(pts.map(p => ({ ...p })));
-  }, []);
-
-  // Append points from Single/Batch imports — preserves existing PDF points
-  const handleAppendSurveyPoints = useCallback((newPts: ConvertedCoordinatePoint[]) => {
-    setSurveyPoints(prev => {
-      const nextIndex = prev.length;
-      const reindexed = newPts.map((p, i) => ({ ...p, index: nextIndex + i }));
-      return [...prev, ...reindexed];
-    });
-    // Do NOT overwrite originalSurveyPoints — only PDF OCR sets the baseline
-  }, []);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const [mediaPage, setMediaPage] = useState(1);
   const MEDIA_PAGE_SIZE = 12;
@@ -196,6 +181,60 @@ export default function ProjectDetail() {
 
   // tRPC mutation to persist defaultCrs
   const updateProjectMutation = trpc.project.update.useMutation();
+
+  // tRPC mutation to persist survey points
+  const updateSurveyPointsMutation = trpc.project.updateSurveyPoints.useMutation();
+  const [isSavingSurvey, setIsSavingSurvey] = useState(false);
+  const surveyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced save helper — call whenever surveyPoints changes
+  const persistSurveyPoints = useCallback((pts: ConvertedCoordinatePoint[]) => {
+    if (isDemoProject || projectId <= 0) return;
+    if (surveyDebounceRef.current) clearTimeout(surveyDebounceRef.current);
+    setIsSavingSurvey(true);
+    surveyDebounceRef.current = setTimeout(() => {
+      updateSurveyPointsMutation.mutate(
+        { id: projectId, surveyPoints: JSON.stringify(pts) },
+        { onSettled: () => setIsSavingSurvey(false) }
+      );
+    }, 800);
+  }, [isDemoProject, projectId, updateSurveyPointsMutation]);
+
+  // Capture originals when OCR data first arrives (or is replaced)
+  const handleConverterPointsChange = useCallback((pts: ConvertedCoordinatePoint[]) => {
+    setSurveyPoints(pts);
+    setOriginalSurveyPoints(pts.map(p => ({ ...p })));
+    persistSurveyPoints(pts);
+  }, [persistSurveyPoints]);
+
+  // Append points from Single/Batch imports — preserves existing PDF points
+  const handleAppendSurveyPoints = useCallback((newPts: ConvertedCoordinatePoint[]) => {
+    setSurveyPoints(prev => {
+      const nextIndex = prev.length;
+      const reindexed = newPts.map((p, i) => ({ ...p, index: nextIndex + i }));
+      const next = [...prev, ...reindexed];
+      persistSurveyPoints(next);
+      return next;
+    });
+    // Do NOT overwrite originalSurveyPoints — only PDF OCR sets the baseline
+  }, [persistSurveyPoints]);
+
+  // Delete a single row
+  const handleDeleteSurveyPoint = useCallback((index: number) => {
+    setSurveyPoints(prev => {
+      const next = prev.filter((_, i) => i !== index).map((p, i) => ({ ...p, index: i }));
+      persistSurveyPoints(next);
+      return next;
+    });
+  }, [persistSurveyPoints]);
+
+  // Clear all survey points with confirmation
+  const handleClearAllSurveyPoints = useCallback(() => {
+    setSurveyPoints([]);
+    setOriginalSurveyPoints([]);
+    persistSurveyPoints([]);
+    setConfirmClearOpen(false);
+  }, [persistSurveyPoints]);
 
   // Client-side proj4 re-projection
   const reprojectPoint = useCallback((northing: number, easting: number, zoneKey: string): { lat: number; lng: number } | null => {
@@ -250,9 +289,10 @@ export default function ProjectDetail() {
         }
       }
       updated[index] = pt;
+      persistSurveyPoints(updated);
       return updated;
     });
-  }, [crsZoneKey, reprojectPoint]);
+  }, [crsZoneKey, reprojectPoint, persistSurveyPoints]);
 
 
   // Fetch project details - always call both hooks, enable only the correct one
@@ -278,6 +318,22 @@ export default function ProjectDetail() {
       }
     }
   }, [(project as any)?.defaultCrs]);
+
+  // Seed survey points from DB when project loads (only if no points are in memory yet)
+  useEffect(() => {
+    const saved = (project as any)?.surveyPoints;
+    if (!saved) return;
+    try {
+      const parsed: ConvertedCoordinatePoint[] = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0 && surveyPoints.length === 0) {
+        setSurveyPoints(parsed);
+        // Do NOT set originalSurveyPoints — DB points may already be edited
+      }
+    } catch {
+      // Ignore malformed JSON
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(project as any)?.surveyPoints]);
 
   // Fetch media list - always call both hooks, enable only the correct one
   const demoMediaQuery = trpc.media.listDemo.useQuery(
@@ -812,19 +868,33 @@ export default function ProjectDetail() {
                         Points extracted from engineering PDFs via the OCR tool (Import Survey Points → PDF tab in the map sidebar).
                       </p>
                     </div>
-                    {surveyPoints.length > 0 && (
-                      <button
-                        onClick={() => setShowSurveyPoints((v) => !v)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          showSurveyPoints
-                            ? 'border-orange-500/40 bg-orange-500/10 text-orange-400'
-                            : 'border-border text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {showSurveyPoints ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                        {showSurveyPoints ? 'Visible on Map' : 'Hidden from Map'}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {isSavingSurvey && (
+                        <span className="text-xs text-muted-foreground animate-pulse">Saving…</span>
+                      )}
+                      {surveyPoints.length > 0 && (
+                        <>
+                          <button
+                            onClick={() => setConfirmClearOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Clear All
+                          </button>
+                          <button
+                            onClick={() => setShowSurveyPoints((v) => !v)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              showSurveyPoints
+                                ? 'border-orange-500/40 bg-orange-500/10 text-orange-400'
+                                : 'border-border text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {showSurveyPoints ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                            {showSurveyPoints ? 'Visible on Map' : 'Hidden from Map'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Cascading CRS dropdowns */}
@@ -854,12 +924,24 @@ export default function ProjectDetail() {
                           }
                           return pt;
                         }));
-                        // Persist to project
+                        // Persist CRS and re-projected points to project
                         if (!isDemoProject && projectId > 0) {
                           if (crsDebounceRef.current) clearTimeout(crsDebounceRef.current);
                           crsDebounceRef.current = setTimeout(() => {
                             updateProjectMutation.mutate({ id: projectId, defaultCrs: newKey });
                           }, 800);
+                          // Also persist the re-projected survey points
+                          setSurveyPoints(prev => {
+                            const reprojected = prev.map(pt => {
+                              if (pt.northing != null && pt.easting != null) {
+                                const result = reprojectPoint(pt.northing, pt.easting, newKey);
+                                if (result) return { ...pt, latitude: result.lat, longitude: result.lng };
+                              }
+                              return pt;
+                            });
+                            persistSurveyPoints(reprojected);
+                            return reprojected;
+                          });
                         }
                       }}
                       className="text-xs bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
@@ -896,6 +978,7 @@ export default function ProjectDetail() {
                             <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Lat</th>
                             <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Lng</th>
                             <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Description</th>
+                            <th className="px-2 py-2 w-8"></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -952,6 +1035,15 @@ export default function ProjectDetail() {
                                 <td className="px-2 py-1 text-right font-mono text-muted-foreground">{pt.latitude.toFixed(7)}</td>
                                 <td className="px-2 py-1 text-right font-mono text-muted-foreground">{pt.longitude.toFixed(7)}</td>
                                 {editableCell('description', pt.description || '', 'left')}
+                                <td className="px-1 py-1">
+                                  <button
+                                    onClick={() => handleDeleteSurveyPoint(i)}
+                                    className="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                    title="Delete point"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </td>
                               </tr>
                             );
                           })}
@@ -962,6 +1054,32 @@ export default function ProjectDetail() {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Clear All Confirmation Dialog */}
+              {confirmClearOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-card border border-border rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
+                    <h3 className="text-base font-semibold mb-2">Clear All Survey Points?</h3>
+                    <p className="text-sm text-muted-foreground mb-5">
+                      Are you sure you want to permanently delete all survey points for this project? This cannot be undone.
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => setConfirmClearOpen(false)}
+                        className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted/40 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleClearAllSurveyPoints}
+                        className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                      >
+                        Delete All Points
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
