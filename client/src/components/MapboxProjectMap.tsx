@@ -56,6 +56,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { PdfToOverlayConverter } from "./PdfToOverlayConverter";
 import type { Media } from "../../../drizzle/schema";
+import { SPCS_STATES } from "@shared/spcsZones";
 import turfDistance from "@turf/distance";
 import turfArea from "@turf/area";
 import { polygon as turfPolygon, point as turfPoint } from "@turf/helpers";
@@ -280,12 +281,19 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [singleEasting, setSingleEasting] = useState("");
     const [singleNorthing, setSingleNorthing] = useState("");
     const [singlePointId, setSinglePointId] = useState("");
-    const [singleCRS, setSingleCRS] = useState("TX_NORTH_CENTRAL");
+    // Single tab — two-step State → Zone
+    const [singleCrsState, setSingleCrsState] = useState("TX");
+    const [singleCrsZone, setSingleCrsZone] = useState("TX_NORTH_CENTRAL");
+    const singleCRS = singleCrsZone; // alias for mutation call-sites
+    const singleCrsZones = useMemo(() => SPCS_STATES.find(s => s.abbr === singleCrsState)?.zones ?? [], [singleCrsState]);
     const [singleCSF, setSingleCSF] = useState("1.0");
     const [singleResult, setSingleResult] = useState<ConversionResult | null>(null);
     const [batchFile, setBatchFile] = useState<File | null>(null);
-    // Shared CRS/CSF used by both Batch and PDF tabs
-    const [sharedCRS, setSharedCRS] = useState("TX_NORTH_CENTRAL");
+    // Shared (Batch + PDF) — two-step State → Zone
+    const [sharedCrsState, setSharedCrsState] = useState("TX");
+    const [sharedCrsZone, setSharedCrsZone] = useState("TX_NORTH_CENTRAL");
+    const sharedCRS = sharedCrsZone; // alias for mutation call-sites
+    const sharedCrsZones = useMemo(() => SPCS_STATES.find(s => s.abbr === sharedCrsState)?.zones ?? [], [sharedCrsState]);
     const [sharedCSF, setSharedCSF] = useState("1.0");
     // Aliases so existing mutation call-sites keep working without changes
     const batchCRS = sharedCRS;
@@ -2056,14 +2064,30 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                               {coordinateConverterTab === "single" ? (
                                 <div className="space-y-3">
                                   <div>
-                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">State</label>
                                     <select
-                                      value={singleCRS}
-                                      onChange={(e) => setSingleCRS(e.target.value)}
+                                      value={singleCrsState}
+                                      onChange={(e) => {
+                                        setSingleCrsState(e.target.value);
+                                        const zones = SPCS_STATES.find(s => s.abbr === e.target.value)?.zones ?? [];
+                                        setSingleCrsZone(zones[0]?.key ?? '');
+                                      }}
                                       className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                                     >
-                                      {availableSystemsQuery.data?.map((system) => (
-                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
+                                      {SPCS_STATES.map(s => (
+                                        <option key={s.abbr} value={s.abbr}>{s.name}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Zone</label>
+                                    <select
+                                      value={singleCrsZone}
+                                      onChange={(e) => setSingleCrsZone(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    >
+                                      {singleCrsZones.map(z => (
+                                        <option key={z.key} value={z.key}>{z.name} (EPSG:{z.epsg})</option>
                                       ))}
                                     </select>
                                   </div>
@@ -2127,16 +2151,32 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 </div>
                               ) : (
                                 <div className="space-y-3">
-                                  {/* Shared: Coordinate System + Combined Scale Factor */}
+                                  {/* Shared: State → Zone + Combined Scale Factor */}
                                   <div>
-                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Coordinate System</label>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">State</label>
                                     <select
-                                      value={sharedCRS}
-                                      onChange={(e) => setSharedCRS(e.target.value)}
+                                      value={sharedCrsState}
+                                      onChange={(e) => {
+                                        setSharedCrsState(e.target.value);
+                                        const zones = SPCS_STATES.find(s => s.abbr === e.target.value)?.zones ?? [];
+                                        setSharedCrsZone(zones[0]?.key ?? '');
+                                      }}
                                       className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                                     >
-                                      {availableSystemsQuery.data?.map((system) => (
-                                        <option key={system.key} value={system.key}>{system.name} (EPSG:{system.epsg})</option>
+                                      {SPCS_STATES.map(s => (
+                                        <option key={s.abbr} value={s.abbr}>{s.name}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Zone</label>
+                                    <select
+                                      value={sharedCrsZone}
+                                      onChange={(e) => setSharedCrsZone(e.target.value)}
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                                    >
+                                      {sharedCrsZones.map(z => (
+                                        <option key={z.key} value={z.key}>{z.name} (EPSG:{z.epsg})</option>
                                       ))}
                                     </select>
                                   </div>
