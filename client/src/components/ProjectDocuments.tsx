@@ -1,3 +1,4 @@
+import { authFetch } from "@/lib/authFetch";
 import { apiUrl } from "@/lib/apiBase";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -188,9 +189,8 @@ export function ProjectDocuments({ projectId, mapInstance, projectCenter, onOver
         const formData = new FormData();
         formData.append("file", file);
         formData.append("projectId", String(projectId));
-        const res = await fetch(apiUrl("/api/document/upload"), {
+        const res = await authFetch(apiUrl("/api/document/upload"), {
           method: "POST",
-          credentials: "include",
           body: formData,
         });
         if (!res.ok) {

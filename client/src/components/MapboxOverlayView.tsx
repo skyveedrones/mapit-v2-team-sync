@@ -9,6 +9,7 @@
  *   - Delete: API call + state clear + Mapbox source/layer removal + DB row removal
  */
 
+import { authFetch } from "@/lib/authFetch";
 import { apiUrl } from "@/lib/apiBase";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
@@ -350,10 +351,9 @@ export function MapboxOverlayView({
   // ── Save coordinates to backend (raw 4-corner array) ──────────────────────
   const saveCoordinates = useCallback(async (ovId: number, corners: [number, number][], rotation?: number): Promise<boolean> => {
     try {
-      const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ovId}`), {
+      const resp = await authFetch(apiUrl(`/api/projects/${projectId}/overlays/${ovId}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           coordinates: corners,
           ...(rotation !== undefined && rotation !== 0 ? { rotation } : {}),
@@ -744,9 +744,8 @@ export function MapboxOverlayView({
   const handleReset = async (ov: OverlayData) => {
     if (!confirm("Reset overlay to its original GPS-derived position?")) return;
     try {
-      const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}/reset`), {
+      const resp = await authFetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}/reset`), {
         method: "POST",
-        credentials: "include",
       });
       if (!resp.ok) throw new Error(await resp.text());
       toast.success("Overlay reset to original GPS bounds");
@@ -763,9 +762,8 @@ export function MapboxOverlayView({
     if (!confirm(`Delete "${ov.label || "this overlay"}"? This cannot be undone.`)) return;
     setIsDeleting(true);
     try {
-      const resp = await fetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}`), {
+      const resp = await authFetch(apiUrl(`/api/projects/${projectId}/overlays/${ov.id}`), {
         method: "DELETE",
-        credentials: "include",
       });
       if (!resp.ok) {
         const errText = await resp.text();

@@ -6,6 +6,7 @@
  */
 
 import { apiUrl } from "@/lib/apiBase";
+import { authFetch } from "@/lib/authFetch";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -902,7 +903,7 @@ export function MediaUploadDialog({
             const uploadId = uploadUrl.split("/").pop();
             
             // Get metadata from server
-            const response = await fetch(apiUrl(`/api/video-upload-metadata/${uploadId}`));
+            const response = await authFetch(apiUrl(`/api/video-upload-metadata/${uploadId}`));
             if (!response.ok) {
               throw new Error("Failed to get upload metadata");
             }

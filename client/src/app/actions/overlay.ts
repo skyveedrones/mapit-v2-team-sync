@@ -1,4 +1,5 @@
 import { apiUrl } from "../../lib/apiBase";
+import { authFetch } from "../../lib/authFetch";
 /**
  * Client-side action for uploading a PDF/image overlay to a project.
  * POSTs multipart form data to POST /api/overlay/upload.
@@ -9,9 +10,8 @@ export async function uploadProjectOverlay(
 ): Promise<{ success: boolean; overlay?: { id: number; fileUrl: string; coordinates: unknown } }> {
   formData.set("projectId", String(projectId));
 
-  const res = await fetch(apiUrl(`/api/overlay/upload`), {
+  const res = await authFetch(apiUrl(`/api/overlay/upload`), {
     method: "POST",
-    credentials: "include",
     body: formData,
   });
 
