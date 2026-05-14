@@ -149,6 +149,8 @@ interface MapboxProjectMapProps {
   onConverterPointsChange?: (points: ConvertedCoordinatePoint[]) => void;
   /** Called by Single/Batch imports to APPEND new points to the parent's surveyPoints (does not replace) */
   onAppendSurveyPoints?: (points: ConvertedCoordinatePoint[]) => void;
+  /** Pre-loaded survey points from DB — seeds converterPoints on mount so markers appear immediately */
+  initialSurveyPoints?: ConvertedCoordinatePoint[];
   /** Pre-fetched media array — when provided, skips the internal tRPC media fetch */
   initialMedia?: Array<{
     id: number;
@@ -216,6 +218,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       isTourActive = false,
       showSurveyPoints = true,
       onConverterPointsChange,
+      initialSurveyPoints,
       onAppendSurveyPoints,
     } = props;
 
@@ -300,9 +303,20 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const batchCSF = sharedCSF;
     const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
     const [batchLoading, setBatchLoading] = useState(false);
-     const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>([]);
+     const [converterPoints, setConverterPoints] = useState<ConvertedCoordinatePoint[]>(() => initialSurveyPoints ?? []);
     // Notify parent whenever converterPoints changes (for Smart Survey tab)
     useEffect(() => { onConverterPointsChange?.(converterPoints); }, [converterPoints, onConverterPointsChange]);
+    // Sync initialSurveyPoints into converterPoints when they arrive from DB (after async project load)
+    useEffect(() => {
+      if (initialSurveyPoints && initialSurveyPoints.length > 0) {
+        setConverterPoints(prev => {
+          // Only seed if converterPoints is still empty (don't overwrite user edits)
+          if (prev.length === 0) return initialSurveyPoints;
+          return prev;
+        });
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialSurveyPoints?.length]);
     // PDF Extract state
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const pdfCRS = sharedCRS;
