@@ -187,7 +187,8 @@ export default function ProjectDetail() {
   // Store mutation in a ref so persistSurveyPoints has a stable reference (avoids infinite loop)
   const updateSurveyPointsMutationRef = useRef(updateSurveyPointsMutation);
   useEffect(() => { updateSurveyPointsMutationRef.current = updateSurveyPointsMutation; });
-  const [isSavingSurvey, setIsSavingSurvey] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const surveyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced save helper — call whenever surveyPoints changes
@@ -195,13 +196,23 @@ export default function ProjectDetail() {
   const persistSurveyPoints = useCallback((pts: ConvertedCoordinatePoint[]) => {
     if (isDemoProject || projectId <= 0) return;
     if (surveyDebounceRef.current) clearTimeout(surveyDebounceRef.current);
-    setIsSavingSurvey(true);
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    setSaveStatus('saving');
     surveyDebounceRef.current = setTimeout(() => {
       updateSurveyPointsMutationRef.current.mutate(
         { id: projectId, surveyPoints: JSON.stringify(pts) },
-        { onSettled: () => setIsSavingSurvey(false) }
+        {
+          onSuccess: () => {
+            setSaveStatus('saved');
+            savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2500);
+          },
+          onError: () => {
+            setSaveStatus('error');
+            toast.error('Failed to save survey points. Click Retry to try again.');
+          },
+        }
       );
-    }, 800);
+    }, 1500);
   }, [isDemoProject, projectId]);
 
   // Capture originals when OCR data first arrives (or is replaced)
@@ -874,8 +885,26 @@ export default function ProjectDetail() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isSavingSurvey && (
-                        <span className="text-xs text-muted-foreground animate-pulse">Saving…</span>
+                      {saveStatus === 'saving' && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground animate-pulse">
+                          <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                          Saving…
+                        </span>
+                      )}
+                      {saveStatus === 'saved' && (
+                        <span className="flex items-center gap-1 text-xs text-emerald-400">
+                          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                          Saved
+                        </span>
+                      )}
+                      {saveStatus === 'error' && (
+                        <button
+                          onClick={() => persistSurveyPoints(surveyPoints)}
+                          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                          Save failed — Retry
+                        </button>
                       )}
                       {surveyPoints.length > 0 && (
                         <>
