@@ -89,17 +89,20 @@ export async function storagePut(
     chunk_size: 20_000_000, // 20 MB chunks
   };
 
-  // upload_large bypasses the per-file size limit on free/starter Cloudinary plans
-  // by streaming in chunks. Use it for all files — it works for any size.
+  // upload_large_stream accepts a Buffer piped into a writable stream.
+  // upload_large (the path-based variant) calls path.split() internally and
+  // throws "path.split is not a function" when given a Buffer.
   const result = await new Promise<any>((resolve, reject) => {
-    cloudinary.uploader.upload_large(
-      buffer,
-      uploadOptions,
+    const uploadStream = (cloudinary.uploader as any).upload_large_stream(
+      undefined,
       (error: any, result: any) => {
         if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
         else resolve(result);
-      }
+      },
+      uploadOptions
     );
+    const { Readable } = require('stream');
+    Readable.from(buffer).pipe(uploadStream);
   });
 
   return { key, url: result.secure_url as string };
