@@ -89,17 +89,16 @@ export async function storagePut(
     chunk_size: 20_000_000, // 20 MB chunks
   };
 
-  // upload_large_stream accepts a Buffer piped into a writable stream.
-  // upload_large (the path-based variant) calls path.split() internally and
-  // throws "path.split is not a function" when given a Buffer.
+  // upload_chunked_stream is the v2-compatible writable stream variant.
+  // upload_large expects a file-system path string and calls path.split() internally,
+  // throwing "path.split is not a function" when given a Buffer.
   const result = await new Promise<any>((resolve, reject) => {
-    const uploadStream = (cloudinary.uploader as any).upload_large_stream(
-      undefined,
+    const uploadStream = cloudinary.uploader.upload_chunked_stream(
+      uploadOptions,
       (error: any, result: any) => {
         if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
         else resolve(result);
-      },
-      uploadOptions
+      }
     );
     const { Readable } = require('stream');
     Readable.from(buffer).pipe(uploadStream);
