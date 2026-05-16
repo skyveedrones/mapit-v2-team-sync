@@ -104,11 +104,9 @@ export function GPSEditDialog({
     if (!token) return;
     mapboxgl.accessToken = token;
 
-    console.log('[GPSDialog] useEffect fired, open=', open, 'token=', token ? 'present' : 'MISSING');
 
     const timer = setTimeout(() => {
       const container = mapContainerRef.current;
-      console.log('[GPSDialog] setTimeout fired, container=', container, 'w=', container?.offsetWidth, 'h=', container?.offsetHeight);
       if (!container) return;
 
       const map = new mapboxgl.Map({
@@ -130,7 +128,6 @@ export function GPSEditDialog({
       });
 
       map.on("load", () => {
-        console.log('[GPSDialog] map loaded successfully');
         mapRef.current = map;
         map.resize();
 
