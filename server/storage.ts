@@ -1,27 +1,61 @@
 /**
- * Storage helpers backed by Cloudinary.
- * Drop-in replacement for the Manus forge storage proxy.
- * All call sites (storagePut / storageGet / storageDownload / storageGetUploadUrl) work unchanged.
+ * Storage helpers backed by Cloudflare R2 (S3-compatible).
+ *
+ * All existing URLs in the database (CloudFront / Cloudinary) are untouched —
+ * this module only handles NEW uploads going forward.
+ *
+ * Required environment variables (set in Railway):
+ *   R2_ACCOUNT_ID        – Cloudflare account ID
+ *   R2_ACCESS_KEY_ID     – R2 API token Access Key ID
+ *   R2_SECRET_ACCESS_KEY – R2 API token Secret Access Key
+ *   R2_BUCKET_NAME       – R2 bucket name (e.g. "mapit-media")
+ *   R2_PUBLIC_URL        – Public base URL for the bucket
+ *                          e.g. "https://pub-<hash>.r2.dev" (R2 public bucket URL)
+ *                          or a custom domain like "https://media.mapit.skyveedrones.com"
  */
-import { v2 as cloudinary } from "cloudinary";
-import { Readable } from "stream";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// ─── config ─────────────────────────────────────────────────────────────────
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+function getR2Config() {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET_NAME;
+  const publicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
 
-/** Strip leading slashes */
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
+    throw new Error(
+      "R2 storage credentials missing. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, " +
+        "R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL in Railway."
+    );
+  }
+
+  const client = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+
+  return { client, bucket, publicUrl };
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+/** Strip leading slashes and normalise separators */
 function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
+  return relKey.replace(/^\/+/, "").replace(/\\/g, "/");
 }
 
 /**
- * Sanitize a filename for use as a storage key segment.
+ * Sanitize a filename for use as a storage key segment:
+ * replaces spaces with hyphens and strips characters that are unsafe in S3/R2 keys.
  */
 export function sanitizeFilename(name: string): string {
   return name
@@ -29,126 +63,129 @@ export function sanitizeFilename(name: string): string {
     .replace(/[^a-zA-Z0-9._\-/]/g, "_");
 }
 
-/** Derive a Cloudinary resource_type from a MIME type string. */
-function resourceTypeFromMime(mimeType: string): "image" | "video" | "raw" {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
-  if (mimeType.startsWith("audio/")) return "video"; // Cloudinary treats audio as video
-  return "raw";
-}
-
-/** Derive resource_type from file extension (used when MIME is unavailable). */
-function resourceTypeFromKey(key: string): "image" | "video" | "raw" {
-  const ext = key.split(".").pop()?.toLowerCase() ?? "";
-  if (["jpg", "jpeg", "png", "gif", "webp", "avif", "heic", "tiff", "bmp"].includes(ext)) return "image";
-  if (["mp4", "mov", "avi", "mkv", "webm", "flv", "m4v", "mp3", "wav", "aac", "m4a"].includes(ext)) return "video";
-  return "raw";
-}
+// ─── public API ──────────────────────────────────────────────────────────────
 
 /**
- * Build the canonical Cloudinary delivery URL for a public_id.
- * Pure URL construction — no API call required.
- */
-function buildCloudinaryUrl(publicId: string, resourceType: "image" | "video" | "raw"): string {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  if (!cloudName) throw new Error("CLOUDINARY_CLOUD_NAME is not set");
-  // For image/video Cloudinary appends the extension automatically; strip it from public_id
-  const pid = resourceType === "raw" ? publicId : publicId.replace(/\.[^/.]+$/, "");
-  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${pid}`;
-}
-
-// ─── public API ─────────────────────────────────────────────────────────────
-
-/**
- * Upload bytes to Cloudinary.
- * Returns { key, url } — same contract as the forge proxy.
+ * Upload bytes to R2 and return the permanent public URL.
+ * The returned URL is stored directly in media.url — no proxy needed.
  */
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
+  const { client, bucket, publicUrl } = getR2Config();
   const key = normalizeKey(relKey);
-  const resourceType = resourceTypeFromMime(contentType);
-
-  // Split key into folder + public_id
-  const lastSlash = key.lastIndexOf("/");
-  const folder = lastSlash >= 0 ? key.substring(0, lastSlash) : "";
-  const filename = lastSlash >= 0 ? key.substring(lastSlash + 1) : key;
-  // Remove extension from public_id — Cloudinary appends the correct one
-  const publicIdBase = filename.replace(/\.[^/.]+$/, "");
-  const publicId = folder ? `${folder}/${publicIdBase}` : publicIdBase;
-
-  const buffer = Buffer.isBuffer(data)
+  const body = Buffer.isBuffer(data)
     ? data
-    : Buffer.from(data as Uint8Array | string);
+    : typeof data === "string"
+    ? Buffer.from(data, "utf-8")
+    : Buffer.from(data as Uint8Array);
 
-  const uploadOptions: any = {
-    resource_type: resourceType,
-    public_id: publicId,
-    overwrite: true,
-    chunk_size: 20_000_000, // 20 MB chunks
-  };
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
 
-  // upload_chunked_stream is the v2-compatible writable stream variant.
-  // upload_large expects a file-system path string and calls path.split() internally,
-  // throwing "path.split is not a function" when given a Buffer.
-  const result = await new Promise<any>((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_chunked_stream(
-      uploadOptions,
-      (error: any, result: any) => {
-        if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
-        else resolve(result);
-      }
-    );
-    Readable.from(buffer).pipe(uploadStream);
-  });
-
-  return { key, url: result.secure_url as string };
+  return { key, url: `${publicUrl}/${key}` };
 }
 
 /**
- * Get a delivery URL for a stored key.
- * Returns { key, url } — same contract as the forge proxy.
+ * Get the public URL for an existing key.
+ * For R2 public buckets the URL is deterministic — no signing needed.
+ * Falls back to a presigned URL if the bucket is private.
  */
-export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
+export async function storageGet(
+  relKey: string,
+  expiresIn = 3600
+): Promise<{ key: string; url: string }> {
+  const { client, bucket, publicUrl } = getR2Config();
   const key = normalizeKey(relKey);
-  const resourceType = resourceTypeFromKey(key);
-  const url = buildCloudinaryUrl(key, resourceType);
-  return { key, url };
+
+  // If the key looks like a full URL already (legacy CloudFront / Cloudinary rows),
+  // return it unchanged so the frontend continues to work.
+  if (relKey.startsWith("http://") || relKey.startsWith("https://")) {
+    return { key: relKey, url: relKey };
+  }
+
+  // For public R2 buckets the permanent URL is sufficient.
+  // If you make the bucket private, swap this for the presigned URL below.
+  const permanentUrl = `${publicUrl}/${key}`;
+
+  // Presigned fallback (uncomment if bucket is private):
+  // const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  // const presignedUrl = await getSignedUrl(client, command, { expiresIn });
+  // return { key, url: presignedUrl };
+
+  return { key, url: permanentUrl };
 }
 
 /**
- * Download file bytes from Cloudinary.
- * Returns { buffer, contentType } — same contract as the forge proxy.
+ * Download file bytes directly from R2.
+ * Uses a presigned GET URL so the server never streams through a proxy.
  */
-export async function storageDownload(relKey: string): Promise<{ buffer: Buffer; contentType: string }> {
-  const { url } = await storageGet(relKey);
-  const response = await fetch(url);
+export async function storageDownload(
+  relKey: string
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const { client, bucket } = getR2Config();
+  const key = normalizeKey(relKey);
+
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  const presignedUrl = await getSignedUrl(client, command, { expiresIn: 300 });
+
+  const response = await fetch(presignedUrl);
   if (!response.ok) {
-    throw new Error(`storageDownload: fetch failed (${response.status}) for key: ${relKey}`);
+    throw new Error(
+      `storageDownload: fetch failed (${response.status}) for key: ${key}`
+    );
   }
+
   const buffer = Buffer.from(await response.arrayBuffer());
-  const contentType = response.headers.get("content-type") || "application/octet-stream";
+  const contentType =
+    response.headers.get("content-type") || "application/octet-stream";
   return { buffer, contentType };
 }
 
 /**
- * Get an upload URL for direct client-side uploads.
- * Returns { key, uploadUrl, publicUrl } — same contract as the forge proxy.
+ * Generate a presigned PUT URL so the browser can upload directly to R2,
+ * bypassing the Railway server entirely (no memory / timeout limits).
+ *
+ * Returns:
+ *   uploadUrl  – presigned PUT URL (browser POSTs directly here)
+ *   publicUrl  – permanent public URL that gets saved to media.url
  */
 export async function storageGetUploadUrl(
   relKey: string,
-  contentType: string
+  contentType: string,
+  expiresIn = 3600
 ): Promise<{ key: string; uploadUrl: string; publicUrl: string }> {
+  const { client, bucket, publicUrl: baseUrl } = getR2Config();
   const key = normalizeKey(relKey);
-  const resourceType = resourceTypeFromMime(contentType);
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  if (!cloudName) throw new Error("CLOUDINARY_CLOUD_NAME is not set");
-  const publicUrl = buildCloudinaryUrl(key, resourceType);
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+  });
+
+  const uploadUrl = await getSignedUrl(client, command, { expiresIn });
+
   return {
     key,
-    uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-    publicUrl,
+    uploadUrl,
+    publicUrl: `${baseUrl}/${key}`,
   };
+}
+
+/**
+ * Delete an object from R2.
+ */
+export async function storageDelete(relKey: string): Promise<void> {
+  const { client, bucket } = getR2Config();
+  const key = normalizeKey(relKey);
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
