@@ -4,6 +4,7 @@
  * All call sites (storagePut / storageGet / storageDownload / storageGetUploadUrl) work unchanged.
  */
 import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -100,7 +101,6 @@ export async function storagePut(
         else resolve(result);
       }
     );
-    const { Readable } = require('stream');
     Readable.from(buffer).pipe(uploadStream);
   });
 
