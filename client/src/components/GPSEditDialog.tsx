@@ -102,7 +102,7 @@ export function GPSEditDialog({
     if (!token) return;
     mapboxgl.accessToken = token;
 
-    // Small delay to ensure DOM is ready
+    // Longer delay to let the dialog open animation finish before Mapbox measures the container
     const timer = setTimeout(() => {
       if (!mapContainerRef.current) return;
 
@@ -126,8 +126,9 @@ export function GPSEditDialog({
 
       map.on("load", () => {
         mapRef.current = map;
-        // Add this line to fix the blank map
         map.resize();
+        // Second resize after dialog animation fully completes
+        setTimeout(() => map.resize(), 250);
 
         // Add existing GPS point markers (gray dots)
         existingGPSPoints.forEach((point) => {
@@ -149,7 +150,7 @@ export function GPSEditDialog({
           addSelectedMarker(map, selectedPosition);
         }
       });
-    }, 100);
+    }, 300);
 
     return () => {
       clearTimeout(timer);
@@ -304,7 +305,7 @@ export function GPSEditDialog({
 
         <div className="space-y-4">
           {/* Mapbox Map */}
-          <div className="relative h-64 rounded-lg overflow-hidden border border-border">
+          <div className="relative h-64 rounded-lg border border-border" style={{ overflow: 'hidden' }}>
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Map controls overlay */}
