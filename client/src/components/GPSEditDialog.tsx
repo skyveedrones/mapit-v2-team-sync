@@ -94,10 +94,11 @@ export function GPSEditDialog({
     }
   }, [media]);
 
-  // Initialize Mapbox when dialog opens.
-  // Uses a ResizeObserver to wait until the container actually has non-zero dimensions
-  // (the shadcn Dialog portal + animation means the container may have 0x0 size when
-  // the effect first fires, causing a black map regardless of setTimeout length).
+  // Initialize Mapbox after the dialog open animation completes.
+  // The shadcn Dialog uses a CSS zoom-in animation (duration-200). Mapbox must not
+  // initialize while a CSS transform is active — it will render black. We listen for
+  // the animationend event on the [data-slot="dialog-content"] element so we start
+  // exactly when the container is fully laid out with no active transforms.
   useEffect(() => {
     if (!open) return;
 
@@ -106,15 +107,14 @@ export function GPSEditDialog({
     mapboxgl.accessToken = token;
 
     let map: mapboxgl.Map | null = null;
-    let observer: ResizeObserver | null = null;
     let initialized = false;
 
-    const initMap = (container: HTMLDivElement) => {
-      if (initialized) return;
+    const buildMap = () => {
+      if (initialized || !mapContainerRef.current) return;
       initialized = true;
 
       map = new mapboxgl.Map({
-        container,
+        container: mapContainerRef.current,
         style: "mapbox://styles/mapbox/satellite-streets-v12",
         center: getMapCenter(),
         zoom: existingGPSPoints.length > 0 ? 14 : 12,
@@ -135,19 +135,13 @@ export function GPSEditDialog({
         mapRef.current = map;
         map!.resize();
 
-        // Add existing GPS point markers (gray dots)
         existingGPSPoints.forEach((point) => {
           const el = document.createElement("div");
           el.style.cssText =
             "width:10px;height:10px;border-radius:50%;background:rgba(148,163,184,0.6);border:1px solid rgba(255,255,255,0.5);";
-          const marker = new mapboxgl.Marker({
-            element: el,
-            color: '#50C878',
-            scale: 0.65,
-          })
+          new mapboxgl.Marker({ element: el })
             .setLngLat([point.lng, point.lat])
             .addTo(map!);
-          existingMarkersRef.current.push(marker);
         });
 
         if (selectedPosition) {
@@ -156,25 +150,33 @@ export function GPSEditDialog({
       });
     };
 
-    // Poll via ResizeObserver: init as soon as the container has real dimensions
-    const tryInit = () => {
-      const container = mapContainerRef.current;
-      if (!container) return;
-      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-        observer?.disconnect();
-        initMap(container);
+    // Find the dialog content element (rendered in a portal by Radix)
+    // and wait for its open animation to finish before initialising Mapbox.
+    const attachListener = () => {
+      const dialogEl = document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
+      if (!dialogEl) {
+        // Portal hasn't rendered yet — retry on next frame
+        requestAnimationFrame(attachListener);
+        return;
       }
+      const onAnimEnd = (e: AnimationEvent) => {
+        if (e.target !== dialogEl) return;
+        dialogEl.removeEventListener('animationend', onAnimEnd);
+        buildMap();
+      };
+      dialogEl.addEventListener('animationend', onAnimEnd);
+      // Fallback: if no animation fires within 400ms, build anyway
+      const fallback = setTimeout(() => {
+        dialogEl.removeEventListener('animationend', onAnimEnd);
+        buildMap();
+      }, 400);
+      return () => clearTimeout(fallback);
     };
 
-    observer = new ResizeObserver(tryInit);
-    if (mapContainerRef.current) {
-      observer.observe(mapContainerRef.current);
-    }
-    // Also try immediately in case the container is already sized
-    tryInit();
+    const cleanup = attachListener();
 
     return () => {
-      observer?.disconnect();
+      cleanup?.();
       selectedMarkerRef.current?.remove();
       selectedMarkerRef.current = null;
       existingMarkersRef.current.forEach((m) => m.remove());
