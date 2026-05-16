@@ -94,11 +94,9 @@ export function GPSEditDialog({
     }
   }, [media]);
 
-  // Initialize Mapbox after the dialog open animation completes.
-  // The shadcn Dialog uses a CSS zoom-in animation (duration-200). Mapbox must not
-  // initialize while a CSS transform is active — it will render black. We listen for
-  // the animationend event on the [data-slot="dialog-content"] element so we start
-  // exactly when the container is fully laid out with no active transforms.
+  // Initialize Mapbox when dialog opens.
+  // Animation is disabled on this dialog (!duration-0 zoom-in-100) so the container
+  // has stable dimensions immediately — a short timeout just lets the portal mount.
   useEffect(() => {
     if (!open) return;
 
@@ -106,14 +104,10 @@ export function GPSEditDialog({
     if (!token) return;
     mapboxgl.accessToken = token;
 
-    let map: mapboxgl.Map | null = null;
-    let initialized = false;
+    const timer = setTimeout(() => {
+      if (!mapContainerRef.current) return;
 
-    const buildMap = () => {
-      if (initialized || !mapContainerRef.current) return;
-      initialized = true;
-
-      map = new mapboxgl.Map({
+      const map = new mapboxgl.Map({
         container: mapContainerRef.current,
         style: "mapbox://styles/mapbox/satellite-streets-v12",
         center: getMapCenter(),
@@ -133,7 +127,7 @@ export function GPSEditDialog({
 
       map.on("load", () => {
         mapRef.current = map;
-        map!.resize();
+        map.resize();
 
         existingGPSPoints.forEach((point) => {
           const el = document.createElement("div");
@@ -141,42 +135,17 @@ export function GPSEditDialog({
             "width:10px;height:10px;border-radius:50%;background:rgba(148,163,184,0.6);border:1px solid rgba(255,255,255,0.5);";
           new mapboxgl.Marker({ element: el })
             .setLngLat([point.lng, point.lat])
-            .addTo(map!);
+            .addTo(map);
         });
 
         if (selectedPosition) {
-          addSelectedMarker(map!, selectedPosition);
+          addSelectedMarker(map, selectedPosition);
         }
       });
-    };
-
-    // Find the dialog content element (rendered in a portal by Radix)
-    // and wait for its open animation to finish before initialising Mapbox.
-    const attachListener = () => {
-      const dialogEl = document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
-      if (!dialogEl) {
-        // Portal hasn't rendered yet — retry on next frame
-        requestAnimationFrame(attachListener);
-        return;
-      }
-      const onAnimEnd = (e: AnimationEvent) => {
-        if (e.target !== dialogEl) return;
-        dialogEl.removeEventListener('animationend', onAnimEnd);
-        buildMap();
-      };
-      dialogEl.addEventListener('animationend', onAnimEnd);
-      // Fallback: if no animation fires within 400ms, build anyway
-      const fallback = setTimeout(() => {
-        dialogEl.removeEventListener('animationend', onAnimEnd);
-        buildMap();
-      }, 400);
-      return () => clearTimeout(fallback);
-    };
-
-    const cleanup = attachListener();
+    }, 50);
 
     return () => {
-      cleanup?.();
+      clearTimeout(timer);
       selectedMarkerRef.current?.remove();
       selectedMarkerRef.current = null;
       existingMarkersRef.current.forEach((m) => m.remove());
@@ -308,7 +277,9 @@ export function GPSEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      {/* data-[state=open]:animate-none disables the zoom-in transform so Mapbox
+          can initialise on a static container without rendering black */}
+      <DialogContent className="sm:max-w-2xl !duration-0 data-[state=open]:zoom-in-100">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
