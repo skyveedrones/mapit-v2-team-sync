@@ -94,20 +94,27 @@ export function GPSEditDialog({
     }
   }, [media]);
 
-  // Initialize Mapbox when dialog opens
+  // Initialize Mapbox when dialog opens.
+  // Uses a ResizeObserver to wait until the container actually has non-zero dimensions
+  // (the shadcn Dialog portal + animation means the container may have 0x0 size when
+  // the effect first fires, causing a black map regardless of setTimeout length).
   useEffect(() => {
-    if (!open || !mapContainerRef.current) return;
+    if (!open) return;
 
     const token = import.meta.env.VITE_MAPBOX_TOKEN;
     if (!token) return;
     mapboxgl.accessToken = token;
 
-    // Longer delay to let the dialog open animation finish before Mapbox measures the container
-    const timer = setTimeout(() => {
-      if (!mapContainerRef.current) return;
+    let map: mapboxgl.Map | null = null;
+    let observer: ResizeObserver | null = null;
+    let initialized = false;
 
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
+    const initMap = (container: HTMLDivElement) => {
+      if (initialized) return;
+      initialized = true;
+
+      map = new mapboxgl.Map({
+        container,
         style: "mapbox://styles/mapbox/satellite-streets-v12",
         center: getMapCenter(),
         zoom: existingGPSPoints.length > 0 ? 14 : 12,
@@ -126,9 +133,7 @@ export function GPSEditDialog({
 
       map.on("load", () => {
         mapRef.current = map;
-        map.resize();
-        // Second resize after dialog animation fully completes
-        setTimeout(() => map.resize(), 250);
+        map!.resize();
 
         // Add existing GPS point markers (gray dots)
         existingGPSPoints.forEach((point) => {
@@ -137,23 +142,39 @@ export function GPSEditDialog({
             "width:10px;height:10px;border-radius:50%;background:rgba(148,163,184,0.6);border:1px solid rgba(255,255,255,0.5);";
           const marker = new mapboxgl.Marker({
             element: el,
-            color: '#50C878', // SkyVee Emerald Green
-            scale: 0.65,      // Optimized small pin size
+            color: '#50C878',
+            scale: 0.65,
           })
             .setLngLat([point.lng, point.lat])
-            .addTo(map);
+            .addTo(map!);
           existingMarkersRef.current.push(marker);
         });
 
-        // Add selected position marker if exists
         if (selectedPosition) {
-          addSelectedMarker(map, selectedPosition);
+          addSelectedMarker(map!, selectedPosition);
         }
       });
-    }, 300);
+    };
+
+    // Poll via ResizeObserver: init as soon as the container has real dimensions
+    const tryInit = () => {
+      const container = mapContainerRef.current;
+      if (!container) return;
+      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+        observer?.disconnect();
+        initMap(container);
+      }
+    };
+
+    observer = new ResizeObserver(tryInit);
+    if (mapContainerRef.current) {
+      observer.observe(mapContainerRef.current);
+    }
+    // Also try immediately in case the container is already sized
+    tryInit();
 
     return () => {
-      clearTimeout(timer);
+      observer?.disconnect();
       selectedMarkerRef.current?.remove();
       selectedMarkerRef.current = null;
       existingMarkersRef.current.forEach((m) => m.remove());
