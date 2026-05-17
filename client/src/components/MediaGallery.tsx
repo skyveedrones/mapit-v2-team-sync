@@ -48,6 +48,7 @@ import {
   Maximize2,
   Minimize2,
   Mountain,
+  RefreshCw,
   RotateCcw,
   SortAsc,
   SortDesc,
@@ -177,11 +178,16 @@ const MediaCard = memo(function MediaCard({
         }}
       />
 
-      {/* Video play icon */}
+      {/* Video play icon overlay */}
       {item.mediaType === "video" && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-            <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1" />
+          {/* Play button circle */}
+          <div className="w-14 h-14 rounded-full bg-black/50 border-2 border-white/70 flex items-center justify-center shadow-lg backdrop-blur-[2px] group-hover:bg-black/70 group-hover:scale-110 transition-all duration-200">
+            <div className="w-0 h-0 border-t-[11px] border-t-transparent border-l-[18px] border-l-white border-b-[11px] border-b-transparent ml-1.5" />
+          </div>
+          {/* VIDEO label badge at bottom-left */}
+          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-bold tracking-wider">
+            VIDEO
           </div>
         </div>
       )}
@@ -403,6 +409,24 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
     { enabled: !!selectedMedia && !isDemoProject, staleTime: 30_000 }
   );
   const renameMutation = trpc.media.rename.useMutation();
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const regenerateThumbnailsMutation = trpc.media.regenerateThumbnails.useMutation({
+    onSuccess: (result) => {
+      setIsRegenerating(false);
+      utils.media.list.invalidate({ projectId, flightId });
+      if (result.successCount > 0) {
+        toast.success(`Regenerated ${result.successCount} thumbnail${result.successCount !== 1 ? 's' : ''}${result.failCount > 0 ? ` (${result.failCount} failed)` : ''}`);
+      } else if (result.failCount > 0) {
+        toast.error(`Failed to regenerate ${result.failCount} thumbnail${result.failCount !== 1 ? 's' : ''}`);
+      } else {
+        toast.info('No video thumbnails needed regeneration');
+      }
+    },
+    onError: (error) => {
+      setIsRegenerating(false);
+      toast.error(`Failed to regenerate thumbnails: ${error.message}`);
+    },
+  });
 
   // Create GPS marker number mapping based on capture time (flight path order)
   // This ensures numbers stay consistent with map markers regardless of gallery sorting
@@ -829,6 +853,17 @@ export function MediaGallery({ projectId, flightId, canEdit = true, onUploadClic
                       >
                         <ImagePlus className="h-4 w-4 mr-2" />
                         Watermark Media ({watermarkableCount})
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setIsRegenerating(true);
+                          regenerateThumbnailsMutation.mutate({ projectId });
+                        }}
+                        disabled={isRegenerating}
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                        {isRegenerating ? 'Regenerating...' : 'Regenerate Video Thumbnails'}
                       </DropdownMenuItem>
                       {canDeleteMedia && (
                       <>

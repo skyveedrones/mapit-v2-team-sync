@@ -60,6 +60,7 @@ interface FileToUpload {
   uploadId?: string; // For resumable uploads
   chunksUploaded?: number; // Track which chunks have been uploaded
   isH265?: boolean; // Flag for H.265/HEVC videos that may have playback issues
+  codec?: string; // Detected codec string (e.g. 'H.264', 'H.265/HEVC', 'Unknown')
   telemetry?: any; // Extracted EXIF/XMP drone telemetry (GPS, altitude, etc.)
 }
 
@@ -408,10 +409,12 @@ export function MediaUploadDialog({
         const isH265 = await detectH265Codec(file);
         if (isH265) {
           fileItem.isH265 = true;
+          fileItem.codec = 'H.265/HEVC';
           // Block H.265 files from uploading — set status to error so they cannot be queued
           fileItem.status = "error";
           fileItem.error = "H.265/HEVC codec detected — please convert to H.264 first";
         } else {
+          fileItem.codec = 'H.264';
           // Extract thumbnail only for non-H.265 videos
           console.log(`[Upload] Extracting thumbnail for video: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
           const thumbnail = await extractVideoThumbnail(file);
@@ -1369,8 +1372,16 @@ export function MediaUploadDialog({
                         {fileItem.file.size > 50 * 1024 * 1024 && (
                           <span className="text-blue-500">(Resumable)</span>
                         )}
-                        {fileItem.isH265 && (
-                          <span className="text-amber-500 font-medium">(H.265 - may not play in browser)</span>
+                        {fileItem.codec && (
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide ${
+                              fileItem.codec === 'H.265/HEVC'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                            }`}
+                          >
+                            {fileItem.codec}
+                          </span>
                         )}
                         {fileItem.uploadSpeed && fileItem.status === "uploading" && (
                           <>

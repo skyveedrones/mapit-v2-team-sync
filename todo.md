@@ -2836,3 +2836,8 @@
 - [x] @ffmpeg-installer/ffmpeg added to package.json for bundled ffmpeg binary
 - [x] videoThumbnail.ts server utility created for frame extraction
 - [x] All four upload procedures updated with server-side thumbnail fallback
+
+### Video Media Improvements (Round 2)
+- [x] Add "Regenerate Thumbnails" button to Media Action dropdown in MediaGallery
+- [x] Add play-button overlay on video thumbnails in media grid (enhance existing)
+- [x] Add codec badge (H.264 / H.265) to upload dialog file rows
