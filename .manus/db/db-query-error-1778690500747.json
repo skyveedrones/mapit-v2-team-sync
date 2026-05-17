@@ -1,0 +1,10 @@
+{
+  "query": "SHOW COLUMNS FROM projects LIKE 'survey_points'; SELECT COUNT(*) as project_count FROM projects WHERE deleted_at IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SHOW COLUMNS FROM projects LIKE 'survey_points'; SELECT COUNT(*) as project_count FROM projects WHERE deleted_at IS NULL;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "survey_points\ttext\tYES\t\tNULL",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'deleted_at' in 'where clause'"
+  ]
+}

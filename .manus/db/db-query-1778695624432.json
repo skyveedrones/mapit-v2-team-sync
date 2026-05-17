@@ -1,0 +1,31 @@
+{
+  "query": "SELECT id, email, name, role, clerkUserId FROM users WHERE email LIKE '%clay%' OR email LIKE '%skyvee%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, email, name, role, clerkUserId FROM users WHERE email LIKE '%clay%' OR email LIKE '%skyvee%';",
+  "rows": [
+    {
+      "id": "1",
+      "email": "clay@skyveedrones.com",
+      "name": "Clay Bechtol",
+      "role": "webmaster",
+      "clerkUserId": "user_3CXEaVEccVmBia5vGxDNqYzRvOr"
+    },
+    {
+      "id": "1560095",
+      "email": "claybechtol@gmail.com",
+      "name": "Clay",
+      "role": "webmaster",
+      "clerkUserId": "user_3CXPM2jqY6MApthcy5GvvstAoaB"
+    },
+    {
+      "id": "27480001",
+      "email": "clay@urbanwoodsco.com",
+      "name": "clay",
+      "role": "user",
+      "clerkUserId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\tclerkUserId\n1\tclay@skyveedrones.com\tClay Bechtol\twebmaster\tuser_3CXEaVEccVmBia5vGxDNqYzRvOr\n1560095\tclaybechtol@gmail.com\tClay\twebmaster\tuser_3CXPM2jqY6MApthcy5GvvstAoaB\n27480001\tclay@urbanwoodsco.com\tclay\tuser\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}

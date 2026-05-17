@@ -2827,3 +2827,12 @@
 - [ ] Add to section focused on record-keeping or modernizing archives
 - [ ] Headline: "Bring Historical Plans into the Modern Era"
 - [ ] Body: "City records are full of utility plats and site plans mapped on local state plane grids. MAPIT makes it incredibly easy for city staff to upload those local coordinates and instantly visualize them on a modern aerial map. Bridge the gap between your physical archives and your digital GIS environment with a single click."
+
+### Video Upload Improvements
+- [x] H.265/HEVC detection now blocks upload (status=error) instead of just warning
+- [x] H.265 warning dialog updated to "OK, Got It" (files already blocked)
+- [x] Server-side video thumbnail extraction via ffmpeg (fallback when client can't generate thumbnail)
+- [x] nixpacks.toml added to ensure ffmpeg is available on Railway
+- [x] @ffmpeg-installer/ffmpeg added to package.json for bundled ffmpeg binary
+- [x] videoThumbnail.ts server utility created for frame extraction
+- [x] All four upload procedures updated with server-side thumbnail fallback

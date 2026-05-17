@@ -1,0 +1,61 @@
+{
+  "query": "SELECT COUNT(*) as total_projects FROM projects WHERE deletedAt IS NULL;\nSELECT p.id, p.name, u.email FROM projects p JOIN users u ON p.userId = u.id WHERE p.deletedAt IS NULL AND p.userId != 1 AND p.userId != 1560095 ORDER BY p.id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT COUNT(*) as total_projects FROM projects WHERE deletedAt IS NULL;\nSELECT p.id, p.name, u.email FROM projects p JOIN users u ON p.userId = u.id WHERE p.deletedAt IS NULL AND p.userId != 1 AND p.userId != 1560095 ORDER BY p.id DESC LIMIT 20;",
+  "rows": [
+    {
+      "total_projects": "21"
+    },
+    {
+      "total_projects": "id\tname\temail"
+    },
+    {
+      "total_projects": "3480001\tGPS Test Project\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3420001\tNew School Rd\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3390001\tNew School Rd\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3360001\tNew School Rd\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3330001\tNew School Rd\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3060001\t59 BullCreekDam 04\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3030003\tDJI 0453\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3030002\tDJI 0453\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3030001\tDJI 0454\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "3000002\tOld Lampasas\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "750001\tRanch Road Expansion\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "420001\tBowie & York Waterline Replacement\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "30003\tOncor Forney Switch\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "30002\tGail Wilson Road Extension\ttbechtol@forneytx.gov"
+    },
+    {
+      "total_projects": "30001\tCIP222 US 80 Waterline\ttbechtol@forneytx.gov"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_projects\n21\nid\tname\temail\n3480001\tGPS Test Project\ttbechtol@forneytx.gov\n3420001\tNew School Rd\ttbechtol@forneytx.gov\n3390001\tNew School Rd\ttbechtol@forneytx.gov\n3360001\tNew School Rd\ttbechtol@forneytx.gov\n3330001\tNew School Rd\ttbechtol@forneytx.gov\n3060001\t59 BullCreekDam 04\ttbechtol@forneytx.gov\n3030003\tDJI 0453\ttbechtol@forneytx.gov\n3030002\tDJI 0453\ttbechtol@forneytx.gov\n3030001\tDJI 0454\ttbechtol@forneytx.gov\n3000002\tOld Lampasas\ttbechtol@forneytx.gov\n750001\tRanch Road Expansion\ttbechtol@forneytx.gov\n420001\tBowie & York Waterline Replacement\ttbechtol@forneytx.gov\n30003\tOncor Forney Switch\ttbechtol@forneytx.gov\n30002\tGail Wilson Road Extension\ttbechtol@forneytx.gov\n30001\tCIP222 US 80 Waterline\ttbechtol@forneytx.gov\n",
+  "stderr": "",
+  "execution_time_ms": 329
+}

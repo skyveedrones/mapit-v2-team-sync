@@ -408,17 +408,19 @@ export function MediaUploadDialog({
         const isH265 = await detectH265Codec(file);
         if (isH265) {
           fileItem.isH265 = true;
-        }
-        
-        // Extract thumbnail for all videos (browser will handle memory)
-        // Note: H.265 videos may produce green/corrupted thumbnails due to codec issues
-        console.log(`[Upload] Extracting thumbnail for video: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
-        const thumbnail = await extractVideoThumbnail(file);
-        if (thumbnail) {
-          fileItem.thumbnail = thumbnail;
-          console.log(`[Upload] Thumbnail extracted successfully for: ${file.name}`);
+          // Block H.265 files from uploading — set status to error so they cannot be queued
+          fileItem.status = "error";
+          fileItem.error = "H.265/HEVC codec detected — please convert to H.264 first";
         } else {
-          console.warn(`[Upload] Failed to extract thumbnail for: ${file.name}`);
+          // Extract thumbnail only for non-H.265 videos
+          console.log(`[Upload] Extracting thumbnail for video: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
+          const thumbnail = await extractVideoThumbnail(file);
+          if (thumbnail) {
+            fileItem.thumbnail = thumbnail;
+            console.log(`[Upload] Thumbnail extracted successfully for: ${file.name}`);
+          } else {
+            console.warn(`[Upload] Failed to extract thumbnail for: ${file.name}`);
+          }
         }
       }
       
@@ -1522,12 +1524,11 @@ export function MediaUploadDialog({
           <div className="flex gap-2 justify-end pt-4 border-t">
             <Button
               onClick={() => {
-                // Remove H.265 files from the upload list
-                setFiles(prev => prev.filter(f => !f.isH265));
+                // H.265 files are already blocked (status=error), just close the dialog
                 setH265WarningOpen(false);
               }}
             >
-              OK, Remove H.265 Files
+              OK, Got It
             </Button>
           </div>
         </DialogContent>

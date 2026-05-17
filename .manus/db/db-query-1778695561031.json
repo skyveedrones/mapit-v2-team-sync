@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, email, name, role FROM users LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, email, name, role FROM users LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "clay@skyveedrones.com",
+      "name": "Clay Bechtol",
+      "role": "webmaster"
+    },
+    {
+      "id": "1560095",
+      "email": "claybechtol@gmail.com",
+      "name": "Clay",
+      "role": "webmaster"
+    },
+    {
+      "id": "16050001",
+      "email": "mrozelle@garlandtx.gov",
+      "name": "Mike Rozelle",
+      "role": "user"
+    },
+    {
+      "id": "16140001",
+      "email": "eluna@forneytx.gov",
+      "name": "eluna",
+      "role": "user"
+    },
+    {
+      "id": "20220001",
+      "email": "tbechtol@forneytx.gov",
+      "name": "Tracey Bechtol",
+      "role": "admin"
+    },
+    {
+      "id": "24900027",
+      "email": "traceybechtol@gmail.com",
+      "name": "Tracey Bechtol",
+      "role": "user"
+    },
+    {
+      "id": "25860029",
+      "email": "robban@overcastinnovations.com",
+      "name": "robban",
+      "role": "user"
+    },
+    {
+      "id": "27360001",
+      "email": "NULL",
+      "name": "John Doe",
+      "role": "user"
+    },
+    {
+      "id": "27420001",
+      "email": "test@example.com",
+      "name": "John Doe",
+      "role": "user"
+    },
+    {
+      "id": "27480001",
+      "email": "clay@urbanwoodsco.com",
+      "name": "clay",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\n1\tclay@skyveedrones.com\tClay Bechtol\twebmaster\n1560095\tclaybechtol@gmail.com\tClay\twebmaster\n16050001\tmrozelle@garlandtx.gov\tMike Rozelle\tuser\n16140001\teluna@forneytx.gov\teluna\tuser\n20220001\ttbechtol@forneytx.gov\tTracey Bechtol\tadmin\n24900027\ttraceybechtol@gmail.com\tTracey Bechtol\tuser\n25860029\trobban@overcastinnovations.com\trobban\tuser\n27360001\tNULL\tJohn Doe\tuser\n27420001\ttest@example.com\tJohn Doe\tuser\n27480001\tclay@urbanwoodsco.com\tclay\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 259
+}

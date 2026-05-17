@@ -119,6 +119,7 @@ import { storagePut, storageGet, storageDownload } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
+import { extractVideoThumbnail } from "./videoThumbnail";
 import { uploadHighResolutionMedia } from "./highres-upload";
 import { extractImageMetadata, formatMetadataForDisplay, isMapGradeAccuracy } from "./metadataExtractor";
 
@@ -1685,7 +1686,21 @@ export const appRouter = router({
           const thumbResult = await storagePut(thumbKey, thumbnailBuffer, "image/jpeg");
           thumbnailUrl = thumbResult.url;
         }
-
+        // Server-side video thumbnail fallback (when client couldn't generate one, e.g. H.265)
+        if (isVideo && !thumbnailUrl) {
+          try {
+            console.log(`[VideoThumbnail] Generating server-side thumbnail for: ${input.filename}`);
+            const thumbBuffer = await extractVideoThumbnail(combinedBuffer, input.mimeType);
+            if (thumbBuffer) {
+              const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+              thumbnailUrl = thumbResult.url;
+              console.log(`[VideoThumbnail] Server-side thumbnail generated: ${thumbnailUrl}`);
+            }
+          } catch (err) {
+            console.error("[VideoThumbnail] Failed to generate server-side thumbnail:", err);
+          }
+        }
         // MD5 integrity check — verify no bytes were dropped during chunked transfer
         if (input.clientMd5) {
           const crypto = await import('crypto');
@@ -1803,14 +1818,28 @@ export const appRouter = router({
           }
         }
 
-        // If client provided a thumbnail (for videos), use it
+         // If client provided a thumbnail (for videos), use it
         if (input.thumbnailData && isVideo) {
           const thumbnailBuffer = Buffer.from(input.thumbnailData, "base64");
           const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
           const thumbResult = await storagePut(thumbKey, thumbnailBuffer, "image/jpeg");
           thumbnailUrl = thumbResult.url;
         }
-
+        // Server-side video thumbnail fallback (when client couldn't generate one, e.g. H.265)
+        if (isVideo && !thumbnailUrl) {
+          try {
+            console.log(`[VideoThumbnail] Generating server-side thumbnail for: ${input.filename}`);
+            const thumbBuffer = await extractVideoThumbnail(buffer, input.mimeType);
+            if (thumbBuffer) {
+              const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+              thumbnailUrl = thumbResult.url;
+              console.log(`[VideoThumbnail] Server-side thumbnail generated: ${thumbnailUrl}`);
+            }
+          } catch (err) {
+            console.error("[VideoThumbnail] Failed to generate server-side thumbnail:", err);
+          }
+        }
         // Create media record in database
         const mediaItem = await createMedia({
           projectId: input.projectId,
@@ -1973,6 +2002,24 @@ export const appRouter = router({
             thumbnailUrl = fileUrl; // Fall back to original
           }
         }
+        // Server-side video thumbnail generation (finalizePhotoUpload path)
+        if (input.mimeType.startsWith("video/")) {
+          try {
+            console.log(`[VideoThumbnail] Generating server-side thumbnail for: ${input.filename}`);
+            const response = await fetch(fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const videoBuffer = Buffer.from(arrayBuffer);
+            const thumbBuffer = await extractVideoThumbnail(videoBuffer, input.mimeType);
+            if (thumbBuffer) {
+              const thumbKey = `projects/${input.projectId}/thumbnails/${nanoid(12)}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+              thumbnailUrl = thumbResult.url;
+              console.log(`[VideoThumbnail] Server-side thumbnail generated: ${thumbnailUrl}`);
+            }
+          } catch (err) {
+            console.error("[VideoThumbnail] Failed to generate server-side thumbnail:", err);
+          }
+        }
 
         // Create media record
         const mediaItem = await createMedia({
@@ -2040,6 +2087,25 @@ export const appRouter = router({
           const thumbnailKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
           const thumbnailResult = await storagePut(thumbnailKey, thumbnailBuffer, "image/jpeg");
           thumbnailUrl = thumbnailResult.url;
+        }
+        // Server-side video thumbnail fallback for TUS uploads (when client couldn't generate one)
+        if (input.mimeType.startsWith("video/") && !thumbnailUrl) {
+          try {
+            console.log(`[VideoThumbnail] Generating server-side thumbnail for TUS upload: ${input.filename}`);
+            const response = await fetch(input.fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const videoBuffer = Buffer.from(arrayBuffer);
+            const thumbBuffer = await extractVideoThumbnail(videoBuffer, input.mimeType);
+            if (thumbBuffer) {
+              const uniqueId2 = nanoid(12);
+              const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId2}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+              thumbnailUrl = thumbResult.url;
+              console.log(`[VideoThumbnail] Server-side thumbnail generated for TUS: ${thumbnailUrl}`);
+            }
+          } catch (err) {
+            console.error("[VideoThumbnail] Failed to generate server-side thumbnail for TUS:", err);
+          }
         }
 
         // Extract file key from URL
