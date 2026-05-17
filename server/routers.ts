@@ -5827,6 +5827,21 @@ export const appRouter = router({
             thumbnailUrl = thumbResult.url;
           } catch { /* non-fatal */ }
         }
+        // Server-side video thumbnail fallback (when client couldn't generate one, e.g. H.265)
+        if (isVideo && !thumbnailUrl) {
+          try {
+            console.log(`[VideoThumbnail] Generating server-side thumbnail for onboarding: ${input.filename}`);
+            const thumbBuffer = await extractVideoThumbnail(combinedBuffer, input.mimeType);
+            if (thumbBuffer) {
+              const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, 'image/jpeg');
+              thumbnailUrl = thumbResult.url;
+              console.log(`[VideoThumbnail] Server-side thumbnail generated for onboarding: ${thumbnailUrl}`);
+            }
+          } catch (err) {
+            console.error('[VideoThumbnail] Failed to generate server-side thumbnail for onboarding:', err);
+          }
+        }
         // Create media record with GPS metadata passed from client
         const mediaItem = await createMedia({
           projectId: input.projectId,
