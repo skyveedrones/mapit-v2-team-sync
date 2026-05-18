@@ -1,6 +1,6 @@
 /**
  * Flight Detail Page
- * Shows detailed view of a single flight with its media
+ * Full parity with ProjectDetail — tabs (Media, Documents, Reports), export, all report types
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -10,6 +10,10 @@ import { LazyMapWrapper } from "@/components/LazyMapWrapper";
 import { MediaGallery } from "@/components/MediaGallery";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { FlightReportDialog } from "@/components/FlightReportDialog";
+import { ReportGeneratorDialog } from "@/components/ReportGeneratorDialog";
+import { IssueReportDialog } from "@/components/IssueReportDialog";
+import { ExportDataDialog } from "@/components/ExportDataDialog";
+import { ProjectDocuments } from "@/components/ProjectDocuments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -36,6 +40,7 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  BarChart2,
   Calendar,
   ChevronDown,
   Download,
@@ -82,6 +87,8 @@ const staggerContainer = {
   },
 };
 
+type FlightTab = "media" | "documents" | "reports";
+
 export default function FlightDetail() {
   const { user, logout } = useAuth();
   const params = useParams<{ id: string; flightId: string }>();
@@ -90,10 +97,14 @@ export default function FlightDetail() {
   const flightId = parseInt(params.flightId || "0", 10);
   const isDemoProject = projectId === 1;
 
+  const [activeTab, setActiveTab] = useState<FlightTab>("media");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [correctiveReportOpen, setCorrectiveReportOpen] = useState(false);
+  const [punchlistReportOpen, setPunchlistReportOpen] = useState(false);
 
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -105,27 +116,20 @@ export default function FlightDetail() {
 
   const utils = trpc.useUtils();
 
-  // Fetch flight details with media - use demo procedure for unauthenticated demo access
+  // Fetch flight details with media
   const { data: flight, isLoading, error } = isDemoProject
-    ? trpc.flight.getDemo.useQuery(
-        { id: flightId },
-        { enabled: flightId > 0 }
-      )
-    : trpc.flight.get.useQuery(
-        { id: flightId },
-        { enabled: flightId > 0 }
-      );
+    ? trpc.flight.getDemo.useQuery({ id: flightId }, { enabled: flightId > 0 })
+    : trpc.flight.get.useQuery({ id: flightId }, { enabled: flightId > 0 });
 
-  // Fetch parent project for breadcrumb - use demo procedure for unauthenticated demo access
+  // Fetch parent project for breadcrumb and access role
   const { data: project } = isDemoProject
-    ? trpc.project.getDemo.useQuery(
-        { id: projectId },
-        { enabled: projectId > 0 }
-      )
-    : trpc.project.get.useQuery(
-        { id: projectId },
-        { enabled: projectId > 0 }
-      );
+    ? trpc.project.getDemo.useQuery({ id: projectId }, { enabled: projectId > 0 })
+    : trpc.project.get.useQuery({ id: projectId }, { enabled: projectId > 0 });
+
+  // Fetch media list for report dialogs (flight-scoped)
+  const { data: mediaList } = isDemoProject
+    ? trpc.media.listDemo.useQuery({ projectId, flightId }, { enabled: isDemoProject && projectId > 0 })
+    : trpc.media.list.useQuery({ projectId, flightId }, { enabled: !isDemoProject && projectId > 0 });
 
   const updateFlight = trpc.flight.update.useMutation({
     onSuccess: () => {
@@ -135,9 +139,7 @@ export default function FlightDetail() {
       setEditDialogOpen(false);
     },
     onError: (error) => {
-      toast.error("Failed to update flight", {
-        description: error.message,
-      });
+      toast.error("Failed to update flight", { description: error.message });
     },
   });
 
@@ -147,9 +149,7 @@ export default function FlightDetail() {
       setLocation(`/project/${projectId}`);
     },
     onError: (error) => {
-      toast.error("Failed to delete flight", {
-        description: error.message,
-      });
+      toast.error("Failed to delete flight", { description: error.message });
     },
   });
 
@@ -164,9 +164,7 @@ export default function FlightDetail() {
       setEditName(flight.name);
       setEditDescription(flight.description || "");
       setEditFlightDate(
-        flight.flightDate
-          ? format(new Date(flight.flightDate), "yyyy-MM-dd")
-          : ""
+        flight.flightDate ? format(new Date(flight.flightDate), "yyyy-MM-dd") : ""
       );
       setEditDronePilot(flight.dronePilot || "");
       setEditFaaLicenseNumber(flight.faaLicenseNumber || "");
@@ -197,10 +195,11 @@ export default function FlightDetail() {
     setDeleteDialogOpen(false);
   };
 
-  // Check if user is owner
+  // Access control — mirrors ProjectDetail logic
   const isOwner = project && (project as any).accessRole === "owner";
   const isEditor = project && (project as any).accessRole === "editor";
-  const canEdit = isOwner || isEditor;
+  const isWebmaster = project && (project as any).accessRole === "webmaster";
+  const canEdit = !!(isOwner || isEditor || isWebmaster || isDemoProject);
 
   if (isLoading) {
     return (
@@ -208,11 +207,7 @@ export default function FlightDetail() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-8 w-auto"
-              />
+              <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -232,11 +227,7 @@ export default function FlightDetail() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
           <div className="container flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img
-                src="/images/mapit-logo-new.png"
-                alt="MAPIT"
-                className="h-8 w-auto"
-              />
+              <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-8 w-auto" />
             </Link>
           </div>
         </nav>
@@ -249,8 +240,7 @@ export default function FlightDetail() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Flight Not Found</h3>
                 <p className="text-muted-foreground mb-4">
-                  The flight you're looking for doesn't exist or you don't have
-                  access to it.
+                  The flight you're looking for doesn't exist or you don't have access to it.
                 </p>
                 <Link href={`/project/${projectId}`}>
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -272,25 +262,24 @@ export default function FlightDetail() {
 
   const hasMedia = flight.media && flight.media.length > 0;
 
+  const tabs: { id: FlightTab; label: string; icon: React.ElementType }[] = [
+    { id: "media", label: "Media", icon: Image },
+    { id: "documents", label: "Documents", icon: FileText },
+    { id: "reports", label: "Reports", icon: BarChart2 },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/images/mapit-logo-new.png"
-              alt="MAPIT"
-              className="h-8 w-auto"
-            />
+            <img src="/images/mapit-logo-new.png" alt="MAPIT" className="h-8 w-auto" />
           </Link>
-
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {user?.name || user?.email || "User"}
-              </span>
+              <span className="hidden sm:inline">{user?.name || user?.email || "User"}</span>
             </div>
             <Button
               variant="ghost"
@@ -307,12 +296,8 @@ export default function FlightDetail() {
 
       <main className="pt-24 pb-12">
         <div className="container">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Back to Project Navigation */}
+          <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+            {/* Back Navigation */}
             <motion.div variants={fadeInUp} className="mb-6">
               <BackToDashboard projectId={projectId} />
             </motion.div>
@@ -334,15 +319,12 @@ export default function FlightDetail() {
                     {flight.name}
                   </h1>
                   {flight.description && (
-                    <p className="text-muted-foreground max-w-2xl">
-                      {flight.description}
-                    </p>
+                    <p className="text-muted-foreground max-w-2xl">{flight.description}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Flight Actions Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -352,30 +334,29 @@ export default function FlightDetail() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     {canEdit && (
-                      <DropdownMenuItem
-                        onClick={() => setUploadDialogOpen(true)}
-                      >
+                      <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
                         <Upload className="h-4 w-4 mr-2 text-emerald-500" />
                         Upload Media
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem
-                      onClick={() =>
-                        setLocation(`/project/${projectId}/flight/${flightId}/map`)
-                      }
+                      onClick={() => setLocation(`/project/${projectId}/flight/${flightId}/map`)}
                     >
                       <Map className="h-4 w-4 mr-2 text-blue-500" />
                       View Map
                     </DropdownMenuItem>
                     {!isDemoProject && (
-                      <DropdownMenuItem
-                        onClick={() => setReportDialogOpen(true)}
-                      >
-                        <Download className="h-4 w-4 mr-2 text-purple-500" />
-                        Download Report
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                          <Download className="h-4 w-4 mr-2 text-purple-500" />
+                          Download Report
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setExportDialogOpen(true)}>
+                          <Download className="h-4 w-4 mr-2 text-orange-500" />
+                          Export GPS Data
+                        </DropdownMenuItem>
+                      </>
                     )}
-
                     {canEdit && (
                       <>
                         <DropdownMenuSeparator />
@@ -383,14 +364,14 @@ export default function FlightDetail() {
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit Flight
                         </DropdownMenuItem>
-                        {(user?.role === 'admin' || user?.role === 'webmaster') && (
-                        <DropdownMenuItem
-                          onClick={() => setDeleteDialogOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Flight
-                        </DropdownMenuItem>
+                        {(user?.role === "admin" || user?.role === "webmaster") && (
+                          <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Flight
+                          </DropdownMenuItem>
                         )}
                       </>
                     )}
@@ -409,34 +390,26 @@ export default function FlightDetail() {
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <Calendar className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">
-                        Flight Date
-                      </span>
+                      <span className="text-xs uppercase tracking-wide">Flight Date</span>
                     </div>
                     <p className="font-medium">{formattedFlightDate}</p>
                   </CardContent>
                 </Card>
               )}
-
               <Card className="bg-card">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <Image className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">
-                      Media Items
-                    </span>
+                    <span className="text-xs uppercase tracking-wide">Media Items</span>
                   </div>
                   <p className="font-medium">{flight.media?.length || 0} items</p>
                 </CardContent>
               </Card>
-
               <Card className="bg-card">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <FolderOpen className="h-4 w-4" />
-                    <span className="text-xs uppercase tracking-wide">
-                      Parent Project
-                    </span>
+                    <span className="text-xs uppercase tracking-wide">Parent Project</span>
                   </div>
                   <Link
                     href={`/project/${projectId}`}
@@ -446,44 +419,34 @@ export default function FlightDetail() {
                   </Link>
                 </CardContent>
               </Card>
-
-              {/* Pilot Information Cards */}
               {flight.dronePilot && (
                 <Card className="bg-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <User className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">
-                        Drone Pilot
-                      </span>
+                      <span className="text-xs uppercase tracking-wide">Drone Pilot</span>
                     </div>
                     <p className="font-medium">{flight.dronePilot}</p>
                   </CardContent>
                 </Card>
               )}
-
               {flight.faaLicenseNumber && (
                 <Card className="bg-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <FileText className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">
-                        FAA License #
-                      </span>
+                      <span className="text-xs uppercase tracking-wide">FAA License #</span>
                     </div>
                     <p className="font-medium">{flight.faaLicenseNumber}</p>
                   </CardContent>
                 </Card>
               )}
-
               {flight.laancAuthNumber && (
                 <Card className="bg-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <Shield className="h-4 w-4" />
-                      <span className="text-xs uppercase tracking-wide">
-                        LAANC Auth #
-                      </span>
+                      <span className="text-xs uppercase tracking-wide">LAANC Auth #</span>
                     </div>
                     <p className="font-medium">{flight.laancAuthNumber}</p>
                   </CardContent>
@@ -498,55 +461,144 @@ export default function FlightDetail() {
                   projectId={projectId}
                   projectName={flight.name}
                   flightId={flightId}
+                  isDemoProject={isDemoProject}
                   projectLocation={(project as any)?.location}
                 />
               </LazyMapWrapper>
             </motion.div>
 
-            {/* Media Section */}
+            {/* Tabbed Content — Media / Documents / Reports */}
             <motion.div variants={fadeInUp}>
-              <div className="flex items-center justify-between mb-4">
-                <h2
-                  className="text-lg font-semibold"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Flight Media
-                </h2>
+              {/* Tab Bar */}
+              <div className="flex items-center gap-1 border-b border-border mb-6">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                        activeTab === tab.id
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
 
-              {hasMedia ? (
-                <MediaGallery
-                  projectId={projectId}
-                  flightId={flightId}
-                  canEdit={canEdit}
-                  onUploadClick={() => setUploadDialogOpen(true)}
-                  isDemoProject={isDemoProject}
-                />
-              ) : (
-                <Card className="border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Image className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      No media uploaded yet
-                    </h3>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                      {canEdit
-                        ? "Upload drone photos and videos to this flight. Media with GPS data will automatically appear on the map."
-                        : "No media has been uploaded to this flight yet."}
-                    </p>
-                    {canEdit && (
-                      <Button
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => setUploadDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Upload Media
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+              {/* Media Tab */}
+              {activeTab === "media" && (
+                <div>
+                  {hasMedia ? (
+                    <MediaGallery
+                      projectId={projectId}
+                      flightId={flightId}
+                      canEdit={canEdit}
+                      onUploadClick={() => setUploadDialogOpen(true)}
+                      isDemoProject={isDemoProject}
+                    />
+                  ) : (
+                    <Card className="border-dashed">
+                      <CardContent className="py-12 text-center">
+                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                          <Image className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No media uploaded yet</h3>
+                        <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                          {canEdit
+                            ? "Upload drone photos and videos to this flight. Media with GPS data will automatically appear on the map."
+                            : "No media has been uploaded to this flight yet."}
+                        </p>
+                        {canEdit && (
+                          <Button
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                            onClick={() => setUploadDialogOpen(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Upload Media
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Documents Tab */}
+              {activeTab === "documents" && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Upload engineering PDFs, CAD files, and blueprints associated with this flight.
+                  </p>
+                  <ProjectDocuments projectId={projectId} />
+                </div>
+              )}
+
+              {/* Reports Tab */}
+              {activeTab === "reports" && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Generate and export flight reports. All reports are compiled from the current flight data.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={() => setReportDialogOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Generate Report</p>
+                        <p className="text-xs text-muted-foreground">Full flight summary PDF</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setCorrectiveReportOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-red-500/40 hover:bg-red-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Corrective Actions Report</p>
+                        <p className="text-xs text-muted-foreground">Document corrective actions</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setPunchlistReportOpen(true)}
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-yellow-500/40 hover:bg-yellow-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Punchlist Report</p>
+                        <p className="text-xs text-muted-foreground">Track outstanding items</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() =>
+                        isDemoProject
+                          ? toast.info("Export disabled on demo project")
+                          : setExportDialogOpen(true)
+                      }
+                      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-purple-500/40 hover:bg-purple-500/5 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                        <Download className="h-5 w-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Export GPS Data</p>
+                        <p className="text-xs text-muted-foreground">KML, CSV, GeoJSON, GPX</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
               )}
             </motion.div>
           </motion.div>
@@ -561,6 +613,52 @@ export default function FlightDetail() {
         onOpenChange={setUploadDialogOpen}
       />
 
+      {/* Flight Report (photo gallery PDF) */}
+      <FlightReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        flightId={flightId}
+        flightName={flight.name}
+        media={flight.media || []}
+        isDemoProject={isDemoProject}
+      />
+
+      {/* Full project-style report generator */}
+      <ReportGeneratorDialog
+        open={false}
+        onOpenChange={() => {}}
+        projectId={projectId}
+        projectName={flight.name}
+        media={mediaList || []}
+        isDemoProject={isDemoProject}
+      />
+
+      {/* Corrective Actions Report */}
+      <IssueReportDialog
+        projectId={projectId}
+        projectName={flight.name}
+        issueReportType="corrective"
+        open={correctiveReportOpen}
+        onOpenChange={setCorrectiveReportOpen}
+      />
+
+      {/* Punchlist Report */}
+      <IssueReportDialog
+        projectId={projectId}
+        projectName={flight.name}
+        issueReportType="punchlist"
+        open={punchlistReportOpen}
+        onOpenChange={setPunchlistReportOpen}
+      />
+
+      {/* Export GPS Data */}
+      <ExportDataDialog
+        projectId={projectId}
+        projectName={flight.name}
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+      />
+
       {/* Edit Flight Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -569,9 +667,7 @@ export default function FlightDetail() {
               <Pencil className="h-5 w-5 text-primary" />
               Edit Flight
             </DialogTitle>
-            <DialogDescription>
-              Update the flight details below.
-            </DialogDescription>
+            <DialogDescription>Update the flight details below.</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleUpdateFlight} className="space-y-4">
@@ -584,7 +680,6 @@ export default function FlightDetail() {
                 disabled={updateFlight.isPending}
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-flight-date">Flight Date</Label>
               <div className="relative">
@@ -599,7 +694,6 @@ export default function FlightDetail() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-flight-description">Description</Label>
               <Textarea
@@ -610,14 +704,11 @@ export default function FlightDetail() {
                 rows={3}
               />
             </div>
-
-            {/* Pilot Information Section */}
             <div className="border-t pt-4 space-y-4">
               <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Pilot Information
               </h4>
-              
               <div className="space-y-2">
                 <Label htmlFor="edit-drone-pilot">Drone Pilot Name</Label>
                 <Input
@@ -628,7 +719,6 @@ export default function FlightDetail() {
                   disabled={updateFlight.isPending}
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-faa-license" className="flex items-center gap-1">
@@ -643,7 +733,6 @@ export default function FlightDetail() {
                     disabled={updateFlight.isPending}
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="edit-laanc-auth" className="flex items-center gap-1">
                     <Shield className="h-3 w-3" />
@@ -659,7 +748,6 @@ export default function FlightDetail() {
                 </div>
               </div>
             </div>
-
             <DialogFooter>
               <Button
                 type="button"
@@ -684,25 +772,14 @@ export default function FlightDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Flight Report Dialog */}
-      <FlightReportDialog
-        open={reportDialogOpen}
-        onOpenChange={setReportDialogOpen}
-        flightId={flightId}
-        flightName={flight.name}
-        media={flight.media || []}
-        isDemoProject={isDemoProject}
-      />
-
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Flight</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{flight.name}"? This will also
-              delete all {flight.media?.length || 0} media files in this flight.
-              This action cannot be undone.
+              Are you sure you want to delete "{flight.name}"? This will also delete all{" "}
+              {flight.media?.length || 0} media files in this flight. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

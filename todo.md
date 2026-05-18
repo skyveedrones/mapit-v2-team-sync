@@ -2841,3 +2841,13 @@
 - [x] Add "Regenerate Thumbnails" button to Media Action dropdown in MediaGallery
 - [x] Add play-button overlay on video thumbnails in media grid (enhance existing)
 - [x] Add codec badge (H.264 / H.265) to upload dialog file rows
+
+## Flight Detail Page Parity
+- [x] Add tabbed layout (Media, Documents, Reports) to FlightDetail matching ProjectDetail
+- [x] Add Export GPS Data dialog to FlightDetail
+- [x] Add Generate Report (ReportGeneratorDialog) to FlightDetail
+- [x] Add Corrective Actions Report (IssueReportDialog) to FlightDetail
+- [x] Add Punchlist Report (IssueReportDialog) to FlightDetail
+- [x] Add Documents tab (ProjectDocuments) to FlightDetail
+- [x] Fix media upload button visibility - ensure canEdit works correctly for flight owner
+- [x] Add "Upload Media" to Flight Actions dropdown when canEdit is true

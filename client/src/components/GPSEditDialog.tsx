@@ -110,7 +110,7 @@ export function GPSEditDialog({
       if (!container) return;
 
       const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
+        container: mapContainerRef.current!,
         style: "mapbox://styles/mapbox/satellite-streets-v12",
         center: getMapCenter(),
         zoom: existingGPSPoints.length > 0 ? 14 : 12,

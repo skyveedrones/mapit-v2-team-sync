@@ -130,8 +130,8 @@ export const coordinateConverterUploadRouter = router({
             easting: pt.easting,
             elevation: pt.elevation,
             description: pt.description,
-            latitude: conv?.success ? conv.latitude : null,
-            longitude: conv?.success ? conv.longitude : null,
+            latitude: (conv?.success && conv.latitude != null ? conv.latitude : null) as number | null,
+            longitude: (conv?.success && conv.longitude != null ? conv.longitude : null) as number | null,
             conversionSuccess: conv?.success ?? false,
             conversionError: conv?.error ?? null,
           };
