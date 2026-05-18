@@ -1,11 +1,11 @@
 {
-  "version": "2.4.75",
-  "commit": "322fa50",
-  "fullCommit": "322fa50d98bf5aa6721c3eea70bf8a17512452b8",
-  "hash": "322fa50",
-  "fullHash": "322fa50d98bf5aa6721c3eea70bf8a17512452b8",
-  "branch": "main",
-  "buildDate": "2026-05-13T16:22:11.527Z",
-  "timestamp": 1778689331527,
-  "buildTime": "5/13/2026, 12:22:11 PM"
+  "version": "2.4.84",
+  "commit": "de029c4",
+  "fullCommit": "de029c4229d51c22c669d01f1e6702746597e7ba",
+  "hash": "de029c4",
+  "fullHash": "de029c4229d51c22c669d01f1e6702746597e7ba",
+  "branch": "feature/r2-storage",
+  "buildDate": "2026-05-18T15:44:31.521Z",
+  "timestamp": 1779119071521,
+  "buildTime": "5/18/2026, 11:44:31 AM"
 }
