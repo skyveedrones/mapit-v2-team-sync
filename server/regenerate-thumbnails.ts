@@ -1,118 +1,175 @@
 /**
- * Utility script to regenerate missing thumbnails for media files
- * This fixes the issue where some media has NULL thumbnailUrl values
+ * Utility to regenerate missing thumbnails for media files.
+ * Handles both images (via sharp) and videos (via ffmpeg).
+ *
+ * Safety limits:
+ *   - Skips files larger than MAX_FILE_BYTES (50 MB) to avoid OOM
+ *   - Each item is wrapped in a per-item timeout (30 s)
  */
 
 import { getDb } from "./db";
 import { media } from "../drizzle/schema";
-import { isNull, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { storagePut } from "./storage";
 import { generateThumbnail } from "./watermark";
+import { extractVideoThumbnail } from "./videoThumbnail";
 import { nanoid } from "nanoid";
 
+/** Maximum file size we will download for thumbnail generation (50 MB). */
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+/** Per-item processing timeout in milliseconds. */
+const ITEM_TIMEOUT_MS = 30_000;
+
 /**
- * Fetch image from URL and return buffer
+ * Fetch a file from URL with a size guard.
+ * Returns null (instead of throwing) when the file exceeds MAX_FILE_BYTES.
  */
-async function fetchImageBuffer(url: string): Promise<Buffer> {
+async function fetchBufferWithSizeGuard(url: string): Promise<Buffer | null> {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.statusText}`);
+    throw new Error(`HTTP ${response.status} fetching ${url}`);
   }
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+
+  // Honour Content-Length if present
+  const contentLength = response.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_FILE_BYTES) {
+    console.warn(`[RegenerateThumbnails] Skipping oversized file (${contentLength} bytes): ${url}`);
+    return null;
+  }
+
+  // Stream into a buffer, bailing out if we exceed the cap mid-stream
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  const reader = response.body!.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_FILE_BYTES) {
+      reader.cancel();
+      console.warn(`[RegenerateThumbnails] Skipping oversized file (stream exceeded ${MAX_FILE_BYTES} bytes): ${url}`);
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  return Buffer.concat(chunks.map((c) => Buffer.from(c)));
+}
+
+/** Wrap a promise with a timeout; resolves to null on timeout instead of throwing. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      console.warn(`[RegenerateThumbnails] Timeout (${ms}ms) for ${label}`);
+      resolve(null);
+    }, ms);
+    promise
+      .then((v) => { clearTimeout(timer); resolve(v); })
+      .catch((err) => { clearTimeout(timer); console.error(`[RegenerateThumbnails] Error for ${label}:`, err); resolve(null); });
+  });
 }
 
 /**
- * Regenerate thumbnails for media files with NULL thumbnailUrl
+ * Regenerate thumbnails for media files with NULL or broken thumbnailUrl.
+ * Pass a projectId to scope to a single project.
  */
 export async function regenerateMissingThumbnails(projectId?: number) {
   const db = await getDb();
-  if (!db) {
-    throw new Error("Failed to connect to database");
-  }
-  
-  // Find media with NULL thumbnailUrl OR Cloudinary URLs (broken after migration)
+  if (!db) throw new Error("Failed to connect to database");
+
   const mediaWithoutThumbnails = projectId
     ? await db
         .select()
         .from(media)
-        .where(sql`(${media.thumbnailUrl} IS NULL OR ${media.thumbnailUrl} LIKE '%cloudinary%') AND ${media.projectId} = ${projectId}`)
+        .where(
+          sql`(${media.thumbnailUrl} IS NULL OR ${media.thumbnailUrl} LIKE '%cloudinary%') AND ${media.projectId} = ${projectId}`
+        )
     : await db
         .select()
         .from(media)
         .where(sql`${media.thumbnailUrl} IS NULL OR ${media.thumbnailUrl} LIKE '%cloudinary%'`);
 
-  
-  console.log(`Found ${mediaWithoutThumbnails.length} media files with missing or broken thumbnails`);
-  
+  console.log(`[RegenerateThumbnails] Found ${mediaWithoutThumbnails.length} items to process`);
+
   const results = {
     success: [] as number[],
     failed: [] as { id: number; error: string }[],
   };
-  
+
   for (const mediaItem of mediaWithoutThumbnails) {
-    try {
-      // Only process images (skip videos for now)
-      if (!mediaItem.mimeType.startsWith("image/")) {
-        console.log(`Skipping non-image media ${mediaItem.id}: ${mediaItem.mimeType}`);
-        continue;
-      }
-      
-      console.log(`Processing media ${mediaItem.id}: ${mediaItem.filename}`);
-      
-      // Fetch the original image
-      const imageBuffer = await fetchImageBuffer(mediaItem.url);
-      
-      // Generate thumbnail
-      const thumbBuffer = await generateThumbnail(imageBuffer, 300);
-      
-      // Upload thumbnail to S3
-      const uniqueId = nanoid(12);
-      const thumbKey = `projects/${mediaItem.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
-      const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
-      
-      // Update media record
-      await db
-        .update(media)
-        .set({
-          thumbnailUrl: thumbResult.url,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(media.id, mediaItem.id));
-      
-      console.log(`✓ Generated thumbnail for media ${mediaItem.id}: ${thumbResult.url}`);
+    const isVideo = mediaItem.mimeType.startsWith("video/");
+    const isImage = mediaItem.mimeType.startsWith("image/");
+
+    if (!isImage && !isVideo) {
+      console.log(`[RegenerateThumbnails] Skipping unsupported type ${mediaItem.mimeType} (id=${mediaItem.id})`);
+      continue;
+    }
+
+    const result = await withTimeout(
+      processItem(db, mediaItem, isVideo),
+      ITEM_TIMEOUT_MS,
+      `media ${mediaItem.id} (${mediaItem.filename})`
+    );
+
+    if (result === null) {
+      results.failed.push({ id: mediaItem.id, error: "Timeout or unhandled error" });
+    } else if (result.ok) {
       results.success.push(mediaItem.id);
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`✗ Failed to generate thumbnail for media ${mediaItem.id}:`, errorMessage);
-      results.failed.push({ id: mediaItem.id, error: errorMessage });
+    } else {
+      results.failed.push({ id: mediaItem.id, error: result.error });
     }
   }
-  
-  console.log(`\n=== Results ===`);
-  console.log(`  ✓ Success: ${results.success.length}`);
-  console.log(`  ✗ Failed: ${results.failed.length}`);
-  
-  if (results.failed.length > 0) {
-    console.log(`\nFailed items:`);
-    results.failed.forEach(f => console.log(`  - Media ${f.id}: ${f.error}`));
-  }
-  
+
+  console.log(`[RegenerateThumbnails] Done — success: ${results.success.length}, failed: ${results.failed.length}`);
   return results;
 }
 
-// If run directly from command line
+async function processItem(
+  db: Awaited<ReturnType<typeof getDb>>,
+  mediaItem: { id: number; projectId: number; filename: string; mimeType: string; url: string },
+  isVideo: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const fileBuffer = await fetchBufferWithSizeGuard(mediaItem.url);
+    if (!fileBuffer) {
+      return { ok: false, error: "File too large (>50 MB), skipped" };
+    }
+
+    let thumbBuffer: Buffer | null = null;
+
+    if (isVideo) {
+      thumbBuffer = await extractVideoThumbnail(fileBuffer, mediaItem.mimeType, 1);
+    } else {
+      thumbBuffer = await generateThumbnail(fileBuffer, 300);
+    }
+
+    if (!thumbBuffer) {
+      return { ok: false, error: "Thumbnail generation returned null" };
+    }
+
+    const uniqueId = nanoid(12);
+    const thumbKey = `projects/${mediaItem.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+    const { url: thumbUrl } = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+
+    await db!
+      .update(media)
+      .set({ thumbnailUrl: thumbUrl, updatedAt: new Date().toISOString() })
+      .where(eq(media.id, mediaItem.id));
+
+    console.log(`[RegenerateThumbnails] ✓ id=${mediaItem.id} → ${thumbUrl}`);
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[RegenerateThumbnails] ✗ id=${mediaItem.id}:`, msg);
+    return { ok: false, error: msg };
+  }
+}
+
+// CLI entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   const projectId = process.argv[2] ? parseInt(process.argv[2]) : undefined;
-  
   regenerateMissingThumbnails(projectId)
-    .then((results) => {
-      console.log("\nThumbnail regeneration complete!");
-      process.exit(results.failed.length > 0 ? 1 : 0);
-    })
-    .catch((error) => {
-      console.error("Fatal error:", error);
-      process.exit(1);
-    });
+    .then((r) => process.exit(r.failed.length > 0 ? 1 : 0))
+    .catch(() => process.exit(1));
 }
