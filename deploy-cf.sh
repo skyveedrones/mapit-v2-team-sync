@@ -40,7 +40,7 @@ done
 # ── build ─────────────────────────────────────────────────────────────────────
 if [[ "$SKIP_BUILD" == "false" ]]; then
   info "Building frontend…"
-  # CRITICAL: Do NOT pass VITE_API_URL here — the .env file has the correct Railway URL.
+  # CRITICAL: Do NOT pass VITE_API_URL here — the .env file has the correct Railway API URL.
   # Only the Mapbox token is passed inline to ensure the correct value is used.
   VITE_MAPBOX_TOKEN="$MAPBOX_TOKEN" pnpm build
 
