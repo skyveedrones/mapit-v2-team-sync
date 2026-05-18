@@ -19,7 +19,7 @@ set -euo pipefail
 # ── config ───────────────────────────────────────────────────────────────────
 CF_PROJECT="${CF_PROJECT:-mapit-skyveedrones}"
 DIST_DIR="dist/public"
-MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtbXF0bnIzdTEwcmEyc3IwMDU4dGZwMXkifQ.Kb7RTEJUConyNMsXj_bk1Q"
+MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtcDZ5dzNtYTAxOGoycG9tdDAwNWt4dWoifQ.SWVEBzFO8jLhTVyuuzrLuw"
 
 # ── colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
