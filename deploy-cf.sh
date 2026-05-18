@@ -12,12 +12,12 @@
 #   - pnpm installed
 #   - npx wrangler available (installed via devDependencies or globally)
 #
-# Cloudflare Pages project name: mapit  (update CF_PROJECT below if different)
+# Cloudflare Pages project name: mapit-skyveedrones  (update CF_PROJECT below if different)
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
 # ── config ───────────────────────────────────────────────────────────────────
-CF_PROJECT="${CF_PROJECT:-mapit}"
+CF_PROJECT="${CF_PROJECT:-mapit-skyveedrones}"
 DIST_DIR="dist/public"
 MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtbXF0bnIzdTEwcmEyc3IwMDU4dGZwMXkifQ.Kb7RTEJUConyNMsXj_bk1Q"
 
