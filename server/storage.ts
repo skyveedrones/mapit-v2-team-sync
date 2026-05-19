@@ -18,6 +18,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  PutBucketCorsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -44,6 +45,45 @@ function getR2Config() {
   });
 
   return { client, bucket, publicUrl };
+}
+
+// ─── CORS bootstrap ──────────────────────────────────────────────────────────
+
+/**
+ * Apply CORS policy to the R2 bucket via the S3 API so browsers can PUT
+ * files directly to R2 (presigned URL uploads) without routing through Railway.
+ *
+ * Called once at server startup. Safe to call repeatedly — idempotent.
+ */
+export async function ensureR2Cors(): Promise<void> {
+  try {
+    const { client, bucket } = getR2Config();
+    await client.send(
+      new PutBucketCorsCommand({
+        Bucket: bucket,
+        CORSConfiguration: {
+          CORSRules: [
+            {
+              AllowedOrigins: [
+                "https://mapit.skyveedrones.com",
+                "https://mapit-skyveedrones.pages.dev",
+                // Wildcard for any future Cloudflare Pages preview deployments
+                "https://*.mapit-skyveedrones.pages.dev",
+              ],
+              AllowedMethods: ["PUT", "GET", "HEAD"],
+              AllowedHeaders: ["Content-Type", "Content-Length", "*"],
+              ExposeHeaders: ["ETag"],
+              MaxAgeSeconds: 3600,
+            },
+          ],
+        },
+      })
+    );
+    console.log("[R2] CORS policy applied to bucket:", bucket);
+  } catch (err) {
+    // Log but don't crash — uploads fall back to chunked path if CORS is missing
+    console.error("[R2] Failed to apply CORS policy:", err);
+  }
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

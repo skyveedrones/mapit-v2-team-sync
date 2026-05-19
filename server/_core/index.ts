@@ -20,6 +20,7 @@ import documentUploadRouter from "../routes/document-upload";
 import pdfConverterRouter from "../routes/pdf-converter";
 import createOverlayRouter from "../routes/create-overlay";
 import { registerStorageProxy } from "./storageProxy";
+import { ensureR2Cors } from "../storage";
 import cors from "cors";
 
 // Force rebuild trigger - CORS fix deployed
@@ -244,6 +245,9 @@ async function startServer() {
   server.listen(port, '0.0.0.0', () => {
     console.log(`[Server] Running on http://0.0.0.0:${port}/`);
   });
+
+  // Apply R2 CORS policy at startup so browsers can PUT directly to R2
+  ensureR2Cors().catch((err) => console.error('[R2] CORS bootstrap error:', err));
   
   // Graceful shutdown
   process.on('SIGTERM', () => {
