@@ -2851,3 +2851,9 @@
 - [x] Add Documents tab (ProjectDocuments) to FlightDetail
 - [x] Fix media upload button visibility - ensure canEdit works correctly for flight owner
 - [x] Add "Upload Media" to Flight Actions dropdown when canEdit is true
+
+## Upload Performance — Direct-to-R2 Presigned URL
+- [ ] Add media.getUploadUrl tRPC procedure returning presigned PUT URL + finalizeDirectUpload procedure
+- [ ] Replace base64-over-tRPC chunked upload in MediaUploadDialog with direct browser PUT to R2
+- [ ] Keep progress bar, speed, ETA working with XMLHttpRequest progress events
+- [ ] Fallback: keep existing chunk path for environments where CORS blocks direct PUT

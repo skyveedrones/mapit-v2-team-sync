@@ -341,6 +341,8 @@ export function MediaUploadDialog({
   const finalizeChunkedUploadMutation = trpc.media.finalizeChunkedUpload.useMutation();
   const finalizePhotoUploadMutation = trpc.media.finalizePhotoUpload.useMutation();
   const uploadHighResMutation = trpc.media.uploadHighResolution.useMutation();
+  const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
+  const finalizeDirectUploadMutation = trpc.media.finalizeDirectUpload.useMutation();
   const utils = trpc.useUtils();
 
   const { data: mediaList = propMediaList || [] } = trpc.media.list.useQuery(
@@ -507,6 +509,74 @@ export function MediaUploadDialog({
       
       reader.onerror = (error) => reject(error);
       reader.readAsDataURL(chunk);
+    });
+  };
+
+  // Upload a file directly to R2 via presigned PUT URL — bypasses Railway for full network speed
+  const uploadDirectToR2 = async (
+    fileItem: FileToUpload,
+    index: number,
+    startTime: number
+  ): Promise<void> => {
+    const file = fileItem.file;
+
+    // Step 1: Get presigned PUT URL from server
+    const { uploadUrl, publicUrl, fileKey } = await getUploadUrlMutation.mutateAsync({
+      projectId,
+      filename: file.name,
+      mimeType: file.type,
+      fileSize: file.size,
+    });
+
+    // Step 2: PUT file bytes directly to R2 with XHR for progress events
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
+        const elapsed = (Date.now() - startTime) / 1000 || 0.001;
+        const speed = e.loaded / elapsed;
+        const remaining = e.total - e.loaded;
+        const eta = speed > 0 ? remaining / speed : 0;
+        const progress = (e.loaded / e.total) * 90; // 90% = upload done, 10% = finalize
+        setFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === index
+              ? { ...f, progress, uploadSpeed: speed, eta, bytesUploaded: e.loaded }
+              : f
+          )
+        );
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`R2 PUT failed: ${xhr.status} ${xhr.statusText}`));
+      };
+      xhr.onerror = () => reject(new Error('Network error during direct upload'));
+      xhr.send(file);
+    });
+
+    setFiles((prev) => prev.map((f, idx) => (idx === index ? { ...f, progress: 92 } : f)));
+
+    // Step 3: Finalize — create DB record + thumbnail on server
+    const gps = fileItem.telemetry;
+    await finalizeDirectUploadMutation.mutateAsync({
+      projectId,
+      flightId,
+      filename: file.name,
+      mimeType: file.type,
+      fileSize: file.size,
+      fileKey,
+      publicUrl,
+      thumbnailData: fileItem.thumbnail?.split(',')[1],
+      latitude: gps?.latitude != null && !isNaN(gps.latitude) ? gps.latitude : undefined,
+      longitude: gps?.longitude != null && !isNaN(gps.longitude) ? gps.longitude : undefined,
+      altitude: gps?.absoluteAltitude != null && !isNaN(gps.absoluteAltitude) ? gps.absoluteAltitude : undefined,
+      capturedAt: gps?.capturedAt ? new Date(gps.capturedAt).toISOString() : undefined,
+      cameraMake: gps?.cameraMake ?? undefined,
+      cameraModel: gps?.cameraModel ?? undefined,
     });
   };
 
@@ -1100,11 +1170,21 @@ export function MediaUploadDialog({
             const isPhoto = fileItem.file.type.startsWith("image/");
             
             if (isVideo) {
-              // Video: use chunked S3 upload (Evidence-Grade — no transcoding, GPS metadata preserved)
-              await uploadInChunks(fileItem, fileIndex, startTime);
+              // Video: try direct PUT to R2 first; fall back to chunked upload if CORS blocks it
+              try {
+                await uploadDirectToR2(fileItem, fileIndex, startTime);
+              } catch (directErr) {
+                console.warn('[Upload] Direct R2 upload failed, falling back to chunked upload:', directErr);
+                await uploadInChunks(fileItem, fileIndex, startTime);
+              }
             } else if (isPhoto) {
-              // Photo: use direct-to-S3 chunked upload to preserve metadata
-              await uploadPhotoDirectToS3(fileItem, fileIndex, startTime);
+              // Photo: try direct PUT to R2 first; fall back to chunked upload if CORS blocks it
+              try {
+                await uploadDirectToR2(fileItem, fileIndex, startTime);
+              } catch (directErr) {
+                console.warn('[Upload] Direct R2 upload failed, falling back to chunked upload:', directErr);
+                await uploadPhotoDirectToS3(fileItem, fileIndex, startTime);
+              }
             } else {
               // Other file types: use base64 upload
               const base64Data = await fileToBase64WithProgress(

@@ -115,7 +115,7 @@ import {
   countAuditLog,
 } from "./db";
 import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
-import { storagePut, storageGet, storageDownload } from "./storage";
+import { storagePut, storageGet, storageDownload, storageGetUploadUrl } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
@@ -1734,6 +1734,125 @@ export const appRouter = router({
         });
 
         // Assign to flight if flightId provided
+        if (input.flightId) {
+          await assignMediaToFlight(mediaItem.id, input.flightId);
+        }
+
+        return mediaItem;
+      }),
+
+    // Get a presigned PUT URL so the browser can upload directly to R2 (bypasses Railway)
+    getUploadUrl: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Viewers cannot upload media' });
+        }
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+
+        const uniqueId = nanoid(12);
+        const fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+        const { uploadUrl, publicUrl } = await storageGetUploadUrl(fileKey, input.mimeType, 7200);
+        return { uploadUrl, publicUrl, fileKey };
+      }),
+
+    // Finalize a direct-to-R2 upload: generate thumbnail + create media record
+    finalizeDirectUpload: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        flightId: z.number().optional(),
+        filename: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+        fileKey: z.string(),
+        publicUrl: z.string(),
+        thumbnailData: z.string().optional(), // base64 thumbnail from client
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        altitude: z.number().optional(),
+        capturedAt: z.string().optional(),
+        cameraMake: z.string().optional(),
+        cameraModel: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const clientAccess = await getUserClientAccess(ctx.user.id);
+        if (clientAccess.length > 0 && clientAccess[0].role === 'viewer') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Viewers cannot upload media' });
+        }
+        const project = await getUserProject(input.projectId, ctx.user.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+
+        const uniqueId = nanoid(12);
+        const isVideo = input.mimeType.startsWith('video/');
+        const isImage = input.mimeType.startsWith('image/');
+        let thumbnailUrl: string | null = null;
+
+        // Client-provided thumbnail (video preview frame)
+        if (input.thumbnailData && isVideo) {
+          const thumbnailBuffer = Buffer.from(input.thumbnailData, 'base64');
+          const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+          const thumbResult = await storagePut(thumbKey, thumbnailBuffer, 'image/jpeg');
+          thumbnailUrl = thumbResult.url;
+        }
+
+        // For images: fetch from R2 and generate thumbnail server-side
+        if (isImage && !thumbnailUrl) {
+          try {
+            const { url: imgUrl } = await storageGet(input.fileKey);
+            const imgResp = await fetch(imgUrl);
+            const imgBuf = Buffer.from(await imgResp.arrayBuffer());
+            const thumbBuffer = await generateThumbnail(imgBuf, 250);
+            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbBuffer, 'image/jpeg');
+            thumbnailUrl = thumbResult.url;
+          } catch (err) {
+            console.error('[DirectUpload] Image thumbnail failed:', err);
+            thumbnailUrl = input.publicUrl;
+          }
+        }
+
+        // Server-side video thumbnail fallback
+        if (isVideo && !thumbnailUrl) {
+          try {
+            const { url: vidUrl } = await storageGet(input.fileKey);
+            const vidResp = await fetch(vidUrl);
+            const vidBuf = Buffer.from(await vidResp.arrayBuffer());
+            const thumbBuffer = await extractVideoThumbnail(vidBuf, input.mimeType);
+            if (thumbBuffer) {
+              const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+              const thumbResult = await storagePut(thumbKey, thumbBuffer, 'image/jpeg');
+              thumbnailUrl = thumbResult.url;
+            }
+          } catch (err) {
+            console.error('[DirectUpload] Video thumbnail failed:', err);
+          }
+        }
+
+        const mediaItem = await createMedia({
+          projectId: input.projectId,
+          userId: ctx.user.id,
+          filename: input.filename,
+          fileKey: input.fileKey,
+          url: input.publicUrl,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          mediaType: getMediaType(input.mimeType),
+          latitude: input.latitude != null ? String(input.latitude) : null,
+          longitude: input.longitude != null ? String(input.longitude) : null,
+          altitude: input.altitude != null ? String(input.altitude) : null,
+          capturedAt: input.capturedAt ? new Date(input.capturedAt).toISOString() : null,
+          cameraMake: input.cameraMake ?? null,
+          cameraModel: input.cameraModel ?? null,
+          thumbnailUrl,
+        });
+
         if (input.flightId) {
           await assignMediaToFlight(mediaItem.id, input.flightId);
         }
