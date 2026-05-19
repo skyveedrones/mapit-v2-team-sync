@@ -19,6 +19,11 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   PutBucketCorsCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCopyCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -228,4 +233,118 @@ export async function storageDelete(relKey: string): Promise<void> {
   const { client, bucket } = getR2Config();
   const key = normalizeKey(relKey);
   await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}
+
+/**
+ * Assemble temp chunk objects into a final file using S3 server-side multipart copy.
+ * NO bytes are downloaded to Railway — all copying happens inside R2.
+ *
+ * Chunk keys must follow the pattern: temp-chunks/{uploadId}/chunk-{00000..N}
+ * Each chunk must be >= 5 MB except the last one (S3 multipart minimum).
+ *
+ * @param uploadId   - The upload session ID
+ * @param totalChunks - Total number of chunks
+ * @param destKey    - Final destination key (relative, e.g. "projects/1/media/abc.mp4")
+ * @param contentType - MIME type of the final file
+ * @returns public URL of the assembled file
+ */
+export async function assembleChunksViaMultipartCopy(
+  uploadId: string,
+  totalChunks: number,
+  destKey: string,
+  contentType: string
+): Promise<{ key: string; url: string }> {
+  const { client, bucket, publicUrl: baseUrl } = getR2Config();
+  const finalKey = normalizeKey(destKey);
+
+  // 1. Create multipart upload
+  const createRes = await client.send(
+    new CreateMultipartUploadCommand({
+      Bucket: bucket,
+      Key: finalKey,
+      ContentType: contentType,
+    })
+  );
+  const mpUploadId = createRes.UploadId!;
+
+  try {
+    // 2. Copy each chunk as a part
+    const parts: { ETag: string; PartNumber: number }[] = [];
+
+    for (let i = 0; i < totalChunks; i++) {
+      const chunkKey = normalizeKey(
+        `temp-chunks/${uploadId}/chunk-${i.toString().padStart(5, "0")}`
+      );
+
+      // Verify chunk exists and get its size
+      const head = await client.send(
+        new HeadObjectCommand({ Bucket: bucket, Key: chunkKey })
+      );
+      const chunkSize = head.ContentLength ?? 0;
+
+      const copyRes = await client.send(
+        new UploadPartCopyCommand({
+          Bucket: bucket,
+          Key: finalKey,
+          UploadId: mpUploadId,
+          PartNumber: i + 1,
+          CopySource: `${bucket}/${chunkKey}`,
+          // R2 requires explicit byte range for UploadPartCopy
+          CopySourceRange: `bytes=0-${chunkSize - 1}`,
+        })
+      );
+
+      parts.push({
+        ETag: copyRes.CopyPartResult!.ETag!,
+        PartNumber: i + 1,
+      });
+
+      console.log(`[MultipartCopy] Part ${i + 1}/${totalChunks} copied (${Math.round(chunkSize / 1024)}KB)`);
+    }
+
+    // 3. Complete the multipart upload
+    await client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: bucket,
+        Key: finalKey,
+        UploadId: mpUploadId,
+        MultipartUpload: { Parts: parts },
+      })
+    );
+
+    console.log(`[MultipartCopy] Assembly complete: ${finalKey}`);
+    return { key: finalKey, url: `${baseUrl}/${finalKey}` };
+  } catch (err) {
+    // Abort the multipart upload to avoid orphaned parts
+    try {
+      await client.send(
+        new AbortMultipartUploadCommand({
+          Bucket: bucket,
+          Key: finalKey,
+          UploadId: mpUploadId,
+        })
+      );
+    } catch {
+      /* ignore abort errors */
+    }
+    throw err;
+  }
+}
+
+/**
+ * Delete all temp chunk objects for a given uploadId.
+ */
+export async function deleteChunks(uploadId: string, totalChunks: number): Promise<void> {
+  const { client, bucket } = getR2Config();
+  for (let i = 0; i < totalChunks; i++) {
+    const chunkKey = normalizeKey(
+      `temp-chunks/${uploadId}/chunk-${i.toString().padStart(5, "0")}`
+    );
+    try {
+      await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: chunkKey }));
+    } catch {
+      /* ignore individual delete errors */
+    }
+  }
+  console.log(`[MultipartCopy] Deleted ${totalChunks} temp chunks for uploadId=${uploadId}`);
 }

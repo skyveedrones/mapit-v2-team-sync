@@ -115,7 +115,7 @@ import {
   countAuditLog,
 } from "./db";
 import { sendProjectInvitationEmail, sendClientWelcomeEmail, sendProjectWelcomeEmail, sendTestEmail } from "./email";
-import { storagePut, storageGet, storageDownload, storageGetUploadUrl } from "./storage";
+import { storagePut, storageGet, storageDownload, storageGetUploadUrl, assembleChunksViaMultipartCopy, deleteChunks } from "./storage";
 // Cloudinary imports removed - now using S3 storage
 import { applyWatermark, WatermarkOptions, generateThumbnail } from "./watermark";
 import { applyVideoWatermarkFromBuffers, VideoWatermarkOptions } from "./videoWatermark";
@@ -1636,48 +1636,31 @@ export const appRouter = router({
 
         // Generate unique file key for reference
         const uniqueId = nanoid(12);
-        const folder = `mapit/projects/${input.projectId}/media`;
-
-        // Fetch and combine all chunks from S3 temp storage
         const totalChunks = Math.ceil(input.fileSize / (5 * 1024 * 1024)); // 5MB chunks (must match client)
-        const chunks: Buffer[] = [];
-        
-        for (let i = 0; i < totalChunks; i++) {
-          const chunkKey = `temp-chunks/${input.uploadId}/chunk-${i.toString().padStart(5, '0')}`;
-          const { url: chunkUrl } = await storageGet(chunkKey);
-          const response = await fetch(chunkUrl);
-          const arrayBuffer = await response.arrayBuffer();
-          chunks.push(Buffer.from(arrayBuffer));
-        }
-
-        // Combine chunks
-        const combinedBuffer = Buffer.concat(chunks);
-
-        // Upload to Cloudinary
-        let url: string;
-        let fileKey: string;
-        let thumbnailUrl: string | null = null;
 
         const isVideo = input.mimeType.startsWith("video/");
         const isImage = input.mimeType.startsWith("image/");
 
-        // Upload to S3
-        fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
-        const result = await storagePut(fileKey, combinedBuffer, input.mimeType);
-        url = result.url;
+        let url: string;
+        let fileKey: string;
+        let thumbnailUrl: string | null = null;
 
-        // Generate thumbnail for images
-        if (isImage) {
-          try {
-            const thumbBuffer = await generateThumbnail(combinedBuffer, 250);
-            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
-            const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
-            thumbnailUrl = thumbResult.url;
-          } catch (error) {
-            console.error("Failed to generate thumbnail:", error);
-            thumbnailUrl = url; // Fall back to original image
-          }
-        }
+        fileKey = `projects/${input.projectId}/media/${uniqueId}-${input.filename}`;
+
+        // Use server-side multipart copy — no bytes downloaded to Railway, no OOM risk
+        console.log(`[Upload] Assembling ${totalChunks} chunks via multipart copy for: ${input.filename}`);
+        const assembleResult = await assembleChunksViaMultipartCopy(
+          input.uploadId,
+          totalChunks,
+          fileKey,
+          input.mimeType
+        );
+        url = assembleResult.url;
+
+        // Clean up temp chunks asynchronously (don't block the response)
+        deleteChunks(input.uploadId, totalChunks).catch((err) =>
+          console.error("[Upload] Failed to delete temp chunks:", err)
+        );
 
         // If client provided a thumbnail (for videos), use it
         if (input.thumbnailData && isVideo) {
@@ -1686,36 +1669,35 @@ export const appRouter = router({
           const thumbResult = await storagePut(thumbKey, thumbnailBuffer, "image/jpeg");
           thumbnailUrl = thumbResult.url;
         }
-        // Server-side video thumbnail fallback (when client couldn't generate one, e.g. H.265)
-        // Skip for large files (>200MB) to prevent Railway OOM — use Regenerate Thumbnails to backfill
-        const THUMBNAIL_OOM_LIMIT = 200 * 1024 * 1024;
-        if (isVideo && !thumbnailUrl && combinedBuffer.length <= THUMBNAIL_OOM_LIMIT) {
+
+        // For images: download only for thumbnail (images are small, this is fine)
+        if (isImage && !thumbnailUrl) {
           try {
-            console.log(`[VideoThumbnail] Generating server-side thumbnail for: ${input.filename}`);
-            const thumbBuffer = await extractVideoThumbnail(combinedBuffer, input.mimeType);
+            const { buffer: imgBuffer } = await (await import('./storage')).storageDownload(fileKey);
+            const thumbBuffer = await generateThumbnail(imgBuffer, 250);
+            const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
+            const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
+            thumbnailUrl = thumbResult.url;
+          } catch (error) {
+            console.error("Failed to generate image thumbnail:", error);
+            thumbnailUrl = url;
+          }
+        }
+
+        // For videos without a client thumbnail: use URL-based ffmpeg (no download needed)
+        if (isVideo && !thumbnailUrl) {
+          try {
+            const { extractVideoThumbnailFromUrl } = await import('./videoThumbnail');
+            const thumbBuffer = await extractVideoThumbnailFromUrl(url, 1);
             if (thumbBuffer) {
               const thumbKey = `projects/${input.projectId}/thumbnails/${uniqueId}-thumb.jpg`;
               const thumbResult = await storagePut(thumbKey, thumbBuffer, "image/jpeg");
               thumbnailUrl = thumbResult.url;
-              console.log(`[VideoThumbnail] Server-side thumbnail generated: ${thumbnailUrl}`);
+              console.log(`[VideoThumbnail] URL-based thumbnail generated: ${thumbnailUrl}`);
             }
           } catch (err) {
-            console.error("[VideoThumbnail] Failed to generate server-side thumbnail:", err);
+            console.error("[VideoThumbnail] URL-based thumbnail failed, will backfill via Regenerate:", err);
           }
-        } else if (isVideo && !thumbnailUrl && combinedBuffer.length > THUMBNAIL_OOM_LIMIT) {
-          console.log(`[VideoThumbnail] Skipping server-side thumbnail for large file (${Math.round(combinedBuffer.length / 1024 / 1024)}MB) — use Regenerate Thumbnails to backfill`);
-        }
-        // MD5 integrity check — verify no bytes were dropped during chunked transfer
-        if (input.clientMd5) {
-          const crypto = await import('crypto');
-          const serverMd5 = crypto.createHash('md5').update(combinedBuffer).digest('hex');
-          if (serverMd5 !== input.clientMd5) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: `Integrity check failed: file hash mismatch. Upload may be corrupted. Please retry.`,
-            });
-          }
-          console.log(`[Upload] MD5 integrity verified: ${serverMd5}`);
         }
 
         // Create media record in database (with GPS metadata from client)
