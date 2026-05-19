@@ -768,8 +768,8 @@ export function MediaUploadDialog({
         chunksUploaded: persistedUpload.chunksUploaded,
       };
       
-      // Extract thumbnail if available
-      if (file.type.startsWith("video/") && file.size < 500 * 1024 * 1024) {
+      // Extract thumbnail if available — browser seeks to 1s only, no full-file load needed
+      if (file.type.startsWith("video/")) {
         const thumbnail = await extractVideoThumbnail(file);
         if (thumbnail) {
           fileItem.thumbnail = thumbnail;
