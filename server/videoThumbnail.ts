@@ -29,6 +29,63 @@ function setFfmpegPath(): void {
 setFfmpegPath();
 
 /**
+ * Extract a thumbnail frame from a video URL directly (no download needed).
+ * FFmpeg fetches only the bytes it needs via HTTP range requests.
+ *
+ * @param videoUrl    - Public URL of the video
+ * @param seekSeconds - Timestamp in seconds to capture (default: 1)
+ * @returns JPEG buffer, or null if extraction fails
+ */
+export async function extractVideoThumbnailFromUrl(
+  videoUrl: string,
+  seekSeconds = 1
+): Promise<Buffer | null> {
+  const uniqueId = nanoid(12);
+  const tempDir = os.tmpdir();
+  const outputPath = path.join(tempDir, `vthumb_out_${uniqueId}.jpg`);
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(videoUrl)
+        .seekInput(seekSeconds)
+        .frames(1)
+        .outputOptions(["-vf", "scale=480:-1", "-q:v", "3"])
+        .output(outputPath)
+        .on("end", () => resolve())
+        .on("error", (err) => {
+          // If seek past end of file, try frame 0
+          if (seekSeconds > 0) {
+            ffmpeg(videoUrl)
+              .seekInput(0)
+              .frames(1)
+              .outputOptions(["-vf", "scale=480:-1", "-q:v", "3"])
+              .output(outputPath)
+              .on("end", () => resolve())
+              .on("error", reject)
+              .run();
+          } else {
+            reject(err);
+          }
+        })
+        .run();
+    });
+
+    if (!fs.existsSync(outputPath)) {
+      console.error("[VideoThumbnail] Output file not created from URL");
+      return null;
+    }
+
+    const thumbBuffer = fs.readFileSync(outputPath);
+    return thumbBuffer;
+  } catch (err) {
+    console.error("[VideoThumbnail] Failed to extract thumbnail from URL:", err);
+    return null;
+  } finally {
+    try { fs.unlinkSync(outputPath); } catch { /* ignore */ }
+  }
+}
+
+/**
  * Extract a thumbnail frame from a video buffer.
  * Writes the buffer to a temp file, runs ffmpeg, reads the output JPEG, then cleans up.
  *

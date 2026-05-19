@@ -12,14 +12,14 @@ import { media } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { storagePut } from "./storage";
 import { generateThumbnail } from "./watermark";
-import { extractVideoThumbnail } from "./videoThumbnail";
+import { extractVideoThumbnailFromUrl } from "./videoThumbnail";
 import { nanoid } from "nanoid";
 
-/** Maximum file size we will download for thumbnail generation (50 MB). */
-const MAX_FILE_BYTES = 50 * 1024 * 1024;
+/** Maximum file size we will download for thumbnail generation (images only — videos use URL-based ffmpeg). */
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 
-/** Per-item processing timeout in milliseconds. */
-const ITEM_TIMEOUT_MS = 30_000;
+/** Per-item processing timeout in milliseconds (120s to allow ffmpeg to seek large remote videos). */
+const ITEM_TIMEOUT_MS = 120_000;
 
 /**
  * Fetch a file from URL with a size guard.
@@ -33,8 +33,8 @@ async function fetchBufferWithSizeGuard(url: string): Promise<Buffer | null> {
 
   // Honour Content-Length if present
   const contentLength = response.headers.get("content-length");
-  if (contentLength && parseInt(contentLength, 10) > MAX_FILE_BYTES) {
-    console.warn(`[RegenerateThumbnails] Skipping oversized file (${contentLength} bytes): ${url}`);
+  if (contentLength && parseInt(contentLength, 10) > MAX_IMAGE_BYTES) {
+    console.warn(`[RegenerateThumbnails] Skipping oversized image (${contentLength} bytes): ${url}`);
     return null;
   }
 
@@ -46,9 +46,9 @@ async function fetchBufferWithSizeGuard(url: string): Promise<Buffer | null> {
     const { done, value } = await reader.read();
     if (done) break;
     totalBytes += value.byteLength;
-    if (totalBytes > MAX_FILE_BYTES) {
+    if (totalBytes > MAX_IMAGE_BYTES) {
       reader.cancel();
-      console.warn(`[RegenerateThumbnails] Skipping oversized file (stream exceeded ${MAX_FILE_BYTES} bytes): ${url}`);
+      console.warn(`[RegenerateThumbnails] Skipping oversized image (stream exceeded ${MAX_IMAGE_BYTES} bytes): ${url}`);
       return null;
     }
     chunks.push(value);
@@ -131,16 +131,18 @@ async function processItem(
   isVideo: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    const fileBuffer = await fetchBufferWithSizeGuard(mediaItem.url);
-    if (!fileBuffer) {
-      return { ok: false, error: "File too large (>50 MB), skipped" };
-    }
-
     let thumbBuffer: Buffer | null = null;
 
     if (isVideo) {
-      thumbBuffer = await extractVideoThumbnail(fileBuffer, mediaItem.mimeType, 1);
+      // Use URL-based ffmpeg — no download needed, works for any file size
+      console.log(`[RegenerateThumbnails] Extracting video thumbnail from URL: ${mediaItem.url}`);
+      thumbBuffer = await extractVideoThumbnailFromUrl(mediaItem.url, 1);
     } else {
+      // Images: download buffer (capped at 50 MB)
+      const fileBuffer = await fetchBufferWithSizeGuard(mediaItem.url);
+      if (!fileBuffer) {
+        return { ok: false, error: "Image too large (>50 MB), skipped" };
+      }
       thumbBuffer = await generateThumbnail(fileBuffer, 300);
     }
 
