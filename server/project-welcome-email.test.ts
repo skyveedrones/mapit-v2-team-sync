@@ -15,7 +15,7 @@ describe('Project Welcome Email', () => {
       projectName: 'Demonstration Project',
       role: 'viewer' as const,
       inviterName: 'Jane Smith',
-      projectUrl: 'https://skyveemapit.manus.space/project/1',
+      projectUrl: 'https://mapit.skyveedrones.com/project/1',
     };
 
     // This will attempt to send the email
@@ -37,7 +37,7 @@ describe('Project Welcome Email', () => {
       projectName: 'Test Project',
       role: 'editor' as const,
       inviterName: 'John Doe',
-      projectUrl: 'https://skyveemapit.manus.space/project/2',
+      projectUrl: 'https://mapit.skyveedrones.com/project/2',
     };
 
     const result = await sendProjectWelcomeEmail(params);
@@ -51,7 +51,7 @@ describe('Project Welcome Email', () => {
       projectName: 'City of Forney - Main Street Reconstruction',
       role: 'viewer' as const,
       inviterName: 'Project Manager',
-      projectUrl: 'https://skyveemapit.manus.space/project/3',
+      projectUrl: 'https://mapit.skyveedrones.com/project/3',
     };
 
     const result = await sendProjectWelcomeEmail(params);

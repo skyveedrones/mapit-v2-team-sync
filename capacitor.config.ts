@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     // For production, the app will load from the bundled web assets
     // For development, you can point to your Manus hosted site:
-    // url: 'https://skyveemapit.manus.space',
+    // url: 'https://mapit.skyveedrones.com',
     // cleartext: true
   },
   android: {

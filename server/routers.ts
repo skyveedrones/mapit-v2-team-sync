@@ -2699,7 +2699,7 @@ export const appRouter = router({
         });
 
         // Build the accept URL
-        const baseUrl = process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+        const baseUrl = process.env.VITE_APP_URL || 'https://mapit.skyveedrones.com';
         const acceptUrl = `${baseUrl}/invite/${invitation.token}`;
 
         // Send the invitation email (only if sendEmail is true)
@@ -2769,7 +2769,7 @@ export const appRouter = router({
             const inviter = await getUserById(result.invitation.invitedBy);
             
             // Get the project URL
-            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://mapit.skyveedrones.com';
             const projectUrl = `${baseUrl}/project/${project.id}`;
             
             // Send welcome email (only if user has email)
@@ -4605,7 +4605,7 @@ export const appRouter = router({
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
 
-        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://mapit.skyveedrones.com";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
         // Warranty reminder email - using test email for now
@@ -4645,7 +4645,7 @@ export const appRouter = router({
           (warrantyEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );
 
-        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://skyveemapit.manus.space";
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || "https://mapit.skyveedrones.com";
         const projectUrl = `${baseUrl}/project/${project.id}`;
 
         // Warranty reminder email - using test email for now
@@ -5025,7 +5025,7 @@ export const appRouter = router({
         });
 
         // Send invitation email (only if sendEmail is true)
-        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+        const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://mapit.skyveedrones.com';
         const inviteUrl = `${baseUrl}/client-invite/${token}`;
         
         let emailResult: { success: boolean; error?: string } = { success: false, error: 'Email sending skipped' };
@@ -5070,7 +5070,7 @@ export const appRouter = router({
             const projectCount = projects.length;
             
             // Get the dashboard URL
-            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://skyveemapit.manus.space';
+            const baseUrl = ctx.req.headers.origin || process.env.VITE_APP_URL || 'https://mapit.skyveedrones.com';
             const dashboardUrl = `${baseUrl}/dashboard`;
             
             // Send welcome email (only if user has email)
