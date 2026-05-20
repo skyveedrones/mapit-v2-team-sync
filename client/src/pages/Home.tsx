@@ -118,20 +118,20 @@ export default function Home() {
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
-            <Button
-              size="lg"
-              className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-semibold px-8 py-4 rounded-full shadow-xl"
-              onClick={() => {
-                posthog.capture('demo_started', { 
-                  location: 'homepage_hero',
-                  version: 'v1_demo' 
-                });
-                window.open('/create', '_blank');
-              }}
-            >
-              Drop a Photo. Build Your Map.
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+           <Button
+  size="lg"
+  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-semibold px-8 py-4 rounded-full shadow-xl"
+  onClick={() => {
+    posthog.capture('demo_started', { 
+      location: 'homepage_hero',
+      version: 'v1_demo' 
+    });
+    window.open('/create', '_blank');
+  }}
+>
+  Drop a Photo. Build Your Map.
+  <ChevronRight className="ml-2 h-5 w-5" />
+</Button>
             <p className="mt-3 text-sm text-gray-400 font-medium">
               Uses your drone photo. Builds a real project. Saves with your email.
             </p>
@@ -344,8 +344,8 @@ export default function Home() {
           </h2>
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
-            Experience the new standard of site intelligence. <br className="hidden md:block" />
-            Start your 14-day free trial today.
+            Your first map is one photo away.<br className="hidden md:block" />
+            
           </p>
           
           <div className="flex flex-col items-center">

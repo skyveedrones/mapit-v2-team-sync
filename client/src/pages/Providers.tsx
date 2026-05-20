@@ -325,7 +325,7 @@ export default function Providers() {
               className="text-xl md:text-2xl text-slate-300 font-light mb-12 max-w-3xl mx-auto"
             >
               Stop sharing raw files. Deliver an interactive client portal.<br className="hidden md:block" />
-              Start your 14-day free trial today.
+              Your first map is one photo away.
             </motion.p>
             
             <motion.div variants={fadeInUp} className="flex flex-col items-center">

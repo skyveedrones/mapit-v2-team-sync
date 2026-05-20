@@ -309,7 +309,7 @@ export default function Pricing() {
             Ready to elevate your drone mapping?
           </h2>
           <p className="text-xl text-slate-400 mb-8">
-            Start your 14-day free trial today. No credit card required.
+            Your first map is one photo away. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
