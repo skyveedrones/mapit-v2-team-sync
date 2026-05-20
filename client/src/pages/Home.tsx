@@ -118,20 +118,25 @@ export default function Home() {
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 mt-10 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-semibold px-8 py-4 rounded-full shadow-xl"
-              onClick={() => {
-                posthog.capture('demo_started', { 
-                  location: 'homepage_hero',
-                  version: 'v1_demo' 
-                });
-                window.open('/create', '_blank');
-              }}
-            >
-              Experience MAPIT
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="flex flex-col items-center">
+              <Button
+                size="lg"
+                className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-semibold px-8 py-4 rounded-full shadow-xl"
+                onClick={() => {
+                  posthog.capture('demo_started', { 
+                    location: 'homepage_hero',
+                    version: 'v1_demo' 
+                  });
+                  window.open('/create', '_blank');
+                }}
+              >
+                Drop a Photo. Build Your Map.
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+              <p className="mt-3 text-sm text-gray-400 font-medium">
+                Uses your drone photo. Builds a real project. Saves with your email.
+              </p>
+            </div>
             <button
               className="text-white font-medium hover:text-gray-300 transition-colors flex items-center gap-2"
               onClick={() => setLocation("/municipal")}
@@ -351,20 +356,18 @@ export default function Home() {
             Start your 14-day free trial today.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col items-center">
             <Button
               size="lg"
               className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
               onClick={() => setLocation("/pricing")}
             >
-              Start Free Trial
+              Build Your First Map Free
             </Button>
-            <p className="text-sm text-slate-500 sm:hidden mt-2">Upload your first site photo. We'll build your map. Your project saves automatically — no credit card needed.</p>
+            <p className="mt-3 text-sm text-gray-400">
+              Upload your photo. Your map saves automatically. 14-day trial, no credit card.
+            </p>
           </div>
-          
-          <p className="hidden sm:block text-sm text-slate-500 mt-6">
-            Upload your first site photo. We'll build your map. Your project saves automatically — no credit card needed.
-          </p>
         </div>
       </section>
 

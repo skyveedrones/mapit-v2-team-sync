@@ -138,7 +138,7 @@ export default function Providers() {
               </span>
             </motion.div>
 
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInUp} className="flex flex-col items-center">
               <Button
                 size="lg"
                 className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-bold px-10 py-6 text-base rounded-full shadow-xl"
@@ -147,6 +147,9 @@ export default function Providers() {
                 Start Free Trial
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
+              <p className="mt-2 text-xs text-gray-300">
+                Live demo — no account required. Your map saves instantly.
+              </p>
             </motion.div>
           </motion.div>
         </div>
@@ -325,21 +328,17 @@ export default function Providers() {
               Start your 14-day free trial today.
             </motion.p>
             
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div variants={fadeInUp} className="flex flex-col items-center">
               <button 
                 onClick={() => setLocation("/pricing")}
                 className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
               >
-                Start Free Trial
+                Build Your First Map Free
               </button>
+              <p className="mt-3 text-sm text-gray-400">
+                Upload your photo. Your map saves automatically. 14-day trial, no credit card.
+              </p>
             </motion.div>
-            
-            <motion.p
-              variants={fadeInUp}
-              className="text-sm text-slate-500 mt-6"
-            >
-              No credit card required. Works with any standard drone.
-            </motion.p>
           </motion.div>
         </div>
       </section>

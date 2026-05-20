@@ -9,6 +9,46 @@ import * as path from "path";
 import * as os from "os";
 import { nanoid } from "nanoid";
 
+// Set ffmpeg and ffprobe paths from @ffmpeg-installer/ffmpeg when available,
+// otherwise fall back to system ffmpeg (e.g., Railway Nixpacks).
+function initFfmpegPaths(): void {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
+    if (ffmpegInstaller?.path && fs.existsSync(ffmpegInstaller.path)) {
+      ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+      console.log("[VideoWatermark] Using bundled ffmpeg:", ffmpegInstaller.path);
+    }
+  } catch {
+    // not available — fall through to system ffmpeg
+  }
+  // Set ffprobe path: try @ffprobe-installer first, then derive from system PATH
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ffprobeInstaller = require("@ffprobe-installer/ffprobe");
+    if (ffprobeInstaller?.path && fs.existsSync(ffprobeInstaller.path)) {
+      ffmpeg.setFfprobePath(ffprobeInstaller.path);
+      console.log("[VideoWatermark] Using bundled ffprobe:", ffprobeInstaller.path);
+      return;
+    }
+  } catch {
+    // not available
+  }
+  // Derive ffprobe from system PATH (Railway Nixpacks installs ffmpeg which includes ffprobe)
+  try {
+    const { execSync } = require("child_process");
+    const probePath = execSync("which ffprobe", { encoding: "utf8" }).trim();
+    if (probePath) {
+      ffmpeg.setFfprobePath(probePath);
+      console.log("[VideoWatermark] Using system ffprobe:", probePath);
+    }
+  } catch {
+    console.log("[VideoWatermark] ffprobe not found on PATH — video probing may fail");
+  }
+}
+
+initFfmpegPaths();
+
 export interface VideoWatermarkOptions {
   position:
     | "top-left"

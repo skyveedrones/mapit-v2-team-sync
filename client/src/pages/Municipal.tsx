@@ -83,16 +83,21 @@ export default function Municipal() {
             Real-time aerial intelligence for every department.<br className="hidden md:block" /> One platform. One unified source of truth.
           </motion.p>
 
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            onClick={() => setBriefingFormOpen(true)}
-            className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl"
-          >
-            Start Municipal Pilot
-            <ChevronRight className="w-5 h-5" />
-          </motion.button>
+          <div className="flex flex-col items-center">
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              onClick={() => setBriefingFormOpen(true)}
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl"
+            >
+              Start Municipal Pilot
+              <ChevronRight className="w-5 h-5" />
+            </motion.button>
+            <p className="mt-2 text-xs text-gray-300">
+              Live demo — no account required. Your map saves instantly.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -526,17 +531,22 @@ export default function Municipal() {
             Start your municipal pilot today. No credit card required.
           </motion.p>
 
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            onClick={() => setBriefingFormOpen(true)}
-            className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
-          >
-            Start Municipal Pilot
-            <ChevronRight className="w-5 h-5" />
-          </motion.button>
+          <div className="flex flex-col items-center">
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              onClick={() => setBriefingFormOpen(true)}
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
+            >
+              Start Municipal Pilot
+              <ChevronRight className="w-5 h-5" />
+            </motion.button>
+            <p className="mt-2 text-xs text-gray-300">
+              Live demo — no account required. Your map saves instantly.
+            </p>
+          </div>
 
           <p className="text-sm text-slate-500 mt-6">
             Dedicated municipal onboarding and training included.
