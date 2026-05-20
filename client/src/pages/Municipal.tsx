@@ -494,7 +494,9 @@ export default function Municipal() {
               lineHeight: 1.3,
             }}
           >
-            "Visibility is the first step toward absolute efficiency in modern governance."
+            "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."
+
+— Director of Public Works, Mid-Sized Texas Municipality toward absolute efficiency in modern governance."
           </p>
         </motion.blockquote>
       </section>
