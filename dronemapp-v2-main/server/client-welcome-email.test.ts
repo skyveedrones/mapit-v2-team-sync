@@ -14,7 +14,7 @@ describe('Client Welcome Email', () => {
       userName: 'John Doe',
       clientName: 'City of Forney',
       projectCount: 5,
-      dashboardUrl: 'https://skyveemapit.manus.space/dashboard',
+      dashboardUrl: '/dashboard',
     };
 
     // This will attempt to send the email
@@ -36,7 +36,7 @@ describe('Client Welcome Email', () => {
       userName: 'Jane Smith',
       clientName: 'Test Client',
       projectCount: 1,
-      dashboardUrl: 'https://skyveemapit.manus.space/dashboard',
+      dashboardUrl: '/dashboard',
     };
 
     const result = await sendClientWelcomeEmail(params);
@@ -49,7 +49,7 @@ describe('Client Welcome Email', () => {
       userName: 'Test User',
       clientName: 'Empty Client',
       projectCount: 0,
-      dashboardUrl: 'https://skyveemapit.manus.space/dashboard',
+      dashboardUrl: '/dashboard',
     };
 
     const result = await sendClientWelcomeEmail(params);
