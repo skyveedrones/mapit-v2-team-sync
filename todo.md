@@ -2862,3 +2862,10 @@
 - [x] Fix email dispatch: use dynamic project dashboard URL instead of hardcoded /create
 - [x] Redesign hero H1: three-line cascade with color contrast (white, slate-400, slate-400)
 - [x] Update CTA button: green bg-[#00e676], hover:bg-[#00c853], text-[#003314]
+
+
+## Master Prompt Batch Updates (May 21, 2026)
+- [x] Task 1: Backend Email Routing Fix - verified claimProject uses dynamic dashboard URL
+- [x] Task 2: Homepage Hero UI & Typography - 4-line cascade (Your site. / Documented. / Verified. / Delivered.)
+- [x] Task 3: Post-Demo Growth Loop - added 'Copy Link' prompt after prestige claim success
+- [x] Task 4: Sunlight Readability - added 1px borders to feature cards on /providers Platform Capabilities

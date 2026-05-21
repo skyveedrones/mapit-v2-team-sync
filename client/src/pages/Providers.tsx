@@ -299,7 +299,56 @@ export default function Providers() {
           </div>
         </div>
       </section>
-            {/* ─── JOBSIAN BOTTOM CTA ─── */}
+
+      {/* ─── PLATFORM CAPABILITIES ─── */}
+      <section className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          {/* Section header */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="mb-20 flex flex-col items-center text-center"
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight text-center"
+            >
+              Platform Capabilities
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-white/50 max-w-2xl text-center mx-auto"
+            >
+              Everything you need to deliver professional client portals.
+            </motion.p>
+          </motion.div>
+
+          {/* Feature cards grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featureCards.map((card, idx) => {
+              const Icon = card.icon;
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  viewport={{ once: true }}
+                  className="p-8 bg-[#080808] border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300"
+                >
+                  <Icon className="w-8 h-8 text-[#00C853] mb-4" />
+                  <h3 className="text-lg font-bold text-white mb-3">{card.title}</h3>
+                  <p className="text-white/60 text-sm leading-relaxed">{card.body}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-[#0A0A0A]">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>

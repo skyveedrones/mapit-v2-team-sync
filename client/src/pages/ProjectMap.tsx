@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { trpc as trpcClient } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -744,6 +745,30 @@ export default function ProjectMap() {
                   <p className="text-white/60 text-base leading-relaxed mb-10" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
                     Your project has been secured. We are now processing your data into a high-precision workspace.
                   </p>
+                  {/* Growth Loop: Copy Link Prompt */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="mb-8 p-4 bg-white/5 border border-white/10 rounded-lg"
+                  >
+                    <p className="text-white/80 text-sm mb-3" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                      Your map is live. Send this link to your client.
+                    </p>
+                    <button
+                      onClick={() => {
+                        const projectUrl = `https://mapit.skyveedrones.com/project/${projectId}`;
+                        navigator.clipboard.writeText(projectUrl).then(() => {
+                          toast.success('Project link copied to clipboard!');
+                        }).catch(() => {
+                          toast.error('Failed to copy link');
+                        });
+                      }}
+                      className="w-full bg-[#00e676] hover:bg-[#00c853] text-[#003314] font-bold text-sm py-2 rounded-full transition-all duration-200"
+                    >
+                      Copy Link
+                    </button>
+                  </motion.div>
                   <button
                     onClick={() => { window.location.href = '/dashboard'; }}
                     className="w-full bg-white hover:bg-gray-100 text-black font-bold text-base py-4 rounded-full transition-all duration-200"

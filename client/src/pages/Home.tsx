@@ -108,6 +108,7 @@ export default function Home() {
           >
             <span className="block text-white">Your site.</span>
             <span className="block text-slate-400">Documented.</span>
+            <span className="block text-slate-400">Verified.</span>
             <span className="block text-slate-400">Delivered.</span>
           </motion.h1>
 
@@ -115,7 +116,7 @@ export default function Home() {
             variants={fadeInUp}
             className="text-lg md:text-2xl font-medium tracking-tight text-gray-400 max-w-3xl text-center mt-6 mb-10"
           >
-            The world is changing. Trade the fragmented workflows of the past for the speed of the future.
+            Stop managing data. Start making decisions.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
