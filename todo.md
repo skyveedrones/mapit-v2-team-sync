@@ -2857,3 +2857,8 @@
 - [ ] Replace base64-over-tRPC chunked upload in MediaUploadDialog with direct browser PUT to R2
 - [ ] Keep progress bar, speed, ETA working with XMLHttpRequest progress events
 - [ ] Fallback: keep existing chunk path for environments where CORS blocks direct PUT
+
+## Email & Hero Redesign (May 2026)
+- [x] Fix email dispatch: use dynamic project dashboard URL instead of hardcoded /create
+- [x] Redesign hero H1: three-line cascade with color contrast (white, slate-400, slate-400)
+- [x] Update CTA button: green bg-[#00e676], hover:bg-[#00c853], text-[#003314]

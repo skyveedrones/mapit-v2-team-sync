@@ -5795,7 +5795,7 @@ export const appRouter = router({
       <p style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0 0 32px">MAPIT</p>
       <h1 style="font-size:clamp(2rem,8vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1;margin:0 0 24px;background:linear-gradient(to bottom,#ffffff,#6b7280);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Your map is waiting</h1>
       <p style="font-size:16px;line-height:1.7;color:rgba(255,255,255,0.6);margin:0 0 32px">You claimed <strong style="color:#ffffff">${projectName}</strong> but haven't secured your account yet. Your digital twin is ready — complete your setup to access it.</p>
-      <a href="https://mapit.skyveedrones.com/welcome" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">Secure My Map</a>
+      <a href="https://mapit.skyveedrones.com/dashboard/project/${input.projectId}" style="display:inline-block;background:#ffffff;color:#000000;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;text-decoration:none;letter-spacing:-0.01em">Secure My Map</a>
       <p style="margin:48px 0 0;font-size:12px;color:rgba(255,255,255,0.2)">MAPIT &nbsp;·&nbsp; Precision mapping for the modern job site</p>
     </td></tr>
   </table>

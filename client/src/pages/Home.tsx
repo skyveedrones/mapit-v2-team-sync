@@ -103,11 +103,12 @@ export default function Home() {
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-white text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
+            className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            <span className="block">High-precision intelligence.</span>
-            <span className="block">Zero complexity.</span>
+            <span className="block text-white">Your site.</span>
+            <span className="block text-slate-400">Documented.</span>
+            <span className="block text-slate-400">Delivered.</span>
           </motion.h1>
 
           <motion.p
