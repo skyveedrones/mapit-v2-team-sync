@@ -156,9 +156,9 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-center mb-20"
             >
-              Three steps. Pure magic.
+              Three steps. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Pure magic.</span>
             </motion.h2>
 
             <div className="grid md:grid-cols-3 gap-16">
@@ -187,8 +187,8 @@ export default function Home() {
         {/* Subtle Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
-          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-            From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+            From paper to pixel. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Instantly.</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
@@ -277,9 +277,9 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8"
             >
-              Manage the city. Not the maps.
+              Manage the city. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Not the maps.</span>
             </motion.h2>
             <motion.p
               variants={fadeInUp}
@@ -312,9 +312,9 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8"
             >
-              You fly the mission. We build the intelligence.
+              You fly the mission. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">We build the intelligence.</span>
             </motion.h2>
 
             <motion.p
