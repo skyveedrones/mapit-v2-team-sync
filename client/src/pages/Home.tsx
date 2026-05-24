@@ -237,7 +237,7 @@ export default function Home() {
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words whitespace-normal"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
