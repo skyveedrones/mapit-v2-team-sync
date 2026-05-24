@@ -106,17 +106,14 @@ export default function Home() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            <span className="block text-white">Your site.</span>
-            <span className="block text-slate-400">Documented.</span>
-            <span className="block text-slate-400">Verified.</span>
-            <span className="block text-slate-400">Delivered.</span>
+            <span className="block text-white">What's actually happening out there?</span>
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
-            className="text-lg md:text-2xl font-medium tracking-tight text-gray-400 max-w-3xl text-center mt-6 mb-10"
+            className="text-xl md:text-2xl text-slate-200 font-medium mb-8 drop-shadow-lg"
           >
-            Stop managing data. Start making decisions.
+            Reality, finally on record.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
@@ -134,7 +131,7 @@ export default function Home() {
   Drop a Photo. Build Your Map.
   <ChevronRight className="ml-2 h-5 w-5" />
 </Button>
-            <p className="mt-3 text-sm text-gray-400 font-medium">
+            <p className="mt-3 text-lg text-white/90 font-medium drop-shadow-md">
               Uses your drone photo. Builds a real project. Saves with your email.
             </p>
           </motion.div>
@@ -176,78 +173,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── MUNICIPAL GATEWAY ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
-            >
-              Manage the city. Not the maps.
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
-            >
-              <span className="block">Live aerial records for roads, utilities, and infrastructure.</span>
-              <span className="block mt-1 md:mt-2">No consultants. No delays.</span>
-            </motion.p>
-
-            <motion.div variants={fadeInUp} className="mt-12">
-              <a
-                href="/municipal"
-                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
-              </a>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── PILOT PERSONA ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
-            >
-              You fly the mission. We build the intelligence.
-            </motion.h2>
-
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
-            >
-              Transform raw drone data into a professional client portal. Look like an enterprise agency and win the bid.
-            </motion.p>
-
-            <motion.div variants={fadeInUp} className="mt-12">
-              <a
-                href="/providers"
-                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Explore Pilot Solutions <ChevronRight className="w-4 h-4" />
-              </a>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-       {/* ═══════════════════════════════════════════════════════════════════════
-          SMART SURVEY OCR SHOWCASE
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SMART SURVEY OCR SHOWCASE (MOVED HERE)
           ═══════════════════════════════════════════════════════════════════════ */}
       <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
         {/* Subtle Background Glow */}
@@ -332,6 +259,76 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── MUNICIPAL GATEWAY ─── */}
+      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              Manage the city. Not the maps.
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
+            >
+              <span className="block">Live aerial records for roads, utilities, and infrastructure.</span>
+              <span className="block mt-1 md:mt-2">No consultants. No delays.</span>
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="mt-12">
+              <a
+                href="/municipal"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── PILOT PERSONA ─── */}
+      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              You fly the mission. We build the intelligence.
+            </motion.h2>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
+            >
+              Transform raw drone data into a professional client portal. Look like an enterprise agency and win the bid.
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="mt-12">
+              <a
+                href="/providers"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                Explore Pilot Solutions <ChevronRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
         {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         {/* Subtle background glow */}
@@ -347,7 +344,6 @@ export default function Home() {
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
             Your first map is one photo away.<br className="hidden md:block" />
-            
           </p>
           
           <div className="flex flex-col items-center">
