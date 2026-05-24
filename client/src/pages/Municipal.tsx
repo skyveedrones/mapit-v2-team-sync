@@ -496,7 +496,7 @@ export default function Municipal() {
           >
             "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."
 
-— Director of Public Works, Mid-Sized Texas Municipality toward absolute efficiency in modern governance."
+— Director of Public Works, Mid-Sized Texas Municipality
           </p>
         </motion.blockquote>
       </section>
