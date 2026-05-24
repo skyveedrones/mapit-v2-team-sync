@@ -306,7 +306,7 @@ export default function Home() {
                   className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  Universal.
+                  
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
