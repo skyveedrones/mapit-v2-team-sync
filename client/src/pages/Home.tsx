@@ -132,10 +132,17 @@ export default function Home() {
   <ChevronRight className="ml-2 h-5 w-5" />
 </Button>
             <p className="mt-3 text-lg text-white/90 font-medium drop-shadow-md">
-              Uses your drone photo. Builds a real project. Saves with your email.
+              Uses your drone photo&nbsp;&bull;&nbsp;Builds a real project&nbsp;&bull;&nbsp;Saves with your email.
             </p>
           </motion.div>
         </motion.div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <svg className="w-8 h-8 text-white/50 hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </section>
 
       {/* ─── 3-STEP WORKFLOW ─── */}
@@ -214,9 +221,9 @@ export default function Home() {
           >
             <div className="grid md:grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-2xl">
               {/* Card 1 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -228,9 +235,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 2 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
@@ -242,9 +249,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 3 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
+              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
