@@ -119,7 +119,7 @@ export default function Home() {
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
            <Button
   size="lg"
-  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-semibold px-8 py-4 rounded-full shadow-xl"
+  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-bold px-8 md:px-12 py-4 md:py-6 rounded-full shadow-xl text-lg md:text-xl"
   onClick={() => {
     posthog.capture('demo_started', { 
       location: 'homepage_hero',
@@ -129,7 +129,7 @@ export default function Home() {
   }}
 >
   Drop a Photo. Build Your Map.
-  <ChevronRight className="ml-2 h-5 w-5" />
+  <ChevronRight className="ml-2 h-5 w-5 md:h-6 md:w-6" />
 </Button>
             <p className="mt-3 text-lg text-white/90 font-medium drop-shadow-md">
               Uses your drone photo&nbsp;&bull;&nbsp;Builds a real project&nbsp;&bull;&nbsp;Saves with your email.
@@ -312,9 +312,10 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8 leading-tight"
             >
-              You fly the mission. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">We build the intelligence.</span>
+              You fly the mission.<br />
+              <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">We build the intelligence.</span>
             </motion.h2>
 
             <motion.p
@@ -361,7 +362,7 @@ export default function Home() {
             >
               Build Your First Map Free
             </Button>
-            <p className="mt-3 text-sm text-gray-400">
+            <p className="mt-3 text-base md:text-lg text-gray-400">
               Upload your photo. Your map saves automatically. 14-day trial, no credit card.
             </p>
           </div>
