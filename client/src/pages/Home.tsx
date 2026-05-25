@@ -180,35 +180,106 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SMART SURVEY OCR SHOWCASE (MOVED HERE)
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-32 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
-        {/* Subtle Background Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
-        <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            From paper to pixel. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Instantly.</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
-          </p>
-        </div>
-        <div className="w-full max-w-5xl mx-auto relative z-10">
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
-            <video
-              className="w-full h-full object-cover"
-              autoPlay
-              loop
-              muted
-              playsInline
+     {/* ─── MUNICIPAL GATEWAY ─── */}
+<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+  <div className="max-w-4xl mx-auto text-center">
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-80px" }}
+      variants={stagger}
+    >
+      <motion.h2
+        variants={fadeInUp}
+        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+      >
+        Manage the city. Not the maps.
+      </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
             >
-              <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
-            </video>
+              <span className="block">Live aerial records for roads, utilities, and infrastructure.</span>
+              <span className="block mt-1 md:mt-2">No consultants. No delays.</span>
+            </motion.p>
 
-          </div>
+            <motion.div variants={fadeInUp} className="mt-12">
+              <a
+                href="/municipal"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
+
+     {/* ─── PILOT PERSONA ─── */}
+<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+  <div className="max-w-4xl mx-auto text-center">
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-80px" }}
+      variants={stagger}
+    >
+      <motion.h2
+        variants={fadeInUp}
+        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+      >
+        You fly the mission. We build the intelligence.
+      </motion.h2>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
+            >
+              Transform raw drone data into a professional client portal. Look like an enterprise agency and win the bid.
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="mt-12">
+              <a
+                href="/providers"
+                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                Explore Pilot Solutions <ChevronRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+       {/* ═══════════════════════════════════════════════════════════════════════
+          SMART SURVEY OCR SHOWCASE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
+  {/* Subtle Background Glow */}
+  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
+  
+  <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
+    <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+      From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
+    </h2>
+    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+      Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
+    </p>
+  </div>
+  
+  <div className="w-full max-w-5xl mx-auto relative z-10">
+    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
+      <video
+        className="w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+      >
+        <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
+      </video>
+    </div>
+  </div>
+</section>
 
       {/* ─── 3-CARD FEATURE GRID ─── */}
       <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
@@ -240,7 +311,7 @@ export default function Home() {
                   className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words whitespace-normal"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  Universal.
+                  
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
