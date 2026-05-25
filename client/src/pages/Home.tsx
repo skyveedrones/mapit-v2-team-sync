@@ -152,7 +152,7 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-center mb-20"
             >
               Three steps. Pure magic.
             </motion.h2>
@@ -186,9 +186,9 @@ export default function Home() {
             variants={stagger}
           >
             {/* 🚀 BUMPED FONT SIZE HERE */}
-            <motion.h2
+           <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
             >
               Manage the city. <span className="text-[#00C853]">Not the maps.</span>
             </motion.h2>
@@ -224,7 +224,7 @@ export default function Home() {
             {/* 🚀 BUMPED FONT SIZE HERE */}
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
             >
               You fly the mission. <span className="text-[#00C853]">We build the intelligence.</span>
             </motion.h2>
