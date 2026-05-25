@@ -177,20 +177,20 @@ export default function Home() {
       </section>
 
      {/* ─── MUNICIPAL GATEWAY ─── */}
-<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
-  <div className="max-w-4xl mx-auto text-center">
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-      variants={stagger}
-    >
-      <motion.h2
-        variants={fadeInUp}
-        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
-      >
-        Manage the city. Not the maps.
-      </motion.h2>
+      <section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              Manage the city. <span className="text-[#00C853]">Not the maps.</span>
+            </motion.h2>
             <motion.p
               variants={fadeInUp}
               className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
@@ -211,21 +211,21 @@ export default function Home() {
         </div>
       </section>
 
-     {/* ─── PILOT PERSONA ─── */}
-<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
-  <div className="max-w-4xl mx-auto text-center">
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-      variants={stagger}
-    >
-      <motion.h2
-        variants={fadeInUp}
-        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
-      >
-        You fly the mission. We build the intelligence.
-      </motion.h2>
+      {/* ─── PILOT PERSONA ─── */}
+      <section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              You fly the mission. <span className="text-[#00C853]">We build the intelligence.</span>
+            </motion.h2>
 
             <motion.p
               variants={fadeInUp}
@@ -277,20 +277,21 @@ export default function Home() {
   </div>
 </section>
 
-      {/* ─── 3-CARD FEATURE GRID ─── */}
+{/* ─── 3-CARD FEATURE GRID ─── */}
       <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
-            <div className="grid md:grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-2xl">
+            {/* Changed from md:grid-cols-3 to lg:grid-cols-3 */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
-                <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -302,12 +303,12 @@ export default function Home() {
               </motion.div>
 
               {/* Card 2 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
-                <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  
+                  Universal.
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
@@ -316,9 +317,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 3 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-between overflow-hidden">
-                <p
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
@@ -333,13 +334,8 @@ export default function Home() {
         </div>
       </section>
 
-        {/* ─── JOBSIAN BOTTOM CTA ─── */}
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
-        </div>
-
         <div className="relative z-10 max-w-4xl mx-auto">
           <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
             Magically precise.<br />
@@ -348,14 +344,13 @@ export default function Home() {
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
             Your first map is one photo away.<br className="hidden md:block" />
-            
           </p>
           
           <div className="flex flex-col items-center">
             <Button
               size="lg"
               className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
-              onClick={() => setLocation("/pricing")}
+              onClick={() => setLocation("/create")}
             >
               Build Your First Map Free
             </Button>
@@ -368,8 +363,6 @@ export default function Home() {
 
       <Footer onContactClick={() => setShowContactModal(true)} />
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
-
-
     </div>
   );
 }
