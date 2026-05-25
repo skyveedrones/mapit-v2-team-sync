@@ -290,7 +290,7 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
-            <div className="grid md:grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-x divide-white/5 border border-white/5 rounded-2xl">
               {/* Card 1 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
@@ -308,10 +308,10 @@ export default function Home() {
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words whitespace-normal"
+                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
-                  
+                  Universal.
                 </p>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
