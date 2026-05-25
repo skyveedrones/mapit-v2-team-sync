@@ -185,9 +185,10 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
+            {/* 🚀 BUMPED FONT SIZE HERE */}
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
             >
               Manage the city. <span className="text-[#00C853]">Not the maps.</span>
             </motion.h2>
@@ -220,9 +221,10 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
+            {/* 🚀 BUMPED FONT SIZE HERE */}
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
             >
               You fly the mission. <span className="text-[#00C853]">We build the intelligence.</span>
             </motion.h2>
