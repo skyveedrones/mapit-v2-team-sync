@@ -11,7 +11,7 @@ import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { motion } from "framer-motion";
 import { ChevronRight, X, Check, Link2, Tablet, Layers, Ruler } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 32 },
@@ -77,21 +77,28 @@ export default function Providers() {
       {/* ─── HERO ─── */}
       <section className="relative w-full min-h-screen flex items-center justify-center" style={{overflow: 'hidden'}}>
         {/* Full-bleed video */}
-       <video
+      <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          controls={false}
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0"
         >
           <source src="/PilotHero.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
+
         {/* Overlay */}
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#0A0A0A]" />
-        
+        <div className="absolute inset-0 bg-black/10 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-[#0A0A0A] z-10" />
+
         {/* Content layer */}
-        <div className="relative z-20 max-w-3xl mx-auto px-6 text-center" style={{ paddingTop: '60px' }}>
+        <div 
+          className="relative z-20 max-w-3xl mx-auto px-6 text-center" 
+          style={{ paddingTop: '60px' }}
+        >
           <motion.div
             initial="hidden"
             animate="visible"

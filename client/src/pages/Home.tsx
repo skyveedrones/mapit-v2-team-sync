@@ -13,7 +13,7 @@ import LandscapeNudge from "@/components/LandscapeNudge";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useLocation, Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import posthog from "posthog-js";
 
 const fadeInUp = {
