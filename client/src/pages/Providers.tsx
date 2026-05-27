@@ -75,8 +75,7 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full min-h-screen flex items-center justify-center" style={{overflow: 'hidden'}}>
-        {/* Full-bleed video */}
+      <section className="relative w-screen left-1/2 -translate-x-1/2 min-h-[60vh] md:min-h-[80vh] overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
       <video
           autoPlay
           loop
@@ -90,13 +89,13 @@ export default function Providers() {
           Your browser does not support the video tag.
         </video>
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/10 z-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-[#0A0A0A] z-10" />
+       {/* Overlays */}
+  <div className="absolute inset-0 bg-black/40 z-10" />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0A0A0A] z-10" />
 
-        {/* Content layer */}
-        <div 
-          className="relative z-20 max-w-3xl mx-auto px-6 text-center" 
+  {/* Inner Content Layer (Keeps text centered and beautiful) */}
+  <div 
+          className="relative z-20 max-w-4xl mx-auto px-6 text-center py-20" 
           style={{ paddingTop: '60px' }}
         >
           <motion.div
