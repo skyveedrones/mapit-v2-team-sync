@@ -340,20 +340,20 @@ export default function Home() {
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-  Magically precise.<br />
-  <span className="bg-gradient-to-r from-gray-300 to-gray-600 bg-clip-text text-transparent">
-    Profoundly simple.
-  </span>
-</h2>
+            Magically precise.<br />
+            <span className="bg-gradient-to-r from-gray-300 to-gray-600 bg-clip-text text-transparent">
+              Profoundly simple.
+            </span>
+          </h2>
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
             Your first map is one photo away.<br className="hidden md:block" />
           </p>
           
           <div className="flex flex-col items-center">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
               onClick={() => setLocation("/create")}
             >
               Build Your First Map Free
