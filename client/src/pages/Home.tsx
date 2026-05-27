@@ -257,7 +257,7 @@ export default function Home() {
   
   <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
     <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-      From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
+      From paper to pixel. <br/><span className="text-[#00e676]">Instantly.</span>
     </h2>
     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
       Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
@@ -339,10 +339,12 @@ export default function Home() {
       {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
-            Magically precise.<br />
-            <span className="text-slate-400">Profoundly simple.</span>
-          </h2>
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+  Magically precise.<br />
+  <span className="bg-gradient-to-r from-gray-300 to-gray-600 bg-clip-text text-transparent">
+    Profoundly simple.
+  </span>
+</h2>
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
             Your first map is one photo away.<br className="hidden md:block" />
