@@ -76,7 +76,7 @@ export default function Providers() {
 
       {/* ─── HERO ─── */}
       <section id="map-begins-here" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Full-bleed video */}
+        {/* Full-bleed video trial */}
         <video
           autoPlay
           loop
@@ -84,7 +84,10 @@ export default function Providers() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/PilotHero.mp4" type="video/mp4" />
+          <source
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
+            type="video/mp4"
+          />
         </video>
 
         {/* Overlay */}
