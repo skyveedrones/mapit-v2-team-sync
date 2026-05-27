@@ -191,9 +191,9 @@ export default function Home() {
     >
       <motion.h2
         variants={fadeInUp}
-        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
       >
-        Manage the city. Not the maps.
+        Manage the city. <span className="text-[#00e676]">Not the maps.</span>
       </motion.h2>
             <motion.p
               variants={fadeInUp}
@@ -226,9 +226,9 @@ export default function Home() {
     >
       <motion.h2
         variants={fadeInUp}
-        className="text-4xl md:text-5xl font-bold text-white text-center tracking-tight mb-8"
+        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
       >
-        You fly the mission. We build the intelligence.
+        You fly the mission. <br/><span className="text-[#00e676]">We build the intelligence.</span>
       </motion.h2>
 
             <motion.p
@@ -294,7 +294,7 @@ export default function Home() {
               {/* Card 1 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -308,7 +308,7 @@ export default function Home() {
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
@@ -322,7 +322,7 @@ export default function Home() {
               {/* Card 3 */}
               <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
                 <p
-                  className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
@@ -338,78 +338,9 @@ export default function Home() {
       </section>
 
       {/* ─── MUNICIPAL GATEWAY ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8"
-            >
-              Manage the city. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Not the maps.</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
-            >
-              <span className="block">Live aerial records for roads, utilities, and infrastructure.</span>
-              <span className="block mt-1 md:mt-2">No consultants. No delays.</span>
-            </motion.p>
-
-            <motion.div variants={fadeInUp} className="mt-12">
-              <a
-                href="/municipal"
-                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Explore Municipal Solutions <ChevronRight className="w-4 h-4" />
-              </a>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── PILOT PERSONA ─── */}
-      <section className="py-48 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-center tracking-tight mb-8 leading-tight"
-            >
-              You fly the mission.<br />
-              <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">We build the intelligence.</span>
-            </motion.h2>
-
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-white/60 leading-relaxed max-w-xl mx-auto mb-12"
-            >
-              Transform raw drone data into a professional client portal. Look like an enterprise agency and win the bid.
-            </motion.p>
-
-            <motion.div variants={fadeInUp} className="mt-12">
-              <a
-                href="/providers"
-                className="inline-flex items-center gap-2 bg-white text-black font-bold px-8 py-4 rounded-full text-base hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Explore Pilot Solutions <ChevronRight className="w-4 h-4" />
-              </a>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
 
         {/* ─── JOBSIAN BOTTOM CTA ─── */}
-      <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+      <section className="relative bg-[#0A0A0A] py-20 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         {/* Subtle background glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
@@ -428,7 +359,7 @@ export default function Home() {
           <div className="flex flex-col items-center">
             <Button
               size="lg"
-              className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
+              className="w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
               onClick={() => setLocation("/pricing")}
             >
               Build Your First Map Free

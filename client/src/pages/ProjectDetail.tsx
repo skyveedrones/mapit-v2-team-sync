@@ -357,7 +357,7 @@ export default function ProjectDetail() {
   );
   const normalMediaQuery = trpc.media.list.useQuery(
     { projectId },
-    { enabled: !isDemoProject && projectId > 0 }
+    { enabled: !isDemoProject && projectId > 0, staleTime: 0 }
   );
   const { data: mediaList } = isDemoProject ? demoMediaQuery : normalMediaQuery;
 
@@ -368,7 +368,7 @@ export default function ProjectDetail() {
   );
   const normalFlightQuery = trpc.flight.list.useQuery(
     { projectId },
-    { enabled: !isDemoProject && projectId > 0 }
+    { enabled: !isDemoProject && projectId > 0, staleTime: 0 }
   );
   const { data: flights } = isDemoProject ? demoFlightQuery : normalFlightQuery;
 
