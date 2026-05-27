@@ -75,26 +75,24 @@ export default function Providers() {
       <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-screen left-1/2 -translate-x-1/2 min-h-[60vh] md:min-h-[80vh] overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
-      <video
+      <section id="map-begins-here" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Full-bleed video */}
+        <video
           autoPlay
           loop
           muted
           playsInline
-          controls={false}
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover object-center z-0"
+          className="absolute inset-0 w-full h-full object-cover"
         >
           <source src="/PilotHero.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
         </video>
 
-       {/* Overlays */}
-  <div className="absolute inset-0 bg-black/40 z-10" />
-  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0A0A0A] z-10" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#0A0A0A]" />
 
-  {/* Inner Content Layer (Keeps text centered and beautiful) */}
-  <div 
+        {/* Inner Content Layer (Keeps text centered and beautiful) */}
+        <div 
           className="relative z-20 max-w-4xl mx-auto px-6 text-center py-20" 
           style={{ paddingTop: '60px' }}
         >
