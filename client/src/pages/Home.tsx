@@ -351,13 +351,12 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col items-center">
-            <Button 
-              size="lg" 
-              className="w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
-              onClick={() => setLocation("/create")}
+            <Link 
+              to="/register"
+              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
             >
               Build Your First Map Free
-            </Button>
+            </Link>
             <p className="mt-3 text-sm text-gray-400">
               Upload your photo. Your map saves automatically. 14-day trial, no credit card.
             </p>
