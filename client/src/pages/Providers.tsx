@@ -77,17 +77,14 @@ export default function Providers() {
       {/* ─── HERO ─── */}
       <section className="relative w-full min-h-screen flex items-center justify-center" style={{overflow: 'hidden'}}>
         {/* Full-bleed video */}
-        <video
+       <video
           autoPlay
           loop
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover object-center"
         >
-          <source
-            src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/provider_hero.mp4"
-            type="video/mp4"
-          />
+          <source src="/PilotHero.mp4" type="video/mp4" />
         </video>
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/30" />
