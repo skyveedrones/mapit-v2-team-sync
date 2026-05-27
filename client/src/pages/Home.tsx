@@ -106,20 +106,23 @@ export default function Home() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            <span className="block text-white">What's actually happening out there?</span>
+            <span className="block text-white">Your site.</span>
+            <span className="block text-slate-400">Documented.</span>
+            <span className="block text-slate-400">Verified.</span>
+            <span className="block text-slate-400">Delivered.</span>
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
-            className="text-xl md:text-2xl text-slate-200 font-medium mb-8 drop-shadow-lg"
+            className="text-lg md:text-2xl font-medium tracking-tight text-gray-400 max-w-3xl text-center mt-6 mb-10"
           >
-            Reality, finally on record.
+            Stop managing data. Start making decisions.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
            <Button
   size="lg"
-  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-bold px-8 md:px-12 py-4 md:py-6 rounded-full shadow-xl text-lg md:text-xl"
+  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-semibold px-8 py-4 rounded-full shadow-xl"
   onClick={() => {
     posthog.capture('demo_started', { 
       location: 'homepage_hero',
@@ -129,20 +132,13 @@ export default function Home() {
   }}
 >
   Drop a Photo. Build Your Map.
-  <ChevronRight className="ml-2 h-5 w-5 md:h-6 md:w-6" />
+  <ChevronRight className="ml-2 h-5 w-5" />
 </Button>
-            <p className="mt-3 text-lg text-white/90 font-medium drop-shadow-md">
-              Uses your drone photo&nbsp;&bull;&nbsp;Builds a real project&nbsp;&bull;&nbsp;Saves with your email.
+            <p className="mt-3 text-sm text-gray-400 font-medium">
+              Uses your drone photo. Builds a real project. Saves with your email.
             </p>
           </motion.div>
         </motion.div>
-        
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <svg className="w-8 h-8 text-white/50 hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
       </section>
 
       {/* ─── 3-STEP WORKFLOW ─── */}
@@ -156,9 +152,9 @@ export default function Home() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-center mb-20"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-center mb-20"
             >
-              Three steps. <span className="bg-gradient-to-r from-[#00e676] to-[#00c853] text-transparent bg-clip-text">Pure magic.</span>
+              Three steps. Pure magic.
             </motion.h2>
 
             <div className="grid md:grid-cols-3 gap-16">
@@ -181,20 +177,21 @@ export default function Home() {
       </section>
 
      {/* ─── MUNICIPAL GATEWAY ─── */}
-<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
-  <div className="max-w-4xl mx-auto text-center">
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-      variants={stagger}
-    >
-      <motion.h2
-        variants={fadeInUp}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
-      >
-        Manage the city. <span className="text-[#00e676]">Not the maps.</span>
-      </motion.h2>
+      <section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            {/* 🚀 BUMPED FONT SIZE HERE */}
+           <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              Manage the city. <span className="text-[#00C853]">Not the maps.</span>
+            </motion.h2>
             <motion.p
               variants={fadeInUp}
               className="text-gray-400 text-lg mt-4 text-center max-w-3xl mx-auto mb-12"
@@ -215,21 +212,22 @@ export default function Home() {
         </div>
       </section>
 
-     {/* ─── PILOT PERSONA ─── */}
-<section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
-  <div className="max-w-4xl mx-auto text-center">
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-      variants={stagger}
-    >
-      <motion.h2
-        variants={fadeInUp}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center tracking-tight mb-8"
-      >
-        You fly the mission. <br/><span className="text-[#00e676]">We build the intelligence.</span>
-      </motion.h2>
+      {/* ─── PILOT PERSONA ─── */}
+      <section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            {/* 🚀 BUMPED FONT SIZE HERE */}
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
+            >
+              You fly the mission. <span className="text-[#00C853]">We build the intelligence.</span>
+            </motion.h2>
 
             <motion.p
               variants={fadeInUp}
@@ -259,7 +257,7 @@ export default function Home() {
   
   <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
     <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-      From paper to pixel. <br/><span className="text-gray-500">Instantly.</span>
+      From paper to pixel. <br/><span className="text-[#00e676]">Instantly.</span>
     </h2>
     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
       Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
@@ -281,20 +279,21 @@ export default function Home() {
   </div>
 </section>
 
-      {/* ─── 3-CARD FEATURE GRID ─── */}
+{/* ─── 3-CARD FEATURE GRID ─── */}
       <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-x divide-white/5 border border-white/5 rounded-2xl">
+            {/* Changed from md:grid-cols-3 to lg:grid-cols-3 */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
-                <p
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Exact.
@@ -306,9 +305,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 2 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
-                <p
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Universal.
@@ -320,9 +319,9 @@ export default function Home() {
               </motion.div>
 
               {/* Card 3 */}
-              <motion.div variants={fadeInUp} className="bg-[#0A0A0A] p-10 flex flex-col justify-start overflow-visible">
-                <p
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent break-words"
+              <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
                   style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
                 >
                   Aligned.
@@ -337,19 +336,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── MUNICIPAL GATEWAY ─── */}
-
-        {/* ─── JOBSIAN BOTTOM CTA ─── */}
-      <section className="relative bg-[#0A0A0A] py-20 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full"></div>
-        </div>
-
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
+      <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
             Magically precise.<br />
-            <span className="text-slate-400">Profoundly simple.</span>
+            <span className="bg-gradient-to-r from-gray-300 to-gray-600 bg-clip-text text-transparent">
+              Profoundly simple.
+            </span>
           </h2>
           
           <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
@@ -357,14 +351,13 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col items-center">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
-              onClick={() => setLocation("/pricing")}
+            <Link 
+              to="/register"
+              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
             >
               Build Your First Map Free
-            </Button>
-            <p className="mt-3 text-base md:text-lg text-gray-400">
+            </Link>
+            <p className="mt-3 text-sm text-gray-400">
               Upload your photo. Your map saves automatically. 14-day trial, no credit card.
             </p>
           </div>
@@ -373,8 +366,6 @@ export default function Home() {
 
       <Footer onContactClick={() => setShowContactModal(true)} />
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
-
-
     </div>
   );
 }
