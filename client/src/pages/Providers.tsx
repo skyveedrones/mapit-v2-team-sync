@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
+import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
 import { motion } from "framer-motion";
 import { ChevronRight, X, Check, Link2, Tablet, Layers, Ruler } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -63,6 +64,7 @@ const featureCards = [
 ];
 
 export default function Providers() {
+  const [briefingFormOpen, setBriefingFormOpen] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [, setLocation] = useLocation();
 
@@ -72,7 +74,8 @@ export default function Providers() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
-      <GlobalHamburgerHeader />
+      <GlobalHamburgerHeader onBriefingRequest={() => setBriefingFormOpen(true)} />
+      <MunicipalBriefingForm open={briefingFormOpen} onOpenChange={setBriefingFormOpen} />
 
       {/* ─── HERO ─── */}
       <section className="relative w-full min-h-screen flex items-center justify-center" style={{overflow: 'hidden'}}>
@@ -85,7 +88,7 @@ export default function Providers() {
           className="absolute inset-0 w-full h-full object-cover object-center"
         >
           <source
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/GatewayConstructionPilotHeroVideo_477e04c1.mp4"
+            src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/Gateway%20Construction%20Pilot%20Hero%20Video.mp4"
             type="video/mp4"
           />
         </video>
@@ -113,7 +116,7 @@ export default function Providers() {
               style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
             >
               <span className="block">Deliver intelligence.</span>
-              <span className="block">Not just images.</span>
+              <span className="block text-[#00e676]">Not just images.</span>
             </motion.h1>
 
             <motion.p
@@ -141,13 +144,13 @@ export default function Providers() {
             <motion.div variants={fadeInUp} className="flex flex-col items-center">
               <Button
                 size="lg"
-                className="bg-white hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-black font-bold px-10 py-6 text-base rounded-full shadow-xl"
+                className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-black font-bold px-10 py-6 text-base rounded-full shadow-xl"
                 onClick={() => setLocation("/pricing")}
               >
                 Start Free Trial
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
-              <p className="mt-2 text-xs text-gray-300">
+              <p className="mt-4 text-sm md:text-base text-gray-300">
                 Live demo — no account required. Your map saves instantly.
               </p>
             </motion.div>
@@ -366,7 +369,7 @@ export default function Providers() {
               className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8"
             >
               Expertly flown.<br />
-              <span className="text-slate-400">Magically processed.</span>
+              <span className="text-white">Magically processed.</span>
             </motion.h2>
             
             <motion.p
@@ -380,7 +383,7 @@ export default function Providers() {
             <motion.div variants={fadeInUp} className="flex flex-col items-center">
               <button 
                 onClick={() => setLocation("/pricing")}
-                className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
+                className="w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
               >
                 Build Your First Map Free
               </button>
