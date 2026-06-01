@@ -13,7 +13,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
-import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
 
 // Tier id → Stripe price IDs (mirrors server/products.ts)
 const TIER_PRICE_IDS: Record<string, { monthly: string; annual: string } | null> = {
@@ -130,7 +129,6 @@ const TIERS = [
 ];
 
 export default function Pricing() {
-  const [briefingFormOpen, setBriefingFormOpen] = useState(false);
   const [annual, setAnnual] = useState(false);
   const [loadingTierId, setLoadingTierId] = useState<string | null>(null);
   const [, setLocation] = useLocation();
@@ -199,8 +197,7 @@ export default function Pricing() {
       className="min-h-screen text-white flex flex-col"
       style={{ background: "#0A0A0A", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
-      <GlobalHamburgerHeader onBriefingRequest={() => setBriefingFormOpen(true)} />
-      <MunicipalBriefingForm open={briefingFormOpen} onOpenChange={setBriefingFormOpen} />
+      <GlobalHamburgerHeader />
       {/* ── Trial Expired Banner ── */}
       {isExpired && (
         <div
@@ -211,7 +208,18 @@ export default function Pricing() {
           Your complimentary experience has concluded. Upgrade to Precision to keep your projects.
         </div>
       )}
-
+      {/* ── Nav ── */}
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
+        <button
+          onClick={() => setLocation("/")}
+          className="flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-200 text-sm font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          ← Back to MAPIT
+        </button>
+        <div className="w-16" />
+        <div className="w-16" />
+      </nav>
 
       {/* ── Hero ── */}
       <div className="relative text-center pb-10 px-6 overflow-hidden" style={{ paddingTop: 'calc(4rem + 60px)' }}>
@@ -229,7 +237,7 @@ export default function Pricing() {
             style={{ fontSize: "clamp(2.5rem, 6vw, 3.5rem)", letterSpacing: "-0.03em", lineHeight: 1.2 }}
           >
             Infinite scale.<br />
-            <span className="text-[#00e676]">Simple pricing.</span>
+            <span className="text-slate-400">Simple pricing.</span>
           </motion.h1>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -405,28 +413,28 @@ export default function Pricing() {
                 className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-[0.98]"
                 style={
                   tier.ctaStyle === "solid"
-                    ? { background: "#00e676", color: "#0A0A0A" }
+                    ? { background: "#ffffff", color: "#0A0A0A" }
                     : {
                         background: "transparent",
                         color: "rgba(255,255,255,0.70)",
-                        border: "1px solid rgba(0,230,118,0.30)",
+                        border: "1px solid rgba(255,255,255,0.20)",
                       }
                 }
                 onMouseEnter={(e) => {
                   const el = e.currentTarget;
                   if (tier.ctaStyle === "solid") {
-                    el.style.background = "#00c853";
+                    el.style.background = "#e5e7eb";
                   } else {
-                    el.style.borderColor = "rgba(0,230,118,0.60)";
-                    el.style.color = "#00e676";
+                    el.style.borderColor = "rgba(255,255,255,0.45)";
+                    el.style.color = "#ffffff";
                   }
                 }}
                 onMouseLeave={(e) => {
                   const el = e.currentTarget;
                   if (tier.ctaStyle === "solid") {
-                    el.style.background = "#00e676";
+                    el.style.background = "#ffffff";
                   } else {
-                    el.style.borderColor = "rgba(0,230,118,0.30)";
+                    el.style.borderColor = "rgba(255,255,255,0.20)";
                     el.style.color = "rgba(255,255,255,0.70)";
                   }
                 }}

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import { ContactModal } from "@/components/ContactModal";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
-import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
 import LandscapeNudge from "@/components/LandscapeNudge";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
@@ -64,7 +63,6 @@ const workflowSteps = [
 
 export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false);
-  const [briefingFormOpen, setBriefingFormOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -74,8 +72,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
       <LandscapeNudge />
-      <GlobalHamburgerHeader onBriefingRequest={() => setBriefingFormOpen(true)} />
-      <MunicipalBriefingForm open={briefingFormOpen} onOpenChange={setBriefingFormOpen} />
+      <GlobalHamburgerHeader />
 
       {/* ─── HERO ─── */}
       <section id="map-begins-here" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -109,15 +106,15 @@ export default function Home() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
-            <span className="block text-white font-extrabold">Your site.</span>
-            <span className="block text-white font-bold">Documented.</span>
-            <span className="block text-white font-bold">Verified.</span>
-            <span className="block text-white font-bold">Delivered.</span>
+            <span className="block text-white">Your site.</span>
+            <span className="block text-slate-400">Documented.</span>
+            <span className="block text-slate-400">Verified.</span>
+            <span className="block text-slate-400">Delivered.</span>
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
-            className="text-lg md:text-2xl font-medium tracking-tight text-white max-w-3xl text-center mt-6 mb-10"
+            className="text-lg md:text-2xl font-medium tracking-tight text-gray-400 max-w-3xl text-center mt-6 mb-10"
           >
             Stop managing data. Start making decisions.
           </motion.p>
@@ -125,7 +122,7 @@ export default function Home() {
           <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center mt-8 text-center w-full">
            <Button
   size="lg"
-  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-semibold px-12 py-6 rounded-full shadow-xl text-xl"
+  className="bg-[#00e676] hover:bg-[#00c853] hover:scale-105 transition-all duration-300 text-[#003314] font-semibold px-8 py-4 rounded-full shadow-xl"
   onClick={() => {
     posthog.capture('demo_started', { 
       location: 'homepage_hero',
@@ -135,9 +132,9 @@ export default function Home() {
   }}
 >
   Drop a Photo. Build Your Map.
-  <ChevronRight className="ml-2 h-6 w-6" />
+  <ChevronRight className="ml-2 h-5 w-5" />
 </Button>
-            <p className="mt-4 text-lg md:text-xl text-gray-300 font-medium">
+            <p className="mt-3 text-sm text-gray-400 font-medium">
               Uses your drone photo. Builds a real project. Saves with your email.
             </p>
           </motion.div>
@@ -157,7 +154,7 @@ export default function Home() {
               variants={fadeInUp}
               className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-center mb-20"
             >
-              Three steps. <span className="text-[#00C853]">Pure magic.</span>
+              Three steps. Pure magic.
             </motion.h2>
 
             <div className="grid md:grid-cols-3 gap-16">
@@ -189,12 +186,11 @@ export default function Home() {
             variants={stagger}
           >
             {/* 🚀 BUMPED FONT SIZE HERE */}
-            <motion.h2
+           <motion.h2
               variants={fadeInUp}
               className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
             >
-              Manage the city.<br />
-              <span className="text-[#00C853]">Not the maps.</span>
+              Manage the city. <span className="text-[#00C853]">Not the maps.</span>
             </motion.h2>
             <motion.p
               variants={fadeInUp}
@@ -230,8 +226,7 @@ export default function Home() {
               variants={fadeInUp}
               className="text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center tracking-tight mb-8"
             >
-              You fly the mission.<br />
-              <span className="text-[#00C853]">We build the intelligence.</span>
+              You fly the mission. <span className="text-[#00C853]">We build the intelligence.</span>
             </motion.h2>
 
             <motion.p
@@ -262,7 +257,7 @@ export default function Home() {
   
   <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
     <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-      From paper to pixel. <span className="text-[#00e676]">Instantly.</span>
+      From paper to pixel. <br/><span className="text-[#00e676]">Instantly.</span>
     </h2>
     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
       Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
@@ -346,7 +341,7 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
             Magically precise.<br />
-            <span className="text-white font-bold">
+            <span className="bg-gradient-to-r from-gray-300 to-gray-600 bg-clip-text text-transparent">
               Profoundly simple.
             </span>
           </h2>
@@ -362,7 +357,7 @@ export default function Home() {
             >
               Build Your First Map Free
             </Link>
-            <p className="mt-4 text-base md:text-lg text-gray-400">
+            <p className="mt-3 text-sm text-gray-400">
               Upload your photo. Your map saves automatically. 14-day trial, no credit card.
             </p>
           </div>

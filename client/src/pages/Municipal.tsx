@@ -30,7 +30,7 @@ export default function Municipal() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden">
-      <GlobalHamburgerHeader onBriefingRequest={() => setBriefingFormOpen(true)} />
+      <GlobalHamburgerHeader />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           SECTION 1: HERO — "Your entire city. Live from above."
@@ -89,12 +89,12 @@ export default function Municipal() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               onClick={() => setBriefingFormOpen(true)}
-              className="inline-flex items-center gap-2 bg-[#00e676] hover:bg-[#00c853] text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl"
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl"
             >
               Start Municipal Pilot
               <ChevronRight className="w-5 h-5" />
             </motion.button>
-            <p className="mt-4 text-xs text-gray-300">
+            <p className="mt-2 text-xs text-gray-300">
               Live demo — no account required. Your map saves instantly.
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function Municipal() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-5xl md:text-7xl font-bold text-white mb-16 text-center"
+            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
           >
             The Problem. The Solution.
           </motion.h2>
@@ -179,198 +179,7 @@ export default function Municipal() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 2.5: SMART SURVEY - PDF Data Unlock
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative px-6 bg-[#0A0A0A]" style={{ paddingTop: '140px', paddingBottom: '140px' }}>
-        <div className="max-w-7xl mx-auto">
-          {/* Subtle background glow */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.02] blur-[120px] rounded-full"></div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="relative z-10"
-          >
-            {/* Heading */}
-            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
-              Stop paying twice for the<br />
-              <span className="text-[#00e676]">exact same survey data.</span>
-            </h2>
-
-            {/* Subtext */}
-            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 max-w-3xl">
-              MAPIT Smart Survey unlocks decades of buried PDF data in a single afternoon — sub-centimeter accuracy, zero manual entry.
-            </p>
-
-            {/* Image - Smart Survey Interface */}
-            <div className="mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 overflow-hidden">
-              <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/wWXdCjiGeneScXxq.png"
-                alt="MAPIT Smart Survey - PDF Data Unlock Interface"
-                className="w-full max-h-[80vh] object-contain"
-              />
-            </div>
-
-            {/* Three-Step Process */}
-            <div className="grid md:grid-cols-3 gap-8 mt-16">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-[#00e676] text-sm font-bold tracking-widest mb-4">01</div>
-                <h3 className="text-2xl font-bold text-white mb-3">Drop the PDF</h3>
-                <p className="text-slate-400">Any engineering survey table.</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-[#00e676] text-sm font-bold tracking-widest mb-4">02</div>
-                <h3 className="text-2xl font-bold text-white mb-3">Pick your zone</h3>
-                <p className="text-slate-400">Select the State Plane zone.</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-[#00e676] text-sm font-bold tracking-widest mb-4">03</div>
-                <h3 className="text-2xl font-bold text-white mb-3">Get a live map</h3>
-                <p className="text-slate-400">Every point pinned automatically.</p>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 3: APWA UTILITY COLOR CODING (moved up)
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-40 px-6 bg-[#0A0A0A]">
-        <div className="max-w-7xl mx-auto">
-          {/* Subtle background glow */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.02] blur-[120px] rounded-full"></div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="relative z-10"
-          >
-            {/* Heading */}
-            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8 text-center">
-              Beneath the surface.<br />
-              <span className="text-[#00C853]">Perfectly mapped.</span>
-            </h2>
-
-            {/* Subtext */}
-            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 text-center">
-              Full APWA color-coded utility overlays. Prevent strikes, eliminate guesswork, and know exactly what lies beneath before you dig.
-            </p>
-
-            {/* Graphic - Neon Street Cutaway */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 flex items-center justify-center"
-            >
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/neon_street_cutaway_solid_pipes-iWFEmVe2zVQbKSo2erbExk.webp"
-                alt="3D Neon Street Cutaway - Underground Infrastructure"
-                className="w-full max-h-[75vh] object-contain"
-              />
-            </motion.div>
-
-
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 5: THE RECORD — Bleed Image Layout
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section ref={infrastructureRef} className="relative px-6 bg-[#0A0A0A]" style={{ paddingTop: '140px', paddingBottom: '140px' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left: Text */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <p className="text-slate-400 text-sm uppercase tracking-widest mb-4">Infrastructure Record</p>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Automated surface analysis. Catch degradation before it costs you.
-              </h2>
-              <p className="text-slate-300 text-lg leading-relaxed mb-8">
-                Track millimeter-level changes in road surfaces and bridge integrity over time. Ditch the manual clipboards and let automated drone capture highlight exactly where your paving budget needs to go.
-              </p>
-              {/* Tech Tags */}
-              <div className="flex flex-wrap gap-3">
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  AI Surface Detection
-                </div>
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  Thermal Bridge Scans
-                </div>
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  Historical Timeline Compare
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Right: Bridge Thermal Image */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="relative h-96 md:h-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-[#00e676]/10"
-              style={{ y: imageY }}
-            >
-              <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/IyMAHOecBZsjsGWl.jpg"
-                alt="Highway thermal analysis with AI surface detection"
-                className="w-full h-full object-cover"
-              />
-              {/* Subtle overlay for premium feel */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          className="flex justify-center mt-16"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <ChevronDown className="w-6 h-6 text-slate-500" />
-        </motion.div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 4: THE IMPACT — "50% Cost Reduction"
+          SECTION 3: THE IMPACT — "50% Cost Reduction"
           ═══════════════════════════════════════════════════════════════════════ */}
       <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center overflow-hidden">
         {/* Green glow */}
@@ -447,7 +256,158 @@ export default function Municipal() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 6: THE ECOSYSTEM — Three-Column Grid
+          SECTION 4: THE RECORD — Bleed Image Layout
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section ref={infrastructureRef} className="relative py-32 px-6 bg-[#0A0A0A]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left: Text */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-slate-400 text-sm uppercase tracking-widest mb-4">Infrastructure Record</p>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Monitor roads and bridges with profound simplicity.
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Every pothole. Every crack. Every bridge inspection. Captured, verified, and accessible to every stakeholder in real-time.
+              </p>
+            </motion.div>
+
+            {/* Right: Demo Video with Premium Styling */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="relative h-96 md:h-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-[#00e676]/10"
+              style={{ y: imageY }}
+            >
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                className="w-full h-full object-cover"
+              >
+                <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/mapit-site/municipal_infrastructure_record.mp4" type="video/mp4" />
+              </video>
+              {/* Subtle overlay for premium feel */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          className="flex justify-center mt-16"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <ChevronDown className="w-6 h-6 text-slate-500" />
+        </motion.div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 4.5: APWA UTILITY COLOR CODING
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Subtle background glow */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.02] blur-[120px] rounded-full"></div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="relative z-10"
+          >
+            {/* Heading */}
+            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+              Beneath the surface.<br />
+              <span className="text-slate-400">Perfectly mapped.</span>
+            </h2>
+
+            {/* Subtext */}
+            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16">
+              Full APWA color-coded utility overlays. Prevent strikes, eliminate guesswork, and know exactly what lies beneath before you dig.
+            </p>
+
+            {/* APWA Color Indicators */}
+            <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+              {/* Red - Electric */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-red-600 shadow-lg shadow-red-600/50 flex items-center justify-center border border-red-500/30"></div>
+                <span className="text-sm font-medium text-slate-300">Electric</span>
+              </motion.div>
+
+              {/* Yellow - Gas */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50 flex items-center justify-center border border-yellow-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Gas</span>
+              </motion.div>
+
+              {/* Blue - Water */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50 flex items-center justify-center border border-blue-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Water</span>
+              </motion.div>
+
+              {/* Orange - Communications */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-orange-500 shadow-lg shadow-orange-500/50 flex items-center justify-center border border-orange-400/30"></div>
+                <span className="text-sm font-medium text-slate-300">Communications</span>
+              </motion.div>
+
+              {/* Green - Sewer */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-green-600 shadow-lg shadow-green-600/50 flex items-center justify-center border border-green-500/30"></div>
+                <span className="text-sm font-medium text-slate-300">Sewer</span>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 5: THE ECOSYSTEM — Three-Column Grid
           ═══════════════════════════════════════════════════════════════════════ */}
       <section className="relative py-32 px-6 bg-[#0A0A0A]">
         <div className="max-w-6xl mx-auto">
@@ -456,7 +416,7 @@ export default function Municipal() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-5xl md:text-7xl font-bold text-white mb-16 text-center"
+            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
           >
             Built for Every Department
           </motion.h2>
@@ -525,7 +485,8 @@ export default function Municipal() {
           transition={{ duration: 0.7 }}
           viewport={{ once: true }}
           className="relative z-10 text-center max-w-4xl"
-        >          <p
+        >
+          <p
             className="text-white italic font-light"
             style={{
               fontSize: "clamp(1.8rem, 5vw, 3rem)",
@@ -533,9 +494,11 @@ export default function Municipal() {
               lineHeight: 1.3,
             }}
           >
-            "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."<br />
-            <span className="text-sm md:text-base text-slate-400 font-normal not-italic">Director of Public Works, Mid-Sized Texas Municipality</span>
-          </p>     </motion.blockquote>
+            "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."
+
+— Director of Public Works, Mid-Sized Texas Municipality
+          </p>
+        </motion.blockquote>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -557,7 +520,7 @@ export default function Municipal() {
           >
             City-wide scale.
             <br />
-            <span className="text-white font-bold">Profoundly simple.</span>
+            <span className="text-slate-400">Profoundly simple.</span>
           </motion.h2>
 
           <motion.p
@@ -565,19 +528,9 @@ export default function Municipal() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             viewport={{ once: true }}
-            className="text-xl md:text-2xl text-slate-300 font-light mb-4"
-          >
-            Start your municipal pilot today. No credit card required.
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            viewport={{ once: true }}
             className="text-xl md:text-2xl text-slate-300 font-light mb-12"
           >
-            Dedicated municipal onboarding and training included.
+            Start your municipal pilot today. No credit card required.
           </motion.p>
 
           <div className="flex flex-col items-center">
@@ -587,15 +540,19 @@ export default function Municipal() {
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
               onClick={() => setBriefingFormOpen(true)}
-              className="inline-flex items-center gap-2 bg-[#00e676] hover:bg-[#00c853] text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl"
             >
               Start Municipal Pilot
               <ChevronRight className="w-5 h-5" />
             </motion.button>
-            <p className="mt-4 text-sm md:text-base text-gray-300">
+            <p className="mt-2 text-xs text-gray-300">
               Live demo — no account required. Your map saves instantly.
             </p>
           </div>
+
+          <p className="text-sm text-slate-500 mt-6">
+            Dedicated municipal onboarding and training included.
+          </p>
         </div>
       </section>
 
@@ -614,7 +571,7 @@ export default function Municipal() {
             </svg>
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/40">Trust &amp; Security</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-[#00e676]">
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 text-white">
             Built for the public trust.
           </h2>
           <p className="text-lg text-white/50 leading-relaxed max-w-xl mx-auto">
