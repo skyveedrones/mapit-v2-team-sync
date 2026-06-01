@@ -209,9 +209,9 @@ export default function Municipal() {
             {/* Image - Smart Survey Interface */}
             <div className="mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 overflow-hidden">
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204719166/wWXdCjiGeneScXxq.png"
+                src="https://dronemapv2-fis5wf2n.manus.space/manus-storage/SmartSurveySection_2e94671e.jpeg"
                 alt="MAPIT Smart Survey - PDF Data Unlock Interface"
-                className="w-full max-h-[80vh] object-contain"
+                className="w-full max-h-[70vh] object-cover"
               />
             </div>
 
