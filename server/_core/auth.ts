@@ -12,14 +12,34 @@ const clerkClient = createClerkClient({ secretKey: ENV.clerkSecretKey });
  */
 export async function authenticateRequest(req: Request): Promise<User | null> {
   try {
+    // First try Clerk session cookie authentication
     const requestState = await clerkClient.authenticateRequest(req as any, {
       authorizedParties: [],
     });
-    if (!requestState.isSignedIn) return null;
-    const clerkUserId = requestState.toAuth().userId;
-    if (!clerkUserId) return null;
-    return await db.getUserByClerkId(clerkUserId);
-  } catch {
+    if (requestState.isSignedIn) {
+      const clerkUserId = requestState.toAuth().userId;
+      if (clerkUserId) {
+        return await db.getUserByClerkId(clerkUserId);
+      }
+    }
+    
+    // Fallback: try Bearer token authentication
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const verifiedToken = await clerkClient.verifyToken(token);
+        if (verifiedToken && verifiedToken.sub) {
+          return await db.getUserByClerkId(verifiedToken.sub);
+        }
+      } catch (tokenErr) {
+        console.error('[Auth] Bearer token verification failed:', tokenErr);
+      }
+    }
+    
+    return null;
+  } catch (err) {
+    console.error('[Auth] Authentication error:', err);
     return null;
   }
 }

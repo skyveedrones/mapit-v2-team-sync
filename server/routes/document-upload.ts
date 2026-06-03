@@ -29,11 +29,16 @@ async function getSessionUser(req: Request) {
 }
 
 router.post("/document/upload", upload.single("file"), async (req: Request, res: Response) => {
+  console.log("[Document Upload] Auth check starting...");
+  console.log("[Document Upload] Headers:", req.headers);
   const user = await getSessionUser(req);
+  console.log("[Document Upload] User result:", user ? `User ID: ${user.id}` : "null");
   if (!user) {
+    console.log("[Document Upload] Auth failed - no user");
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  console.log("[Document Upload] Auth passed - user:", user.id);
 
   const file = req.file;
   if (!file) {
