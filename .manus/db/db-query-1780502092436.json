@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, userId, name FROM projects WHERE id = 3690001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user zhFTwZdMBa685Cr.4d37142b48ab --database FiS5WF2NaftJTm6fu3BYQb --execute SELECT id, userId, name FROM projects WHERE id = 3690001;",
+  "rows": [
+    {
+      "id": "3690001",
+      "userId": "1",
+      "name": "Demonstrtion - Smart Survey Points"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tname\n3690001\t1\tDemonstrtion - Smart Survey Points\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}

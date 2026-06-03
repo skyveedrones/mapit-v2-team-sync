@@ -13,7 +13,7 @@
 
 import express, { Router, Request, Response } from "express";
 import { getDb } from "../db";
-import { projectOverlays, projects, media } from "../../drizzle/schema";
+import { projectOverlays, projects, media, projectCollaborators } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { authenticateRequest } from "../_core/auth";
 
@@ -91,8 +91,21 @@ router.post("/create-overlay", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Project not found" });
     }
 
-    if (project[0].userId !== user.id && user.role !== "webmaster" && user.role !== "admin") {
-      return res.status(403).json({ error: "No access to this project" });
+    // Check if user is owner, webmaster, or admin
+    const isOwner = project[0].userId === user.id;
+    const isAdmin = user.role === "webmaster" || user.role === "admin";
+    
+    if (!isOwner && !isAdmin) {
+      // Check if user is a collaborator with editor role
+      const collaborator = await db
+        .select({ role: projectCollaborators.role })
+        .from(projectCollaborators)
+        .where(and(eq(projectCollaborators.projectId, projectId), eq(projectCollaborators.userId, user.id)))
+        .limit(1);
+      
+      if (!collaborator || collaborator.length === 0 || collaborator[0].role !== 'editor') {
+        return res.status(403).json({ error: "No access to this project" });
+      }
     }
 
     // Get default coordinates
