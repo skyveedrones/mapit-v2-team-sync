@@ -106,7 +106,7 @@ export default function Home() {
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
+            className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
             <span className="block text-white font-extrabold">Your site.</span>
@@ -117,7 +117,7 @@ export default function Home() {
 
           <motion.p
             variants={fadeInUp}
-            className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-white max-w-3xl text-center mt-6 mb-10"
+            className="text-lg md:text-2xl font-medium tracking-tight text-white max-w-3xl text-center mt-6 mb-10"
           >
             Stop managing data. Start making decisions.
           </motion.p>
@@ -177,7 +177,7 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-      </section>
+
 
        {/* ═══════════════════════════════════════════════════════════════════════
           SMART SURVEY OCR SHOWCASE
@@ -203,13 +203,13 @@ export default function Home() {
         loop
         muted
         playsInline
-        style={{ animationPlayState: 'running' }}
-        onLoadedMetadata={(e) => { (e.target as HTMLVideoElement).playbackRate = 0.75; }}
       >
         <source src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/US%2080%20Waterline%20Overlay%20for%20LinkedIn.mp4" type="video/mp4" />
       </video>
     </div>
   </div>
+</section>
+
 </section>
 
      {/* ─── MUNICIPAL GATEWAY ─── */}
@@ -286,6 +286,8 @@ export default function Home() {
         </div>
       </section>
 
+
+
 {/* ─── 3-CARD FEATURE GRID ─── */}
       <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-7xl mx-auto">
@@ -299,31 +301,79 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Card 1 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
-                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[0].headline}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{featureCards[0].body}</p>
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
+                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+                >
+                  Exact.
+                </p>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Perfect clarity.</h3>
+                  <p className="text-white/50 text-sm leading-relaxed">Centimeter-level accuracy. Ready to share in minutes.</p>
+                </div>
               </motion.div>
 
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
-                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[1].headline}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{featureCards[1].body}</p>
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
+                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+                >
+                  Universal.
+                </p>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
+                  <p className="text-white/50 text-sm leading-relaxed">Export to Esri, ArcGIS, or CAD in one click. KML, CSV, GeoJSON, GPX — all native.</p>
+                </div>
               </motion.div>
 
               {/* Card 3 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
-                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[2].headline}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{featureCards[2].body}</p>
+                <p 
+                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
+                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
+                >
+                  Aligned.
+                </p>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Plans meet reality.</h3>
+                  <p className="text-white/50 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Two reference points. Perfect alignment.</p>
+                </div>
               </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
-      <Footer />
+      {/* ─── JOBSIAN BOTTOM CTA ─── */}
+      <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+            Magically precise.<br />
+            <span className="text-white font-bold">
+              Profoundly simple.
+            </span>
+          </h2>
+          
+          <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
+            Your first map is one photo away.<br className="hidden md:block" />
+          </p>
+          
+          <div className="flex flex-col items-center">
+            <Link 
+              to="/register"
+              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
+            >
+              Build Your First Map Free
+            </Link>
+            <p className="mt-4 text-base md:text-lg text-gray-400">
+              Upload your photo. Your map saves automatically. 14-day trial, no credit card.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <Footer onContactClick={() => setShowContactModal(true)} />
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
