@@ -88,7 +88,7 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663204719166/FiS5WF2NaftJTm6fu3BYQb/hero_background_new_fe49dcb4.mp4"
+            src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/MAPit%20Homepage%20Hero%20Video.mp4"
             type="video/mp4"
           />
         </video>
@@ -262,10 +262,10 @@ export default function Home() {
   
   <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
     <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-      From paper to pixel. <span className="text-[#00e676]">Instantly.</span>
+      Your Site. <span className="text-[#00e676]">Perfect Vision.</span>
     </h2>
     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-      Stop manually plotting coordinates. Drop an engineering PDF with an embedded <span className="text-white font-semibold">Point Table</span> into MAPIT and watch our OCR intelligence engine pin every survey point to your 3D site with sub-centimeter accuracy.
+      Drop an engineering blueprint onto your screen, link two reference points, and watch it snap perfectly into real-world GPS alignment.
     </p>
   </div>
   
@@ -278,7 +278,7 @@ export default function Home() {
         muted
         playsInline
       >
-        <source src="https://res.cloudinary.com/dp1fvan1x/video/upload/v1778603585/mapit-homepage/ocr-demo.mp4" type="video/mp4" />
+        <source src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/US%2080%20Waterline%20Overlay%20for%20LinkedIn.mp4" type="video/mp4" />
       </video>
     </div>
   </div>
