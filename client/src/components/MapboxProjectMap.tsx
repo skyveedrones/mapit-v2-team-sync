@@ -680,7 +680,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const props = feature.properties as any;
 
         if (props.isSurveyPoint) {
-          // Survey point popup — show identifier + coordinates + easting/northing
+          // Survey point popup — show identifier + coordinates + easting/northing + description
           const surveyLabel = props.filename || `Survey Point ${Math.abs(props.id)}`;
           const popupHtml = `
             <div style="max-width:240px;font-family:system-ui,sans-serif">
@@ -692,6 +692,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lng: ${parseFloat(props.longitude).toFixed(7)}</div>
               ${props.easting ? `<div style="font-size:11px;color:#fb923c;margin-top:5px">Easting: ${parseFloat(props.easting).toFixed(3)}</div>` : ''}
               ${props.northing ? `<div style="font-size:11px;color:#fb923c">Northing: ${parseFloat(props.northing).toFixed(3)}</div>` : ''}
+              ${props.description ? `<div style="font-size:11px;color:#cbd5e1;margin-top:8px;padding-top:8px;border-top:1px solid #334155"><span style="font-weight:600">Description:</span> ${props.description}</div>` : ''}
             </div>
           `;
           new mapboxgl.Popup({ offset: 25, closeButton: true, maxWidth: '260px', className: 'mapbox-media-popup' })
