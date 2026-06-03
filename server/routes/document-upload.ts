@@ -12,9 +12,10 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
 import { getDb } from "../db";
-import { projectDocuments } from "../../drizzle/schema";
+import { projectDocuments, projects, projectCollaborators } from "../../drizzle/schema";
 import { storagePut, sanitizeFilename } from "../storage";
 import { authenticateRequest } from "../_core/auth";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -49,6 +50,36 @@ router.post("/document/upload", upload.single("file"), async (req: Request, res:
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+
+    // Verify user has access to this project
+    const project = await db
+      .select({ id: projects.id, userId: projects.userId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (!project || project.length === 0) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
+
+    // Check if user is owner, webmaster, or admin
+    const isOwner = project[0].userId === user.id;
+    const isAdmin = user.role === "webmaster" || user.role === "admin";
+    
+    if (!isOwner && !isAdmin) {
+      // Check if user is a collaborator with editor role
+      const collaborator = await db
+        .select({ role: projectCollaborators.role })
+        .from(projectCollaborators)
+        .where(and(eq(projectCollaborators.projectId, projectId), eq(projectCollaborators.userId, user.id)))
+        .limit(1);
+      
+      if (!collaborator || collaborator.length === 0 || collaborator[0].role !== 'editor') {
+        res.status(403).json({ error: "No access to this project" });
+        return;
+      }
+    }
 
     // Sanitize filename: spaces → hyphens, unsafe chars → underscores
     const safeFileName = sanitizeFilename(file.originalname);
