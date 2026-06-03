@@ -181,12 +181,14 @@ async function getDefaultCoordinates(
 router.post("/overlay/upload", upload.single("file"), async (req: Request, res: Response) => {
   console.log("[Overlay Upload] ── Request received ──");
   console.log("[Overlay Upload] Content-Type:", req.headers["content-type"]);
+  const rawAuthHeader = req.headers["authorization"];
+  console.log("[Overlay Upload] Authorization header:", rawAuthHeader ? `"${rawAuthHeader.substring(0, 20)}..."` : "MISSING");
 
   try {
     // Auth check
     const user = await getSessionUser(req);
     if (!user) {
-      console.log("[Overlay Upload] Auth failed — no user");
+      console.log("[Overlay Upload] Auth failed — no user found. Authorization header was:", rawAuthHeader ? "present" : "absent");
       return res.status(401).json({ error: "Unauthorized" });
     }
     console.log("[Overlay Upload] User:", user.id, user.email, "role:", user.role);

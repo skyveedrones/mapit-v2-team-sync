@@ -11,6 +11,7 @@ const clerkClient = createClerkClient({ secretKey: ENV.clerkSecretKey });
  * Returns the DB User or null if unauthenticated.
  */
 export async function authenticateRequest(req: Request): Promise<User | null> {
+  console.log('[Auth] clerkSecretKey length:', ENV.clerkSecretKey.length);
   try {
     // First try Clerk session cookie authentication
     const requestState = await clerkClient.authenticateRequest(req as any, {
@@ -25,8 +26,10 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
     
     // Fallback: try Bearer token authentication
     const authHeader = req.headers.authorization;
+    console.log('[Auth] Authorization header:', authHeader ? `"${authHeader.substring(0, 20)}..."` : 'MISSING');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
+      console.log('[Auth] Bearer token found, length:', token.length);
       try {
         const verifiedToken = await clerkClient.verifyToken(token);
         if (verifiedToken && verifiedToken.sub) {
