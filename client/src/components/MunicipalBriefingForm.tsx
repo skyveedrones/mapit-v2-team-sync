@@ -297,7 +297,7 @@ export function MunicipalBriefingForm({
                 />
               </div>
 
-              {/* Actions */}
+            {/* Actions */}
               <div className="flex gap-3 justify-end pt-4">
                 <Button
                   type="button"
@@ -308,7 +308,7 @@ export function MunicipalBriefingForm({
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-[#00e676] hover:bg-[#00c853] text-black font-bold"
                   disabled={submitMutation.isPending}
                 >
                   {submitMutation.isPending

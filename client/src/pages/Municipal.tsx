@@ -196,13 +196,13 @@ export default function Municipal() {
             className="relative z-10"
           >
             {/* Heading */}
-            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8">
+            <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-8 text-center">
               Stop paying twice for the<br />
               <span className="text-[#00e676]">exact same survey data.</span>
             </h2>
 
             {/* Subtext */}
-            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 max-w-3xl">
+            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 max-w-3xl text-center mx-auto">
               MAPIT Smart Survey unlocks decades of buried PDF data in a single afternoon — sub-centimeter accuracy, zero manual entry.
             </p>
 
@@ -550,13 +550,13 @@ export default function Municipal() {
           viewport={{ once: true }}
           className="relative z-10 text-center max-w-4xl"
         >          <p
-            className="text-white italic font-light"
-            style={{
-              fontSize: "clamp(1.8rem, 5vw, 3rem)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
-            }}
-          >
+          className="text-white italic font-light"
+          style={{
+            fontSize: "clamp(1.8rem, 5vw, 3rem)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.3,
+          }}
+        >
             "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."<br />
             <span className="text-sm md:text-base text-slate-400 font-normal not-italic">Director of Public Works, Mid-Sized Texas Municipality</span>
           </p>     </motion.blockquote>
@@ -624,7 +624,7 @@ export default function Municipal() {
       </section>
 
       <Footer />
-      
+
       {/* Municipal Briefing Form Modal */}
       <MunicipalBriefingForm open={briefingFormOpen} onOpenChange={setBriefingFormOpen} />
     </div>
