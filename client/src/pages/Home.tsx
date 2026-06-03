@@ -106,7 +106,7 @@ export default function Home() {
         >
           <motion.h1
             variants={fadeInUp}
-            className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
+            className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-center drop-shadow-2xl mb-6 w-full mx-auto px-4"
             style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
           >
             <span className="block text-white font-extrabold">Your site.</span>
@@ -117,7 +117,7 @@ export default function Home() {
 
           <motion.p
             variants={fadeInUp}
-            className="text-lg md:text-2xl font-medium tracking-tight text-white max-w-3xl text-center mt-6 mb-10"
+            className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-white max-w-3xl text-center mt-6 mb-10"
           >
             Stop managing data. Start making decisions.
           </motion.p>
