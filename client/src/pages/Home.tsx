@@ -277,6 +277,8 @@ export default function Home() {
         loop
         muted
         playsInline
+        style={{ animationPlayState: 'running' }}
+        onLoadedMetadata={(e) => { (e.target as HTMLVideoElement).playbackRate = 0.75; }}
       >
         <source src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/US%2080%20Waterline%20Overlay%20for%20LinkedIn.mp4" type="video/mp4" />
       </video>
