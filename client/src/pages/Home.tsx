@@ -179,6 +179,39 @@ export default function Home() {
         </div>
       </section>
 
+       {/* ═══════════════════════════════════════════════════════════════════════
+          SMART SURVEY OCR SHOWCASE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
+  {/* Subtle Background Glow */}
+  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
+  
+  <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
+    <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+      Your Site. <span className="text-[#00e676]">Perfect Vision.</span>
+    </h2>
+    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+      Drop an engineering blueprint onto your screen, link two reference points, and watch it snap perfectly into real-world GPS alignment.
+    </p>
+  </div>
+  
+  <div className="w-full max-w-5xl mx-auto relative z-10">
+    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
+      <video
+        className="w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{ animationPlayState: 'running' }}
+        onLoadedMetadata={(e) => { (e.target as HTMLVideoElement).playbackRate = 0.75; }}
+      >
+        <source src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/US%2080%20Waterline%20Overlay%20for%20LinkedIn.mp4" type="video/mp4" />
+      </video>
+    </div>
+  </div>
+</section>
+
      {/* ─── MUNICIPAL GATEWAY ─── */}
       <section className="py-20 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
@@ -253,39 +286,6 @@ export default function Home() {
         </div>
       </section>
 
-       {/* ═══════════════════════════════════════════════════════════════════════
-          SMART SURVEY OCR SHOWCASE
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-6 bg-[#0A0A0A] flex flex-col items-center border-t border-white/5 relative overflow-hidden">
-  {/* Subtle Background Glow */}
-  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
-  
-  <div className="max-w-4xl mx-auto text-center mb-16 relative z-10">
-    <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-      Your Site. <span className="text-[#00e676]">Perfect Vision.</span>
-    </h2>
-    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-      Drop an engineering blueprint onto your screen, link two reference points, and watch it snap perfectly into real-world GPS alignment.
-    </p>
-  </div>
-  
-  <div className="w-full max-w-5xl mx-auto relative z-10">
-    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(255,255,255,0.05)] bg-black aspect-video">
-      <video
-        className="w-full h-full object-cover"
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{ animationPlayState: 'running' }}
-        onLoadedMetadata={(e) => { (e.target as HTMLVideoElement).playbackRate = 0.75; }}
-      >
-        <source src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/US%2080%20Waterline%20Overlay%20for%20LinkedIn.mp4" type="video/mp4" />
-      </video>
-    </div>
-  </div>
-</section>
-
 {/* ─── 3-CARD FEATURE GRID ─── */}
       <section id="features" className="py-40 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-7xl mx-auto">
@@ -299,79 +299,31 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Card 1 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p 
-                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
-                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
-                >
-                  Exact.
-                </p>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Perfect clarity.</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">Centimeter-level accuracy. Ready to share in minutes.</p>
-                </div>
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
+                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[0].headline}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">{featureCards[0].body}</p>
               </motion.div>
 
               {/* Card 2 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p 
-                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
-                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
-                >
-                  Universal.
-                </p>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Native to your workflow.</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">Export to Esri, ArcGIS, or CAD in one click. KML, CSV, GeoJSON, GPX — all native.</p>
-                </div>
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
+                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[1].headline}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">{featureCards[1].body}</p>
               </motion.div>
 
               {/* Card 3 */}
               <motion.div variants={fadeInUp} className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col justify-between overflow-hidden">
-                <p 
-                  className="text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight pb-1 mb-8 bg-clip-text text-transparent whitespace-nowrap" 
-                  style={{ backgroundImage: "linear-gradient(to bottom, #ffffff, #4b5563)" }}
-                >
-                  Aligned.
-                </p>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Plans meet reality.</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">Drop utility drawings onto live aerial maps. Two reference points. Perfect alignment.</p>
-                </div>
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/30 mb-4">Feature</p>
+                <h3 className="text-2xl font-bold text-white mb-4">{featureCards[2].headline}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">{featureCards[2].body}</p>
               </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ─── JOBSIAN BOTTOM CTA ─── */}
-      <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-            Magically precise.<br />
-            <span className="text-white font-bold">
-              Profoundly simple.
-            </span>
-          </h2>
-          
-          <p className="text-xl md:text-2xl text-slate-300 font-light mb-12">
-            Your first map is one photo away.<br className="hidden md:block" />
-          </p>
-          
-          <div className="flex flex-col items-center">
-            <Link 
-              to="/register"
-              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#00e676] hover:bg-[#00c853] text-[#003314] px-10 py-4 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 shadow-xl"
-            >
-              Build Your First Map Free
-            </Link>
-            <p className="mt-4 text-base md:text-lg text-gray-400">
-              Upload your photo. Your map saves automatically. 14-day trial, no credit card.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <Footer onContactClick={() => setShowContactModal(true)} />
+      {/* ─── FOOTER ─── */}
+      <Footer />
       <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
