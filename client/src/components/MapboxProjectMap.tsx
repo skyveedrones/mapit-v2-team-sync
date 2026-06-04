@@ -169,6 +169,7 @@ interface MapboxProjectMapProps {
 // ── Corner labels & colors ──────────────────────────────────────────────────
 const CORNER_LABELS = ["NW", "NE", "SE", "SW"];
 const CORNER_COLORS = ["#10B981", "#10B981", "#10B981", "#10B981"];
+const SATELLITE_STYLE = "mapbox://styles/mapbox/satellite-v9";
 
 // ── Measurement helpers ─────────────────────────────────────────────────────
 
@@ -465,7 +466,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
         const map = new mapboxgl.Map({
           container,
-          style: "mapbox://styles/mapbox/satellite-streets-v12",
+          style: SATELLITE_STYLE,
           center: [-96.797, 32.7767], // Default center; data watcher will flyTo markers
           zoom: 12,
           pitchWithRotate: false,
@@ -638,29 +639,6 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       });
 
       // ── Survey point labels — identifier text above each orange pin ──
-      if (!map.getLayer('survey-labels')) {
-        map.addLayer({
-          id: 'survey-labels',
-          type: 'symbol',
-          source: 'media-source',
-          filter: ['==', ['get', 'isSurveyPoint'], true],
-          layout: {
-            'text-field': ['get', 'filename'],
-            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 11,
-            'text-anchor': 'bottom',
-            'text-offset': [0, -2.6],
-            'text-allow-overlap': true,
-            'text-ignore-placement': true,
-          },
-          paint: {
-            'text-color': '#ffffff',
-            'text-halo-color': '#000000',
-            'text-halo-width': 1.5,
-          },
-        });
-      }
-
       // ── Click Handler — photo popup vs survey popup ──
       const handleMediaPinClick = (e: mapboxgl.MapMouseEvent) => {
         const features = map.queryRenderedFeatures({ layers: ['media-pins'] });
@@ -1732,7 +1710,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
             {/* Map status indicator */}
             <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
-              {mediaWithGPS.length > 0 ? `${mediaWithGPS.length} GPS points` : ""} Satellite-Streets-V12
+              {mediaWithGPS.length > 0 ? `${mediaWithGPS.length} GPS points` : ""} Satellite Raster
             </div>
 
               {/* Fullscreen toggle button (top-right) */}

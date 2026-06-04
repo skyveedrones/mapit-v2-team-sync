@@ -13,15 +13,60 @@ const clerkClient = createClerkClient({ secretKey: ENV.clerkSecretKey });
 export async function authenticateRequest(req: Request): Promise<User | null> {
   console.log('[Auth] clerkSecretKey length:', ENV.clerkSecretKey.length);
   try {
-    // First try Clerk session cookie authentication
-    const requestState = await clerkClient.authenticateRequest(req as any, {
-      authorizedParties: [],
-    });
-    if (requestState.isSignedIn) {
-      const clerkUserId = requestState.toAuth().userId;
-      if (clerkUserId) {
-        return await db.getUserByClerkId(clerkUserId);
+    // First try Clerk session cookie authentication.
+    // Keep this isolated so a cookie parsing error does not skip bearer-token fallback.
+    try {
+      const requestState = await clerkClient.authenticateRequest(req as any, {
+        authorizedParties: [],
+      });
+      if (requestState.isSignedIn) {
+        const clerkUserId = requestState.toAuth().userId;
+        if (clerkUserId) {
+          const existingUser = await db.getUserByClerkId(clerkUserId);
+          if (existingUser) return existingUser;
+
+          // Mirror the tRPC context fallback so migrated users and newly linked
+          // Clerk accounts still authenticate even if the DB row is missing its clerkUserId.
+          try {
+            const clerkUser = await clerkClient.users.getUser(clerkUserId);
+            const email = clerkUser.emailAddresses[0]?.emailAddress ?? null;
+
+            if (email) {
+              const emailUser = await db.getUserByEmail(email);
+              if (emailUser) {
+                const dbInstance = await db.getDb();
+                if (dbInstance) {
+                  const { users } = await import("../../drizzle/schema");
+                  const { eq } = await import("drizzle-orm");
+                  await dbInstance
+                    .update(users)
+                    .set({ clerkUserId })
+                    .where(eq(users.id, emailUser.id));
+                }
+                return { ...emailUser, clerkUserId };
+              }
+            }
+
+            await db.upsertUser({
+              openId: clerkUserId,
+              clerkUserId,
+              email,
+              name:
+                [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
+                email ||
+                clerkUserId,
+              loginMethod: "clerk",
+              lastSignedIn: new Date().toISOString(),
+            });
+
+            return (await db.getUserByOpenId(clerkUserId)) ?? (await db.getUserByClerkId(clerkUserId));
+          } catch (syncErr) {
+            console.warn('[Auth] Failed to sync Clerk user to DB during cookie auth:', syncErr);
+          }
+        }
       }
+    } catch (cookieErr) {
+      console.warn('[Auth] Cookie authentication failed, trying bearer token fallback:', cookieErr);
     }
     
     // Fallback: try Bearer token authentication
@@ -33,7 +78,46 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
       try {
         const verifiedToken = await clerkClient.verifyToken(token);
         if (verifiedToken && verifiedToken.sub) {
-          return await db.getUserByClerkId(verifiedToken.sub);
+          const existingUser = await db.getUserByClerkId(verifiedToken.sub);
+          if (existingUser) return existingUser;
+
+          // Same migrated-user fallback as above for bearer-token auth.
+          try {
+            const clerkUser = await clerkClient.users.getUser(verifiedToken.sub);
+            const email = clerkUser.emailAddresses[0]?.emailAddress ?? null;
+
+            if (email) {
+              const emailUser = await db.getUserByEmail(email);
+              if (emailUser) {
+                const dbInstance = await db.getDb();
+                if (dbInstance) {
+                  const { users } = await import("../../drizzle/schema");
+                  const { eq } = await import("drizzle-orm");
+                  await dbInstance
+                    .update(users)
+                    .set({ clerkUserId: verifiedToken.sub })
+                    .where(eq(users.id, emailUser.id));
+                }
+                return { ...emailUser, clerkUserId: verifiedToken.sub };
+              }
+            }
+
+            await db.upsertUser({
+              openId: verifiedToken.sub,
+              clerkUserId: verifiedToken.sub,
+              email,
+              name:
+                [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
+                email ||
+                verifiedToken.sub,
+              loginMethod: "clerk",
+              lastSignedIn: new Date().toISOString(),
+            });
+
+            return (await db.getUserByOpenId(verifiedToken.sub)) ?? (await db.getUserByClerkId(verifiedToken.sub));
+          } catch (syncErr) {
+            console.warn('[Auth] Failed to sync Clerk user to DB during bearer auth:', syncErr);
+          }
         }
       } catch (tokenErr) {
         console.error('[Auth] Bearer token verification failed:', tokenErr);

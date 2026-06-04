@@ -111,10 +111,36 @@ if (!fs.existsSync(sharedDir)) fs.mkdirSync(sharedDir, { recursive: true });
 fs.writeFileSync(path.join(sharedDir, 'version.ts'), versionTs);
 console.log(`✓ Wrote shared/version.ts → v${version} (${shortHash})`);
 
-// ── 5. Write VITE_BUILD_HASH to .env.local ───────────────────────────────────
-const envContent = `VITE_BUILD_HASH=${shortHash}\n`;
-fs.writeFileSync(path.join(root, '.env.local'), envContent);
-console.log(`✓ Wrote VITE_BUILD_HASH=${shortHash} to .env.local`);
+// ── 5. Upsert VITE_BUILD_HASH in .env.local (preserve other env vars) ───────
+const envPath = path.join(root, '.env.local');
+const buildHashLine = `VITE_BUILD_HASH=${shortHash}`;
+let envLines = [];
+
+if (fs.existsSync(envPath)) {
+  envLines = fs.readFileSync(envPath, 'utf-8').split(/\r?\n/);
+}
+
+let foundBuildHash = false;
+envLines = envLines.map((line) => {
+  if (line.startsWith('VITE_BUILD_HASH=')) {
+    foundBuildHash = true;
+    return buildHashLine;
+  }
+  return line;
+});
+
+if (!foundBuildHash) {
+  // Keep file tidy: avoid adding an extra blank separator if the file is empty.
+  if (envLines.length === 0 || (envLines.length === 1 && envLines[0] === '')) {
+    envLines = [buildHashLine];
+  } else {
+    envLines.push(buildHashLine);
+  }
+}
+
+const nextEnvContent = `${envLines.filter((line, idx, arr) => !(idx === arr.length - 1 && line === '')).join('\n')}\n`;
+fs.writeFileSync(envPath, nextEnvContent);
+console.log(`✓ Upserted VITE_BUILD_HASH=${shortHash} in .env.local`);
 
 console.log(`\n✓ Atomic versioning complete → v${version} | ${shortHash} | ${branch}`);
 

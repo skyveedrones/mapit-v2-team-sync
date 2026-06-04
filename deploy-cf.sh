@@ -19,7 +19,7 @@ set -euo pipefail
 # ── config ───────────────────────────────────────────────────────────────────
 CF_PROJECT="${CF_PROJECT:-mapit-skyveedrones}"
 DIST_DIR="dist/public"
-MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtcDZ5dzNtYTAxOGoycG9tdDAwNWt4dWoifQ.SWVEBzFO8jLhTVyuuzrLuw"
+MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtcHludmVhcTA4MGMycXB3bmdsejd0Y24ifQ.lR29HSbb0rMPPsrKzJFidw"
 
 # ── colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -50,7 +50,7 @@ if [[ "$SKIP_BUILD" == "false" ]]; then
   [[ -z "$INDEX_JS" ]] && error "Build failed — no index-*.js found in $DIST_DIR/assets/"
 
   FOUND_MAPBOX=$(grep -o '"pk\.[^"]*"' "$INDEX_JS" | head -1)
-  FOUND_API=$(grep -o '"https://mapit-api-production[^"]*"' "$INDEX_JS" | head -1)
+  FOUND_API=$(grep -o '"https://mapit-v2-team-sync-production[^"]*"' "$INDEX_JS" | head -1)
 
   if [[ -z "$FOUND_MAPBOX" ]]; then
     error "Mapbox token NOT found in build. Aborting deploy."

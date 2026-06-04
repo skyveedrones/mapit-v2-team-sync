@@ -142,13 +142,82 @@ function AppWithClerkToken() {
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-createRoot(document.getElementById("root")!).render(
-  <ClerkProvider
-    publishableKey={CLERK_PUBLISHABLE_KEY}
-    afterSignOutUrl="/"
-    signInUrl="/login"
-    signUpUrl="/login"
-  >
-    <AppWithClerkToken />
-  </ClerkProvider>
-);
+function FatalStartupScreen({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
+      <div className="max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
+        <p className="text-xs uppercase tracking-[0.3em] text-amber-400 mb-3">Startup error</p>
+        <h1 className="text-2xl font-semibold mb-3">{title}</h1>
+        <p className="text-slate-300 leading-7">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+function MissingClerkKeyScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
+      <div className="max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
+        <p className="text-xs uppercase tracking-[0.3em] text-amber-400 mb-3">Configuration error</p>
+        <h1 className="text-2xl font-semibold mb-3">Authentication is not configured</h1>
+        <p className="text-slate-300 leading-7">
+          The site is missing the Clerk publishable key required to start the app.
+          Set <span className="font-mono text-slate-100">VITE_CLERK_PUBLISHABLE_KEY</span> in the
+          Cloudflare Pages environment variables, then redeploy.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const root = document.getElementById("root");
+const appRoot = root ? createRoot(root) : null;
+
+const renderFatalStartupScreen = (title: string, message: string) => {
+  if (!appRoot) {
+    console.error(title, message);
+    return;
+  }
+  appRoot.render(<FatalStartupScreen title={title} message={message} />);
+};
+
+window.addEventListener("error", (event) => {
+  if ((event as ErrorEvent).error instanceof Error) {
+    renderFatalStartupScreen(
+      "The app hit a startup error",
+      (event as ErrorEvent).error.message || "An unexpected error prevented the site from loading."
+    );
+  }
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason;
+  const message = reason instanceof Error ? reason.message : String(reason ?? "An unexpected promise rejection occurred.");
+  renderFatalStartupScreen(
+    "The app hit a startup error",
+    message
+  );
+});
+
+try {
+  if (!appRoot) {
+    console.error("Root element #root was not found");
+  } else if (!CLERK_PUBLISHABLE_KEY) {
+    console.error("Missing VITE_CLERK_PUBLISHABLE_KEY. The app cannot initialize Clerk.");
+    appRoot.render(<MissingClerkKeyScreen />);
+  } else {
+    appRoot.render(
+      <ClerkProvider
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        afterSignOutUrl="/"
+        signInUrl="/login"
+        signUpUrl="/login"
+      >
+        <AppWithClerkToken />
+      </ClerkProvider>
+    );
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error ?? "Unknown startup error");
+  renderFatalStartupScreen("The app failed to start", message);
+}

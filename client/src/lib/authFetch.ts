@@ -20,18 +20,42 @@ export function registerClerkTokenGetter(fn: TokenGetter) {
 }
 
 /**
+ * Resolve a Clerk session token from the registered getter first, then fall back
+ * to the global Clerk object if available.
+ */
+export async function getClerkSessionToken(): Promise<string | null> {
+  if (_getToken) {
+    try {
+      const token = await _getToken();
+      if (token) return token;
+    } catch {
+      // Continue to global Clerk fallback
+    }
+  }
+
+  try {
+    const maybeWindow = globalThis as typeof globalThis & {
+      Clerk?: {
+        session?: { getToken?: () => Promise<string | null> };
+      };
+    };
+
+    if (maybeWindow.Clerk?.session?.getToken) {
+      return await maybeWindow.Clerk.session.getToken();
+    }
+  } catch {
+    // Non-fatal: final return null fallback
+  }
+
+  return null;
+}
+
+/**
  * Fetch wrapper that adds Authorization: Bearer <clerk_token> to every request.
  * Preserves all other init options including credentials, body, method, headers.
  */
 export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  let token: string | null = null;
-  if (_getToken) {
-    try {
-      token = await _getToken();
-    } catch {
-      // Non-fatal — fall back to cookie-only
-    }
-  }
+  const token = await getClerkSessionToken();
 
   const existingHeaders = new Headers(init.headers ?? {});
   if (token) {

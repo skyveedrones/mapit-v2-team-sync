@@ -1,11 +1,11 @@
 {
-  "version": "2.4.235",
-  "commit": "bbfd1e2",
-  "fullCommit": "bbfd1e2ea8250598df5068df432b2164389b2739",
-  "hash": "bbfd1e2",
-  "fullHash": "bbfd1e2ea8250598df5068df432b2164389b2739",
+  "version": "2.4.257",
+  "commit": "5092c4b",
+  "fullCommit": "5092c4b02d3e5984000646f4695cdb777fba5888",
+  "hash": "5092c4b",
+  "fullHash": "5092c4b02d3e5984000646f4695cdb777fba5888",
   "branch": "main",
-  "buildDate": "2026-06-03T16:13:47.330Z",
-  "timestamp": 1780503227330,
-  "buildTime": "6/3/2026, 12:13:47 PM"
+  "buildDate": "2026-06-04T00:16:03.570Z",
+  "timestamp": 1780532163570,
+  "buildTime": "6/4/2026, 12:16:03 AM"
 }

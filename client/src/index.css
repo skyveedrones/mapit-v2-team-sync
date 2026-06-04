@@ -139,10 +139,12 @@
   }
   body {
     @apply bg-transparent text-foreground;
+    background-color: #0a0a0a;
     font-family: var(--font-sans);
   }
   html {
     @apply bg-background;
+    background-color: #0a0a0a;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

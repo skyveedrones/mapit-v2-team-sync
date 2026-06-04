@@ -209,7 +209,7 @@ export default function Municipal() {
             {/* Image - Smart Survey Interface */}
             <div className="mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 overflow-hidden">
               <img
-                src="https://dronemapv2-fis5wf2n.manus.space/manus-storage/SmartSurveyImage_cropped_dd7d8dc5.png"
+                src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/MAPIT%20PDF%20Import%20Survey%20Points%20Video.mp4https://dronemapv2-fis5wf2n.manus.space/manus-storage/SmartSurveyImage_cropped_dd7d8dc5.png"
                 alt="MAPIT Smart Survey - PDF Data Unlock Interface"
                 className="w-full max-h-[50vh] object-cover"
               />
@@ -281,7 +281,7 @@ export default function Municipal() {
             </h2>
 
             {/* Subtext */}
-            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 text-center">
+            <p className="text-xl md:text-2xl text-slate-300 font-light mb-16 text-center max-w-5xl mx-auto text-balance leading-relaxed">
               Full APWA color-coded utility overlays. Prevent strikes, eliminate guesswork, and know exactly what lies beneath before you dig.
             </p>
 
@@ -309,43 +309,29 @@ export default function Municipal() {
           SECTION 5: THE RECORD — Bleed Image Layout
           ═══════════════════════════════════════════════════════════════════════ */}
       <section ref={infrastructureRef} className="relative px-6 bg-[#0A0A0A]" style={{ paddingTop: '140px', paddingBottom: '140px' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left: Text */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <p className="text-slate-400 text-sm uppercase tracking-widest mb-4">Infrastructure Record</p>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Automated surface analysis. Catch degradation before it costs you.
-              </h2>
-              <p className="text-slate-300 text-lg leading-relaxed mb-8">
-                Track millimeter-level changes in road surfaces and bridge integrity over time. Ditch the manual clipboards and let automated drone capture highlight exactly where your paving budget needs to go.
-              </p>
-              {/* Tech Tags */}
-              <div className="flex flex-wrap gap-3">
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  AI Surface Detection
-                </div>
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  Thermal Bridge Scans
-                </div>
-                <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors">
-                  Historical Timeline Compare
-                </div>
-              </div>
-            </motion.div>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <p className="text-slate-400 text-sm uppercase tracking-widest mb-4">Infrastructure Record</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              Automated surface analysis. <span className="text-[#00e676]">Catch degradation before it costs you.</span>
+            </h2>
+            <p className="text-slate-300 text-lg md:text-xl leading-relaxed max-w-4xl mx-auto mb-12">
+              Track millimeter-level changes in road surfaces and bridge integrity over time. Ditch the manual clipboards and let automated drone capture highlight exactly where your paving budget needs to go.
+            </p>
 
-            {/* Right: Bridge Thermal Image */}
+            {/* Bridge Thermal Image */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="relative h-96 md:h-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-[#00e676]/10"
+              className="relative mx-auto h-[22rem] md:h-[34rem] w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-[#00e676]/10"
               style={{ y: imageY }}
             >
               <img
@@ -356,7 +342,20 @@ export default function Municipal() {
               {/* Subtle overlay for premium feel */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
             </motion.div>
-          </div>
+
+            {/* Tech Tags */}
+            <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
+              <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors text-center">
+                AI Surface Detection
+              </div>
+              <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors text-center">
+                Thermal Bridge Scans
+              </div>
+              <div className="px-4 py-2 border border-[#00e676] rounded-full text-sm text-[#00e676] font-medium bg-[#00e676]/5 hover:bg-[#00e676]/10 transition-colors text-center">
+                Historical Timeline Compare
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Scroll Indicator */}
@@ -531,35 +530,27 @@ export default function Municipal() {
           <p className="text-lg text-white/50 leading-relaxed max-w-xl mx-auto">
             Secure cloud infrastructure. Immutable audit trails for capital projects. Public Works ready.
           </p>
+
+          <motion.blockquote
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            viewport={{ once: true }}
+            className="mt-16 text-center max-w-4xl mx-auto"
+          >
+            <p
+              className="text-white italic font-light"
+              style={{
+                fontSize: "clamp(1.8rem, 5vw, 3rem)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.3,
+              }}
+            >
+              "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."<br />
+              <span className="text-sm md:text-base text-slate-400 font-normal not-italic">Director of Public Works, Mid-Sized Texas Municipality</span>
+            </p>
+          </motion.blockquote>
         </motion.div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 6: THE VALIDATION — Premium Quote Section
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-40 px-6 bg-[#0A0A0A] flex items-center justify-center">
-        {/* Green glow */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] bg-[#00e676] opacity-[0.03] blur-[120px] rounded-full" />
-        </div>
-
-        <motion.blockquote
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          viewport={{ once: true }}
-          className="relative z-10 text-center max-w-4xl"
-        >          <p
-          className="text-white italic font-light"
-          style={{
-            fontSize: "clamp(1.8rem, 5vw, 3rem)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.3,
-          }}
-        >
-            "Managing city infrastructure meant drowning in paper and complicated software. MAPIT changed everything. We just drop in a photo, and it instantly builds a live map our entire team can understand. Simply, It just works."<br />
-            <span className="text-sm md:text-base text-slate-400 font-normal not-italic">Director of Public Works, Mid-Sized Texas Municipality</span>
-          </p>     </motion.blockquote>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════

@@ -718,6 +718,7 @@ export default function ProjectDetail() {
                   projectId={project.id}
                   projectName={project.name}
                   isDemoProject={isDemoProject}
+                  initialMedia={mediaList || []}
                   overlays={overlays}
                   onOverlayUpdated={() => {
                     if (isDemoProject) {
