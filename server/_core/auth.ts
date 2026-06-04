@@ -1,4 +1,4 @@
-import { createClerkClient, decodeJwt } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import type { Request } from "express";
 import * as db from "../db";
 import { ENV } from "./env";
@@ -76,11 +76,11 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
       const token = authHeader.substring(7);
       console.log('[Auth] Bearer token found, length:', token.length);
       try {
-        // Decode and verify the JWT token
-        const decoded = await decodeJwt(token);
+        // Verify and decode the JWT token
+        const decoded = await verifyToken(token, { secretKey: ENV.clerkSecretKey });
         if (decoded && decoded.sub) {
           const clerkUserId = decoded.sub;
-          console.log('[Auth] Decoded Clerk user ID from token:', clerkUserId);
+          console.log('[Auth] Verified Clerk user ID from token:', clerkUserId);
           const existingUser = await db.getUserByClerkId(clerkUserId);
           if (existingUser) return existingUser;
 
