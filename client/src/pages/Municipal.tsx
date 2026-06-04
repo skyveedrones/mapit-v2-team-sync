@@ -178,7 +178,7 @@ export default function Municipal() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
+     {/* ═══════════════════════════════════════════════════════════════════════
           SECTION 2.5: SMART SURVEY - PDF Data Unlock
           ═══════════════════════════════════════════════════════════════════════ */}
       <section className="relative px-6 bg-[#0A0A0A]" style={{ paddingTop: '140px', paddingBottom: '140px' }}>
@@ -206,13 +206,22 @@ export default function Municipal() {
               MAPIT Smart Survey unlocks decades of buried PDF data in a single afternoon — sub-centimeter accuracy, zero manual entry.
             </p>
 
-            {/* Image - Smart Survey Interface */}
-            <div className="mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 overflow-hidden">
-              <img
-                src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/MAPIT%20PDF%20Import%20Survey%20Points%20Video.mp4https://dronemapv2-fis5wf2n.manus.space/manus-storage/SmartSurveyImage_cropped_dd7d8dc5.png"
-                alt="MAPIT Smart Survey - PDF Data Unlock Interface"
-                className="w-full max-h-[50vh] object-cover"
-              />
+           {/* Video - Smart Survey Interface */}
+            <div className="w-full max-w-5xl mx-auto mb-16 rounded-2xl border border-slate-800 shadow-2xl shadow-[#00e676]/10 overflow-hidden bg-black aspect-video max-h-[60vh] flex items-center justify-center">
+              <video
+                className="w-full h-full object-cover"
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                defaultMuted={true}
+                playsInline={true}
+                preload="auto"
+              >
+                <source 
+                  src="https://pub-4e15c1350b3b4f3e87823e90991b0cf4.r2.dev/MAPIT%20PDF%20Import%20Survey%20Points%20Video.mp4" 
+                  type="video/mp4" 
+                />
+              </video>
             </div>
 
             {/* Three-Step Process */}

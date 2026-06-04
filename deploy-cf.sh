@@ -19,7 +19,11 @@ set -euo pipefail
 # ── config ───────────────────────────────────────────────────────────────────
 CF_PROJECT="${CF_PROJECT:-mapit-skyveedrones}"
 DIST_DIR="dist/public"
-MAPBOX_TOKEN="pk.eyJ1Ijoic2t5dmVlZHJvbmVzIiwiYSI6ImNtcHludmVhcTA4MGMycXB3bmdsejd0Y24ifQ.lR29HSbb0rMPPsrKzJFidw"
+MAPBOX_TOKEN="${VITE_MAPBOX_TOKEN:-}"
+
+if [[ -z "$MAPBOX_TOKEN" && -f ".env.local" ]]; then
+  MAPBOX_TOKEN=$(grep -E '^VITE_MAPBOX_TOKEN=' .env.local | head -1 | cut -d'=' -f2-)
+fi
 
 # ── colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -30,6 +34,7 @@ error()   { echo -e "${RED}[deploy]${NC} $*" >&2; exit 1; }
 # ── preflight checks ─────────────────────────────────────────────────────────
 [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]  && error "CLOUDFLARE_API_TOKEN is not set. Export it before running this script."
 [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]] && error "CLOUDFLARE_ACCOUNT_ID is not set. Export it before running this script."
+[[ -z "$MAPBOX_TOKEN" ]] && error "Mapbox token not found. Set VITE_MAPBOX_TOKEN or define it in .env.local"
 
 # ── optional: skip build ─────────────────────────────────────────────────────
 SKIP_BUILD=false

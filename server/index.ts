@@ -2,12 +2,27 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import cors from "cors";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+const app = express();
+  
+  // 👉 PASTE THIS BLOCK HERE
+  app.use(cors({
+    origin: [
+      'http://localhost:5173', 
+      'https://mapit.skyveedrones.com'
+    ],
+    credentials: true
+  }));
+  // 👈 END OF BLOCK
+
+  const server = createServer(app);
+
+
   const server = createServer(app);
 
   // Serve static files from dist/public in production
