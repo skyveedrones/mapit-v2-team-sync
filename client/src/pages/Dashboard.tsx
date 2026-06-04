@@ -263,17 +263,25 @@ export default function Dashboard() {
   const pinnedProjects = projects?.filter((p) => p.isPinned) ?? [];
   const unpinnedProjects = projects?.filter((p) => !p.isPinned) ?? [];
 
-  return (
-    <DashboardLayout>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={staggerContainer}
-        className="space-y-6"
-      >
-        {/* Trial Expiry Banner */}
-        {trialInfo && trialInfo.daysLeft <= 14 && (
-          <motion.div variants={fadeInUp}>
+ return (
+      <DashboardLayout>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          className="space-y-6"
+        >
+          {/* 👇 ADD THIS LINK BLOCK 👇 */}
+          <Link href="/user-invitations">
+            <a className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block mt-4">
+              Manage User Invitations
+            </a>
+          </Link>
+         {/* 👆 ADD THIS LINK BLOCK 👆 */}
+
+          {/* Trial Expiry Banner */}
+          {trialInfo && trialInfo.daysLeft <= 14 && (
+            <motion.div variants={fadeInUp}>
             <div className="flex items-center justify-between gap-3 rounded-xl px-5 py-3 text-sm font-medium"
               style={{
                 background: trialInfo.daysLeft <= 3
