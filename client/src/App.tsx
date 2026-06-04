@@ -48,6 +48,8 @@ import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CoordinateConverter from "./pages/CoordinateConverter";
+import AcceptInvitation from "./pages/AcceptInvitation";
+import UserInvitations from "./pages/UserInvitations";
 
 // Lazy-loaded map-heavy pages (mapbox-gl is ~1.7MB)
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -257,6 +259,7 @@ function Router() {
       <Route path="/login/sso-callback" component={() => <AuthenticateWithRedirectCallback signInForceRedirectUrl="/dashboard" />} />
       {/* Catch-all for Clerk multi-step login flows (factor-one, factor-two, continue, etc.) */}
       <Route path="/login/:rest*" component={Login} />
+      <Route path="/accept-invitation" component={AcceptInvitation} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment" component={Payment} />
       <Route path="/converter" component={CoordinateConverter} />
@@ -272,6 +275,9 @@ function Router() {
       </Route>
       <Route path="/users">
         {() => <ProtectedRoute component={Users} />}
+      </Route>
+      <Route path="/user-invitations">
+        {() => <ProtectedRoute component={UserInvitations} />}
       </Route>
       <Route path="/project/:id">
         {(params) => {

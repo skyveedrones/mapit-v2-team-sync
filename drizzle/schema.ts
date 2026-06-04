@@ -348,6 +348,25 @@ export const onboardingLeads = mysqlTable("onboarding_leads", {
 	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
 });
 
+export const userInvitations = mysqlTable("user_invitations", {
+	id: int().autoincrement().notNull().primaryKey(),
+	email: varchar({ length: 320 }).notNull(),
+	temporaryPassword: varchar({ length: 255 }).notNull(),
+	token: varchar({ length: 64 }).notNull().unique(),
+	invitedBy: int().notNull(),
+	clientId: int(),
+	status: mysqlEnum(['pending', 'accepted', 'expired', 'revoked']).default('pending').notNull(),
+	expiresAt: timestamp({ mode: 'string' }).notNull(),
+	acceptedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_user_invitations_email").on(table.email),
+	index("idx_user_invitations_token").on(table.token),
+	index("idx_user_invitations_status").on(table.status),
+]);
+
 // ─── Inferred Type Exports ───────────────────────────────────────────────────
 // Allow components to import types: import type { Project } from '../../../drizzle/schema'
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
@@ -378,6 +397,9 @@ export type NewClient = InferInsertModel<typeof clients>;
 
 export type Organization = InferSelectModel<typeof organizations>;
 export type NewOrganization = InferInsertModel<typeof organizations>;
+
+export type UserInvitation = InferSelectModel<typeof userInvitations>;
+export type NewUserInvitation = InferInsertModel<typeof userInvitations>;
 
 export type Referral = InferSelectModel<typeof referrals>;
 export type WarrantyReminder = InferSelectModel<typeof warrantyReminders>;

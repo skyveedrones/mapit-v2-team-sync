@@ -556,14 +556,99 @@ export const appRouter = router({
         const { getUserProjects } = await import('./db');
         return getUserProjects(ctx.user.id);
       }),
-    inviteUserToProjects: protectedProcedure
-      .input(z.object({ email: z.string().email() }))
+    createUserInvitation: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+        clientId: z.number().optional(),
+        projectIds: z.array(z.number()).optional(),
+      }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
-        return { success: true };
+
+        const { getUserByEmail, createUserInvitation, sendUserInvitationEmail } = await import('./db');
+        const existingUser = await getUserByEmail(input.email);
+        if (existingUser) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
+        }
+
+        const temporaryPassword = Math.random().toString(36).slice(-12);
+        const token = nanoid(32);
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        await createUserInvitation({
+          email: input.email,
+          temporaryPassword,
+          token,
+          invitedBy: ctx.user.id,
+          clientId: input.clientId,
+          expiresAt,
+        });
+
+        try {
+          await sendUserInvitationEmail({
+            email: input.email,
+            token,
+            temporaryPassword,
+            invitedByName: ctx.user.name || 'Administrator',
+            expiresAt,
+          });
+        } catch (emailError) {
+          console.error('[User Invitation] Failed to send email:', emailError);
+        }
+
+        return { success: true, token, temporaryPassword };
+      }),
+    
+    acceptUserInvitation: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        password: z.string().min(8),
+        name: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { getUserInvitationByToken, acceptUserInvitation, upsertUser, getUserByEmail, addClientUser } = await import('./db');
+        
+        const invitation = await getUserInvitationByToken(input.token);
+        if (!invitation) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Invitation not found' });
+        }
+
+        if (invitation.status !== 'pending') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Invitation is ${invitation.status}` });
+        }
+
+        if (new Date(invitation.expiresAt) < new Date()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invitation has expired' });
+        }
+
+        const existingUser = await getUserByEmail(invitation.email);
+        if (existingUser) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
+        }
+
+        const bcrypt = require('bcryptjs');
+        const passwordHash = await bcrypt.hash(input.password, 10);
+
+        const newUser = await upsertUser({
+          openId: nanoid(32),
+          email: invitation.email,
+          name: input.name,
+          passwordHash,
+          loginMethod: 'password',
+          subscriptionTier: 'free',
+          setupCompleted: 1,
+        });
+
+        await acceptUserInvitation(input.token, newUser.id);
+
+        if (invitation.clientId) {
+          await addClientUser(invitation.clientId, newUser.id, 'user');
+        }
+
+        return { success: true, userId: newUser.id };
       }),
     removeUserFromProjects: protectedProcedure
       .input(z.object({ userId: z.number() }))

@@ -7,6 +7,7 @@ import { ENV } from './_core/env';
 import { sendWelcomeEmail } from './_core/email';
 import { notifyOwner } from './_core/notification';
 import { sendOwnerNotificationEmail } from './owner-notification-email';
+import { sendUserInvitationEmail } from './user-invitation-email';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: Pool | null = null;
@@ -3495,4 +3496,112 @@ export async function permanentlyDeleteTrashItem(entityType: string, entityId: n
   }
 
   return true;
+}
+
+
+// ─── User Invitations ───────────────────────────────────────────────────
+
+export async function createUserInvitation(data: {
+  email: string;
+  temporaryPassword: string;
+  token: string;
+  invitedBy: number;
+  clientId?: number;
+  expiresAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db.insert(userInvitations).values({
+    email: data.email,
+    temporaryPassword: data.temporaryPassword,
+    token: data.token,
+    invitedBy: data.invitedBy,
+    clientId: data.clientId,
+    expiresAt: data.expiresAt.toISOString(),
+    status: 'pending',
+  });
+
+  return result;
+}
+
+export async function getUserInvitationByToken(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(userInvitations)
+    .where(eq(userInvitations.token, token))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+export async function getUserInvitationByEmail(email: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(userInvitations)
+    .where(eq(userInvitations.email, email))
+    .orderBy(desc(userInvitations.createdAt))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+export async function acceptUserInvitation(token: string, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .update(userInvitations)
+    .set({
+      status: 'accepted',
+      acceptedAt: new Date().toISOString(),
+    })
+    .where(eq(userInvitations.token, token));
+
+  return result;
+}
+
+export async function revokeUserInvitation(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .update(userInvitations)
+    .set({ status: 'revoked' })
+    .where(eq(userInvitations.token, token));
+
+  return result;
+}
+
+export async function expireOldUserInvitations() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .update(userInvitations)
+    .set({ status: 'expired' })
+    .where(and(
+      eq(userInvitations.status, 'pending'),
+      lt(userInvitations.expiresAt, new Date().toISOString())
+    ));
+
+  return result;
 }
