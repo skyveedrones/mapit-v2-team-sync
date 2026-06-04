@@ -1,4 +1,4 @@
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient, decodeJwt } from "@clerk/backend";
 import type { Request } from "express";
 import * as db from "../db";
 import { ENV } from "./env";
@@ -76,14 +76,17 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
       const token = authHeader.substring(7);
       console.log('[Auth] Bearer token found, length:', token.length);
       try {
-        const verifiedToken = await clerkClient.verifyToken(token);
-        if (verifiedToken && verifiedToken.sub) {
-          const existingUser = await db.getUserByClerkId(verifiedToken.sub);
+        // Decode and verify the JWT token
+        const decoded = await decodeJwt(token);
+        if (decoded && decoded.sub) {
+          const clerkUserId = decoded.sub;
+          console.log('[Auth] Decoded Clerk user ID from token:', clerkUserId);
+          const existingUser = await db.getUserByClerkId(clerkUserId);
           if (existingUser) return existingUser;
 
           // Same migrated-user fallback as above for bearer-token auth.
           try {
-            const clerkUser = await clerkClient.users.getUser(verifiedToken.sub);
+            const clerkUser = await clerkClient.users.getUser(clerkUserId);
             const email = clerkUser.emailAddresses[0]?.emailAddress ?? null;
 
             if (email) {
@@ -95,26 +98,26 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
                   const { eq } = await import("drizzle-orm");
                   await dbInstance
                     .update(users)
-                    .set({ clerkUserId: verifiedToken.sub })
+                    .set({ clerkUserId })
                     .where(eq(users.id, emailUser.id));
                 }
-                return { ...emailUser, clerkUserId: verifiedToken.sub };
+                return { ...emailUser, clerkUserId };
               }
             }
 
             await db.upsertUser({
-              openId: verifiedToken.sub,
-              clerkUserId: verifiedToken.sub,
+              openId: clerkUserId,
+              clerkUserId,
               email,
               name:
                 [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
                 email ||
-                verifiedToken.sub,
+                clerkUserId,
               loginMethod: "clerk",
               lastSignedIn: new Date().toISOString(),
             });
 
-            return (await db.getUserByOpenId(verifiedToken.sub)) ?? (await db.getUserByClerkId(verifiedToken.sub));
+            return (await db.getUserByOpenId(clerkUserId)) ?? (await db.getUserByClerkId(clerkUserId));
           } catch (syncErr) {
             console.warn('[Auth] Failed to sync Clerk user to DB during bearer auth:', syncErr);
           }
