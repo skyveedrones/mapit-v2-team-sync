@@ -578,12 +578,13 @@ export const appRouter = router({
         const token = nanoid(32);
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        await createUserInvitation({
+        const invitation = await createUserInvitation({
           email: input.email,
           temporaryPassword,
           token,
           invitedBy: ctx.user.id,
           clientId: input.clientId,
+          projectIds: input.projectIds && input.projectIds.length > 0 ? input.projectIds : undefined,
           expiresAt,
         });
 
@@ -609,7 +610,7 @@ export const appRouter = router({
         name: z.string().min(1),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { getUserInvitationByToken, acceptUserInvitation, upsertUser, getUserByEmail, addClientUser } = await import('./db');
+        const { getUserInvitationByToken, acceptUserInvitation, upsertUser, getUserByEmail, addClientUser, addProjectMember } = await import('./db');
         
         const invitation = await getUserInvitationByToken(input.token);
         if (!invitation) {
@@ -646,6 +647,20 @@ export const appRouter = router({
 
         if (invitation.clientId) {
           await addClientUser(invitation.clientId, newUser.id, 'user');
+        }
+
+        // Add user to assigned projects
+        if (invitation.projectIds) {
+          try {
+            const projectIds = JSON.parse(invitation.projectIds);
+            if (Array.isArray(projectIds)) {
+              for (const projectId of projectIds) {
+                await addProjectMember(projectId, newUser.id, 'viewer');
+              }
+            }
+          } catch (error) {
+            console.error('[User Invitation] Failed to parse project IDs:', error);
+          }
         }
 
         return { success: true, userId: newUser.id };

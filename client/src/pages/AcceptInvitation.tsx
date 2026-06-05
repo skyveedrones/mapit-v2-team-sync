@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useSearch } from 'wouter';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -8,9 +8,11 @@ import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
 export default function AcceptInvitation() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const token = searchParams.token || '';
+  const [location, setLocation] = useLocation();
+  
+  // Extract token from URL query parameters
+  const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const token = urlParams.get('token') || '';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -65,7 +67,7 @@ export default function AcceptInvitation() {
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        navigate('/dashboard');
+        setLocation('/dashboard');
       }, 2000);
     } catch (error: any) {
       setErrors({

@@ -14,12 +14,14 @@ export default function UserInvitations() {
   const [formData, setFormData] = useState({
     email: '',
     clientId: '',
+    projectIds: [] as number[],
   });
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createInvitationMutation = trpc.users.createUserInvitation.useMutation();
   const clientsQuery = trpc.clients.getOwnerClients.useQuery();
+  const projectsQuery = trpc.projects.getAll.useQuery();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +40,11 @@ export default function UserInvitations() {
       await createInvitationMutation.mutateAsync({
         email: formData.email,
         clientId: formData.clientId ? parseInt(formData.clientId) : undefined,
+        projectIds: formData.projectIds,
       });
 
       toast.success('Invitation sent successfully!');
-      setFormData({ email: '', clientId: '' });
+      setFormData({ email: '', clientId: '', projectIds: [] });
       setIsOpen(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create invitation');
@@ -103,21 +106,67 @@ export default function UserInvitations() {
               <Select
                 value={formData.clientId}
                 onValueChange={(value) => setFormData({ ...formData, clientId: value })}
-                disabled={createInvitationMutation.isPending || !clientsQuery.data}
+                disabled={createInvitationMutation.isPending || clientsQuery.isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a client..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {clientsQuery.data?.map((client) => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
+                  {clientsQuery.isLoading ? (
+                    <div className="p-2 text-sm text-muted-foreground">Loading clients...</div>
+                  ) : clientsQuery.data && clientsQuery.data.length > 0 ? (
+                    clientsQuery.data.map((client) => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-muted-foreground">No clients available</div>
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
                 The user will be added to this client's workspace
+              </p>
+            </div>
+
+            {/* Project Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Assign to Projects (Optional)</label>
+              <div className="border border-border rounded-md p-3 max-h-48 overflow-y-auto space-y-2">
+                {projectsQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading projects...</p>
+                ) : projectsQuery.data && projectsQuery.data.length > 0 ? (
+                  projectsQuery.data.map((project) => (
+                    <label key={project.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.projectIds.includes(project.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              projectIds: [...formData.projectIds, project.id],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              projectIds: formData.projectIds.filter(id => id !== project.id),
+                            });
+                          }
+                        }}
+                        disabled={createInvitationMutation.isPending}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{project.name}</span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No projects available</p>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                The user will have access to these projects
               </p>
             </div>
 

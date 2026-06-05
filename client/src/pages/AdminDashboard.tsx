@@ -58,11 +58,7 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground mt-2">
           Sitewide overview of all organizations, users, and projects
         </p>
-        <Link href="/user-invitations">
-  <a className="bg-[#4CAF50] text-white px-4 py-2 rounded-md hover:opacity-90 inline-block mt-4 mb-4">
-    Manage User Invitations
-  </a>
-</Link>
+
       </div>
 
       {isLoading ? (
