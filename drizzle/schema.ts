@@ -355,6 +355,7 @@ export const userInvitations = mysqlTable("user_invitations", {
 	token: varchar({ length: 64 }).notNull().unique(),
 	invitedBy: int().notNull(),
 	clientId: int(),
+	projectIds: text(), // JSON array of project IDs
 	status: mysqlEnum(['pending', 'accepted', 'expired', 'revoked']).default('pending').notNull(),
 	expiresAt: timestamp({ mode: 'string' }).notNull(),
 	acceptedAt: timestamp({ mode: 'string' }),

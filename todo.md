@@ -2869,3 +2869,10 @@
 - [x] Task 2: Homepage Hero UI & Typography - 4-line cascade (Your site. / Documented. / Verified. / Delivered.)
 - [x] Task 3: Post-Demo Growth Loop - added 'Copy Link' prompt after prestige claim success
 - [x] Task 4: Sunlight Readability - added 1px borders to feature cards on /providers Platform Capabilities
+
+## User Invitations UI and Onboarding Flow
+- [x] Move "Manage User Invitations" to Actions menu dropdown
+- [x] Fix client dropdown to fetch and display available clients
+- [x] Add project selection to invitation modal
+- [x] Complete backend invitation and onboarding logic
+- [ ] Test end-to-end onboarding flow

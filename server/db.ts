@@ -3507,6 +3507,7 @@ export async function createUserInvitation(data: {
   token: string;
   invitedBy: number;
   clientId?: number;
+  projectIds?: number[];
   expiresAt: Date;
 }) {
   const db = await getDb();
@@ -3520,6 +3521,7 @@ export async function createUserInvitation(data: {
     token: data.token,
     invitedBy: data.invitedBy,
     clientId: data.clientId,
+    projectIds: data.projectIds ? JSON.stringify(data.projectIds) : null,
     expiresAt: data.expiresAt.toISOString(),
     status: 'pending',
   });

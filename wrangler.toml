@@ -1,0 +1,12 @@
+name = "mapit"
+type = "javascript"
+account_id = ""
+workers_dev = false
+
+[build]
+command = "pnpm build"
+cwd = "./"
+watch_paths = ["client/src/**/*.tsx", "client/src/**/*.ts", "client/src/**/*.css"]
+
+[[build.upload]]
+format = "service-worker"

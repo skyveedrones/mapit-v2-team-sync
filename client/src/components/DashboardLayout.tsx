@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Building2, ClipboardList, Download, FolderPlus, LayoutDashboard, Menu, Moon, Plane, Settings, Sun, Trash2, Users as UsersIcon } from "lucide-react";
+import { Building2, ClipboardList, Download, FolderPlus, LayoutDashboard, Mail, Menu, Moon, Plane, Settings, Sun, Trash2, Users as UsersIcon } from "lucide-react";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { PWAInstallModal } from "./PWAInstallModal";
@@ -25,6 +25,7 @@ const allMenuItems = [
   { icon: FolderPlus, label: "New Project", path: "__new_project__", action: true, roles: ["admin", "webmaster", "user"] },
   { icon: UsersIcon, label: "Users", path: "/users", roles: ["admin", "webmaster"] },
   { icon: Building2, label: "Clients", path: "/clients", roles: ["admin", "webmaster"] },
+  { icon: Mail, label: "Manage User Invitations", path: "/user-invitations", roles: ["admin", "webmaster"] },
   { icon: Trash2, label: "Trash", path: "/trash", roles: ["admin", "webmaster"] },
   { icon: ClipboardList, label: "Audit Log", path: "/audit-log", roles: ["admin", "webmaster"] },
   { icon: Settings, label: "Settings", path: "/settings" },

@@ -351,6 +351,13 @@
       "when": 1780584131111,
       "tag": "0049_complete_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "5",
+      "when": 1780669314467,
+      "tag": "0050_famous_hannibal_king",
+      "breakpoints": true
     }
   ]
 }
