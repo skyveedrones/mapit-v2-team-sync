@@ -61,9 +61,11 @@ function getR2Config() {
  * Called once at server startup. Safe to call repeatedly — idempotent.
  */
 export async function ensureR2Cors(): Promise<void> {
+  return; // <--- ADD THIS LINE HERE
   try {
     const { client, bucket } = getR2Config();
     await client.send(
+// ... rest of code
       new PutBucketCorsCommand({
         Bucket: bucket,
         CORSConfiguration: {
