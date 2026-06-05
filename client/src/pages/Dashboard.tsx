@@ -271,13 +271,7 @@ export default function Dashboard() {
           variants={staggerContainer}
           className="space-y-6"
         >
-          {/* 👇 ADD THIS LINK BLOCK 👇 */}
-          <Link href="/user-invitations">
-            <a className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block mt-4">
-              Manage User Invitations
-            </a>
-          </Link>
-         {/* 👆 ADD THIS LINK BLOCK 👆 */}
+
 
           {/* Trial Expiry Banner */}
           {trialInfo && trialInfo.daysLeft <= 14 && (

@@ -2876,3 +2876,11 @@
 - [x] Add project selection to invitation modal
 - [x] Complete backend invitation and onboarding logic
 - [ ] Test end-to-end onboarding flow
+
+
+## User Invitations UI Fixes (Current)
+- [x] Remove standalone "Manage User Invitations" button from Dashboard.tsx
+- [x] Remove standalone "Manage User Invitations" button from AdminDashboard.tsx
+- [ ] Debug why client dropdown is showing "No clients available"
+- [ ] Debug why project dropdown is showing "No projects available"
+- [ ] Test end-to-end user invitation and onboarding flow
