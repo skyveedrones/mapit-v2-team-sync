@@ -1,0 +1,1 @@
+ALTER TABLE `user_invitations` MODIFY COLUMN `createdAt` timestamp NOT NULL DEFAULT (now());

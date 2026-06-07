@@ -3510,23 +3510,38 @@ export async function createUserInvitation(data: {
   projectIds?: number[];
   expiresAt: Date;
 }) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
+  const pool = await createPool();
+  if (!pool) throw new Error("Database not initialized");
 
-  const { userInvitations } = await import("../drizzle/schema");
-  
-  const result = await db.insert(userInvitations).values({
-    email: data.email,
-    temporaryPassword: data.temporaryPassword,
-    token: data.token,
-    invitedBy: data.invitedBy,
-    clientId: data.clientId,
-    projectIds: data.projectIds ? JSON.stringify(data.projectIds) : null,
-    expiresAt: data.expiresAt.toISOString(),
-    status: 'pending',
-  })
-
-  return result;
+  const connection = await pool.getConnection();
+  try {
+    const projectIdsJson = data.projectIds ? JSON.stringify(data.projectIds) : null;
+    const expiresAtStr = data.expiresAt.toISOString();
+    
+    const now = new Date().toISOString();
+    
+    const query = `
+      INSERT INTO user_invitations 
+      (email, temporaryPassword, token, invitedBy, clientId, projectIds, expiresAt, status, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+    `;
+    
+    const result = await connection.execute(query, [
+      data.email,
+      data.temporaryPassword,
+      data.token,
+      data.invitedBy,
+      data.clientId || null,
+      projectIdsJson,
+      expiresAtStr,
+      now,
+      now,
+    ]);
+    
+    return result;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function getUserInvitationByToken(token: string) {

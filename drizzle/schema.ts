@@ -359,7 +359,7 @@ export const userInvitations = mysqlTable("user_invitations", {
 	status: mysqlEnum(['pending', 'accepted', 'expired', 'revoked']).default('pending').notNull(),
 	expiresAt: timestamp({ mode: 'string' }).notNull(),
 	acceptedAt: timestamp({ mode: 'string' }),
-	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
 },
 (table) => [
