@@ -569,7 +569,7 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
 
-        const { getUserByEmail, createUserInvitation, sendUserInvitationEmail } = await import('./db');
+        const { getUserByEmail, createUserInvitation, sendUserInvitationEmail, upsertUser, addClientUser, addProjectMember } = await import('./db');
         const existingUser = await getUserByEmail(input.email);
         if (existingUser) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
@@ -579,6 +579,21 @@ export const appRouter = router({
         const token = nanoid(32);
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+        // Create user immediately with temporary password
+        const bcrypt = require('bcryptjs');
+        const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+        
+        const newUser = await upsertUser({
+          openId: nanoid(32),
+          email: input.email,
+          name: input.email.split('@')[0],
+          passwordHash,
+          loginMethod: 'password',
+          subscriptionTier: 'free',
+          setupCompleted: 0,
+        });
+
+        // Create invitation record
         const invitation = await createUserInvitation({
           email: input.email,
           temporaryPassword,
@@ -588,6 +603,18 @@ export const appRouter = router({
           projectIds: input.projectIds && input.projectIds.length > 0 ? input.projectIds : undefined,
           expiresAt,
         });
+
+        // Assign to client if provided
+        if (input.clientId) {
+          await addClientUser(input.clientId, newUser.id, 'user');
+        }
+
+        // Assign to projects if provided
+        if (input.projectIds && input.projectIds.length > 0) {
+          for (const projectId of input.projectIds) {
+            await addProjectMember(projectId, newUser.id, 'viewer');
+          }
+        }
 
         try {
           await sendUserInvitationEmail({
