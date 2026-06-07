@@ -3515,6 +3515,7 @@ export async function createUserInvitation(data: {
 
   const { userInvitations } = await import("../drizzle/schema");
   
+  const now = new Date().toISOString();
   const result = await db.insert(userInvitations).values({
     email: data.email,
     temporaryPassword: data.temporaryPassword,
@@ -3524,6 +3525,8 @@ export async function createUserInvitation(data: {
     projectIds: data.projectIds ? JSON.stringify(data.projectIds) : null,
     expiresAt: data.expiresAt.toISOString(),
     status: 'pending',
+    createdAt: now,
+    updatedAt: now,
   });
 
   return result;
