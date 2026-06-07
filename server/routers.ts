@@ -563,6 +563,7 @@ export const appRouter = router({
         clientId: z.number().optional(),
         projectIds: z.array(z.number()).optional(),
         sendIntroEmail: z.boolean().optional().default(true),
+        plan: z.enum(['free', 'pro', 'enterprise']).optional().default('free'),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -589,7 +590,7 @@ export const appRouter = router({
           name: input.email.split('@')[0],
           passwordHash,
           loginMethod: 'password',
-          subscriptionTier: 'free',
+          subscriptionTier: input.plan,
           setupCompleted: 0,
         });
 
@@ -654,22 +655,33 @@ export const appRouter = router({
         }
 
         const existingUser = await getUserByEmail(invitation.email);
+        
+        let newUser;
         if (existingUser) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
+          // User already exists (created when invitation was sent), just update password and name
+          const passwordHash = await bcryptjs.hash(input.password, 10);
+          newUser = await upsertUser({
+            openId: existingUser.openId,
+            email: invitation.email,
+            name: input.name,
+            passwordHash,
+            loginMethod: 'password',
+            subscriptionTier: existingUser.subscriptionTier,
+            setupCompleted: 1,
+          });
+        } else {
+          // Create new user if doesn't exist
+          const passwordHash = await bcryptjs.hash(input.password, 10);
+          newUser = await upsertUser({
+            openId: nanoid(32),
+            email: invitation.email,
+            name: input.name,
+            passwordHash,
+            loginMethod: 'password',
+            subscriptionTier: 'free',
+            setupCompleted: 1,
+          });
         }
-
-        const bcrypt = require('bcryptjs');
-        const passwordHash = await bcrypt.hash(input.password, 10);
-
-        const newUser = await upsertUser({
-          openId: nanoid(32),
-          email: invitation.email,
-          name: input.name,
-          passwordHash,
-          loginMethod: 'password',
-          subscriptionTier: 'free',
-          setupCompleted: 1,
-        });
 
         await acceptUserInvitation(input.token, newUser.id);
 
@@ -691,7 +703,11 @@ export const appRouter = router({
           }
         }
 
-        return { success: true, userId: newUser.id };
+        return { 
+          success: true, 
+          userId: newUser.id,
+          message: `Welcome to Mapit, ${input.name}! Your dashboard with your assigned projects has been created and is ready for you to explore.`
+        };
       }),
     removeUserFromProjects: protectedProcedure
       .input(z.object({ userId: z.number() }))

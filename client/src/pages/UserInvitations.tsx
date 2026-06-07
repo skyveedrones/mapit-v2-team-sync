@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, X, AlertCircle, Plus } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export default function UserInvitations() {
   const [clientSearch, setClientSearch] = useState('');
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string>('free');
 
   // Fetch clients and projects
   const { data: clientsData, isLoading: clientsLoading } = trpc.clients.getOwnerClients.useQuery();
@@ -91,6 +93,7 @@ export default function UserInvitations() {
         clientId: selectedClient?.id,
         projectIds: selectedProjects.map(p => p.id),
         sendIntroEmail,
+        plan: selectedPlan,
       });
 
       toast.success('Invitation sent successfully!');
@@ -172,6 +175,21 @@ export default function UserInvitations() {
                 className="w-full"
                 disabled={createInvitation.isPending}
               />
+            </div>
+
+            {/* Plan Selector */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Subscription Plan</label>
+              <Select value={selectedPlan} onValueChange={setSelectedPlan} disabled={createInvitation.isPending}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Client Selector */}
