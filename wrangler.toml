@@ -1,6 +1,6 @@
 name = "mapit"
 type = "javascript"
-account_id = ""
+account_id = "8cb468d0dae016094c99457e601ff46b"
 workers_dev = false
 
 [build]

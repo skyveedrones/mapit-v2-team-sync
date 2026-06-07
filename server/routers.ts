@@ -6832,6 +6832,34 @@ export const appRouter = router({
       return orgRows[0] ?? null;
     }),
   }),
+
+  // Clients router
+  clients: router({
+    getOwnerClients: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      try {
+        const result = await getOwnerClients(ctx.user.id);
+        return result;
+      } catch (error) {
+        console.error(`[getOwnerClients] Error for user ${ctx.user.id}:`, error);
+        throw error;
+      }
+    }),
+  }),
+
+  // Projects router
+  projects: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      try {
+        const result = await getUserProjects(ctx.user.id);
+        return result;
+      } catch (error) {
+        console.error(`[projects.getAll] Error for user ${ctx.user.id}:`, error);
+        throw error;
+      }
+    }),
+  }),
 });
 
 // ─── Onboarding: anonymous project creation + email claim ───────────────────
