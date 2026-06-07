@@ -561,6 +561,7 @@ export const appRouter = router({
         email: z.string().email(),
         clientId: z.number().optional(),
         projectIds: z.array(z.number()).optional(),
+        sendIntroEmail: z.boolean().optional().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -674,6 +675,15 @@ export const appRouter = router({
         }
         return { success: true };
       }),
+    
+    getInvitations: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can view invitations' });
+      }
+      const { getUserInvitations } = await import('./db');
+      return getUserInvitations(ctx.user.id);
+    }),
   }),
 
   auth: router({

@@ -2884,3 +2884,18 @@
 - [ ] Debug why client dropdown is showing "No clients available"
 - [ ] Debug why project dropdown is showing "No projects available"
 - [ ] Test end-to-end user invitation and onboarding flow
+
+
+## User Invitations Complete Rebuild (Priority)
+- [ ] Move "Manage User Invitations" to Actions menu dropdown
+- [ ] Remove standalone "Manage User Invitations" button from dashboard
+- [ ] Build searchable project selector with multi-select capability
+- [ ] Display selected projects in a list below the selector
+- [ ] Build searchable client selector with multi-select capability
+- [ ] Display selected client in a field
+- [ ] Add "Send intro email" checkbox to modal
+- [ ] Add "Save" button to create user and send emails
+- [ ] Update backend to create user with assigned projects and client
+- [ ] Update backend to send intro email with credentials and setup link
+- [ ] Create new user dashboard showing assigned projects
+- [ ] Test end-to-end user creation and onboarding flow

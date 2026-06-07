@@ -3607,3 +3607,19 @@ export async function expireOldUserInvitations() {
 
   return result;
 }
+
+
+export async function getUserInvitations(ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+
+  const { userInvitations } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(userInvitations)
+    .where(eq(userInvitations.invitedBy, ownerId))
+    .orderBy(desc(userInvitations.createdAt));
+  
+  return result;
+}
