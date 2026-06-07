@@ -3524,8 +3524,6 @@ export async function createUserInvitation(data: {
     projectIds: data.projectIds ? JSON.stringify(data.projectIds) : null,
     expiresAt: data.expiresAt.toISOString(),
     status: 'pending',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   })
 
   return result;
