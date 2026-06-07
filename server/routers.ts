@@ -4,6 +4,7 @@ import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import bcryptjs from "bcryptjs";
 import { PLAN_LIMITS } from "../shared/planLimits";
 import { getDb } from "./db";
 import { media, clientUsers, clients, projectOverlays, users, projectCollaborators, projects, referrals, organizations, projectDocuments, onboardingLeads } from "../drizzle/schema";
@@ -580,8 +581,7 @@ export const appRouter = router({
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
         // Create user immediately with temporary password
-        const bcrypt = require('bcryptjs');
-        const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+        const passwordHash = await bcryptjs.hash(temporaryPassword, 10);
         
         const newUser = await upsertUser({
           openId: nanoid(32),
