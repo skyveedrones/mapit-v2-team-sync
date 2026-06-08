@@ -557,6 +557,101 @@ export const appRouter = router({
         const { getUserProjects } = await import('./db');
         return getUserProjects(ctx.user.id);
       }),
+    // Step 1: Save user info and create user in database
+    saveUserInfo: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+        clientId: z.number().optional(),
+        projectIds: z.array(z.number()).optional(),
+        plan: z.enum(['free', 'pro', 'enterprise']).optional().default('free'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
+        }
+
+        const { getUserByEmail, createUserInvitation, upsertUser, addClientUser, addProjectMember } = await import('./db');
+        const existingUser = await getUserByEmail(input.email);
+        if (existingUser) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
+        }
+
+        const temporaryPassword = Math.random().toString(36).slice(-12);
+        const token = nanoid(32);
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        // Create user immediately with temporary password
+        const passwordHash = await bcryptjs.hash(temporaryPassword, 10);
+        
+        const newUser = await upsertUser({
+          openId: nanoid(32),
+          email: input.email,
+          name: input.email.split('@')[0],
+          passwordHash,
+          loginMethod: 'password',
+          subscriptionTier: input.plan,
+          setupCompleted: 0,
+        });
+
+        // Create invitation record
+        const invitation = await createUserInvitation({
+          email: input.email,
+          temporaryPassword,
+          token,
+          invitedBy: ctx.user.id,
+          clientId: input.clientId,
+          projectIds: input.projectIds && input.projectIds.length > 0 ? input.projectIds : undefined,
+          expiresAt,
+        });
+
+        // Assign to client if provided
+        if (input.clientId) {
+          await addClientUser(input.clientId, newUser.id, 'user');
+        }
+
+        // Assign to projects if provided
+        if (input.projectIds && input.projectIds.length > 0) {
+          for (const projectId of input.projectIds) {
+            await addProjectMember(projectId, newUser.id, 'viewer');
+          }
+        }
+
+        return { success: true, token, temporaryPassword, userId: newUser.id, email: input.email };
+      }),
+
+    // Step 2: Send welcome email
+    sendWelcomeEmail: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+        token: z.string(),
+        temporaryPassword: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'webmaster') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can send invitations' });
+        }
+
+        const { sendUserInvitationEmail } = await import('./db');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        try {
+          await sendUserInvitationEmail({
+            email: input.email,
+            token: input.token,
+            temporaryPassword: input.temporaryPassword,
+            invitedByName: ctx.user.name || 'Administrator',
+            expiresAt,
+          });
+          return { success: true, message: 'Welcome email sent successfully' };
+        } catch (emailError) {
+          console.error('[User Invitation] Failed to send email:', emailError);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to send welcome email' });
+        }
+      }),
+
+    // Legacy: Combined createUserInvitation (for backward compatibility)
     createUserInvitation: protectedProcedure
       .input(z.object({
         email: z.string().email(),
