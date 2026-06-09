@@ -3515,7 +3515,7 @@ export async function createUserInvitation(data: {
 
   const connection = await pool.getConnection();
   try {
-    const projectIdsJson = data.projectIds ? JSON.stringify(data.projectIds) : null;
+    const projectIdsJson = data.projectIds && data.projectIds.length > 0 ? JSON.stringify(data.projectIds) : null;
     const expiresAtStr = data.expiresAt.toISOString();
     
     const now = new Date().toISOString();
@@ -3538,7 +3538,20 @@ export async function createUserInvitation(data: {
       now,
     ]);
     
-    return result;
+    const okPacket = result[0] as any;
+    return {
+      id: okPacket.insertId,
+      email: data.email,
+      token: data.token,
+      temporaryPassword: data.temporaryPassword,
+      invitedBy: data.invitedBy,
+      clientId: data.clientId || null,
+      projectIds: data.projectIds || null,
+      status: 'pending',
+      expiresAt: expiresAtStr,
+      createdAt: now,
+      updatedAt: now,
+    };
   } finally {
     connection.release();
   }

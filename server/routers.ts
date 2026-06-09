@@ -571,7 +571,9 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
 
-        const { getUserByEmail, createUserInvitation, upsertUser, addClientUser, addProjectMember } = await import('./db');
+        const { getUserByEmail, upsertUser, addClientUser, addProjectMember, getDb } = await import('./db');
+        const { userInvitations } = await import('../drizzle/schema');
+        
         const existingUser = await getUserByEmail(input.email);
         if (existingUser) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
@@ -594,15 +596,21 @@ export const appRouter = router({
           setupCompleted: 0,
         });
 
-        // Create invitation record
-        const invitation = await createUserInvitation({
+        // Create invitation record using Drizzle ORM
+        const db = await getDb();
+        if (!db) throw new Error('Database not initialized');
+        
+        const projectIdsJson = input.projectIds && input.projectIds.length > 0 ? JSON.stringify(input.projectIds) : null;
+        
+        await db.insert(userInvitations).values({
           email: input.email,
           temporaryPassword,
           token,
           invitedBy: ctx.user.id,
-          clientId: input.clientId,
-          projectIds: input.projectIds && input.projectIds.length > 0 ? input.projectIds : undefined,
-          expiresAt,
+          clientId: input.clientId || null,
+          projectIds: projectIdsJson,
+          expiresAt: expiresAt.toISOString(),
+          status: 'pending',
         });
 
         // Assign to client if provided
@@ -633,7 +641,7 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can send invitations' });
         }
 
-        const { sendUserInvitationEmail } = await import('./db');
+        const { sendUserInvitationEmail } = await import('./user-invitation-email');
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
         try {
