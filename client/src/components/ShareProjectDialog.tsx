@@ -1,6 +1,6 @@
 /**
  * Share Project Dialog
- * Allows project owners to invite collaborators via email
+ * Allows project owners to invite collaborators via email or share with an entire Client org
  */
 
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import {
+  Building2,
   Check,
   Clock,
   Copy,
@@ -99,6 +101,8 @@ export function ShareProjectDialog({
   const [inviteMethod, setInviteMethod] = useState<"email" | "copy">("email");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastInviteResult, setLastInviteResult] = useState<{ inviteUrl: string; email: string; role: string; projectName: string; inviterName: string } | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [isAssigningClient, setIsAssigningClient] = useState(false);
 
   const { user } = useAuth();
   const utils = trpc.useUtils();
@@ -117,10 +121,44 @@ export function ShareProjectDialog({
       { enabled: open }
     );
 
+  // Fetch the current project to know its clientId
+  const { data: projectData } = trpc.project.get.useQuery(
+    { id: projectId },
+    { enabled: open }
+  );
+
+  // Fetch all clients owned by the user
+  const { data: clients, isLoading: loadingClients } =
+    trpc.clientPortal.list.useQuery(undefined, { enabled: open });
+
+  // Assign project to client mutation
+  const assignClientMutation = trpc.clientPortal.assignProject.useMutation({
+    onSuccess: () => {
+      toast.success("Project shared with client", {
+        description: "All users in this client org now have access.",
+      });
+      utils.project.get.invalidate({ id: projectId });
+      setSelectedClientId("");
+    },
+    onError: (error) => {
+      toast.error("Failed to share with client", { description: error.message });
+    },
+  });
+
+  // Remove project from client mutation (set clientId to null)
+  const removeClientMutation = trpc.clientPortal.assignProject.useMutation({
+    onSuccess: () => {
+      toast.success("Client access removed");
+      utils.project.get.invalidate({ id: projectId });
+    },
+    onError: (error) => {
+      toast.error("Failed to remove client access", { description: error.message });
+    },
+  });
+
   // Invite mutation
   const inviteMutation = trpc.sharing.invite.useMutation({
     onSuccess: (data) => {
-      // Store the result for copy functionality
       if (data.inviteUrl && user) {
         setLastInviteResult({
           inviteUrl: data.inviteUrl,
@@ -197,7 +235,7 @@ export function ShareProjectDialog({
         projectId,
         email: email.trim().toLowerCase(),
         role,
-        sendEmail: inviteMethod === "email", // Only send email if email method is selected
+        sendEmail: inviteMethod === "email",
       });
     } finally {
       setIsSubmitting(false);
@@ -212,8 +250,37 @@ export function ShareProjectDialog({
     removeCollaboratorMutation.mutate({ projectId, userId });
   };
 
+  const handleAssignClient = async () => {
+    if (!selectedClientId) return;
+    setIsAssigningClient(true);
+    try {
+      await assignClientMutation.mutateAsync({
+        projectId,
+        clientId: parseInt(selectedClientId),
+      });
+    } finally {
+      setIsAssigningClient(false);
+    }
+  };
+
+  const handleRemoveClient = async () => {
+    setIsAssigningClient(true);
+    try {
+      await removeClientMutation.mutateAsync({
+        projectId,
+        clientId: null,
+      });
+    } finally {
+      setIsAssigningClient(false);
+    }
+  };
+
   const pendingInvitations = invitations?.filter((inv) => inv.status === "pending") || [];
   const pastInvitations = invitations?.filter((inv) => inv.status !== "pending") || [];
+
+  const currentClientId = (projectData as any)?.clientId;
+  const currentClient = clients?.find((c: any) => c.id === currentClientId);
+  const availableClients = clients?.filter((c: any) => c.id !== currentClientId) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -224,15 +291,22 @@ export function ShareProjectDialog({
             Share Project
           </DialogTitle>
           <DialogDescription>
-            Invite team members to collaborate on "{projectName}"
+            Invite team members or share with an entire Client org
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="invite" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="invite">Invite</TabsTrigger>
             <TabsTrigger value="members">
               Members ({(collaborators?.length || 0) + pendingInvitations.length})
+            </TabsTrigger>
+            <TabsTrigger value="client" className="flex items-center gap-1">
+              <Building2 className="h-3.5 w-3.5" />
+              Client
+              {currentClientId && (
+                <Badge variant="default" className="ml-1 h-4 px-1 text-[10px] bg-green-600">✓</Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -432,7 +506,6 @@ export function ShareProjectDialog({
                 ))}
               </div>
             )}
-
             {/* Active Collaborators */}
             {collaborators && collaborators.length > 0 && (
               <div className="space-y-3">
@@ -465,7 +538,6 @@ export function ShareProjectDialog({
                 ))}
               </div>
             )}
-
             {/* Empty State */}
             {(!collaborators || collaborators.length === 0) && pendingInvitations.length === 0 && (
               <div className="text-center py-8">
@@ -474,6 +546,99 @@ export function ShareProjectDialog({
                 <p className="text-xs text-slate-500">Invite team members from the Invite tab</p>
               </div>
             )}
+          </TabsContent>
+
+          {/* Client Tab */}
+          <TabsContent value="client" className="space-y-4 mt-4">
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+              <p className="text-sm text-blue-300">
+                Assign this project to a <strong>Client org</strong> to give all users in that client automatic access.
+              </p>
+            </div>
+
+            {/* Currently assigned client */}
+            {currentClient ? (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-slate-300">Currently Shared With</h3>
+                <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-green-300">{currentClient.name}</p>
+                      <p className="text-xs text-slate-400">All users in this client have access</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-2 flex-shrink-0"
+                    onClick={handleRemoveClient}
+                    disabled={isAssigningClient}
+                  >
+                    {isAssigningClient ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-slate-300">Not shared with any client</h3>
+              </div>
+            )}
+
+            {/* Assign to a different/new client */}
+            {loadingClients ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              </div>
+            ) : availableClients.length === 0 && !currentClient ? (
+              <div className="text-center py-8">
+                <Building2 className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No clients found</p>
+                <p className="text-xs text-slate-500">Create a client org first from the Clients page</p>
+              </div>
+            ) : availableClients.length > 0 ? (
+              <div className="space-y-3 border-t pt-4">
+                <Label>{currentClient ? "Change to a different client" : "Select a client to share with"}</Label>
+                <div className="flex gap-2">
+                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a client..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableClients.map((c: any) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-slate-400" />
+                            <span>{c.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleAssignClient}
+                    disabled={!selectedClientId || isAssigningClient}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {isAssigningClient ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Share"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-sm text-slate-400 space-y-2">
+              <p className="font-semibold text-slate-300">How client sharing works:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>All current and future users in the client org get access</li>
+                <li>They see it in their dashboard automatically</li>
+                <li>Only one client org can be assigned at a time</li>
+                <li>Remove to revoke access for all client users</li>
+              </ul>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
