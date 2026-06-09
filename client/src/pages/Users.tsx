@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 import { UserManagementDialog } from "@/components/UserManagementDialog";
 
@@ -175,10 +176,17 @@ export default function UsersPage() {
               Manage user access and assign projects to your team members
             </p>
           </div>
-          <Button onClick={() => setInviteDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Invite User
-          </Button>
+          <div className="flex gap-2">
+            {user?.role === 'webmaster' && (
+              <Button variant="outline" asChild>
+                <Link href="/admin/users">Manage All Users</Link>
+              </Button>
+            )}
+            <Button onClick={() => setInviteDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Invite User
+            </Button>
+          </div>
         </div>
 
         {/* Help Section */}
