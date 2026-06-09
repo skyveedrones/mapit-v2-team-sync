@@ -44,6 +44,7 @@ import Providers from "./pages/Providers";
 import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
 import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -371,10 +372,7 @@ function Router() {
         {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
       <Route path="/admin/users">
-        {() => {
-          const AdminUsers = lazy(() => import('./pages/AdminUsers'));
-          return <ProtectedRoute component={() => <AdminUsers />} />;
-        }}
+        {() => <ProtectedRoute component={AdminUsers} />}
       </Route>
       
       {/* Organization management */}
