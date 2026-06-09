@@ -116,7 +116,7 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
   const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   useEffect(() => {
     if (isLocalDev) return; // Skip onboarding redirect in local dev
-    if (!loading && isAuthenticated && user && !user.organizationId && user.role !== 'client') {
+    if (!loading && isAuthenticated && user && !user.organizationId && user.role !== 'client' && user.role !== 'webmaster') {
       // Only redirect if not already on onboarding page
       if (location !== '/onboarding/pilot') {
         setLocation('/onboarding/pilot');
@@ -206,9 +206,9 @@ function ProtectedRoute({ component: Component, isDemoRoute = false }: { compone
   // While onboarding redirect is pending, render nothing to avoid flash
   // Skip this gate on localhost for local development
   // Also skip for /organization so the Civic preview always renders immediately
-  const ONBOARDING_BYPASS_PATHS = ['/onboarding/pilot', '/organization', '/pricing', '/billing'];
+  const ONBOARDING_BYPASS_PATHS = ['/onboarding/pilot', '/organization', '/pricing', '/billing', '/admin'];
   const isOnboardingBypass = ONBOARDING_BYPASS_PATHS.some(p => location === p || location.startsWith(p + '/'));
-  if (!isLocalDev && user && !user.organizationId && user.role !== 'client' && !isOnboardingBypass) {
+  if (!isLocalDev && user && !user.organizationId && user.role !== 'client' && user.role !== 'webmaster' && !isOnboardingBypass) {
     return null;
   }
 
