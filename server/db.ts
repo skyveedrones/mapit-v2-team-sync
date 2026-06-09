@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNull, isNotNull, or, sql, like } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, isNotNull, lt, or, sql, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import type { Pool } from "mysql2/promise";
 import mysql from "mysql2/promise";

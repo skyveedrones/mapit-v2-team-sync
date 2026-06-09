@@ -571,9 +571,8 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
 
-        const { getUserByEmail, upsertUser, addClientUser, addProjectMember, getDb } = await import('./db');
-        const { userInvitations } = await import('../drizzle/schema');
-        
+                const { getUserByEmail, upsertUser, addClientUser, getDb } = await import('./db');
+        const { userInvitations, projectMembers } = await import('../drizzle/schema');
         const existingUser = await getUserByEmail(input.email);
         if (existingUser) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
@@ -585,16 +584,23 @@ export const appRouter = router({
 
         // Create user immediately with temporary password
         const passwordHash = await bcryptjs.hash(temporaryPassword, 10);
+        const planMap: Record<string, 'free'|'starter'|'professional'|'business'|'enterprise'> = {
+          free: 'free', pro: 'professional', enterprise: 'enterprise',
+        };
         
-        const newUser = await upsertUser({
+        await upsertUser({
           openId: nanoid(32),
           email: input.email,
           name: input.email.split('@')[0],
           passwordHash,
           loginMethod: 'password',
-          subscriptionTier: input.plan,
+          subscriptionTier: planMap[input.plan] ?? 'free',
           setupCompleted: 0,
         });
+
+        // Get the created user to retrieve their ID
+        const createdUser = await getUserByEmail(input.email);
+        if (!createdUser) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
 
         // Create invitation record using Drizzle ORM
         const db = await getDb();
@@ -615,17 +621,17 @@ export const appRouter = router({
 
         // Assign to client if provided
         if (input.clientId) {
-          await addClientUser(input.clientId, newUser.id, 'user');
+          await addClientUser({ clientId: input.clientId, userId: createdUser.id, role: 'user' });
         }
 
         // Assign to projects if provided
         if (input.projectIds && input.projectIds.length > 0) {
           for (const projectId of input.projectIds) {
-            await addProjectMember(projectId, newUser.id, 'viewer');
+            await db.insert(projectMembers).values({ projectId, userId: createdUser.id, role: 'viewer' }).onDuplicateKeyUpdate({ set: { role: 'viewer' } });
           }
         }
 
-        return { success: true, token, temporaryPassword, userId: newUser.id, email: input.email };
+        return { success: true, token, temporaryPassword, userId: createdUser.id, email: input.email };
       }),
 
     // Step 2: Send welcome email
@@ -674,7 +680,8 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
 
-        const { getUserByEmail, createUserInvitation, sendUserInvitationEmail, upsertUser, addClientUser, addProjectMember } = await import('./db');
+        const { getUserByEmail, upsertUser, addClientUser, getDb } = await import('./db');
+        const { userInvitations, projectMembers } = await import('../drizzle/schema');
         const existingUser = await getUserByEmail(input.email);
         if (existingUser) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'User with this email already exists' });
@@ -686,42 +693,52 @@ export const appRouter = router({
 
         // Create user immediately with temporary password
         const passwordHash = await bcryptjs.hash(temporaryPassword, 10);
+        const planMap2: Record<string, 'free'|'starter'|'professional'|'business'|'enterprise'> = {
+          free: 'free', pro: 'professional', enterprise: 'enterprise',
+        };
         
-        const newUser = await upsertUser({
+        await upsertUser({
           openId: nanoid(32),
           email: input.email,
           name: input.email.split('@')[0],
           passwordHash,
           loginMethod: 'password',
-          subscriptionTier: input.plan,
+          subscriptionTier: planMap2[input.plan] ?? 'free',
           setupCompleted: 0,
         });
 
-        // Create invitation record
-        const invitation = await createUserInvitation({
+        const createdUser2 = await getUserByEmail(input.email);
+        if (!createdUser2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
+
+        const db2 = await getDb();
+        if (!db2) throw new Error('Database not initialized');
+        const projectIdsJson2 = input.projectIds && input.projectIds.length > 0 ? JSON.stringify(input.projectIds) : null;
+        await db2.insert(userInvitations).values({
           email: input.email,
           temporaryPassword,
           token,
           invitedBy: ctx.user.id,
-          clientId: input.clientId,
-          projectIds: input.projectIds && input.projectIds.length > 0 ? input.projectIds : undefined,
-          expiresAt,
+          clientId: input.clientId || null,
+          projectIds: projectIdsJson2,
+          expiresAt: expiresAt.toISOString(),
+          status: 'pending',
         });
 
         // Assign to client if provided
         if (input.clientId) {
-          await addClientUser(input.clientId, newUser.id, 'user');
+          await addClientUser({ clientId: input.clientId, userId: createdUser2.id, role: 'user' });
         }
 
         // Assign to projects if provided
         if (input.projectIds && input.projectIds.length > 0) {
           for (const projectId of input.projectIds) {
-            await addProjectMember(projectId, newUser.id, 'viewer');
+            await db2.insert(projectMembers).values({ projectId, userId: createdUser2.id, role: 'viewer' }).onDuplicateKeyUpdate({ set: { role: 'viewer' } });
           }
         }
 
         try {
-          await sendUserInvitationEmail({
+          const { sendUserInvitationEmail: sendInvEmail } = await import('./user-invitation-email');
+          await sendInvEmail({
             email: input.email,
             token,
             temporaryPassword,
@@ -742,7 +759,8 @@ export const appRouter = router({
         name: z.string().min(1),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { getUserInvitationByToken, acceptUserInvitation, upsertUser, getUserByEmail, addClientUser, addProjectMember } = await import('./db');
+        const { getUserInvitationByToken, acceptUserInvitation, upsertUser, getUserByEmail, addClientUser, getDb } = await import('./db');
+        const { projectMembers } = await import('../drizzle/schema');
         
         const invitation = await getUserInvitationByToken(input.token);
         if (!invitation) {
@@ -759,11 +777,10 @@ export const appRouter = router({
 
         const existingUser = await getUserByEmail(invitation.email);
         
-        let newUser;
         if (existingUser) {
           // User already exists (created when invitation was sent), just update password and name
           const passwordHash = await bcryptjs.hash(input.password, 10);
-          newUser = await upsertUser({
+          await upsertUser({
             openId: existingUser.openId,
             email: invitation.email,
             name: input.name,
@@ -775,7 +792,7 @@ export const appRouter = router({
         } else {
           // Create new user if doesn't exist
           const passwordHash = await bcryptjs.hash(input.password, 10);
-          newUser = await upsertUser({
+          await upsertUser({
             openId: nanoid(32),
             email: invitation.email,
             name: input.name,
@@ -786,19 +803,23 @@ export const appRouter = router({
           });
         }
 
-        await acceptUserInvitation(input.token, newUser.id);
+        const acceptedUser = await getUserByEmail(invitation.email);
+        if (!acceptedUser) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'User not found after creation' });
+
+        await acceptUserInvitation(input.token, acceptedUser.id);
 
         if (invitation.clientId) {
-          await addClientUser(invitation.clientId, newUser.id, 'user');
+          await addClientUser({ clientId: invitation.clientId, userId: acceptedUser.id, role: 'user' });
         }
 
         // Add user to assigned projects
-        if (invitation.projectIds) {
+        const dbAccept = await getDb();
+        if (dbAccept && invitation.projectIds) {
           try {
             const projectIds = JSON.parse(invitation.projectIds);
             if (Array.isArray(projectIds)) {
               for (const projectId of projectIds) {
-                await addProjectMember(projectId, newUser.id, 'viewer');
+                await dbAccept.insert(projectMembers).values({ projectId, userId: acceptedUser.id, role: 'viewer' }).onDuplicateKeyUpdate({ set: { role: 'viewer' } });
               }
             }
           } catch (error) {
@@ -808,7 +829,7 @@ export const appRouter = router({
 
         return { 
           success: true, 
-          userId: newUser.id,
+          userId: acceptedUser.id,
           message: `Welcome to Mapit, ${input.name}! Your dashboard with your assigned projects has been created and is ready for you to explore.`
         };
       }),

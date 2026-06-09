@@ -205,7 +205,12 @@ export default function AdminDashboard() {
             <TabsContent value="users" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>All Users</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>All Users</CardTitle>
+                    <Button size="sm" onClick={() => setLocation('/admin/users')} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      Manage Users
+                    </Button>
+                  </div>
                   <CardDescription>
                     {users?.length || 0} users across all organizations
                   </CardDescription>

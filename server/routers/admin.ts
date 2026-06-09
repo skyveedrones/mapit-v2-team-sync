@@ -4,6 +4,7 @@ import { protectedProcedure, router } from '../_core/trpc';
 import { getDb } from '../db';
 import { organizations, users, projects, media, clients } from '../../drizzle/schema';
 import { eq, desc } from 'drizzle-orm';
+import bcryptjs from 'bcryptjs';
 
 /**
  * Admin/Webmaster Router
@@ -303,6 +304,56 @@ export const adminRouter = router({
         media: projectMedia,
         mediaCount: projectMedia.length,
       };
+    }),
+
+  /**
+   * Get dashboard statistics
+   */
+  /**
+   * Reset a user's password
+   */
+  resetUserPassword: webmasterOnly
+    .input(z.object({
+      userId: z.number(),
+      newPassword: z.string().min(8),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const passwordHash = await bcryptjs.hash(input.newPassword, 10);
+      await db.update(users).set({ passwordHash, updatedAt: new Date().toISOString() }).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
+
+  /**
+   * Update a user's details (name, email, subscriptionTier, role)
+   */
+  updateUserDetails: webmasterOnly
+    .input(z.object({
+      userId: z.number(),
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+      subscriptionTier: z.enum(['free','starter','professional','business','enterprise']).optional(),
+      role: z.enum(['user','admin','webmaster']).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const { userId, ...updates } = input;
+      await db.update(users).set({ ...updates, updatedAt: new Date().toISOString() }).where(eq(users.id, userId));
+      return { success: true };
+    }),
+
+  /**
+   * Delete a user
+   */
+  deleteUser: webmasterOnly
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      await db.delete(users).where(eq(users.id, input.userId));
+      return { success: true };
     }),
 
   /**

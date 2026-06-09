@@ -370,6 +370,12 @@ function Router() {
       <Route path="/admin">
         {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
+      <Route path="/admin/users">
+        {() => {
+          const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+          return <ProtectedRoute component={() => <AdminUsers />} />;
+        }}
+      </Route>
       
       {/* Organization management */}
       <Route path="/organization">
