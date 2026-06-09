@@ -66,10 +66,22 @@ export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [briefingFormOpen, setBriefingFormOpen] = useState(false);
   const [, setLocation] = useLocation();
+  const { isAuthenticated, loading, user } = useAuth();
 
   useEffect(() => {
     document.title = "MAPIT — Your job site. From above. In minutes.";
   }, []);
+
+  // Redirect authenticated users directly to their dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      if (user.role === 'client') {
+        setLocation('/portal');
+      } else {
+        setLocation('/dashboard');
+      }
+    }
+  }, [loading, isAuthenticated, user, setLocation]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-y-auto">
