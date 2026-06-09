@@ -13,8 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  ArrowLeft,
+import { ArrowLeft,
                   Calendar,
                   CreditCard,
                   Crown,
@@ -37,6 +36,7 @@ import {
                   Camera,
                   Loader2,
                   Settings,
+                  KeyRound,
                 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -156,6 +156,89 @@ function UsageBar({
         </p>
       )}
     </div>
+  );
+}
+
+function ChangePasswordSection() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const changePassword = trpc.account.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success('Password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const handleSubmit = () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    changePassword.mutate({ currentPassword, newPassword });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-primary" />
+          Change Password
+        </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          To change your password: enter your current (temporary) password, then choose a new one. Your new password must be at least 8 characters.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-pw" className="text-xs text-muted-foreground uppercase tracking-wider">Current Password</Label>
+            <Input
+              id="current-pw"
+              type="password"
+              placeholder="Enter current password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-pw" className="text-xs text-muted-foreground uppercase tracking-wider">New Password</Label>
+            <Input
+              id="new-pw"
+              type="password"
+              placeholder="Min. 8 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-pw" className="text-xs text-muted-foreground uppercase tracking-wider">Confirm New Password</Label>
+            <Input
+              id="confirm-pw"
+              type="password"
+              placeholder="Repeat new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-4">
+          <Button
+            onClick={handleSubmit}
+            disabled={!currentPassword || newPassword.length < 8 || !confirmPassword || changePassword.isPending}
+            size="sm"
+            className="gap-2"
+          >
+            {changePassword.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+            Update Password
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -676,6 +759,11 @@ export default function Account() {
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Change Password */}
+        <motion.div variants={fadeInUp}>
+          <ChangePasswordSection />
         </motion.div>
 
         {/* Help text */}

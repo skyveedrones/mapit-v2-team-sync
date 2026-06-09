@@ -5,6 +5,7 @@ import { getDb } from '../db';
 import { organizations, users, projects, media, clients } from '../../drizzle/schema';
 import { eq, desc } from 'drizzle-orm';
 import bcryptjs from 'bcryptjs';
+import { sendEmail } from '../_core/email';
 
 /**
  * Admin/Webmaster Router
@@ -322,6 +323,47 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
       const passwordHash = await bcryptjs.hash(input.newPassword, 10);
       await db.update(users).set({ passwordHash, updatedAt: new Date().toISOString() }).where(eq(users.id, input.userId));
+      // Fetch user and send password reset email
+      const [targetUser] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, input.userId)).limit(1);
+      if (targetUser?.email) {
+        await sendEmail({
+          to: targetUser.email,
+          subject: 'Your MAPIT Password Has Been Reset',
+          html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Inter,-apple-system,sans-serif;background-color:#09323B;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr><td align="center" style="padding:40px 20px;">
+      <table role="presentation" style="max-width:600px;width:100%;background-color:#0a1f26;border-radius:12px;overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,#117660 0%,#04B16F 100%);padding:40px 30px;text-align:center;">
+          <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:700;letter-spacing:2px;">MAP<span style="color:#14E114;">i</span>T</h1>
+          <p style="margin:10px 0 0 0;color:#e0f2f1;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Drone Mapping Platform</p>
+        </td></tr>
+        <tr><td style="padding:40px 30px;color:#e0e0e0;">
+          <h2 style="margin:0 0 20px 0;color:#04B16F;font-size:24px;font-weight:600;">Password Reset</h2>
+          <p style="margin:0 0 20px 0;line-height:1.6;font-size:16px;color:#b0b0b0;">Hi ${targetUser.name || 'there'},</p>
+          <p style="margin:0 0 20px 0;line-height:1.6;font-size:16px;color:#b0b0b0;">Your MAPIT password has been reset by an administrator. Use the temporary password below to log in, then change it from your account settings.</p>
+          <div style="background-color:#051419;border:1px solid #117660;border-radius:8px;padding:20px;margin:0 0 30px 0;">
+            <p style="margin:0 0 10px 0;font-size:12px;text-transform:uppercase;color:#04B16F;font-weight:600;letter-spacing:1px;">Your Temporary Password</p>
+            <p style="margin:0;font-size:20px;font-family:'Courier New',monospace;color:#ffffff;font-weight:600;letter-spacing:2px;word-break:break-all;">${input.newPassword}</p>
+            <p style="margin:10px 0 0 0;font-size:12px;color:#999;">Please change this password after logging in.</p>
+          </div>
+          <table role="presentation" style="width:100%;margin:0 0 30px 0;">
+            <tr><td align="center">
+              <a href="https://mapit.skyveedrones.com/login" style="display:inline-block;background:linear-gradient(135deg,#117660 0%,#04B16F 100%);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:6px;font-weight:600;font-size:16px;">Log In to MAPIT</a>
+            </td></tr>
+          </table>
+          <p style="margin:20px 0 0 0;padding-top:20px;border-top:1px solid #333;font-size:12px;color:#666;line-height:1.5;">If you did not expect this reset, contact your administrator immediately.<br><br>&copy; 2026 MAPIT. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+        });
+      }
       return { success: true };
     }),
 

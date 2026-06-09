@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, KeyRound, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
+import { ArrowLeft, KeyRound, Pencil, Trash2, Search, Loader2, Copy, Mail, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 type UserRow = {
@@ -52,6 +52,7 @@ export default function AdminUsers() {
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [copied, setCopied] = useState(false);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState('');
@@ -219,8 +220,8 @@ export default function AdminUsers() {
       </Card>
 
       {/* Reset Password Dialog */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent>
+      <Dialog open={resetOpen} onOpenChange={(open) => { setResetOpen(open); if (!open) setCopied(false); }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
           </DialogHeader>
@@ -236,6 +237,41 @@ export default function AdminUsers() {
               onChange={(e) => setNewPassword(e.target.value)}
             />
           </div>
+          {newPassword.length >= 8 && (
+            <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Send credentials manually</p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    const msg = `Hi ${selectedUser?.name || ''},\n\nYour MAPIT password has been reset.\n\nEmail: ${selectedUser?.email}\nTemporary Password: ${newPassword}\n\nTo log in and change your password:\n1. Go to https://mapit.skyveedrones.com\n2. Sign in with your email and the temporary password above\n3. Click your name in the sidebar → Account\n4. Scroll to the "Change Password" section\n5. Enter the temporary password as your current password, then set a new one\n\nThank you,\nMAPIT Team`;
+                    navigator.clipboard.writeText(msg);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                    toast.success('Message copied to clipboard');
+                  }}
+                >
+                  {copied ? <Check className="w-4 h-4 mr-1 text-green-500" /> : <Copy className="w-4 h-4 mr-1" />}
+                  {copied ? 'Copied!' : 'Copy Message'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    const subject = encodeURIComponent('Your MAPIT Password Has Been Reset');
+                    const body = encodeURIComponent(`Hi ${selectedUser?.name || ''},\n\nYour MAPIT password has been reset.\n\nEmail: ${selectedUser?.email}\nTemporary Password: ${newPassword}\n\nTo log in and change your password:\n1. Go to https://mapit.skyveedrones.com\n2. Sign in with your email and the temporary password above\n3. Click your name in the sidebar → Account\n4. Scroll to the "Change Password" section\n5. Enter the temporary password as your current password, then set a new one\n\nThank you,\nMAPIT Team`)
+                    window.open(`mailto:${selectedUser?.email}?subject=${subject}&body=${body}`);
+                  }}
+                >
+                  <Mail className="w-4 h-4 mr-1" />
+                  Open in Email
+                </Button>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setResetOpen(false)}>Cancel</Button>
             <Button
@@ -243,7 +279,7 @@ export default function AdminUsers() {
               onClick={() => selectedUser && resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword })}
             >
               {resetPasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Reset Password
+              Reset &amp; Send Email
             </Button>
           </DialogFooter>
         </DialogContent>

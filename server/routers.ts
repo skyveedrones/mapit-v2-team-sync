@@ -1003,6 +1003,26 @@ export const appRouter = router({
         await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
         return { success: true };
       }),
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const [userRecord] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        if (!userRecord?.passwordHash) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'No password set on this account. Use your login provider to manage your password.' });
+        }
+        const valid = await bcryptjs.compare(input.currentPassword, userRecord.passwordHash);
+        if (!valid) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Current password is incorrect.' });
+        }
+        const newHash = await bcryptjs.hash(input.newPassword, 10);
+        await db.update(users).set({ passwordHash: newHash, updatedAt: new Date().toISOString() }).where(eq(users.id, ctx.user.id));
+        return { success: true };
+      }),
   }),
 
   version: router({
