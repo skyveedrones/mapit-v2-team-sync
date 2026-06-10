@@ -10,10 +10,6 @@
  * The survey_ocr_patterns table grows with each extraction, making future parsing faster.
  */
 
-import { execSync } from 'child_process';
-import { writeFileSync, readFileSync, unlinkSync, existsSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
 
 export interface ControlPoint {
@@ -396,7 +392,7 @@ function parseControlPointTable(
 }
 
 /**
- * OCR fallback: convert PDF to image, crop multiple regions, use LLM vision to extract control points.
+ * OCR fallback: upload PDF directly to LLM vision API (no pdftoppm needed).
  * After successful extraction, saves newly detected patterns to the DB.
  */
 async function extractViaOcr(
@@ -405,93 +401,40 @@ async function extractViaOcr(
   patterns: OcrPattern[],
 ): Promise<PdfParseResult> {
   const tmpId = randomUUID();
-  const tmpPdf = join(tmpdir(), `${tmpId}.pdf`);
-  const tmpImgBase = join(tmpdir(), `${tmpId}_page`);
 
   try {
-    writeFileSync(tmpPdf, pdfBuffer);
-    try {
-      execSync(`pdftoppm -r 200 -png -f 1 -l 1 "${tmpPdf}" "${tmpImgBase}"`, { timeout: 30000 });
-    } catch (pdftoppmErr) {
-      const msg = pdftoppmErr instanceof Error ? pdftoppmErr.message : String(pdftoppmErr);
-      const isNotFound = msg.includes('not found') || msg.includes('ENOENT') || msg.includes('No such file');
-      return {
-        success: false,
-        points: [],
-        totalPages: 1,
-        tablesFound: 0,
-        warnings: [],
-        error: isNotFound
-          ? 'No control point table was found via text extraction. OCR fallback requires pdftoppm (poppler-utils) which is not yet installed on this server. Please ensure your PDF contains a digital (selectable text) CONTROL POINTS table, or contact support.'
-          : `PDF to image conversion failed: ${msg}`,
-        method: 'ocr',
-      };
-    }
-
-    const imgPath = `${tmpImgBase}-1.png`;
-    if (!existsSync(imgPath)) {
-      return {
-        success: false,
-        points: [],
-        totalPages: 1,
-        tablesFound: 0,
-        warnings: [],
-        error: 'PDF to image conversion failed. pdftoppm did not produce output.',
-        method: 'ocr',
-      };
-    }
-
-    const sharp = (await import('sharp')).default;
-    const imgMeta = await sharp(imgPath).metadata();
-    const imgW = imgMeta.width ?? 0;
-    const imgH = imgMeta.height ?? 0;
-
-    const regions = [
-      { name: 'bottom-left', left: 0, top: Math.floor(imgH * 0.65), width: Math.floor(imgW * 0.35), height: Math.floor(imgH * 0.35) },
-      { name: 'bottom-right', left: Math.floor(imgW * 0.5), top: Math.floor(imgH * 0.65), width: Math.floor(imgW * 0.5), height: Math.floor(imgH * 0.35) },
-      { name: 'bottom-strip', left: 0, top: Math.floor(imgH * 0.55), width: imgW, height: Math.floor(imgH * 0.45) },
-      { name: 'full-page', left: 0, top: 0, width: imgW, height: imgH },
-    ];
-
     const { invokeLLM } = await import('./_core/llm.js');
     const { storagePut } = await import('./storage.js');
+
+    // Upload PDF to S3 so LLM can access it via URL
+    const { url: pdfUrl } = await storagePut(
+      `ocr-tmp/${tmpId}-${fileName.replace(/[^a-z0-9.]/gi, '_')}.pdf`,
+      pdfBuffer,
+      'application/pdf'
+    );
 
     // Build keyword list from DB patterns for the LLM prompt
     const tableHeaderKeywords = patterns
       .filter(p => p.category === 'table_header')
       .map(p => p.pattern)
       .slice(0, 15)
-      .join(', ');
+      .join(', ') || 'CONTROL POINTS, SURVEY POINTS, BENCHMARKS';
 
     const pointLabelKeywords = patterns
       .filter(p => p.category === 'point_label')
       .map(p => p.pattern)
       .slice(0, 15)
-      .join(', ');
+      .join(', ') || 'XCUT, BM, MON';
 
     const coordSystemKeywords = patterns
       .filter(p => p.category === 'coord_system')
       .map(p => p.pattern)
       .slice(0, 10)
-      .join(', ');
+      .join(', ') || 'STATE PLANE, NAD-83, WGS84';
 
-    for (const region of regions) {
-      const cropPath = join(tmpdir(), `${tmpId}_crop_${region.name}.png`);
-      await sharp(imgPath)
-        .extract({ left: region.left, top: region.top, width: region.width, height: region.height })
-        .png()
-        .toFile(cropPath);
+    const prompt = `You are a precise OCR engine for engineering survey documents.
 
-      const cropBuffer = readFileSync(cropPath);
-      const { url: imageUrl } = await storagePut(
-        `ocr-tmp/${tmpId}-${region.name}.png`,
-        cropBuffer,
-        'image/png'
-      );
-
-      const prompt = `You are a precise OCR engine for engineering survey documents.
-
-Examine this image and look for a survey control point table. It may be labeled with any of these terms:
+Examine this PDF and find the survey control point table. It may be labeled with any of these terms:
 TABLE HEADERS: ${tableHeaderKeywords}
 POINT LABELS: ${pointLabelKeywords}
 COORDINATE SYSTEMS: ${coordSystemKeywords}
@@ -503,7 +446,13 @@ The table typically contains entries with:
 - ELEV: or ELEVATION value (optional, a smaller number like 482.63)
 - A coordinate system note (e.g., TEXAS STATE PLANE, NAD-83, WGS84, UTM)
 
-ALSO: Report any NEW keywords you find that identify the table or coordinate system that are NOT in the lists above.
+Points may be listed in a table OR in a stacked format like:
+  1. XCUT
+     N: 6966963.40
+     E: 2592821.22
+     ELEV: 482.63
+
+Extract ALL control points from the entire document. Report any NEW keywords you find that identify the table or coordinate system.
 
 Return JSON in this exact format:
 {
@@ -517,105 +466,143 @@ Return JSON in this exact format:
   ]
 }
 
-If no control points table is found in this image region, return:
+If no control points table is found, return:
 { "found": false }
 
 Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
 
-      let llmResponse: any;
-      try {
-        llmResponse = await invokeLLM({
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'image_url', image_url: { url: imageUrl, detail: 'high' } },
-                { type: 'text', text: prompt },
-              ],
-            },
-          ],
-          response_format: { type: 'json_object' },
-        });
-      } catch (llmErr) {
-        continue;
-      }
-
-      try { unlinkSync(cropPath); } catch {}
+    let llmResponse: any;
+    try {
+      llmResponse = await invokeLLM({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'file_url', file_url: { url: pdfUrl, mime_type: 'application/pdf' } },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+        response_format: { type: 'json_object' },
+      });
+    } catch (llmErr) {
+      // Cleanup S3
       try {
         const { storageDelete } = await import('./storage.js');
-        await storageDelete(`ocr-tmp/${tmpId}-${region.name}.png`);
+        await storageDelete(`ocr-tmp/${tmpId}-${fileName.replace(/[^a-z0-9.]/gi, '_')}.pdf`);
       } catch {}
+      return {
+        success: false,
+        points: [],
+        totalPages: 1,
+        tablesFound: 0,
+        warnings: [],
+        error: `LLM OCR failed: ${llmErr instanceof Error ? llmErr.message : String(llmErr)}`,
+        method: 'ocr',
+      };
+    }
 
-      const content = llmResponse?.choices?.[0]?.message?.content;
-      if (!content) continue;
+    // Cleanup S3
+    try {
+      const { storageDelete } = await import('./storage.js');
+      await storageDelete(`ocr-tmp/${tmpId}-${fileName.replace(/[^a-z0-9.]/gi, '_')}.pdf`);
+    } catch {}
 
-      let parsed: any;
-      try {
-        parsed = typeof content === 'string' ? JSON.parse(content) : content;
-      } catch {
+    const content = llmResponse?.choices?.[0]?.message?.content;
+    if (!content) {
+      return {
+        success: false,
+        points: [],
+        totalPages: 1,
+        tablesFound: 0,
+        warnings: [],
+        error: 'LLM returned no content for OCR extraction.',
+        method: 'ocr',
+      };
+    }
+
+    let parsed: any;
+    try {
+      parsed = typeof content === 'string' ? JSON.parse(content) : content;
+    } catch {
+      return {
+        success: false,
+        points: [],
+        totalPages: 1,
+        tablesFound: 0,
+        warnings: [],
+        error: 'LLM returned invalid JSON for OCR extraction.',
+        method: 'ocr',
+      };
+    }
+
+    if (!parsed?.found || !Array.isArray(parsed?.points) || parsed.points.length === 0) {
+      return {
+        success: false,
+        points: [],
+        totalPages: 1,
+        tablesFound: 0,
+        warnings: [],
+        error: 'No CONTROL POINTS table found via OCR. Ensure the PDF contains a visible survey control point table.',
+        method: 'ocr',
+      };
+    }
+
+    // Validate and convert extracted points
+    const points: ControlPoint[] = [];
+    const warnings: string[] = [];
+
+    for (const pt of parsed.points) {
+      const northing = typeof pt.northing === 'number' ? pt.northing : parseNum(String(pt.northing ?? ''));
+      const easting = typeof pt.easting === 'number' ? pt.easting : parseNum(String(pt.easting ?? ''));
+      const elevation = pt.elevation != null ? (typeof pt.elevation === 'number' ? pt.elevation : parseNum(String(pt.elevation))) : null;
+      const pointId = String(pt.pointId ?? '').trim();
+      const description = String(pt.description ?? '').trim();
+
+      if (!pointId || northing === null || easting === null) {
+        warnings.push(`Skipped incomplete point: ${JSON.stringify(pt)}`);
         continue;
       }
 
-      if (!parsed?.found || !Array.isArray(parsed?.points) || parsed.points.length === 0) {
+      const validationError = validateCoordinates(northing, easting);
+      if (validationError) {
+        warnings.push(`Point ${pointId}: ${validationError} — skipped.`);
         continue;
       }
 
-      // Validate and convert extracted points
-      const points: ControlPoint[] = [];
-      const warnings: string[] = [];
+      points.push({ pointId, northing, easting, elevation, description });
+    }
 
-      for (const pt of parsed.points) {
-        const northing = typeof pt.northing === 'number' ? pt.northing : parseNum(String(pt.northing ?? ''));
-        const easting = typeof pt.easting === 'number' ? pt.easting : parseNum(String(pt.easting ?? ''));
-        const elevation = pt.elevation != null ? (typeof pt.elevation === 'number' ? pt.elevation : parseNum(String(pt.elevation))) : null;
-        const pointId = String(pt.pointId ?? '').trim();
-        const description = String(pt.description ?? '').trim();
+    if (points.length > 0) {
+      // Save new keywords discovered by the LLM back to the DB
+      let patternsLearned = 0;
+      const newKeywords: Array<{ category: string; pattern: string; sourceDocument: string }> = [];
 
-        if (!pointId || northing === null || easting === null) {
-          warnings.push(`Skipped incomplete point: ${JSON.stringify(pt)}`);
-          continue;
-        }
-
-        const validationError = validateCoordinates(northing, easting);
-        if (validationError) {
-          warnings.push(`Point ${pointId}: ${validationError} — skipped.`);
-          continue;
-        }
-
-        points.push({ pointId, northing, easting, elevation, description });
+      if (parsed.tableHeaderFound && typeof parsed.tableHeaderFound === 'string') {
+        newKeywords.push({ category: 'table_header', pattern: parsed.tableHeaderFound, sourceDocument: fileName });
       }
-
-      if (points.length > 0) {
-        // Save new keywords discovered by the LLM back to the DB
-        let patternsLearned = 0;
-        const newKeywords: Array<{ category: string; pattern: string; sourceDocument: string }> = [];
-
-        if (parsed.tableHeaderFound && typeof parsed.tableHeaderFound === 'string') {
-          newKeywords.push({ category: 'table_header', pattern: parsed.tableHeaderFound, sourceDocument: fileName });
-        }
-        if (Array.isArray(parsed.newKeywordsFound)) {
-          for (const kw of parsed.newKeywordsFound) {
-            if (typeof kw === 'string' && kw.trim().length > 2) {
-              newKeywords.push({ category: 'table_header', pattern: kw.trim(), sourceDocument: fileName });
-            }
+      if (Array.isArray(parsed.newKeywordsFound)) {
+        for (const kw of parsed.newKeywordsFound) {
+          if (typeof kw === 'string' && kw.trim().length > 2) {
+            newKeywords.push({ category: 'table_header', pattern: kw.trim(), sourceDocument: fileName });
           }
         }
-        if (parsed.coordinateSystem && typeof parsed.coordinateSystem === 'string') {
-          newKeywords.push({ category: 'coord_system', pattern: parsed.coordinateSystem.substring(0, 100), sourceDocument: fileName });
-        }
-
-        patternsLearned = await saveNewPatterns(newKeywords);
-
-        return {
-          success: true,
-          points,
-          totalPages: 1,
-          tablesFound: 1,
-          warnings,
-          method: 'ocr',
-          patternsLearned,
-        };
       }
+      if (parsed.coordinateSystem && typeof parsed.coordinateSystem === 'string') {
+        newKeywords.push({ category: 'coord_system', pattern: parsed.coordinateSystem.substring(0, 100), sourceDocument: fileName });
+      }
+
+      patternsLearned = await saveNewPatterns(newKeywords);
+
+      return {
+        success: true,
+        points,
+        totalPages: 1,
+        tablesFound: 1,
+        warnings,
+        method: 'ocr',
+        patternsLearned,
+      };
     }
 
     return {
@@ -628,12 +615,16 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
       method: 'ocr',
     };
 
-  } finally {
-    try { if (existsSync(tmpPdf)) unlinkSync(tmpPdf); } catch {}
-    try {
-      const imgPath = `${tmpImgBase}-1.png`;
-      if (existsSync(imgPath)) unlinkSync(imgPath);
-    } catch {}
+  } catch (err) {
+    return {
+      success: false,
+      points: [],
+      totalPages: 1,
+      tablesFound: 0,
+      warnings: [],
+      error: `OCR extraction failed: ${err instanceof Error ? err.message : String(err)}`,
+      method: 'ocr',
+    };
   }
 }
 
