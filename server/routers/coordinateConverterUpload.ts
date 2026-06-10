@@ -151,10 +151,10 @@ export const coordinateConverterUploadRouter = router({
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-
+        const msg = error instanceof Error ? error.message : String(error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'PDF processing failed',
+          message: `PDF processing failed: ${msg}`,
           cause: error,
         });
       }
