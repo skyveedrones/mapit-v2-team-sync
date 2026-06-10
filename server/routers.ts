@@ -451,9 +451,109 @@ function hasRequiredRole(userRole: string | null, requiredRole: string): boolean
   return (roleHierarchy[userRole] || 0) >= (roleHierarchy[requiredRole] || 0);
 }
 
+const surveyOcrRouter = router({
+  listPatterns: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      approved: z.number().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { surveyOcrPatterns } = await import('../drizzle/schema');
+      const conditions: any[] = [];
+      if (input.category) conditions.push(eq(surveyOcrPatterns.category, input.category));
+      if (input.approved !== undefined) conditions.push(eq(surveyOcrPatterns.approved, input.approved));
+      const rows = conditions.length > 0
+        ? await db.select().from(surveyOcrPatterns).where(and(...conditions))
+        : await db.select().from(surveyOcrPatterns);
+      return rows.sort((a, b) => (b.hitCount ?? 0) - (a.hitCount ?? 0));
+    }),
+
+  approvePattern: protectedProcedure
+    .input(z.object({ id: z.number(), approved: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { surveyOcrPatterns } = await import('../drizzle/schema');
+      await db.update(surveyOcrPatterns).set({ approved: input.approved }).where(eq(surveyOcrPatterns.id, input.id));
+      return { success: true };
+    }),
+
+  updatePattern: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      pattern: z.string().min(1).optional(),
+      category: z.string().min(1).optional(),
+      aliases: z.string().optional(),
+      confidence: z.number().min(0).max(100).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { surveyOcrPatterns } = await import('../drizzle/schema');
+      const { id, ...updates } = input;
+      await db.update(surveyOcrPatterns).set(updates).where(eq(surveyOcrPatterns.id, id));
+      return { success: true };
+    }),
+
+  deletePattern: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { surveyOcrPatterns } = await import('../drizzle/schema');
+      await db.delete(surveyOcrPatterns).where(eq(surveyOcrPatterns.id, input.id));
+      return { success: true };
+    }),
+
+  addPattern: protectedProcedure
+    .input(z.object({
+      pattern: z.string().min(1),
+      category: z.string().min(1),
+      aliases: z.string().optional(),
+      confidence: z.number().min(0).max(100).default(80),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (ctx.user.role !== 'webmaster' && ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { surveyOcrPatterns } = await import('../drizzle/schema');
+      await db.insert(surveyOcrPatterns).values({
+        pattern: input.pattern.toUpperCase(),
+        category: input.category,
+        aliases: input.aliases ?? null,
+        confidence: input.confidence,
+        approved: 1,
+        hitCount: 0,
+      });
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   admin: adminRouter,
+  surveyOcr: surveyOcrRouter,
   coordinateConverter: coordinateConverterRouter,
   coordinateConverterUpload: coordinateConverterUploadRouter,
   

@@ -45,6 +45,7 @@ import Referral from "./pages/Referral";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
+import SurveyOcrPatterns from "./pages/SurveyOcrPatterns";
 import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -373,6 +374,9 @@ function Router() {
       </Route>
       <Route path="/admin/users">
         {() => <ProtectedRoute component={AdminUsers} />}
+      </Route>
+      <Route path="/admin/survey-ocr">
+        {() => <ProtectedRoute component={SurveyOcrPatterns} />}
       </Route>
       
       {/* Organization management */}

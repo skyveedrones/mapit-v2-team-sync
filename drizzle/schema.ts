@@ -368,6 +368,23 @@ export const userInvitations = mysqlTable("user_invitations", {
 	index("idx_user_invitations_status").on(table.status),
 ]);
 
+// ─── Survey OCR Pattern Dataset ─────────────────────────────────────────────
+export const surveyOcrPatterns = mysqlTable('survey_ocr_patterns', {
+	id: int('id').autoincrement().notNull().primaryKey(),
+	category: varchar('category', { length: 64 }).notNull(),
+	pattern: varchar('pattern', { length: 256 }).notNull(),
+	aliases: text('aliases'),
+	sourceDocument: varchar('source_document', { length: 256 }),
+	confidence: int('confidence').default(50).notNull(),
+	approved: tinyint('approved').default(0).notNull(),
+	hitCount: int('hit_count').default(0).notNull(),
+	createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+	index('idx_ocr_patterns_category').on(table.category),
+	index('idx_ocr_patterns_approved').on(table.approved),
+]);
+
 // ─── Inferred Type Exports ───────────────────────────────────────────────────
 // Allow components to import types: import type { Project } from '../../../drizzle/schema'
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
@@ -417,3 +434,4 @@ export type InsertClient = InferInsertModel<typeof clients>;
 export type InsertClientUser = InferInsertModel<typeof clientUsers>;
 export type InsertClientInvitation = InferInsertModel<typeof clientInvitations>;
 export type InsertClientProjectAssignment = InferInsertModel<typeof clientProjectAssignments>;
+export type SurveyOcrPattern = InferSelectModel<typeof surveyOcrPatterns>;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { trpc } from '@/lib/trpc';
-import { BarChart3, Users, Building2, FolderOpen, ArrowLeft } from 'lucide-react';
+import { BarChart3, Users, Building2, FolderOpen, ArrowLeft, Brain } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Loader2 } from 'lucide-react';
 
@@ -58,7 +58,16 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground mt-2">
           Sitewide overview of all organizations, users, and projects
         </p>
-
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Button size="sm" variant="outline" onClick={() => setLocation('/admin/users')} className="gap-2">
+            <Users className="w-4 h-4" />
+            Manage Users
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setLocation('/admin/survey-ocr')} className="gap-2">
+            <Brain className="w-4 h-4" />
+            Survey OCR Patterns
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

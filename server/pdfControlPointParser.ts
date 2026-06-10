@@ -3,17 +3,11 @@
  *
  * Extracts CONTROL POINT tables from survey/engineering PDFs.
  *
- * Strategy 1 (fast): pdfjs-dist text extraction — works for PDFs with embedded digital text.
- * Strategy 2 (OCR fallback): Convert PDF to image via pdftoppm, crop bottom-left region,
- *   upload to R2, and use LLM vision to OCR the Control Points table.
+ * Strategy 1 (fast): pdfjs-dist text extraction — uses keyword dataset from survey_ocr_patterns DB.
+ * Strategy 2 (OCR fallback): Convert PDF to image via pdftoppm, crop regions, use LLM vision.
+ *   After successful OCR, saves newly detected patterns back to the DB for future use.
  *
- * OCR trigger keywords: CONTROL POINTS, XCUT, NORTHING, EASTING, ELEV, ELEVATION,
- *   BENCHMARK, MONUMENT, N:, E:, TEXAS STATE PLANE, NAD-83, COORDINATE SYSTEM
- *
- * STRICT VALIDATION RULES:
- * - Northing and Easting values are range-validated for US State Plane Survey Feet.
- * - Elevation is optional.
- * - If column order is ambiguous, the parser fails gracefully with a descriptive error.
+ * The survey_ocr_patterns table grows with each extraction, making future parsing faster.
  */
 
 import { execSync } from 'child_process';
@@ -38,12 +32,19 @@ export interface PdfParseResult {
   warnings: string[];
   error?: string;
   method?: 'text' | 'ocr';
+  patternsLearned?: number;
 }
 
 interface TextItem {
   str: string;
   x: number;
   y: number;
+}
+
+interface OcrPattern {
+  category: string;
+  pattern: string;
+  aliases: string[];
 }
 
 function parseNum(s: string): number | null {
@@ -60,6 +61,126 @@ function validateCoordinates(northing: number, easting: number): string | null {
     return `Easting ${easting} is outside plausible US Survey Feet range (0–5,000,000)`;
   }
   return null;
+}
+
+/**
+ * Load approved patterns from the survey_ocr_patterns DB table.
+ * Falls back to hardcoded defaults if DB is unavailable.
+ */
+async function loadPatterns(): Promise<OcrPattern[]> {
+  try {
+    const { getDb } = await import('./db.js');
+    const db = await getDb();
+    if (!db) throw new Error('DB unavailable');
+    const { surveyOcrPatterns } = await import('../drizzle/schema.js');
+    const { eq } = await import('drizzle-orm');
+
+    const rows = await db
+      .select()
+      .from(surveyOcrPatterns)
+      .where(eq(surveyOcrPatterns.approved, 1));
+
+    return rows.map((r: any) => ({
+      category: r.category,
+      pattern: r.pattern,
+      aliases: r.aliases ? JSON.parse(r.aliases) : [],
+    }));
+  } catch {
+    // Fallback defaults if DB unavailable
+    return [
+      { category: 'table_header', pattern: 'CONTROL POINTS', aliases: ['Control Points', 'CONTROL PT', 'CTRL PTS'] },
+      { category: 'table_header', pattern: 'SURVEY POINTS', aliases: ['Survey Points', 'SURVEY PT'] },
+      { category: 'table_header', pattern: 'BENCHMARKS', aliases: ['Benchmarks', 'BENCH MARKS'] },
+      { category: 'table_header', pattern: 'HORIZONTAL CONTROL', aliases: ['Horizontal Control'] },
+      { category: 'point_label', pattern: 'XCUT', aliases: ['X-CUT', 'X CUT'] },
+      { category: 'point_label', pattern: 'BM', aliases: ['B.M.', 'BENCHMARK'] },
+      { category: 'coord_label', pattern: 'NORTHING', aliases: ['N:', 'N ='] },
+      { category: 'coord_label', pattern: 'EASTING', aliases: ['E:', 'E ='] },
+      { category: 'elev_label', pattern: 'ELEVATION', aliases: ['ELEV', 'ELEV:'] },
+      { category: 'coord_system', pattern: 'STATE PLANE', aliases: ['STATE PLANE COORDINATES', 'SPCS'] },
+      { category: 'coord_system', pattern: 'NAD-83', aliases: ['NAD83', 'NAD 83'] },
+    ];
+  }
+}
+
+/**
+ * Save newly discovered patterns to the DB (unapproved, pending review).
+ * Increments hit_count if pattern already exists.
+ */
+async function saveNewPatterns(
+  newPatterns: Array<{ category: string; pattern: string; sourceDocument: string }>,
+): Promise<number> {
+  if (newPatterns.length === 0) return 0;
+  try {
+    const { getDb } = await import('./db.js');
+    const db = await getDb();
+    if (!db) return 0;
+    const { surveyOcrPatterns } = await import('../drizzle/schema.js');
+    const { eq, and } = await import('drizzle-orm');
+
+    let saved = 0;
+    for (const np of newPatterns) {
+      // Check if pattern already exists
+      const existing = await db
+        .select({ id: surveyOcrPatterns.id, hitCount: surveyOcrPatterns.hitCount })
+        .from(surveyOcrPatterns)
+        .where(
+          and(
+            eq(surveyOcrPatterns.category, np.category),
+            eq(surveyOcrPatterns.pattern, np.pattern.toUpperCase()),
+          ),
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Increment hit count
+        await db
+          .update(surveyOcrPatterns)
+          .set({ hitCount: (existing[0].hitCount ?? 0) + 1 })
+          .where(eq(surveyOcrPatterns.id, existing[0].id));
+      } else {
+        // Insert as unapproved (pending review)
+        await db.insert(surveyOcrPatterns).values({
+          category: np.category,
+          pattern: np.pattern.toUpperCase(),
+          sourceDocument: np.sourceDocument,
+          confidence: 60,
+          approved: 0,
+          hitCount: 1,
+        });
+        saved++;
+      }
+    }
+    return saved;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Increment hit count for patterns that matched during text extraction.
+ */
+async function incrementPatternHits(matchedPatterns: string[]): Promise<void> {
+  if (matchedPatterns.length === 0) return;
+  try {
+    const { getDb } = await import('./db.js');
+    const db = await getDb();
+    if (!db) return;
+    const { surveyOcrPatterns } = await import('../drizzle/schema.js');
+    const { eq, inArray } = await import('drizzle-orm');
+
+    const rows = await db
+      .select({ id: surveyOcrPatterns.id, hitCount: surveyOcrPatterns.hitCount })
+      .from(surveyOcrPatterns)
+      .where(inArray(surveyOcrPatterns.pattern, matchedPatterns));
+
+    for (const row of rows) {
+      await db
+        .update(surveyOcrPatterns)
+        .set({ hitCount: (row.hitCount ?? 0) + 1 })
+        .where(eq(surveyOcrPatterns.id, row.id));
+    }
+  } catch {}
 }
 
 /**
@@ -113,35 +234,67 @@ function groupIntoRows(items: TextItem[], yTolerance = 4): TextItem[][] {
 }
 
 /**
- * Find the CONTROL POINT header row and extract column x-positions.
- * Supports both column-header format (NORTHING/EASTING headers) and
- * label-value format (N: 1234567.89 / E: 2345678.90 / ELEV: 123.45).
+ * Find the CONTROL POINT header row using patterns from the DB dataset.
  */
-function findHeaderColumns(rows: TextItem[][]): {
+function findHeaderColumns(
+  rows: TextItem[][],
+  patterns: OcrPattern[],
+): {
   headerRowIdx: number;
   cols: { pointId: number; northing: number; easting: number; elevation: number | null; description: number };
+  matchedPatterns: string[];
 } | null {
+  // Build search terms from patterns
+  const headerTerms = patterns
+    .filter(p => p.category === 'table_header')
+    .flatMap(p => [p.pattern, ...p.aliases].map(s => s.toUpperCase()));
+
+  const northingTerms = patterns
+    .filter(p => p.category === 'coord_label' && (p.pattern.includes('NORTHING') || p.aliases.some(a => a.includes('N:'))))
+    .flatMap(p => [p.pattern, ...p.aliases].map(s => s.toUpperCase()));
+
+  const eastingTerms = patterns
+    .filter(p => p.category === 'coord_label' && (p.pattern.includes('EASTING') || p.aliases.some(a => a.includes('E:'))))
+    .flatMap(p => [p.pattern, ...p.aliases].map(s => s.toUpperCase()));
+
+  const elevTerms = patterns
+    .filter(p => p.category === 'elev_label')
+    .flatMap(p => [p.pattern, ...p.aliases].map(s => s.toUpperCase()));
+
+  // Fallback defaults if DB patterns don't cover these
+  const allNorthing = Array.from(new Set([...northingTerms, 'NORTHING', 'N:', 'N =', 'NORTH']));
+  const allEasting = Array.from(new Set([...eastingTerms, 'EASTING', 'E:', 'E =', 'EAST']));
+  const allElev = Array.from(new Set([...elevTerms, 'ELEVATION', 'ELEV', 'ELEV:', 'HT', 'HEIGHT']));
+  const allHeaders = Array.from(new Set([...headerTerms, 'CONTROL', 'CONTROL POINTS', 'SURVEY POINTS', 'BENCHMARKS', 'MONUMENTS']));
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const texts = row.map(item => item.str.toUpperCase());
+    const fullText = texts.join(' ');
 
-    const hasControlPoint = texts.some(t =>
-      t.includes('CONTROL') || t.includes('CONTROL POINTS') || t.includes('CONTROL PT')
-    );
-    const hasNorthing = texts.some(t => t.includes('NORTHING') || t.includes('N:'));
-    const hasEasting = texts.some(t => t.includes('EASTING') || t.includes('E:'));
+    const hasHeader = allHeaders.some(h => fullText.includes(h));
+    const hasNorthing = allNorthing.some(n => fullText.includes(n));
+    const hasEasting = allEasting.some(e => fullText.includes(e));
 
-    if (hasControlPoint && hasNorthing && hasEasting) {
-      const findX = (keyword: string) => {
-        const item = row.find(it => it.str.toUpperCase().includes(keyword));
-        return item ? item.x : null;
+    if (hasHeader && hasNorthing && hasEasting) {
+      const matchedPatterns: string[] = [];
+
+      const findX = (terms: string[]) => {
+        for (const term of terms) {
+          const item = row.find(it => it.str.toUpperCase().includes(term));
+          if (item) {
+            matchedPatterns.push(term);
+            return item.x;
+          }
+        }
+        return null;
       };
 
-      const pointIdX = findX('CONTROL') ?? findX('POINT') ?? row[0]?.x;
-      const northingX = findX('NORTHING') ?? findX('N:');
-      const eastingX = findX('EASTING') ?? findX('E:');
-      const elevationX = findX('ELEVATION') ?? findX('ELEV') ?? findX('ELEV:');
-      const descriptionX = findX('DESCRIPTION') ?? findX('DESC');
+      const pointIdX = findX(allHeaders) ?? row[0]?.x;
+      const northingX = findX(allNorthing);
+      const eastingX = findX(allEasting);
+      const elevationX = findX(allElev);
+      const descriptionX = findX(['DESCRIPTION', 'DESC']);
 
       if (pointIdX == null || northingX == null || eastingX == null) return null;
 
@@ -154,6 +307,7 @@ function findHeaderColumns(rows: TextItem[][]): {
           elevation: elevationX,
           description: descriptionX ?? eastingX + 200,
         },
+        matchedPatterns,
       };
     }
   }
@@ -181,18 +335,19 @@ function assignToColumn(
 
 function parseControlPointTable(
   pageItems: TextItem[],
-): { points: ControlPoint[]; warnings: string[]; tablesFound: number } {
+  patterns: OcrPattern[],
+): { points: ControlPoint[]; warnings: string[]; tablesFound: number; matchedPatterns: string[] } {
   const warnings: string[] = [];
   const points: ControlPoint[] = [];
 
   const rows = groupIntoRows(pageItems);
-  const headerInfo = findHeaderColumns(rows);
+  const headerInfo = findHeaderColumns(rows, patterns);
 
   if (!headerInfo) {
-    return { points, warnings: ['No CONTROL POINT table with NORTHING/EASTING headers found.'], tablesFound: 0 };
+    return { points, warnings: ['No CONTROL POINT table with NORTHING/EASTING headers found.'], tablesFound: 0, matchedPatterns: [] };
   }
 
-  const { headerRowIdx, cols } = headerInfo;
+  const { headerRowIdx, cols, matchedPatterns } = headerInfo;
 
   for (let ri = headerRowIdx + 1; ri < rows.length; ri++) {
     const row = rows[ri];
@@ -234,30 +389,26 @@ function parseControlPointTable(
     points.push({ pointId: pointIdStr, northing, easting, elevation, description: descStr });
   }
 
-  return { points, warnings, tablesFound: points.length > 0 ? 1 : 0 };
+  return { points, warnings, tablesFound: points.length > 0 ? 1 : 0, matchedPatterns };
 }
 
 /**
  * OCR fallback: convert PDF to image, crop multiple regions, use LLM vision to extract control points.
- * Scans for: CONTROL POINTS, XCUT, BENCHMARK, MONUMENT, N:, E:, NORTHING, EASTING, ELEV,
- *   TEXAS STATE PLANE, NAD-83, COORDINATE SYSTEM, SURVEY POINT, CONTROL PT
+ * After successful extraction, saves newly detected patterns to the DB.
  */
 async function extractViaOcr(
   pdfBuffer: Buffer,
   fileName: string,
+  patterns: OcrPattern[],
 ): Promise<PdfParseResult> {
   const tmpId = randomUUID();
   const tmpPdf = join(tmpdir(), `${tmpId}.pdf`);
   const tmpImgBase = join(tmpdir(), `${tmpId}_page`);
 
   try {
-    // Write PDF to temp file
     writeFileSync(tmpPdf, pdfBuffer);
-
-    // Convert first page to PNG at 200 DPI
     execSync(`pdftoppm -r 200 -png -f 1 -l 1 "${tmpPdf}" "${tmpImgBase}"`, { timeout: 30000 });
 
-    // Find the generated image
     const imgPath = `${tmpImgBase}-1.png`;
     if (!existsSync(imgPath)) {
       return {
@@ -271,14 +422,11 @@ async function extractViaOcr(
       };
     }
 
-    // Load image with sharp to get dimensions and crop regions
     const sharp = (await import('sharp')).default;
     const imgMeta = await sharp(imgPath).metadata();
     const imgW = imgMeta.width ?? 0;
     const imgH = imgMeta.height ?? 0;
 
-    // Crop regions to scan — prioritize bottom-left (most common location for control point tables)
-    // but also scan bottom-right, full bottom strip, and full page as fallback
     const regions = [
       { name: 'bottom-left', left: 0, top: Math.floor(imgH * 0.65), width: Math.floor(imgW * 0.35), height: Math.floor(imgH * 0.35) },
       { name: 'bottom-right', left: Math.floor(imgW * 0.5), top: Math.floor(imgH * 0.65), width: Math.floor(imgW * 0.5), height: Math.floor(imgH * 0.35) },
@@ -289,15 +437,32 @@ async function extractViaOcr(
     const { invokeLLM } = await import('./_core/llm.js');
     const { storagePut } = await import('./storage.js');
 
+    // Build keyword list from DB patterns for the LLM prompt
+    const tableHeaderKeywords = patterns
+      .filter(p => p.category === 'table_header')
+      .map(p => p.pattern)
+      .slice(0, 15)
+      .join(', ');
+
+    const pointLabelKeywords = patterns
+      .filter(p => p.category === 'point_label')
+      .map(p => p.pattern)
+      .slice(0, 15)
+      .join(', ');
+
+    const coordSystemKeywords = patterns
+      .filter(p => p.category === 'coord_system')
+      .map(p => p.pattern)
+      .slice(0, 10)
+      .join(', ');
+
     for (const region of regions) {
-      // Crop region
       const cropPath = join(tmpdir(), `${tmpId}_crop_${region.name}.png`);
       await sharp(imgPath)
         .extract({ left: region.left, top: region.top, width: region.width, height: region.height })
         .png()
         .toFile(cropPath);
 
-      // Upload to R2 for LLM access
       const cropBuffer = readFileSync(cropPath);
       const { url: imageUrl } = await storagePut(
         `ocr-tmp/${tmpId}-${region.name}.png`,
@@ -305,28 +470,28 @@ async function extractViaOcr(
         'image/png'
       );
 
-      // Ask LLM to OCR the image for control points
       const prompt = `You are a precise OCR engine for engineering survey documents.
 
-Examine this image and look for a "CONTROL POINTS" table or section. It may also be labeled as:
-- CONTROL POINTS
-- CONTROL PT
-- SURVEY POINTS  
-- BENCHMARK
-- MONUMENT
-- PROJECT CONTROL
+Examine this image and look for a survey control point table. It may be labeled with any of these terms:
+TABLE HEADERS: ${tableHeaderKeywords}
+POINT LABELS: ${pointLabelKeywords}
+COORDINATE SYSTEMS: ${coordSystemKeywords}
 
 The table typically contains entries with:
-- A point number or ID (e.g., 1, 2, 3, or XCUT, MON-1, BM-1, etc.)
+- A point number or ID (numeric like 1, 2, 3 OR labeled like XCUT, MON-1, BM-1, GCP-1, etc.)
 - N: or NORTHING value (a large number like 6966963.40)
 - E: or EASTING value (a large number like 2592821.22)
 - ELEV: or ELEVATION value (optional, a smaller number like 482.63)
-- A coordinate system note (e.g., TEXAS STATE PLANE, NAD-83, NORTH CENTRAL ZONE)
+- A coordinate system note (e.g., TEXAS STATE PLANE, NAD-83, WGS84, UTM)
 
-If you find such a table, extract ALL points and return them as JSON in this exact format:
+ALSO: Report any NEW keywords you find that identify the table or coordinate system that are NOT in the lists above.
+
+Return JSON in this exact format:
 {
   "found": true,
   "coordinateSystem": "TEXAS STATE PLANE COORDINATE SYSTEM NAD-83 NORTH CENTRAL ZONE (4202)",
+  "tableHeaderFound": "CONTROL POINTS",
+  "newKeywordsFound": ["PROJECT DATUM", "GRID COORDINATES"],
   "points": [
     { "pointId": "1", "description": "XCUT", "northing": 6966963.40, "easting": 2592821.22, "elevation": 482.63 },
     { "pointId": "2", "description": "XCUT", "northing": 6966827.58, "easting": 2593148.58, "elevation": 479.48 }
@@ -353,13 +518,11 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
           response_format: { type: 'json_object' },
         });
       } catch (llmErr) {
-        continue; // Try next region
+        continue;
       }
 
-      // Clean up temp crop
       try { unlinkSync(cropPath); } catch {}
       try {
-        // Delete from R2 (best effort)
         const { storageDelete } = await import('./storage.js');
         await storageDelete(`ocr-tmp/${tmpId}-${region.name}.png`);
       } catch {}
@@ -404,6 +567,26 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
       }
 
       if (points.length > 0) {
+        // Save new keywords discovered by the LLM back to the DB
+        let patternsLearned = 0;
+        const newKeywords: Array<{ category: string; pattern: string; sourceDocument: string }> = [];
+
+        if (parsed.tableHeaderFound && typeof parsed.tableHeaderFound === 'string') {
+          newKeywords.push({ category: 'table_header', pattern: parsed.tableHeaderFound, sourceDocument: fileName });
+        }
+        if (Array.isArray(parsed.newKeywordsFound)) {
+          for (const kw of parsed.newKeywordsFound) {
+            if (typeof kw === 'string' && kw.trim().length > 2) {
+              newKeywords.push({ category: 'table_header', pattern: kw.trim(), sourceDocument: fileName });
+            }
+          }
+        }
+        if (parsed.coordinateSystem && typeof parsed.coordinateSystem === 'string') {
+          newKeywords.push({ category: 'coord_system', pattern: parsed.coordinateSystem.substring(0, 100), sourceDocument: fileName });
+        }
+
+        patternsLearned = await saveNewPatterns(newKeywords);
+
         return {
           success: true,
           points,
@@ -411,6 +594,7 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
           tablesFound: 1,
           warnings,
           method: 'ocr',
+          patternsLearned,
         };
       }
     }
@@ -421,12 +605,11 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
       totalPages: 1,
       tablesFound: 0,
       warnings: [],
-      error: 'No CONTROL POINTS table found via OCR. Ensure the PDF contains a labeled control points section with N/E/ELEV values.',
+      error: 'No CONTROL POINTS table found via OCR. Ensure the PDF contains a visible survey control point table.',
       method: 'ocr',
     };
 
   } finally {
-    // Clean up temp files
     try { if (existsSync(tmpPdf)) unlinkSync(tmpPdf); } catch {}
     try {
       const imgPath = `${tmpImgBase}-1.png`;
@@ -437,42 +620,45 @@ Return ONLY valid JSON. No explanation, no markdown, no code blocks.`;
 
 /**
  * Main entry point: parse a PDF buffer and extract all CONTROL POINT tables.
- * Tries text extraction first, falls back to OCR if text extraction yields no results.
+ * Tries text extraction first (using DB patterns), falls back to OCR if needed.
  */
 export async function parsePdfControlPoints(
   pdfBuffer: Buffer,
   fileName: string,
 ): Promise<PdfParseResult> {
+  // Load patterns from DB (or fallback defaults)
+  const patterns = await loadPatterns();
+
   let allPageItems: TextItem[][];
   let totalPages = 1;
 
-  // --- Strategy 1: Text extraction ---
+  // --- Strategy 1: Text extraction with DB patterns ---
   try {
     const result = await extractPdfItems(pdfBuffer);
     allPageItems = result.items;
     totalPages = result.pages;
   } catch (err) {
-    // Text extraction failed entirely — go straight to OCR
-    return extractViaOcr(pdfBuffer, fileName);
+    return extractViaOcr(pdfBuffer, fileName, patterns);
   }
 
-  // Check if there's meaningful text at all
   const hasText = allPageItems.some(p => p.length > 0);
 
   if (hasText) {
-    // Try each page
-    let bestResult: { points: ControlPoint[]; warnings: string[]; tablesFound: number } = {
-      points: [], warnings: [], tablesFound: 0,
+    let bestResult: { points: ControlPoint[]; warnings: string[]; tablesFound: number; matchedPatterns: string[] } = {
+      points: [], warnings: [], tablesFound: 0, matchedPatterns: [],
     };
 
     for (const pageItems of allPageItems) {
-      const result = parseControlPointTable(pageItems);
+      const result = parseControlPointTable(pageItems, patterns);
       if (result.points.length > bestResult.points.length) {
         bestResult = result;
       }
     }
 
     if (bestResult.points.length > 0) {
+      // Increment hit counts for matched patterns
+      await incrementPatternHits(bestResult.matchedPatterns);
+
       return {
         success: true,
         points: bestResult.points,
@@ -485,6 +671,5 @@ export async function parsePdfControlPoints(
   }
 
   // --- Strategy 2: OCR fallback ---
-  // Text extraction found no control points (either no text, or text present but no table)
-  return extractViaOcr(pdfBuffer, fileName);
+  return extractViaOcr(pdfBuffer, fileName, patterns);
 }

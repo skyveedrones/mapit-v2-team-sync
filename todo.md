@@ -2899,3 +2899,14 @@
 - [ ] Update backend to send intro email with credentials and setup link
 - [ ] Create new user dashboard showing assigned projects
 - [ ] Test end-to-end user creation and onboarding flow
+
+## Survey OCR Pattern Dataset System
+- [ ] Create survey_ocr_patterns table in drizzle/schema.ts
+- [ ] Seed initial keyword dataset
+- [ ] Run pnpm db:push for new table
+- [ ] Add DB helpers: getOcrPatterns, saveOcrPattern, approveOcrPattern
+- [ ] Update pdfControlPointParser.ts to query patterns DB before LLM
+- [ ] Update pdfControlPointParser.ts to save new patterns after LLM extraction
+- [ ] Add admin UI page: Survey OCR Patterns (/admin/ocr-patterns)
+- [ ] Add route for /admin/ocr-patterns in App.tsx
+- [ ] Add link to OCR Patterns in admin navigation
