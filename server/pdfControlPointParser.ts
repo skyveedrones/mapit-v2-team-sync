@@ -367,7 +367,10 @@ function parseControlPointTable(
     const elevStr = cells.elevation.join('').trim();
     const descStr = cells.description.join(' ').trim();
 
-    if (!pointIdStr || !/^\d{1,4}$/.test(pointIdStr)) continue;
+    // Accept numeric IDs (1-6 digits) OR alphanumeric labels (XCUT, MON-1, GCP-1, BM-1, etc.)
+    if (!pointIdStr || !/^[A-Z0-9][A-Z0-9\-\._ ]{0,19}$/i.test(pointIdStr)) continue;
+    // Skip obvious header/label rows
+    if (/^(POINT|PT|NO|NUM|ID|NAME|LABEL|STATION|STA)$/i.test(pointIdStr)) continue;
 
     const northing = parseNum(northingStr);
     const easting = parseNum(eastingStr);
@@ -407,7 +410,23 @@ async function extractViaOcr(
 
   try {
     writeFileSync(tmpPdf, pdfBuffer);
-    execSync(`pdftoppm -r 200 -png -f 1 -l 1 "${tmpPdf}" "${tmpImgBase}"`, { timeout: 30000 });
+    try {
+      execSync(`pdftoppm -r 200 -png -f 1 -l 1 "${tmpPdf}" "${tmpImgBase}"`, { timeout: 30000 });
+    } catch (pdftoppmErr) {
+      const msg = pdftoppmErr instanceof Error ? pdftoppmErr.message : String(pdftoppmErr);
+      const isNotFound = msg.includes('not found') || msg.includes('ENOENT') || msg.includes('No such file');
+      return {
+        success: false,
+        points: [],
+        totalPages: 1,
+        tablesFound: 0,
+        warnings: [],
+        error: isNotFound
+          ? 'No control point table was found via text extraction. OCR fallback requires pdftoppm (poppler-utils) which is not yet installed on this server. Please ensure your PDF contains a digital (selectable text) CONTROL POINTS table, or contact support.'
+          : `PDF to image conversion failed: ${msg}`,
+        method: 'ocr',
+      };
+    }
 
     const imgPath = `${tmpImgBase}-1.png`;
     if (!existsSync(imgPath)) {
