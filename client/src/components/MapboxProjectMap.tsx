@@ -531,14 +531,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               type: 'Feature' as const,
               geometry: { type: 'Point' as const, coordinates: [pt.longitude, pt.latitude] },
               properties: {
-                id: -(pt.index + 1), filename: pt.identifier || `Survey Point ${pt.index + 1}`,
-                latitude: pt.latitude, longitude: pt.longitude,
-                altitude: null, mediaType: 'survey',
-                thumbnailUrl: null, url: null,
-                isSurveyPoint: true,
-                easting: pt.easting ?? null, northing: pt.northing ?? null,
-              },
-            })) : []),
+              id: -(pt.index + 1), filename: pt.identifier || `Survey Point ${pt.index + 1}`,
+              latitude: pt.latitude, longitude: pt.longitude,
+              altitude: null, mediaType: 'survey',
+              thumbnailUrl: null, url: null,
+              isSurveyPoint: true,
+              easting: pt.easting ?? null, northing: pt.northing ?? null,
+              pointId: pt.identifier ?? null,
+              description: pt.description ?? null,
+            },
+          })) : []),
         ];
         if (map.getSource('media-source')) {
           (map.getSource('media-source') as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features: allFeatures });
@@ -622,6 +624,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               thumbnailUrl: null, url: null,
               isSurveyPoint: true,
               easting: pt.easting ?? null, northing: pt.northing ?? null,
+              pointId: pt.identifier ?? null,
+              description: pt.description ?? null,
             },
           })) : []),
       ];
@@ -658,14 +662,15 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         const props = feature.properties as any;
 
         if (props.isSurveyPoint) {
-          // Survey point popup — show identifier + coordinates + easting/northing + description
-          const surveyLabel = props.filename || `Survey Point ${Math.abs(props.id)}`;
+          // Survey point popup — show Point ID + coordinates + easting/northing + description
+          const pointId = props.pointId || props.filename || `${Math.abs(props.id)}`;
           const popupHtml = `
             <div style="max-width:240px;font-family:system-ui,sans-serif">
               <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #334155">
                 <div style="width:11px;height:11px;border-radius:50%;background:#f97316;flex-shrink:0"></div>
-                <div style="font-size:13px;font-weight:700;color:#fff">Survey Marker Point #${surveyLabel}</div>
+                <div style="font-size:13px;font-weight:700;color:#fff">Survey Control Point</div>
               </div>
+              <div style="font-size:13px;font-weight:700;color:#fb923c;margin-bottom:8px">Point ID: ${pointId}</div>
               <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lat: ${parseFloat(props.latitude).toFixed(7)}</div>
               <div style="font-size:11px;color:#94a3b8;margin-bottom:3px">Lng: ${parseFloat(props.longitude).toFixed(7)}</div>
               ${props.easting ? `<div style="font-size:11px;color:#fb923c;margin-top:5px">Easting: ${parseFloat(props.easting).toFixed(3)}</div>` : ''}
