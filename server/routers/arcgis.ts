@@ -18,11 +18,19 @@ const ARCGIS_SOURCES = [
     type: 'fill' as const,
   },
   {
-    id: 'kaufman_parcels',
-    label: 'Tax Parcels (Kaufman/Dallas Region)',
-    url: 'https://gis.dallascityhall.com/arcgis/rest/services/Basemap/DallasTaxParcels/FeatureServer/0',
-    outFields: '*',
-    color: '#3b82f6', // blue
+    id: 'txdot_row_parcels',
+    label: 'TxDOT ROW Parcels (Existing)',
+    url: 'https://maps.dot.state.tx.us/arcgis/rest/services/ROW/RPAM_TxDOTCONNECT/MapServer/10',
+    outFields: 'OBJECTID,comment,district,created_by',
+    color: '#ef4444', // red
+    type: 'fill' as const,
+  },
+  {
+    id: 'txdot_row_lines',
+    label: 'TxDOT ROW Lines (Existing)',
+    url: 'https://maps.dot.state.tx.us/arcgis/rest/services/ROW/RPAM_TxDOTCONNECT/MapServer/9',
+    outFields: 'OBJECTID,comment,district',
+    color: '#f97316', // orange
     type: 'line' as const,
   },
 ];
