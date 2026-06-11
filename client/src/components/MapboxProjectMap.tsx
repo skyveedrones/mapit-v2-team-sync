@@ -49,6 +49,7 @@ import {
   Upload,
   FileSearch,
   AlertCircle,
+  Radar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -319,6 +320,18 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSurveyPoints?.length]);
+    // ── ArcGIS ROW auto-detect state ─────────────────────────────────────
+    const [arcgisLayerData, setArcgisLayerData] = useState<Array<{
+      sourceId: string;
+      label: string;
+      color: string;
+      type: 'fill' | 'line';
+      featureCount: number;
+      visible: boolean;
+      error?: string;
+    }>>([]);
+    const arcgisQueryMutation = trpc.arcgis.queryAllByBbox.useMutation();
+
     // PDF Extract state
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const pdfCRS = sharedCRS;
@@ -783,6 +796,21 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         .setLngLat([lng, lat])
         .addTo(map);
     }, [mapLoaded, projectLocation, mediaWithGPS.length]);
+
+    // ── ArcGIS layer management ─────────────────────────────────────────────
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+
+      for (const layer of arcgisLayerData) {
+        const srcId = `arcgis-src-${layer.sourceId}`;
+        const layerId = `arcgis-layer-${layer.sourceId}`;
+        // Update visibility if layer exists
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, 'visibility', layer.visible ? 'visible' : 'none');
+        }
+      }
+    }, [arcgisLayerData, mapLoaded]);
 
     // ── Toggle flight path visibility ───────────────────────────────────────
     useEffect(() => {
@@ -1992,6 +2020,139 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           <Layers size={16} className="text-orange-400" />
                           <span className="text-sm font-medium">Add Map Overlay</span>
                         </button>
+
+                        {/* Auto-Detect ROWs (ArcGIS) */}
+                        <div className="rounded-xl bg-slate-800/70 border border-slate-700 overflow-hidden">
+                          <button
+                            onClick={async () => {
+                              if (isGuestUser || isDemoProject) {
+                                toast.info("Feature requires account.");
+                                return;
+                              }
+                              const map = mapRef.current;
+                              if (!map) return;
+                              const bounds = map.getBounds();
+                              if (!bounds) return;
+                              try {
+                                const results = await arcgisQueryMutation.mutateAsync({
+                                  minLng: bounds.getWest(),
+                                  minLat: bounds.getSouth(),
+                                  maxLng: bounds.getEast(),
+                                  maxLat: bounds.getNorth(),
+                                });
+                                // Remove old ArcGIS layers
+                                for (const layer of arcgisLayerData) {
+                                  const srcId = `arcgis-src-${layer.sourceId}`;
+                                  const layerId = `arcgis-layer-${layer.sourceId}`;
+                                  if (map.getLayer(layerId)) map.removeLayer(layerId);
+                                  if (map.getSource(srcId)) map.removeSource(srcId);
+                                }
+                                const newLayers: typeof arcgisLayerData = [];
+                                for (const result of results) {
+                                  const resultError = 'error' in result ? result.error : undefined;
+                                  if (resultError || !result.geojson) {
+                                    newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: 0, visible: true, error: resultError });
+                                    continue;
+                                  }
+                                  const srcId = `arcgis-src-${result.sourceId}`;
+                                  const layerId = `arcgis-layer-${result.sourceId}`;
+                                  try {
+                                    map.addSource(srcId, { type: 'geojson', data: result.geojson as any });
+                                    if (result.type === 'fill') {
+                                      map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': result.color, 'fill-opacity': 0.25, 'fill-outline-color': result.color } });
+                                    } else {
+                                      map.addLayer({ id: layerId, type: 'line', source: srcId, paint: { 'line-color': result.color, 'line-width': 1.5 } });
+                                    }
+                                    // Popup on click
+                                    map.on('click', layerId, (e) => {
+                                      const feature = e.features?.[0];
+                                      if (!feature) return;
+                                      const props = feature.properties ?? {};
+                                      const rows = Object.entries(props)
+                                        .filter(([k]) => !k.startsWith('_'))
+                                        .map(([k, v]) => `<div style="display:flex;gap:8px;border-bottom:1px solid #334155;padding:3px 0"><span style="color:#94a3b8;min-width:80px;font-size:10px">${k}</span><span style="color:#f1f5f9;font-size:10px;word-break:break-all">${v}</span></div>`)
+                                        .join('');
+                                      new mapboxgl.Popup({ offset: 10, maxWidth: '260px' })
+                                        .setLngLat(e.lngLat)
+                                        .setHTML(`<div style="background:#1e293b;border-radius:8px;padding:10px;color:#f1f5f9"><div style="font-weight:700;margin-bottom:6px;color:#${result.color.replace('#','')};font-size:12px">${result.label}</div>${rows}</div>`)
+                                        .addTo(map);
+                                    });
+                                    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+                                    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+                                    newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: true });
+                                  } catch (err) {
+                                    console.error('[ArcGIS] Failed to add layer', result.sourceId, err);
+                                  }
+                                }
+                                setArcgisLayerData(newLayers);
+                                const total = newLayers.reduce((s, l) => s + l.featureCount, 0);
+                                if (total > 0) toast.success(`Loaded ${total} features from ${newLayers.filter(l => l.featureCount > 0).length} source(s)`);
+                                else toast.info('No features found in this map area');
+                              } catch (err) {
+                                toast.error('ArcGIS query failed');
+                              }
+                            }}
+                            disabled={arcgisQueryMutation.isPending}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-all disabled:opacity-60"
+                          >
+                            <Radar size={16} className="text-amber-400" />
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">{arcgisQueryMutation.isPending ? 'Detecting...' : 'Auto-Detect ROWs'}</span>
+                              <span className="text-[10px] text-slate-400">Zoning & parcel data for current view</span>
+                            </div>
+                            {arcgisLayerData.length > 0 && (
+                              <span className="text-[10px] rounded-full bg-amber-500/20 text-amber-300 px-2 py-0.5">
+                                {arcgisLayerData.reduce((s, l) => s + l.featureCount, 0)}
+                              </span>
+                            )}
+                          </button>
+
+                          {/* ArcGIS layer toggles */}
+                          {arcgisLayerData.length > 0 && (
+                            <div className="border-t border-slate-700 px-3 py-2 space-y-1.5">
+                              {arcgisLayerData.map((layer) => (
+                                <div key={layer.sourceId} className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: layer.color }} />
+                                  <span className="flex-1 text-[11px] text-slate-300 truncate">{layer.label}</span>
+                                  {layer.error ? (
+                                    <span className="text-[10px] text-red-400">Error</span>
+                                  ) : (
+                                    <>
+                                      <span className="text-[10px] text-slate-500">{layer.featureCount}</span>
+                                      <button
+                                        onClick={() => {
+                                          setArcgisLayerData(prev => prev.map(l =>
+                                            l.sourceId === layer.sourceId ? { ...l, visible: !l.visible } : l
+                                          ));
+                                        }}
+                                        className="p-1 hover:bg-slate-700 rounded"
+                                        title={layer.visible ? 'Hide layer' : 'Show layer'}
+                                      >
+                                        {layer.visible ? <Eye size={12} /> : <EyeOff size={12} className="text-slate-500" />}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => {
+                                  const map = mapRef.current;
+                                  if (!map) return;
+                                  for (const layer of arcgisLayerData) {
+                                    const srcId = `arcgis-src-${layer.sourceId}`;
+                                    const layerId = `arcgis-layer-${layer.sourceId}`;
+                                    if (map.getLayer(layerId)) map.removeLayer(layerId);
+                                    if (map.getSource(srcId)) map.removeSource(srcId);
+                                  }
+                                  setArcgisLayerData([]);
+                                }}
+                                className="w-full text-[10px] text-slate-500 hover:text-red-400 transition-colors pt-1"
+                              >
+                                Clear all layers
+                              </button>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Import Survey Points */}
                         <div className="rounded-xl bg-slate-800/70 border border-slate-700 overflow-hidden">

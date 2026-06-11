@@ -12,6 +12,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminRouter } from "./routers/admin";
 import { coordinateConverterRouter } from "./routers/coordinateConverter";
+import { arcgisRouter } from "./routers/arcgis";
 import { coordinateConverterUploadRouter } from "./routers/coordinateConverterUpload";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -555,6 +556,7 @@ export const appRouter = router({
   admin: adminRouter,
   surveyOcr: surveyOcrRouter,
   coordinateConverter: coordinateConverterRouter,
+  arcgis: arcgisRouter,
   coordinateConverterUpload: coordinateConverterUploadRouter,
   
   users: router({
