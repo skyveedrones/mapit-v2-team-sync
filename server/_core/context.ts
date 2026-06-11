@@ -106,6 +106,28 @@ export async function createContext(
     }
 
     user = dbUser ?? null;
+
+    // Update lastSignedIn at most once per hour per user to keep the value fresh
+    // without hammering the DB on every API call.
+    if (user) {
+      const now = new Date();
+      const lastSeen = user.lastSignedIn ? new Date(user.lastSignedIn) : null;
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      if (!lastSeen || lastSeen < oneHourAgo) {
+        const dbInstance = await db.getDb();
+        if (dbInstance) {
+          const { users } = await import("../../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const nowIso = now.toISOString();
+          await dbInstance
+            .update(users)
+            .set({ lastSignedIn: nowIso })
+            .where(eq(users.id, user.id))
+            .catch(() => {});
+          user = { ...user, lastSignedIn: nowIso };
+        }
+      }
+    }
   } catch (err) {
     console.error("[Auth] Unexpected error in createContext:", err);
     user = null;

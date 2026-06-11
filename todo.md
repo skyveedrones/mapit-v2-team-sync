@@ -2910,3 +2910,18 @@
 - [ ] Add admin UI page: Survey OCR Patterns (/admin/ocr-patterns)
 - [ ] Add route for /admin/ocr-patterns in App.tsx
 - [ ] Add link to OCR Patterns in admin navigation
+
+## Fix User Last Sign In Date
+- [x] Update lastSignedIn on every authenticated request in context.ts (throttled 1x/hr per user)
+
+## Admin Survey OCR Patterns UI - Full Implementation
+- [ ] Verify survey_ocr_patterns table exists in schema and is migrated
+- [ ] Implement tRPC procedures: list patterns (with filters), approve/deactivate, edit, add, delete
+- [ ] Build /admin/survey-ocr page: table with hit counts, confidence, approval status
+- [ ] Add filter controls: by category and by status (pending/approved/inactive)
+- [ ] Add approve/deactivate toggle button per row
+- [ ] Add inline edit for pattern text, aliases, confidence
+- [ ] Add "New Pattern" form to manually add patterns
+- [ ] Add delete button per row with confirmation
+- [ ] Wire pdfControlPointParser to load approved patterns from DB before LLM call
+- [ ] Wire pdfControlPointParser to save newly discovered patterns (pending) after LLM extraction
