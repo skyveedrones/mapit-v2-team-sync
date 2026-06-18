@@ -50,6 +50,7 @@ import {
   FileSearch,
   AlertCircle,
   Radar,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -337,6 +338,42 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         return stored === null ? true : stored === 'true';
       } catch { return true; }
     });
+    // ── Address search state ────────────────────────────────────────────────
+    const [addressQuery, setAddressQuery] = useState('');
+    const [addressSearching, setAddressSearching] = useState(false);
+    const [addressSuggestions, setAddressSuggestions] = useState<{ place_name: string; center: [number, number] }[]>([]);
+    const addressDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAddressSearch = async (query: string) => {
+      setAddressQuery(query);
+      if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current);
+      if (!query.trim()) { setAddressSuggestions([]); return; }
+      addressDebounceRef.current = setTimeout(async () => {
+        setAddressSearching(true);
+        try {
+          const token = (window as any).MAPBOX_TOKEN ||
+            document.querySelector('meta[name="mapbox-token"]')?.getAttribute('content') ||
+            (mapboxgl as any).accessToken;
+          const res = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&autocomplete=true&limit=5`
+          );
+          const data = await res.json();
+          setAddressSuggestions((data.features ?? []).map((f: any) => ({ place_name: f.place_name, center: f.center })));
+        } catch { setAddressSuggestions([]); }
+        finally { setAddressSearching(false); }
+      }, 350);
+    };
+
+    const flyToAddress = (center: [number, number], placeName: string) => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.flyTo({ center, zoom: 14, duration: 1200 });
+      setAddressQuery(placeName);
+      setAddressSuggestions([]);
+      searchInputRef.current?.blur();
+    };
+
     const arcgisAutoRefreshRef = useRef(false);
     const arcgisDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Ref always holds the latest arcgisLayerData so callbacks never have stale closures
@@ -1851,6 +1888,50 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             <div className="absolute bottom-4 left-4 z-[5] bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-[10px] text-slate-300 border border-slate-700">
               {mediaWithGPS.length > 0 ? `${mediaWithGPS.length} GPS points` : ""} Satellite Raster
             </div>
+
+              {/* Address Search Bar */}
+              <div className="absolute top-3 left-3 z-[20] w-72">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  {addressSearching && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={addressQuery}
+                    onChange={e => handleAddressSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') { setAddressQuery(''); setAddressSuggestions([]); }
+                      if (e.key === 'Enter' && addressSuggestions.length > 0) flyToAddress(addressSuggestions[0].center, addressSuggestions[0].place_name);
+                    }}
+                    placeholder="Search address or city..."
+                    className="w-full pl-8 pr-8 py-2 text-sm bg-slate-900/90 backdrop-blur-md text-white placeholder-slate-400 border border-slate-600 rounded-lg focus:outline-none focus:border-amber-400 shadow-lg"
+                  />
+                  {addressQuery && (
+                    <button
+                      onClick={() => { setAddressQuery(''); setAddressSuggestions([]); }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+                {addressSuggestions.length > 0 && (
+                  <div className="mt-1 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+                    {addressSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => flyToAddress(s.center, s.place_name)}
+                        className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-700 border-b border-slate-800 last:border-0 flex items-start gap-2"
+                      >
+                        <MapPin size={11} className="text-amber-400 mt-0.5 shrink-0" />
+                        <span className="truncate">{s.place_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Fullscreen toggle button (top-right) */}
               <button
