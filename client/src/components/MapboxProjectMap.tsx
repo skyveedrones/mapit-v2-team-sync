@@ -344,6 +344,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [addressSuggestions, setAddressSuggestions] = useState<{ place_name: string; center: [number, number] }[]>([]);
     const addressDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
     const handleAddressSearch = async (query: string) => {
       setAddressQuery(query);
@@ -372,6 +373,24 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       setAddressQuery(placeName);
       setAddressSuggestions([]);
       searchInputRef.current?.blur();
+      // Remove previous search marker
+      if (searchMarkerRef.current) { searchMarkerRef.current.remove(); searchMarkerRef.current = null; }
+      // Create a custom amber pin element
+      const el = document.createElement('div');
+      el.style.cssText = [
+        'width:28px', 'height:36px', 'cursor:pointer',
+        'background:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 28 36\'%3E%3Cellipse cx=\'14\' cy=\'34\' rx=\'5\' ry=\'2\' fill=\'rgba(0,0,0,0.25)\'/%3E%3Cpath d=\'M14 0C8.477 0 4 4.477 4 10c0 7.5 10 24 10 24S24 17.5 24 10C24 4.477 19.523 0 14 0z\' fill=\'%23f59e0b\'/%3E%3Ccircle cx=\'14\' cy=\'10\' r=\'4.5\' fill=\'white\'/%3E%3C/svg%3E") no-repeat center/contain',
+        'filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+      ].join(';');
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat(center)
+        .setPopup(
+          new mapboxgl.Popup({ offset: 8, closeButton: true, maxWidth: '220px' })
+            .setHTML(`<div style="background:#1e293b;border-radius:8px;padding:8px 10px;color:#f1f5f9;font-size:12px"><div style="font-weight:700;color:#f59e0b;margin-bottom:4px">📍 Search Result</div><div>${placeName}</div></div>`)
+        )
+        .addTo(map);
+      marker.getPopup()?.addTo(map);
+      searchMarkerRef.current = marker;
     };
 
     const arcgisAutoRefreshRef = useRef(false);
