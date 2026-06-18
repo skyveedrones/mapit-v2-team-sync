@@ -403,6 +403,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const arcgisDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Ref always holds the latest arcgisLayerData so callbacks never have stale closures
     const arcgisLayerDataRef = useRef<typeof arcgisLayerData>([]);
+    // Ref always holds the latest visibility map so runArcgisQuery never reads stale state
+    const arcgisLayerVisibilityRef = useRef<Record<string, boolean>>({});
     const arcgisQueryMutation = trpc.arcgis.queryAllByBbox.useMutation();
 
     // PDF Extract state
@@ -973,7 +975,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
             // Default OFF; restore session preference if user previously toggled this layer
-            const sessionVisible = arcgisLayerVisibility[result.sourceId];
+            // Use ref (not state) to avoid stale closure on auto-refresh
+            const sessionVisible = arcgisLayerVisibilityRef.current[result.sourceId];
             const isVisible = sessionVisible === true; // only show if explicitly turned on
             if (!isVisible) map.setLayoutProperty(layerId, 'visibility', 'none');
             newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: isVisible });
@@ -1000,6 +1003,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       try { localStorage.setItem('mapit_arcgis_autorefresh', String(arcgisAutoRefresh)); } catch {}
     }, [arcgisAutoRefresh]);
     useEffect(() => { arcgisLayerDataRef.current = arcgisLayerData; }, [arcgisLayerData]);
+    useEffect(() => { arcgisLayerVisibilityRef.current = arcgisLayerVisibility; }, [arcgisLayerVisibility]);
 
     // Attach / detach moveend listener based on auto-refresh toggle
     useEffect(() => {
