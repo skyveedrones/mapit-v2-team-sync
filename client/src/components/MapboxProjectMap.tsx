@@ -330,7 +330,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       visible: boolean;
       error?: string;
     }>>([]);
-    const [arcgisAutoRefresh, setArcgisAutoRefresh] = useState(false);
+    const [arcgisAutoRefresh, setArcgisAutoRefresh] = useState(() => {
+      try { return localStorage.getItem('mapit_arcgis_autorefresh') === 'true'; } catch { return false; }
+    });
     const arcgisAutoRefreshRef = useRef(false);
     const arcgisDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const arcgisQueryMutation = trpc.arcgis.queryAllByBbox.useMutation();
@@ -884,8 +886,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isGuestUser, isDemoProject]);
 
-    // Keep ref in sync with state so the moveend handler always sees current value
-    useEffect(() => { arcgisAutoRefreshRef.current = arcgisAutoRefresh; }, [arcgisAutoRefresh]);
+    // Keep ref in sync with state and persist preference to localStorage
+    useEffect(() => {
+      arcgisAutoRefreshRef.current = arcgisAutoRefresh;
+      try { localStorage.setItem('mapit_arcgis_autorefresh', String(arcgisAutoRefresh)); } catch {}
+    }, [arcgisAutoRefresh]);
 
     // Attach / detach moveend listener based on auto-refresh toggle
     useEffect(() => {
