@@ -331,10 +331,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       error?: string;
     }>>([]);
     const [arcgisAutoRefresh, setArcgisAutoRefresh] = useState(() => {
-      try { return localStorage.getItem('mapit_arcgis_autorefresh') === 'true'; } catch { return false; }
+      try {
+        const stored = localStorage.getItem('mapit_arcgis_autorefresh');
+        // Default ON if no preference has been saved yet
+        return stored === null ? true : stored === 'true';
+      } catch { return true; }
     });
     const arcgisAutoRefreshRef = useRef(false);
     const arcgisDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Ref always holds the latest arcgisLayerData so callbacks never have stale closures
+    const arcgisLayerDataRef = useRef<typeof arcgisLayerData>([]);
     const arcgisQueryMutation = trpc.arcgis.queryAllByBbox.useMutation();
 
     // PDF Extract state
@@ -818,7 +824,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     }, [arcgisLayerData, mapLoaded]);
 
     // ── ArcGIS auto-refresh on map move/zoom ────────────────────────────────
-    const runArcgisQuery = useCallback(async () => {
+    const runArcgisQuery = useCallback(async (showToast = false) => {
       const map = mapRef.current;
       if (!map || isGuestUser || isDemoProject) return;
       const bounds = map.getBounds();
@@ -830,8 +836,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           maxLng: bounds.getEast(),
           maxLat: bounds.getNorth(),
         });
-        // Remove old layers
-        for (const layer of arcgisLayerData) {
+        // Remove old layers using ref so we always have fresh data
+        for (const layer of arcgisLayerDataRef.current) {
           const srcId = `arcgis-src-${layer.sourceId}`;
           const layerId = `arcgis-layer-${layer.sourceId}`;
           if (map.getLayer(layerId)) map.removeLayer(layerId);
@@ -880,17 +886,24 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
           }
         }
         setArcgisLayerData(newLayers);
+        if (showToast) {
+          const total = newLayers.reduce((s, l) => s + l.featureCount, 0);
+          if (total > 0) toast.success(`Loaded ${total} features from ${newLayers.filter(l => l.featureCount > 0).length} source(s)`);
+          else toast.info('No features found in this map area');
+        }
       } catch (err) {
         console.error('[ArcGIS] Auto-refresh query failed', err);
+        if (showToast) toast.error('ArcGIS query failed');
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isGuestUser, isDemoProject]);
 
-    // Keep ref in sync with state and persist preference to localStorage
+    // Keep refs in sync with state
     useEffect(() => {
       arcgisAutoRefreshRef.current = arcgisAutoRefresh;
       try { localStorage.setItem('mapit_arcgis_autorefresh', String(arcgisAutoRefresh)); } catch {}
     }, [arcgisAutoRefresh]);
+    useEffect(() => { arcgisLayerDataRef.current = arcgisLayerData; }, [arcgisLayerData]);
 
     // Attach / detach moveend listener based on auto-refresh toggle
     useEffect(() => {
@@ -2141,83 +2154,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                 toast.info("Feature requires account.");
                                 return;
                               }
-                              const map = mapRef.current;
-                              if (!map) return;
-                              const bounds = map.getBounds();
-                              if (!bounds) return;
-                              try {
-                                const results = await arcgisQueryMutation.mutateAsync({
-                                  minLng: bounds.getWest(),
-                                  minLat: bounds.getSouth(),
-                                  maxLng: bounds.getEast(),
-                                  maxLat: bounds.getNorth(),
-                                });
-                                // Remove old ArcGIS layers
-                                for (const layer of arcgisLayerData) {
-                                  const srcId = `arcgis-src-${layer.sourceId}`;
-                                  const layerId = `arcgis-layer-${layer.sourceId}`;
-                                  if (map.getLayer(layerId)) map.removeLayer(layerId);
-                                  if (map.getSource(srcId)) map.removeSource(srcId);
-                                }
-                                const newLayers: typeof arcgisLayerData = [];
-                                for (const result of results) {
-                                  const resultError = 'error' in result ? result.error : undefined;
-                                  if (resultError || !result.geojson) {
-                                    newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: 0, visible: true, error: resultError });
-                                    continue;
-                                  }
-                                  const srcId = `arcgis-src-${result.sourceId}`;
-                                  const layerId = `arcgis-layer-${result.sourceId}`;
-                                  try {
-                                    map.addSource(srcId, { type: 'geojson', data: result.geojson as any });
-                                    if (result.type === 'fill') {
-                                      // FEMA flood zones get color-coded by zone type
-                                      const isFema = result.sourceId === 'fema_flood_zones';
-                                      const fillColor = isFema
-                                        ? ['match', ['get', 'FLD_ZONE'],
-                                            'AE', '#1d4ed8',   // dark blue - 100yr w/ BFE
-                                            'A',  '#3b82f6',   // blue - 100yr no BFE
-                                            'AO', '#60a5fa',   // light blue - shallow flooding
-                                            'AH', '#60a5fa',
-                                            'VE', '#7c3aed',   // purple - coastal high hazard
-                                            'V',  '#8b5cf6',
-                                            'X',  '#fbbf24',   // yellow - 500yr / minimal
-                                            '#94a3b8'          // fallback gray
-                                          ]
-                                        : result.color;
-                                      const fillOpacity = isFema ? 0.35 : 0.25;
-                                      map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': fillColor as any, 'fill-opacity': fillOpacity, 'fill-outline-color': isFema ? '#1e3a8a' : result.color } });
-                                    } else {
-                                      map.addLayer({ id: layerId, type: 'line', source: srcId, paint: { 'line-color': result.color, 'line-width': 1.5 } });
-                                    }
-                                    // Popup on click
-                                    map.on('click', layerId, (e) => {
-                                      const feature = e.features?.[0];
-                                      if (!feature) return;
-                                      const props = feature.properties ?? {};
-                                      const rows = Object.entries(props)
-                                        .filter(([k]) => !k.startsWith('_'))
-                                        .map(([k, v]) => `<div style="display:flex;gap:8px;border-bottom:1px solid #334155;padding:3px 0"><span style="color:#94a3b8;min-width:80px;font-size:10px">${k}</span><span style="color:#f1f5f9;font-size:10px;word-break:break-all">${v}</span></div>`)
-                                        .join('');
-                                      new mapboxgl.Popup({ offset: 10, maxWidth: '260px' })
-                                        .setLngLat(e.lngLat)
-                                        .setHTML(`<div style="background:#1e293b;border-radius:8px;padding:10px;color:#f1f5f9"><div style="font-weight:700;margin-bottom:6px;color:#${result.color.replace('#','')};font-size:12px">${result.label}</div>${rows}</div>`)
-                                        .addTo(map);
-                                    });
-                                    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-                                    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-                                    newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: true });
-                                  } catch (err) {
-                                    console.error('[ArcGIS] Failed to add layer', result.sourceId, err);
-                                  }
-                                }
-                                setArcgisLayerData(newLayers);
-                                const total = newLayers.reduce((s, l) => s + l.featureCount, 0);
-                                if (total > 0) toast.success(`Loaded ${total} features from ${newLayers.filter(l => l.featureCount > 0).length} source(s)`);
-                                else toast.info('No features found in this map area');
-                              } catch (err) {
-                                toast.error('ArcGIS query failed');
-                              }
+                              await runArcgisQuery(true);
                             }}
                             disabled={arcgisQueryMutation.isPending}
                             className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-all disabled:opacity-60"
