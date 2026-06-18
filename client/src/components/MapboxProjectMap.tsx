@@ -2059,7 +2059,22 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                   try {
                                     map.addSource(srcId, { type: 'geojson', data: result.geojson as any });
                                     if (result.type === 'fill') {
-                                      map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': result.color, 'fill-opacity': 0.25, 'fill-outline-color': result.color } });
+                                      // FEMA flood zones get color-coded by zone type
+                                      const isFema = result.sourceId === 'fema_flood_zones';
+                                      const fillColor = isFema
+                                        ? ['match', ['get', 'FLD_ZONE'],
+                                            'AE', '#1d4ed8',   // dark blue - 100yr w/ BFE
+                                            'A',  '#3b82f6',   // blue - 100yr no BFE
+                                            'AO', '#60a5fa',   // light blue - shallow flooding
+                                            'AH', '#60a5fa',
+                                            'VE', '#7c3aed',   // purple - coastal high hazard
+                                            'V',  '#8b5cf6',
+                                            'X',  '#fbbf24',   // yellow - 500yr / minimal
+                                            '#94a3b8'          // fallback gray
+                                          ]
+                                        : result.color;
+                                      const fillOpacity = isFema ? 0.35 : 0.25;
+                                      map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': fillColor as any, 'fill-opacity': fillOpacity, 'fill-outline-color': isFema ? '#1e3a8a' : result.color } });
                                     } else {
                                       map.addLayer({ id: layerId, type: 'line', source: srcId, paint: { 'line-color': result.color, 'line-width': 1.5 } });
                                     }

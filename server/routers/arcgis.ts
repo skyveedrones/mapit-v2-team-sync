@@ -33,6 +33,14 @@ const ARCGIS_SOURCES = [
     color: '#f97316', // orange
     type: 'line' as const,
   },
+  {
+    id: 'fema_flood_zones',
+    label: 'FEMA Flood Zones (Nationwide)',
+    url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Flood_Hazard_Reduced_Set_gdb/FeatureServer/0',
+    outFields: 'FLD_ZONE,ZONE_SUBTY,SFHA_TF,STUDY_TYP',
+    color: '#3b82f6', // blue (default; frontend overrides per zone)
+    type: 'fill' as const,
+  },
 ];
 
 async function queryArcGIS(
