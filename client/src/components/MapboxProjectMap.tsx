@@ -1913,6 +1913,25 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                 )}
               </div>
 
+              {/* ── FEMA Flood Zone Legend ── */}
+              {arcgisLayerData.some(l => l.sourceId === 'fema_flood_zones' && l.visible) && (
+                <div className="absolute bottom-10 left-4 z-[50] bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 px-3 py-2 text-white text-[10px] shadow-lg">
+                  <div className="font-semibold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">FEMA Flood Zones</div>
+                  {[
+                    { color: '#1d4ed8', label: 'AE — 100-yr flood w/ BFE' },
+                    { color: '#3b82f6', label: 'A — 100-yr flood' },
+                    { color: '#60a5fa', label: 'AO/AH — Shallow flooding' },
+                    { color: '#7c3aed', label: 'VE/V — Coastal high hazard' },
+                    { color: '#fbbf24', label: 'X — 500-yr / minimal hazard' },
+                  ].map(({ color, label }) => (
+                    <div key={label} className="flex items-center gap-2 py-0.5">
+                      <div className="w-3 h-3 rounded-sm shrink-0 border border-white/20" style={{ backgroundColor: color, opacity: 0.85 }} />
+                      <span className="text-slate-200">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* ── Overlay Manager Sidebar ── */}
               {(activeOverlays.length > 0 || mediaWithGPS.length > 0) && (
                 <>
