@@ -1,11 +1,11 @@
 {
-  "version": "2.4.313",
-  "commit": "cebeccd",
-  "fullCommit": "cebeccdcb1d18ff9fdbfa1dd6a3d037e241f6630",
-  "hash": "cebeccd",
-  "fullHash": "cebeccdcb1d18ff9fdbfa1dd6a3d037e241f6630",
+  "version": "2.4.314",
+  "commit": "133923b",
+  "fullCommit": "133923bbd0eb9e5d927fd556abfa12563f64e269",
+  "hash": "133923b",
+  "fullHash": "133923bbd0eb9e5d927fd556abfa12563f64e269",
   "branch": "main",
-  "buildDate": "2026-06-18T14:17:43.464Z",
-  "timestamp": 1781792263464,
-  "buildTime": "6/18/2026, 2:17:43 PM"
+  "buildDate": "2026-06-18T14:34:11.651Z",
+  "timestamp": 1781793251651,
+  "buildTime": "6/18/2026, 2:34:11 PM"
 }

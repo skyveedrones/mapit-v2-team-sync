@@ -320,7 +320,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSurveyPoints?.length]);
-    // ── ArcGIS ROW auto-detect state ─────────────────────────────────────
+    // ── ArcGIS Map Layers auto-detect state ─────────────────────────────────────
     const [arcgisLayerData, setArcgisLayerData] = useState<Array<{
       sourceId: string;
       label: string;
@@ -330,6 +330,9 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       visible: boolean;
       error?: string;
     }>>([]);
+    const [arcgisAutoRefresh, setArcgisAutoRefresh] = useState(false);
+    const arcgisAutoRefreshRef = useRef(false);
+    const arcgisDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const arcgisQueryMutation = trpc.arcgis.queryAllByBbox.useMutation();
 
     // PDF Extract state
@@ -811,6 +814,91 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         }
       }
     }, [arcgisLayerData, mapLoaded]);
+
+    // ── ArcGIS auto-refresh on map move/zoom ────────────────────────────────
+    const runArcgisQuery = useCallback(async () => {
+      const map = mapRef.current;
+      if (!map || isGuestUser || isDemoProject) return;
+      const bounds = map.getBounds();
+      if (!bounds) return;
+      try {
+        const results = await arcgisQueryMutation.mutateAsync({
+          minLng: bounds.getWest(),
+          minLat: bounds.getSouth(),
+          maxLng: bounds.getEast(),
+          maxLat: bounds.getNorth(),
+        });
+        // Remove old layers
+        for (const layer of arcgisLayerData) {
+          const srcId = `arcgis-src-${layer.sourceId}`;
+          const layerId = `arcgis-layer-${layer.sourceId}`;
+          if (map.getLayer(layerId)) map.removeLayer(layerId);
+          if (map.getSource(srcId)) map.removeSource(srcId);
+        }
+        const newLayers: typeof arcgisLayerData = [];
+        for (const result of results) {
+          const resultError = 'error' in result ? result.error : undefined;
+          if (resultError || !result.geojson) { continue; }
+          const srcId = `arcgis-src-${result.sourceId}`;
+          const layerId = `arcgis-layer-${result.sourceId}`;
+          try {
+            map.addSource(srcId, { type: 'geojson', data: result.geojson as any });
+            if (result.type === 'fill') {
+              const isFema = result.sourceId === 'fema_flood_zones';
+              const fillColor = isFema
+                ? ['match', ['get', 'FLD_ZONE'],
+                    'AE', '#1d4ed8', 'A', '#3b82f6',
+                    'AO', '#60a5fa', 'AH', '#60a5fa',
+                    'VE', '#7c3aed', 'V', '#8b5cf6',
+                    'X', '#fbbf24', '#94a3b8']
+                : result.color;
+              const fillOpacity = isFema ? 0.35 : 0.25;
+              map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': fillColor as any, 'fill-opacity': fillOpacity, 'fill-outline-color': isFema ? '#1e3a8a' : result.color } });
+            } else {
+              map.addLayer({ id: layerId, type: 'line', source: srcId, paint: { 'line-color': result.color, 'line-width': 1.5 } });
+            }
+            map.on('click', layerId, (e) => {
+              const feature = e.features?.[0];
+              if (!feature) return;
+              const props = feature.properties ?? {};
+              const rows = Object.entries(props)
+                .filter(([k]) => !k.startsWith('_'))
+                .map(([k, v]) => `<div style="display:flex;gap:8px;border-bottom:1px solid #334155;padding:3px 0"><span style="color:#94a3b8;min-width:80px;font-size:10px">${k}</span><span style="color:#f1f5f9;font-size:10px;word-break:break-all">${v}</span></div>`)
+                .join('');
+              new mapboxgl.Popup({ offset: 10, maxWidth: '260px' })
+                .setLngLat(e.lngLat)
+                .setHTML(`<div style="background:#1e293b;border-radius:8px;padding:10px;color:#f1f5f9"><div style="font-weight:700;margin-bottom:6px;color:${result.color};font-size:12px">${result.label}</div>${rows}</div>`)
+                .addTo(map);
+            });
+            map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+            newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: true });
+          } catch (err) {
+            console.error('[ArcGIS] Failed to add layer', result.sourceId, err);
+          }
+        }
+        setArcgisLayerData(newLayers);
+      } catch (err) {
+        console.error('[ArcGIS] Auto-refresh query failed', err);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isGuestUser, isDemoProject]);
+
+    // Keep ref in sync with state so the moveend handler always sees current value
+    useEffect(() => { arcgisAutoRefreshRef.current = arcgisAutoRefresh; }, [arcgisAutoRefresh]);
+
+    // Attach / detach moveend listener based on auto-refresh toggle
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapLoaded) return;
+      const handler = () => {
+        if (!arcgisAutoRefreshRef.current) return;
+        if (arcgisDebounceRef.current) clearTimeout(arcgisDebounceRef.current);
+        arcgisDebounceRef.current = setTimeout(() => { runArcgisQuery(); }, 800);
+      };
+      map.on('moveend', handler);
+      return () => { map.off('moveend', handler); };
+    }, [mapLoaded, runArcgisQuery]);
 
     // ── Toggle flight path visibility ───────────────────────────────────────
     useEffect(() => {
@@ -2131,8 +2219,8 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                           >
                             <Radar size={16} className="text-amber-400" />
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">{arcgisQueryMutation.isPending ? 'Detecting...' : 'Auto-Detect ROWs'}</span>
-                              <span className="text-[10px] text-slate-400">Zoning & parcel data for current view</span>
+                              <span className="text-sm font-medium block">{arcgisQueryMutation.isPending ? 'Loading Layers...' : 'Map Zone Layers'}</span>
+                              <span className="text-[10px] text-slate-400">Zoning, ROW & flood data for current view</span>
                             </div>
                             {arcgisLayerData.length > 0 && (
                               <span className="text-[10px] rounded-full bg-amber-500/20 text-amber-300 px-2 py-0.5">
@@ -2140,6 +2228,18 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                               </span>
                             )}
                           </button>
+
+                          {/* Auto-refresh toggle */}
+                          <div className="border-t border-slate-700 px-3 py-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400">Auto-refresh on pan/zoom</span>
+                            <button
+                              onClick={() => setArcgisAutoRefresh(v => !v)}
+                              className={`relative w-8 h-4 rounded-full transition-colors ${arcgisAutoRefresh ? 'bg-amber-500' : 'bg-slate-600'}`}
+                              title={arcgisAutoRefresh ? 'Disable auto-refresh' : 'Enable auto-refresh'}
+                            >
+                              <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${arcgisAutoRefresh ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                            </button>
+                          </div>
 
                           {/* ArcGIS layer toggles */}
                           {arcgisLayerData.length > 0 && (
