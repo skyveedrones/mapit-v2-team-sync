@@ -909,15 +909,45 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             map.addSource(srcId, { type: 'geojson', data: result.geojson as any });
             if (result.type === 'fill') {
               const isFema = result.sourceId === 'fema_flood_zones';
+              const isForney = result.sourceId === 'forney_zoning';
+              // Official Forney Zoning colors from ArcGIS renderer (RGBA→hex)
+              const forneyColorMap: Record<string, string> = {
+                'Agriculture': '#89cd66',
+                'Central Business District': '#1f78b4',
+                'Commercial': '#734c00',
+                'General Retail': '#ff5500',
+                'Light Industrial': '#fb9a99',
+                'Mixed Use': '#e31a1c',
+                'Multi Family Residential 15 District': '#fdbf6f',
+                'Neighborhood Service': '#ffebbe',
+                'Office District': '#cab2d6',
+                'Planned Community Development': '#6a3d9a',
+                'Planned Development': '#ffff99',
+                'Single Family 11 District': '#b15928',
+                'Single Family 15 District': '#a6cee3',
+                'Single Family 20 District': '#cdf57a',
+                'Single Family 6 District': '#e69800',
+                'Industrial Park Temp PD': '#a6cee3',
+                'Planned Commercial Development': '#1f78b4',
+                'Single Family Residential-11': '#a87000',
+                'Single Family Residential-15': '#73dfff',
+                'Single Family Residential-20': '#b4d79e',
+                'Single Family Residential-6': '#e69800',
+              };
               const fillColor = isFema
                 ? ['match', ['get', 'FLD_ZONE'],
                     'AE', '#1d4ed8', 'A', '#3b82f6',
                     'AO', '#60a5fa', 'AH', '#60a5fa',
                     'VE', '#7c3aed', 'V', '#8b5cf6',
                     'X', '#fbbf24', '#94a3b8']
-                : result.color;
-              const fillOpacity = isFema ? 0.35 : 0.25;
-              map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': fillColor as any, 'fill-opacity': fillOpacity, 'fill-outline-color': isFema ? '#1e3a8a' : result.color } });
+                : isForney
+                  ? (['match', ['get', 'description'],
+                      ...Object.entries(forneyColorMap).flatMap(([k, v]) => [k, v]),
+                      '#cccccc'] as any)
+                  : result.color;
+              const fillOpacity = isFema ? 0.35 : isForney ? 0.7 : 0.25;
+              const outlineColor = isFema ? '#1e3a8a' : isForney ? '#4e4e4e' : result.color;
+              map.addLayer({ id: layerId, type: 'fill', source: srcId, paint: { 'fill-color': fillColor as any, 'fill-opacity': fillOpacity, 'fill-outline-color': outlineColor } });
             } else {
               map.addLayer({ id: layerId, type: 'line', source: srcId, paint: { 'line-color': result.color, 'line-width': 1.5 } });
             }
