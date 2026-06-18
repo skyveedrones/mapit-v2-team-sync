@@ -51,6 +51,8 @@ import {
   AlertCircle,
   Radar,
   Search,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -338,6 +340,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
         return stored === null ? true : stored === 'true';
       } catch { return true; }
     });
+    // Persist per-layer visibility across session (sourceId → boolean)
+    const [arcgisLayerVisibility, setArcgisLayerVisibility] = useState<Record<string, boolean>>({});
+    const [legendCollapsed, setLegendCollapsed] = useState(false);
+
     // ── Address search state ────────────────────────────────────────────────
     const [addressQuery, setAddressQuery] = useState('');
     const [addressSearching, setAddressSearching] = useState(false);
@@ -966,7 +972,11 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             });
             map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-            newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: true });
+            // Default OFF; restore session preference if user previously toggled this layer
+            const sessionVisible = arcgisLayerVisibility[result.sourceId];
+            const isVisible = sessionVisible === true; // only show if explicitly turned on
+            if (!isVisible) map.setLayoutProperty(layerId, 'visibility', 'none');
+            newLayers.push({ sourceId: result.sourceId, label: result.label, color: result.color, type: result.type as 'fill' | 'line', featureCount: result.featureCount, visible: isVisible });
           } catch (err) {
             console.error('[ArcGIS] Failed to add layer', result.sourceId, err);
           }
@@ -2151,7 +2161,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
 
               {/* ── FEMA Flood Zone Legend ── */}
               {(arcgisLayerData.some(l => l.sourceId === 'fema_flood_zones' && l.visible) || arcgisLayerData.some(l => l.sourceId === 'forney_zoning' && l.visible)) && (
-                <div className="absolute bottom-10 left-4 z-[50] bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 px-3 py-2 text-white text-[10px] shadow-lg max-h-[60vh] overflow-y-auto">
+                <div className="absolute bottom-10 left-4 z-[50] bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 text-white text-[10px] shadow-lg">
+                  {/* Legend header with collapse toggle */}
+                  <button
+                    onClick={() => setLegendCollapsed(v => !v)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-slate-800 rounded-t-lg transition-colors"
+                  >
+                    <span className="font-semibold text-[9px] uppercase tracking-widest text-slate-400">Map Legend</span>
+                    {legendCollapsed ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+                  </button>
+                  {!legendCollapsed && <div className="px-3 pb-2 max-h-[55vh] overflow-y-auto">
                   {arcgisLayerData.some(l => l.sourceId === 'forney_zoning' && l.visible) && (
                     <>
                       <div className="font-semibold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Forney Zoning Districts</div>
@@ -2203,6 +2222,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                       ))}
                     </>
                   )}
+                  </div>}
                 </div>
               )}
 
@@ -2365,8 +2385,10 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                       <span className="text-[10px] text-slate-500">{layer.featureCount}</span>
                                       <button
                                         onClick={() => {
+                                          const newVis = !layer.visible;
+                                          setArcgisLayerVisibility(prev => ({ ...prev, [layer.sourceId]: newVis }));
                                           setArcgisLayerData(prev => prev.map(l =>
-                                            l.sourceId === layer.sourceId ? { ...l, visible: !l.visible } : l
+                                            l.sourceId === layer.sourceId ? { ...l, visible: newVis } : l
                                           ));
                                         }}
                                         className="p-1 hover:bg-slate-700 rounded"
