@@ -2150,21 +2150,59 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
               </div>
 
               {/* ── FEMA Flood Zone Legend ── */}
-              {arcgisLayerData.some(l => l.sourceId === 'fema_flood_zones' && l.visible) && (
-                <div className="absolute bottom-10 left-4 z-[50] bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 px-3 py-2 text-white text-[10px] shadow-lg">
-                  <div className="font-semibold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">FEMA Flood Zones</div>
-                  {[
-                    { color: '#1d4ed8', label: 'AE — 100-yr flood w/ BFE' },
-                    { color: '#3b82f6', label: 'A — 100-yr flood' },
-                    { color: '#60a5fa', label: 'AO/AH — Shallow flooding' },
-                    { color: '#7c3aed', label: 'VE/V — Coastal high hazard' },
-                    { color: '#fbbf24', label: 'X — 500-yr / minimal hazard' },
-                  ].map(({ color, label }) => (
-                    <div key={label} className="flex items-center gap-2 py-0.5">
-                      <div className="w-3 h-3 rounded-sm shrink-0 border border-white/20" style={{ backgroundColor: color, opacity: 0.85 }} />
-                      <span className="text-slate-200">{label}</span>
-                    </div>
-                  ))}
+              {(arcgisLayerData.some(l => l.sourceId === 'fema_flood_zones' && l.visible) || arcgisLayerData.some(l => l.sourceId === 'forney_zoning' && l.visible)) && (
+                <div className="absolute bottom-10 left-4 z-[50] bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 px-3 py-2 text-white text-[10px] shadow-lg max-h-[60vh] overflow-y-auto">
+                  {arcgisLayerData.some(l => l.sourceId === 'forney_zoning' && l.visible) && (
+                    <>
+                      <div className="font-semibold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Forney Zoning Districts</div>
+                      {[
+                        { color: '#89cd66', label: 'Agriculture' },
+                        { color: '#1f78b4', label: 'Central Business District' },
+                        { color: '#734c00', label: 'Commercial' },
+                        { color: '#ff5500', label: 'General Retail' },
+                        { color: '#fb9a99', label: 'Light Industrial' },
+                        { color: '#e31a1c', label: 'Mixed Use' },
+                        { color: '#fdbf6f', label: 'Multi Family Residential 15' },
+                        { color: '#ffebbe', label: 'Neighborhood Service' },
+                        { color: '#cab2d6', label: 'Office District' },
+                        { color: '#6a3d9a', label: 'Planned Community Development' },
+                        { color: '#ffff99', label: 'Planned Development' },
+                        { color: '#1f78b4', label: 'Planned Commercial Development' },
+                        { color: '#b15928', label: 'Single Family 11 District' },
+                        { color: '#a6cee3', label: 'Single Family 15 District' },
+                        { color: '#cdf57a', label: 'Single Family 20 District' },
+                        { color: '#e69800', label: 'Single Family 6 District' },
+                        { color: '#a87000', label: 'SF Residential-11' },
+                        { color: '#73dfff', label: 'SF Residential-15' },
+                        { color: '#b4d79e', label: 'SF Residential-20' },
+                        { color: '#e69800', label: 'SF Residential-6' },
+                        { color: '#a6cee3', label: 'Industrial Park Temp PD' },
+                      ].map(({ color, label }) => (
+                        <div key={label} className="flex items-center gap-2 py-0.5">
+                          <div className="w-3 h-3 rounded-sm shrink-0 border border-white/20" style={{ backgroundColor: color, opacity: 0.9 }} />
+                          <span className="text-slate-200">{label}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {arcgisLayerData.some(l => l.sourceId === 'fema_flood_zones' && l.visible) && (
+                    <>
+                      {arcgisLayerData.some(l => l.sourceId === 'forney_zoning' && l.visible) && <div className="border-t border-slate-700 my-2" />}
+                      <div className="font-semibold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">FEMA Flood Zones</div>
+                      {[
+                        { color: '#1d4ed8', label: 'AE — 100-yr flood w/ BFE' },
+                        { color: '#3b82f6', label: 'A — 100-yr flood' },
+                        { color: '#60a5fa', label: 'AO/AH — Shallow flooding' },
+                        { color: '#7c3aed', label: 'VE/V — Coastal high hazard' },
+                        { color: '#fbbf24', label: 'X — 500-yr / minimal hazard' },
+                      ].map(({ color, label }) => (
+                        <div key={label} className="flex items-center gap-2 py-0.5">
+                          <div className="w-3 h-3 rounded-sm shrink-0 border border-white/20" style={{ backgroundColor: color, opacity: 0.85 }} />
+                          <span className="text-slate-200">{label}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
