@@ -290,7 +290,7 @@ function findHeaderColumns(
       const northingX = findX(allNorthing);
       const eastingX = findX(allEasting);
       const elevationX = findX(allElev);
-      const descriptionX = findX(['DESCRIPTION', 'DESC']);
+      const descriptionX = findX(['DESCRIPTION', 'DESC', 'NOTE', 'NOTES', 'CODE', 'REMARKS', 'REM', 'MONUMENT', 'MON', 'TYPE', 'LABEL', 'NAME', 'COMMENT', 'COMMENTS', 'ID', 'MARK', 'MARKER']);
 
       if (pointIdX == null || northingX == null || eastingX == null) return null;
 
