@@ -1111,6 +1111,99 @@ export const appRouter = router({
         mediaCount,
       };
     }),
+    getBillingHistory: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const [row] = await db
+        .select({ stripeCustomerId: users.stripeCustomerId })
+        .from(users)
+        .where(eq(users.id, ctx.user!.id))
+        .limit(1);
+      if (!row?.stripeCustomerId) return { invoices: [] };
+      try {
+        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
+        const invoiceList = await stripe.invoices.list({
+          customer: row.stripeCustomerId,
+          limit: 24,
+        });
+        return {
+          invoices: invoiceList.data.map(inv => ({
+            id: inv.id,
+            number: inv.number,
+            status: inv.status,
+            amountPaid: inv.amount_paid,
+            amountDue: inv.amount_due,
+            currency: inv.currency,
+            created: inv.created * 1000,
+            periodStart: inv.period_start * 1000,
+            periodEnd: inv.period_end * 1000,
+            invoicePdf: inv.invoice_pdf,
+            hostedInvoiceUrl: inv.hosted_invoice_url,
+            description: inv.description,
+          })),
+        };
+      } catch (err) {
+        console.error("getBillingHistory error:", err);
+        return { invoices: [] };
+      }
+    }),
+    cancelSubscription: protectedProcedure
+      .input(z.object({ immediately: z.boolean().default(false) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const [row] = await db
+          .select({ stripeSubscriptionId: users.stripeSubscriptionId })
+          .from(users)
+          .where(eq(users.id, ctx.user!.id))
+          .limit(1);
+        if (!row?.stripeSubscriptionId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No active subscription found" });
+        }
+        try {
+          const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
+          if (input.immediately) {
+            await stripe.subscriptions.cancel(row.stripeSubscriptionId);
+            await db.update(users).set({
+              subscriptionStatus: "canceled" as any,
+              subscriptionTier: "free" as any,
+              cancelAtPeriodEnd: "no" as any,
+            }).where(eq(users.id, ctx.user!.id));
+          } else {
+            await stripe.subscriptions.update(row.stripeSubscriptionId, {
+              cancel_at_period_end: true,
+            });
+            await db.update(users).set({ cancelAtPeriodEnd: "yes" as any }).where(eq(users.id, ctx.user!.id));
+          }
+          return { success: true };
+        } catch (err) {
+          console.error("cancelSubscription error:", err);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to cancel subscription" });
+        }
+      }),
+    reactivateSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const [row] = await db
+        .select({ stripeSubscriptionId: users.stripeSubscriptionId })
+        .from(users)
+        .where(eq(users.id, ctx.user!.id))
+        .limit(1);
+      if (!row?.stripeSubscriptionId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No active subscription found" });
+      }
+      try {
+        const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
+        await stripe.subscriptions.update(row.stripeSubscriptionId, {
+          cancel_at_period_end: false,
+        });
+        await db.update(users).set({ cancelAtPeriodEnd: "no" as any }).where(eq(users.id, ctx.user!.id));
+        return { success: true };
+      } catch (err) {
+        console.error("reactivateSubscription error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to reactivate subscription" });
+      }
+    }),
   }),
 
   account: router({

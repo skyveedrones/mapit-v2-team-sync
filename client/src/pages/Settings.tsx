@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Plane, Save, FileText, Sun, Moon, Info, Building2, Upload, X } from "lucide-react";
+import { Loader2, Plane, Save, FileText, Sun, Moon, Info, Building2, Upload, X, CreditCard } from "lucide-react";
+import { useLocation } from "wouter";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Templates from "./settings/Templates";
@@ -312,6 +313,55 @@ function ThemeSettings() {
   );
 }
 
+function SubscriptionSettingsTab() {
+  const [, navigate] = useLocation();
+  const { data: subData, isLoading } = trpc.payment.getSubscriptionStatus.useQuery();
+  const tier = (subData?.subscriptionTier ?? "free") as string;
+  const PLAN_NAMES: Record<string, string> = {
+    free: "Free", starter: "Experience", professional: "Precision", business: "Scale", civic: "Civic",
+  };
+  const isCancelingAtEnd = subData?.cancelAtPeriodEnd === "yes";
+  const periodEnd = subData?.currentPeriodEnd ? new Date(subData.currentPeriodEnd) : null;
+  return (
+    <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Subscription & Billing
+        </CardTitle>
+        <CardDescription>Manage your plan, billing history, and cancellation</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Current plan</span>
+              <span className="font-semibold">{PLAN_NAMES[tier] ?? tier}</span>
+            </div>
+            {subData?.subscriptionStatus && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <span className="text-sm font-medium capitalize">{subData.subscriptionStatus.replace("_", " ")}</span>
+              </div>
+            )}
+            {isCancelingAtEnd && periodEnd && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Cancels on {periodEnd.toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        )}
+        <Button className="w-full" onClick={() => navigate("/settings/subscription")}>
+          <CreditCard className="h-4 w-4 mr-2" />
+          Manage Subscription & Billing History
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Settings() {
   const [dronePilot, setDronePilot] = useState("");
   const [faaLicense, setFaaLicense] = useState("");
@@ -394,6 +444,10 @@ export default function Settings() {
             <TabsTrigger value="version">
               <Info className="mr-2 h-4 w-4" />
               Version
+            </TabsTrigger>
+            <TabsTrigger value="subscription">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Subscription
             </TabsTrigger>
           </TabsList>
 
@@ -487,6 +541,9 @@ export default function Settings() {
 
           <TabsContent value="version" className="mt-6">
             <VersionCheck />
+          </TabsContent>
+          <TabsContent value="subscription" className="mt-6">
+            <SubscriptionSettingsTab />
           </TabsContent>
         </Tabs>
       </div>

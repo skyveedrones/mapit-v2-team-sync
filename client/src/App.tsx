@@ -31,6 +31,7 @@ import Payment from "./pages/Payment";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Billing from "./pages/Billing";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
 import Account from "./pages/Account";
 import Trash from "./pages/Trash";
 import AuditLog from "./pages/AuditLog";
@@ -358,6 +359,9 @@ function Router() {
       </Route>
       <Route path="/billing">
         {() => <ProtectedRoute component={Billing} />}
+      </Route>
+      <Route path="/settings/subscription">
+        {() => <ProtectedRoute component={SubscriptionManagement} />}
       </Route>
       
       {/* Trash & Audit Log */}

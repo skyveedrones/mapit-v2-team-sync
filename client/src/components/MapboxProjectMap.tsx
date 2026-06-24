@@ -290,6 +290,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
     const [singleEasting, setSingleEasting] = useState("");
     const [singleNorthing, setSingleNorthing] = useState("");
     const [singlePointId, setSinglePointId] = useState("");
+    const [singleDescription, setSingleDescription] = useState("");
     // Single tab — two-step State → Zone
     const [singleCrsState, setSingleCrsState] = useState("TX");
     const [singleCrsZone, setSingleCrsZone] = useState("TX_NORTH_CENTRAL");
@@ -1735,6 +1736,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
             identifier: singlePointId.trim() || `SP-${Date.now()}`,
             easting,
             northing,
+            description: singleDescription.trim() || undefined,
           };
           if (onAppendSurveyPoints) {
             onAppendSurveyPoints([newPt]);
@@ -1748,7 +1750,7 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Conversion failed.");
       }
-    }, [singleEasting, singleNorthing, singleCSF, singleCRS, singlePointId, convertSingleMutation, onAppendSurveyPoints]);
+    }, [singleEasting, singleNorthing, singleCSF, singleCRS, singlePointId, singleDescription, convertSingleMutation, onAppendSurveyPoints]);
 
     const handleConverterFile = useCallback((file: File) => {
       const lowerName = file.name.toLowerCase();
@@ -2525,6 +2527,16 @@ export const MapboxProjectMap = forwardRef<MapboxProjectMapHandle, MapboxProject
                                       value={singlePointId}
                                       onChange={(e) => setSinglePointId(e.target.value)}
                                       placeholder="e.g. BM-01"
+                                      className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Description <span className="text-slate-600 normal-case">(optional)</span></label>
+                                    <input
+                                      type="text"
+                                      value={singleDescription}
+                                      onChange={(e) => setSingleDescription(e.target.value)}
+                                      placeholder="e.g. Iron rod found, NE corner lot 42"
                                       className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
                                     />
                                   </div>
