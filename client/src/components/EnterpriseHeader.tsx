@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, User, UserCircle, LayoutDashboard, Settings, LogOut, Menu, X, Sun, Moon } from "lucide-react";
+import { ChevronDown, User, UserCircle, LayoutDashboard, Settings, LogOut, Menu, X, Sun, Moon, CreditCard } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl, getPortalLoginUrl } from "@/const";
@@ -251,6 +251,13 @@ export const EnterpriseHeader = ({ onContactClick }: EnterpriseHeaderProps) => {
                     >
                       <Settings className="h-4 w-4" />
                       Settings
+                    </button>
+                    <button
+                      onClick={() => { navTo("/settings/subscription"); setUserMenuOpen(false); }}
+                      className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Manage Subscription
                     </button>
                     <div className="my-1 border-t border-white/5" />
                     <button

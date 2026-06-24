@@ -2935,11 +2935,11 @@
 ## Task 2: Stripe Checkout + Subscription Management
 - [x] Wire Stripe checkout session creation to pricing page plan buttons (already existed)
 - [x] Add webhook handlers for subscription events (created, updated, deleted, payment_failed)
-- [ ] Build subscription management page in dashboard (/settings/subscription)
+- [x] Build subscription management page in dashboard (/settings/subscription)
 - [x] Add plan limit enforcement middleware (projects, storage, team members)
 - [x] Add upgrade prompts when users hit plan limits
 - [x] Show current plan and usage in dashboard
 - [x] Deploy and checkpoint
 
 ## Survey GPS Marker Popup
-- [ ] Add "Description" field to survey GPS marker point info window popup
+- [x] Add "Description" field to survey GPS marker point info window popup
