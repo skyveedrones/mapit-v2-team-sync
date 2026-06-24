@@ -49,9 +49,12 @@ import {
 import { Link } from "wouter";
 import { ReferralWidget } from "@/components/ReferralWidget";
 import { GettingStartedGuide } from "@/components/GettingStartedGuide";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
+import { PLAN_LIMITS, getUsagePercentage, getNextTierForResource } from "../../../shared/planLimits";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -87,6 +90,10 @@ export default function Dashboard() {
   
   // Fetch shared projects
   const { data: sharedProjects } = trpc.sharing.getSharedWithMe.useQuery();
+
+  // Subscription status and usage
+  const { data: subStatus } = trpc.payment.getSubscriptionStatus.useQuery();
+  const { data: usageStats } = trpc.account.getUsageStats.useQuery();
 
   // PHASE 2 FALLBACK GUARD: Redirect client-role users away from the admin dashboard
   // Placed after all hooks to comply with React's rules of hooks
@@ -271,7 +278,100 @@ export default function Dashboard() {
           variants={staggerContainer}
           className="space-y-6"
         >
-          {/* Trial Expiry Banner */}
+          {/* Plan + Usage Widget */}
+        {subStatus && usageStats && (() => {
+          const tier = (subStatus.subscriptionTier || 'free') as keyof typeof PLAN_LIMITS;
+          const limits = PLAN_LIMITS[tier];
+          const projectPct = getUsagePercentage(tier, 'projects', usageStats.projectCount);
+          const mediaPct = getUsagePercentage(tier, 'media', usageStats.totalMedia);
+          const teamPct = getUsagePercentage(tier, 'teamMembers', usageStats.teamMemberCount);
+          const tierLabel: Record<string, string> = { free: 'Free', starter: 'Experience', professional: 'Precision', business: 'Scale', enterprise: 'Civic' };
+          const planName = tierLabel[tier] || tier;
+          return (
+            <motion.div variants={fadeInUp}>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Current Plan</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-bold text-base">{planName}</span>
+                      {subStatus.subscriptionStatus === 'past_due' && (
+                        <span className="text-xs bg-red-500/15 text-red-500 px-2 py-0.5 rounded-full font-medium">Past Due</span>
+                      )}
+                      {subStatus.subscriptionStatus === 'trialing' && (
+                        <span className="text-xs bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-full font-medium">Trial</span>
+                      )}
+                    </div>
+                  </div>
+                  <Link href="/billing">
+                    <Button size="sm" variant="outline" className="text-xs h-7 px-3">Manage</Button>
+                  </Link>
+                </div>
+                {/* Projects usage */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Projects</span>
+                    <span>{usageStats.projectCount} / {limits.maxProjects === 999999 ? '∞' : limits.maxProjects}</span>
+                  </div>
+                  <Progress value={Math.min(projectPct, 100)} className="h-1.5" />
+                </div>
+                {/* Media usage */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Media Files</span>
+                    <span>{usageStats.totalMedia} / {limits.maxMediaFiles === 999999 ? '∞' : limits.maxMediaFiles}</span>
+                  </div>
+                  <Progress value={Math.min(mediaPct, 100)} className="h-1.5" />
+                </div>
+                {/* Team members usage */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Team Members</span>
+                    <span>{usageStats.teamMemberCount} / {limits.maxTeamMembers === 999999 ? '∞' : limits.maxTeamMembers}</span>
+                  </div>
+                  <Progress value={Math.min(teamPct, 100)} className="h-1.5" />
+                </div>
+                {/* Upgrade prompt when near limit */}
+                {(projectPct >= 80 || mediaPct >= 80 || teamPct >= 80) && (
+                  <div className="pt-1">
+                    {projectPct >= 80 && (
+                      <UpgradePrompt
+                        variant="inline"
+                        title="Project limit approaching"
+                        description={`You've used ${usageStats.projectCount} of ${limits.maxProjects} projects.`}
+                        currentLimit={limits.maxProjects}
+                        nextTierName={tierLabel[getNextTierForResource(tier, 'projects') || 'starter'] || 'next tier'}
+                        resourceType="projects"
+                      />
+                    )}
+                    {mediaPct >= 80 && (
+                      <UpgradePrompt
+                        variant="inline"
+                        title="Media limit approaching"
+                        description={`You've used ${usageStats.totalMedia} of ${limits.maxMediaFiles} media files.`}
+                        currentLimit={limits.maxMediaFiles}
+                        nextTierName={tierLabel[getNextTierForResource(tier, 'media') || 'starter'] || 'next tier'}
+                        resourceType="media"
+                      />
+                    )}
+                    {teamPct >= 80 && (
+                      <UpgradePrompt
+                        variant="inline"
+                        title="Team member limit approaching"
+                        description={`You've used ${usageStats.teamMemberCount} of ${limits.maxTeamMembers} team members.`}
+                        currentLimit={limits.maxTeamMembers}
+                        nextTierName={tierLabel[getNextTierForResource(tier, 'teamMembers') || 'starter'] || 'next tier'}
+                        resourceType="teamMembers"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })()}
+
+        {/* Trial Expiry Banner */}
           {trialInfo && trialInfo.daysLeft <= 14 && (
             <motion.div variants={fadeInUp}>
             <div className="flex items-center justify-between gap-3 rounded-xl px-5 py-3 text-sm font-medium"

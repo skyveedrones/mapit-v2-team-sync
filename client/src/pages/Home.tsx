@@ -357,6 +357,119 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── SPCS CONVERTER FEATURE COPY ─── */}
+      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="flex flex-col gap-20"
+          >
+            {/* Block 1 — Grid to Ground */}
+            <motion.div variants={fadeInUp} className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <p className="text-xs font-semibold tracking-widest text-[#00C853] uppercase mb-4">State Plane Coordinate Converter</p>
+                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
+                  Grid to Ground.<br />
+                  <span className="text-[#00C853]">Like Magic.</span>
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed">
+                  Instantly translate local State Plane coordinates from construction documents into real-world GPS points. No heavy GIS software required. Upload your points, enter your scale factor, and watch them snap perfectly onto your project map.
+                </p>
+              </div>
+              <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#00C853]/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[#00C853] text-sm font-bold">1</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm mb-1">Upload your survey points</p>
+                    <p className="text-white/50 text-sm">CSV or manual entry — Northing, Easting, Elevation</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#00C853]/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[#00C853] text-sm font-bold">2</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm mb-1">Enter your Combined Scale Factor</p>
+                    <p className="text-white/50 text-sm">Supports NAD83 realizations and US Survey Feet</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#00C853]/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[#00C853] text-sm font-bold">3</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm mb-1">Points snap to your aerial map</p>
+                    <p className="text-white/50 text-sm">Verify visually, then save directly into your project layer</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Block 2 — Rosetta Stone */}
+            <motion.div variants={fadeInUp} className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 order-2 md:order-1">
+                <p className="text-white/40 text-xs font-mono mb-4 uppercase tracking-widest">Supported Standards</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {['NAD83 (2011)', 'US Survey Feet', 'EPSG:2276 (TX N Central)', 'EPSG:2277 (TX N Central-C)', 'Combined Scale Factor', 'Batch CSV Import'].map(s => (
+                    <div key={s} className="bg-[#1a1a1a] border border-white/5 rounded-lg px-3 py-2">
+                      <p className="text-white/70 text-xs font-mono">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="order-1 md:order-2">
+                <p className="text-xs font-semibold tracking-widest text-[#00C853] uppercase mb-4">For Surveyors &amp; Engineers</p>
+                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
+                  The Rosetta Stone<br />
+                  <span className="text-[#00C853]">for Surveyors.</span>
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed">
+                  Stop bouncing between AutoCAD, clunky web converters, and your field maps. MAPIT's built-in conversion engine automatically handles US Survey Feet, NAD83 realizations, and your exact Combined Scale Factor. Upload thousands of points at once, verify them visually, and drop them instantly into your project layer. Uncompromising accuracy, zero friction.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Block 3 — Historical Plans */}
+            <motion.div variants={fadeInUp} className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <p className="text-xs font-semibold tracking-widest text-[#00C853] uppercase mb-4">For City Staff &amp; GIS Teams</p>
+                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
+                  Bring Historical Plans<br />
+                  <span className="text-[#00C853]">into the Modern Era.</span>
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed">
+                  City records are full of utility plats and site plans mapped on local state plane grids. MAPIT makes it incredibly easy for city staff to upload those local coordinates and instantly visualize them on a modern aerial map. Bridge the gap between your physical archives and your digital GIS environment with a single click.
+                </p>
+              </div>
+              <div className="bg-[#111111] border border-white/5 rounded-2xl p-8">
+                <p className="text-white/40 text-xs font-mono mb-4 uppercase tracking-widest">Common Use Cases</p>
+                <div className="flex flex-col gap-3">
+                  {[
+                    { label: 'Utility plat digitization', desc: 'Water, sewer, and gas line records' },
+                    { label: 'ROW boundary verification', desc: 'Cross-reference against live aerial imagery' },
+                    { label: 'Construction stakeout prep', desc: 'Convert design coordinates before field work' },
+                    { label: 'As-built documentation', desc: 'Archive survey points with aerial context' },
+                  ].map(item => (
+                    <div key={item.label} className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#00C853] mt-2 shrink-0" />
+                      <div>
+                        <p className="text-white text-sm font-semibold">{item.label}</p>
+                        <p className="text-white/50 text-xs">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ─── JOBSIAN BOTTOM CTA ─── */}
       <section className="relative bg-[#0A0A0A] py-40 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">

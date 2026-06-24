@@ -277,6 +277,45 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 /**
+ * Handle invoice.payment_failed event
+ * Marks subscription as past_due and notifies owner
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  console.log(
+    "[Webhook] Processing invoice.payment_failed",
+    invoice.id,
+    "for customer",
+    invoice.customer
+  );
+  try {
+    const db = await getDb();
+    if (!db) {
+      console.error("[Webhook] Database not available");
+      return;
+    }
+    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+    const userResult = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
+    const user = userResult.length > 0 ? userResult[0] : null;
+    if (!user) {
+      console.warn("[Webhook] No user found for customer:", customerId);
+      return;
+    }
+    await db
+      .update(users)
+      .set({
+        subscriptionStatus: "past_due",
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(users.id, user.id));
+    console.log(`[Webhook] Marked user ${user.id} as past_due due to failed payment`);
+  } catch (error) {
+    console.error("[Webhook] Error processing invoice.payment_failed:", error);
+    throw error;
+  }
+}
+
+/**
  * Main webhook handler
  * Verifies signature and routes to appropriate handler
  */
@@ -324,6 +363,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
       case "invoice.payment_succeeded":
         await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        break;
+
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
 
       default:

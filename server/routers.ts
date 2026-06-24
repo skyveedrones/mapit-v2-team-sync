@@ -1,6 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import ExifParser from "exif-parser";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -673,7 +673,26 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admin and webmaster roles can invite users' });
         }
 
-                const { getUserByEmail, upsertUser, addClientUser, getDb } = await import('./db');
+                const { getUserByEmail, upsertUser, addClientUser, getDb: getDbDynamic } = await import('./db');
+        // Enforce team member plan limits using userInvitations count
+        {
+          const _inviteDb = await getDbDynamic();
+          if (_inviteDb) {
+            const userTier = (ctx.user.subscriptionTier || 'free') as keyof typeof PLAN_LIMITS;
+            const limits = PLAN_LIMITS[userTier];
+            if (limits.maxTeamMembers !== -1) {
+              const { userInvitations: invTable } = await import('../drizzle/schema');
+              const [countRow] = await _inviteDb.select({ count: sql`count(*)` }).from(invTable).where(eq(invTable.invitedBy, ctx.user.id));
+              const teamCount = Number((countRow as any)?.count ?? 0);
+              if (teamCount >= limits.maxTeamMembers - 1) { // -1 for the owner themselves
+                throw new TRPCError({
+                  code: 'FORBIDDEN',
+                  message: `You have reached the team member limit of ${limits.maxTeamMembers} for your ${userTier} plan. Upgrade to invite more users.`,
+                });
+              }
+            }
+          }
+        }
         const { userInvitations, projectMembers } = await import('../drizzle/schema');
         const existingUser = await getUserByEmail(input.email);
         if (existingUser) {
@@ -1056,6 +1075,42 @@ export const appRouter = router({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create billing portal session" });
         }
       }),
+    getSubscriptionStatus: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const [row] = await db
+        .select({
+          subscriptionTier: users.subscriptionTier,
+          subscriptionStatus: users.subscriptionStatus,
+          billingPeriod: users.billingPeriod,
+          currentPeriodStart: users.currentPeriodStart,
+          currentPeriodEnd: users.currentPeriodEnd,
+          cancelAtPeriodEnd: users.cancelAtPeriodEnd,
+          trialEndsAt: users.trialEndsAt,
+          stripeCustomerId: users.stripeCustomerId,
+          stripeSubscriptionId: users.stripeSubscriptionId,
+        })
+        .from(users)
+        .where(eq(users.id, ctx.user!.id))
+        .limit(1);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      // Count projects and media for usage display
+      const projectCountResult = await db
+        .select({ count: sql`count(*)` })
+        .from(projects)
+        .where(eq(projects.userId, ctx.user!.id));
+      const projectCount = Number((projectCountResult[0] as any)?.count ?? 0);
+      const mediaCountResult = await db
+        .select({ count: sql`count(*)` })
+        .from(media)
+        .where(eq(media.userId, ctx.user!.id));
+      const mediaCount = Number((mediaCountResult[0] as any)?.count ?? 0);
+      return {
+        ...row,
+        projectCount,
+        mediaCount,
+      };
+    }),
   }),
 
   account: router({
@@ -2031,6 +2086,25 @@ export const appRouter = router({
             code: "NOT_FOUND",
             message: "Project not found",
           });
+        }
+
+        // Enforce media upload plan limits
+        {
+          const limitDb = await getDb();
+          if (limitDb) {
+            const userTier = (ctx.user.subscriptionTier || "free") as keyof typeof PLAN_LIMITS;
+            const limits = PLAN_LIMITS[userTier];
+            if (limits.maxMediaFiles !== -1) {
+              const [countRow] = await limitDb.select({ count: sql`count(*)` }).from(media).where(eq(media.userId, ctx.user.id));
+              const totalMedia = Number((countRow as any)?.count ?? 0);
+              if (totalMedia >= limits.maxMediaFiles) {
+                throw new TRPCError({
+                  code: "FORBIDDEN",
+                  message: `You have reached the media limit of ${limits.maxMediaFiles} files for your ${userTier} plan. Upgrade to upload more.`,
+                });
+              }
+            }
+          }
         }
 
         // Generate unique file key for reference

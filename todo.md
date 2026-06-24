@@ -2925,3 +2925,18 @@
 - [ ] Add delete button per row with confirmation
 - [ ] Wire pdfControlPointParser to load approved patterns from DB before LLM call
 - [ ] Wire pdfControlPointParser to save newly discovered patterns (pending) after LLM extraction
+
+## Task 1: SPCS Converter Homepage Marketing Copy Blocks
+- [ ] Add "Grid to Ground. Like Magic." copy block to homepage Features section
+- [ ] Add "The Rosetta Stone for Surveyors and Engineers" copy block to homepage Tools/Workflow section
+- [ ] Add "Bring Historical Plans into the Modern Era" copy block to homepage Records section
+- [ ] Deploy and checkpoint
+
+## Task 2: Stripe Checkout + Subscription Management
+- [ ] Wire Stripe checkout session creation to pricing page plan buttons
+- [ ] Add webhook handlers for subscription events (created, updated, deleted, payment_failed)
+- [ ] Build subscription management page in dashboard (/settings/subscription)
+- [ ] Add plan limit enforcement middleware (projects, storage, team members)
+- [ ] Add upgrade prompts when users hit plan limits
+- [ ] Show current plan and usage in dashboard
+- [ ] Deploy and checkpoint
