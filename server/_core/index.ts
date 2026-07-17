@@ -51,25 +51,12 @@ async function startServer() {
 
   // --- CORS MUST be the VERY FIRST middleware ---
   const corsOptions: cors.CorsOptions = {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, server-to-server)
-      if (!origin) return callback(null, true);
-      const allowedExact = [
-        'https://mapit.skyveedrones.com',
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://localhost:4173',
-      ];
-      if (
-        allowedExact.includes(origin) ||
-        origin.endsWith('.mapit-skyveedrones.pages.dev') ||
-        origin.endsWith('.manus.computer')
-      ) {
-        return callback(null, true);
-      }
-      console.warn(`[CORS] Blocked origin: ${origin}`);
-      return callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
+    origin: [
+      'https://mapit.skyveedrones.com',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:4173',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Cache-Control'],
