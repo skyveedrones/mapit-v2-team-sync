@@ -2943,3 +2943,7 @@
 
 ## Survey GPS Marker Popup
 - [x] Add "Description" field to survey GPS marker point info window popup
+
+## Active Login Repair
+- [x] Diagnose the MAPIT sign-in failure across the public site, login trigger, and callback path
+- [x] Repair the login flow without introducing a Manus platform dependency

@@ -1,6 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import { importSPKI, jwtVerify } from "jose";
 import * as db from "../db";
 import { ENV } from "./env";
@@ -24,14 +24,40 @@ async function getPublicKey() {
   return _publicKey;
 }
 
+const CLERK_REMOTE_VERIFY_TIMEOUT_MS = 4_000;
+
+function timeoutAfter(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("Clerk token verification timed out")), ms);
+  });
+}
+
 async function verifyClerkToken(token: string): Promise<string | null> {
+  // Prefer the configured PEM key: it is fast and avoids a network request for
+  // each API call. Clerk signing-key rotation, however, must not block login.
   try {
     const publicKey = await getPublicKey();
-    if (!publicKey) return null;
-    const { payload } = await jwtVerify(token, publicKey, {
-      clockTolerance: 60,
-    });
-    return payload.sub ?? null;
+    if (publicKey) {
+      const { payload } = await jwtVerify(token, publicKey, {
+        clockTolerance: 60,
+      });
+      if (payload.sub) return payload.sub;
+    }
+  } catch {
+    // Fall through to Clerk's verification service. This protects the login
+    // flow when CLERK_JWT_KEY is stale, malformed, or has been rotated.
+  }
+
+  if (!ENV.clerkSecretKey) {
+    return null;
+  }
+
+  try {
+    const payload = await Promise.race([
+      verifyToken(token, { secretKey: ENV.clerkSecretKey }),
+      timeoutAfter(CLERK_REMOTE_VERIFY_TIMEOUT_MS),
+    ]);
+    return payload?.sub ?? null;
   } catch {
     return null;
   }
