@@ -2947,3 +2947,7 @@
 ## Active Login Repair
 - [x] Diagnose the MAPIT sign-in failure across the public site, login trigger, and callback path
 - [x] Repair the login flow without introducing a Manus platform dependency
+
+## Active Deployment Repair
+- [x] Align the frontend build output with the deployment package path
+- [x] Save the corrected deployment configuration
