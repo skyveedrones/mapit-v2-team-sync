@@ -2951,3 +2951,7 @@
 ## Active Deployment Repair
 - [x] Align the frontend build output with the deployment package path
 - [x] Save the corrected deployment configuration
+
+## Active Deployment Repair — Follow-up
+- [x] Diagnose the repeated managed deployment failure
+- [x] Correct the managed deployment configuration or source layout

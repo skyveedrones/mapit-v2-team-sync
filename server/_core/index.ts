@@ -232,11 +232,13 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // In production (Railway), bind to port 8080 (matches Railway Target Port setting).
-  // In development, scan for an available port starting from PORT env var.
+  // Honor the platform-provided port in every environment. Railway injects
+  // PORT for its service, while the managed deployment health probe uses 3000.
+  // Development still scans from that preferred port when it is already busy.
+  const requestedPort = parseInt(process.env.PORT || "3000", 10) || 3000;
   const port = process.env.NODE_ENV === 'production'
-    ? 8080
-    : await findAvailablePort(parseInt(process.env.PORT || "3000"));
+    ? requestedPort
+    : await findAvailablePort(requestedPort);
   console.log(`[Server] Using port ${port} (NODE_ENV=${process.env.NODE_ENV})`);
 
   // Set global request timeout to 120 seconds for PDF generation
