@@ -2955,3 +2955,8 @@
 ## Active Deployment Repair — Follow-up
 - [x] Diagnose the repeated managed deployment failure
 - [x] Correct the managed deployment configuration or source layout
+
+## Active Stripe Billing Link Repair
+- [x] Reconcile missing Stripe customer IDs before opening the billing portal
+- [x] Replace placeholder invoice actions with real Stripe invoice links
+- [x] Prevent browser popup blocking when opening Stripe billing pages

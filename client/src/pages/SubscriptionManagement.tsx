@@ -3,6 +3,11 @@ import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import {
+  closePendingBillingWindow,
+  navigateToBillingUrl,
+  openPendingBillingWindow,
+} from "@/lib/externalBillingWindow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +48,7 @@ const PLAN_NAMES: Record<string, string> = {
   starter: "Experience",
   professional: "Precision",
   business: "Scale",
+  enterprise: "Civic",
   civic: "Civic",
 };
 
@@ -51,6 +57,7 @@ const PLAN_PRICES: Record<string, string> = {
   starter: "$49/mo",
   professional: "$149/mo",
   business: "$349/mo",
+  enterprise: "Custom",
   civic: "Custom",
 };
 
@@ -147,11 +154,18 @@ export default function SubscriptionManagement() {
   };
 
   const handleOpenPortal = async () => {
+    const popup = openPendingBillingWindow();
     setIsPortalLoading(true);
     try {
       const result = await portalMutation.mutateAsync();
-      if (result.portalUrl) window.open(result.portalUrl, "_blank");
+      if (result.portalUrl) {
+        navigateToBillingUrl(popup, result.portalUrl);
+      } else {
+        closePendingBillingWindow(popup);
+        toast.error("Stripe did not return a billing portal link. Please try again.");
+      }
     } catch {
+      closePendingBillingWindow(popup);
       toast.error("Failed to open billing portal. Please try again.");
     } finally {
       setIsPortalLoading(false);

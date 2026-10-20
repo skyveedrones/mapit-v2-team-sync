@@ -43,6 +43,11 @@ import { motion } from "framer-motion";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { PLAN_LIMITS, type SubscriptionTier } from "@shared/planLimits";
+import {
+  closePendingBillingWindow,
+  navigateToBillingUrl,
+  openPendingBillingWindow,
+} from "@/lib/externalBillingWindow";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 12 },
@@ -265,12 +270,18 @@ export default function Account() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const createPortal = trpc.payment.createPortalSession.useMutation({
-    onSuccess: (data) => {
-      window.open(data.portalUrl, "_blank");
-    },
-    onError: (err: any) => toast.error(err.message),
-  });
+  const createPortal = trpc.payment.createPortalSession.useMutation();
+
+  const handleOpenPortal = async () => {
+    const popup = openPendingBillingWindow();
+    try {
+      const result = await createPortal.mutateAsync();
+      navigateToBillingUrl(popup, result.portalUrl);
+    } catch (err: any) {
+      closePendingBillingWindow(popup);
+      toast.error(err.message || "Failed to open the Stripe billing portal.");
+    }
+  };
 
   const uploadLogo = trpc.logo.upload.useMutation({
     onSuccess: () => {
@@ -727,12 +738,12 @@ export default function Account() {
               <Separator />
 
               <div className="flex flex-col sm:flex-row gap-3">
-                {stripeCustomerId ? (
+                {tier !== "free" ? (
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    onClick={() => createPortal.mutate()}
+                    onClick={handleOpenPortal}
                     disabled={createPortal.isPending}
                   >
                     {createPortal.isPending ? (

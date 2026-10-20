@@ -6,6 +6,11 @@ import { AlertCircle, ArrowLeft, Calendar, CreditCard, Download, Zap } from "luc
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { trpc } from "@/lib/trpc";
+import {
+  closePendingBillingWindow,
+  navigateToBillingUrl,
+  openPendingBillingWindow,
+} from "@/lib/externalBillingWindow";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -56,6 +61,28 @@ const PLAN_FEATURES = {
       "Dedicated Account Manager",
     ],
   },
+  enterprise: {
+    name: "Civic",
+    price: "Custom",
+    features: [
+      "White-label city portals",
+      "On-site training",
+      "SLA guarantee",
+      "Dedicated success manager",
+      "Custom integrations",
+    ],
+  },
+  civic: {
+    name: "Civic",
+    price: "Custom",
+    features: [
+      "White-label city portals",
+      "On-site training",
+      "SLA guarantee",
+      "Dedicated success manager",
+      "Custom integrations",
+    ],
+  },
 };
 
 export default function Billing() {
@@ -65,15 +92,22 @@ export default function Billing() {
   const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   const createPortalSession = trpc.payment.createPortalSession.useMutation();
+  const { data: billingHistory, isLoading: isBillingHistoryLoading } =
+    trpc.payment.getBillingHistory.useQuery(undefined, { enabled: !!user });
 
   const handleManageBilling = async () => {
+    const popup = openPendingBillingWindow();
     setIsPortalLoading(true);
     try {
       const result = await createPortalSession.mutateAsync();
       if (result.portalUrl) {
-        window.open(result.portalUrl, "_blank");
+        navigateToBillingUrl(popup, result.portalUrl);
+      } else {
+        closePendingBillingWindow(popup);
+        toast.error("Stripe did not return a billing portal link. Please try again.");
       }
     } catch (error) {
+      closePendingBillingWindow(popup);
       console.error("Portal error:", error);
       toast.error("Failed to open billing portal. Please try again.");
     } finally {
@@ -100,6 +134,8 @@ export default function Billing() {
   const currentPlanData = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.free;
   const billingPeriod = user.billingPeriod || "month";
   const nextBillingDate = user.currentPeriodEnd ? new Date(user.currentPeriodEnd) : null;
+  const latestInvoice = billingHistory?.invoices?.[0];
+  const latestInvoiceUrl = latestInvoice?.hostedInvoiceUrl ?? latestInvoice?.invoicePdf;
 
   const createCheckoutMutation = trpc.payment.createCheckoutSession.useMutation();
 
@@ -329,11 +365,16 @@ export default function Billing() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {currentPlan === "free" ? (
+                  {isBillingHistoryLoading ? (
+                    <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                      <Download className="h-5 w-5 text-muted-foreground animate-pulse" />
+                      <p className="text-sm text-muted-foreground">Loading invoices from Stripe...</p>
+                    </div>
+                  ) : !latestInvoice ? (
                     <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                       <AlertCircle className="h-5 w-5 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        No billing history for free tier
+                        No Stripe invoices have been issued for this account yet.
                       </p>
                     </div>
                   ) : (
@@ -342,17 +383,25 @@ export default function Billing() {
                       <div className="flex-1">
                         <p className="text-sm font-medium">Latest Invoice</p>
                         <p className="text-xs text-muted-foreground">
-                          {nextBillingDate && format(nextBillingDate, "MMMM d, yyyy")}
+                          {format(new Date(latestInvoice.created), "MMMM d, yyyy")}
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleManageBilling}
-                        disabled={isPortalLoading}
-                      >
-                        {isPortalLoading ? "Opening..." : "View in Portal"}
-                      </Button>
+                      {latestInvoiceUrl ? (
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={latestInvoiceUrl} target="_blank" rel="noopener noreferrer">
+                            View in Stripe
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleManageBilling}
+                          disabled={isPortalLoading}
+                        >
+                          {isPortalLoading ? "Opening..." : "View in Portal"}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

@@ -149,6 +149,55 @@ const updateProjectSchema = z.object({
   defaultCrs: z.string().max(50).nullable().optional(),
 });
 
+/**
+ * Restore the local Stripe customer link when an older checkout or webhook
+ * completed without persisting it. Existing customers are matched by the
+ * account email; a new customer is created only for an explicit portal action.
+ */
+async function resolveStripeCustomerId(
+  stripe: any,
+  dbInstance: any,
+  user: {
+    id: number;
+    email: string | null;
+    name: string | null;
+    stripeCustomerId: string | null;
+  },
+  createIfMissing = false,
+): Promise<string | null> {
+  if (user.stripeCustomerId) {
+    try {
+      const customer = await stripe.customers.retrieve(user.stripeCustomerId);
+      if (!("deleted" in customer && customer.deleted)) return customer.id;
+    } catch (error) {
+      console.warn(`[Stripe] Stored customer ${user.stripeCustomerId} is unavailable`, error);
+    }
+  }
+
+  if (!user.email) return null;
+
+  const matches = await stripe.customers.list({ email: user.email, limit: 100 });
+  const customer =
+    matches.data.find((item: any) => item.metadata?.mapit_user_id === String(user.id)) ??
+    matches.data[0] ??
+    (createIfMissing
+      ? await stripe.customers.create({
+          email: user.email,
+          name: user.name ?? undefined,
+          metadata: { mapit_user_id: String(user.id) },
+        })
+      : null);
+
+  if (!customer) return null;
+
+  await dbInstance
+    .update(users)
+    .set({ stripeCustomerId: customer.id, updatedAt: new Date().toISOString() })
+    .where(eq(users.id, user.id));
+
+  return customer.id;
+}
+
 // Helper function to extract EXIF GPS data from image buffer
 async function extractExifData(buffer: Buffer): Promise<{
   latitude: number | null;
@@ -1059,15 +1108,35 @@ export const appRouter = router({
       }),
     createPortalSession: protectedProcedure
       .mutation(async ({ ctx }) => {
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        }
+
+        const [user] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            name: users.name,
+            stripeCustomerId: users.stripeCustomerId,
+          })
+          .from(users)
+          .where(eq(users.id, ctx.user!.id))
+          .limit(1);
+
+        if (!user) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+        }
+
         const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
-        const stripeCustomerId = (ctx.user as any).stripeCustomerId;
+        const stripeCustomerId = await resolveStripeCustomerId(stripe, db, user, true);
         if (!stripeCustomerId) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "No active subscription found. Please subscribe to a plan first." });
+          throw new TRPCError({ code: "BAD_REQUEST", message: "A billing profile could not be created because this account has no email address." });
         }
         try {
           const session = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
-            return_url: `${ctx.req.headers.origin || "http://localhost:3000"}/account`,
+            return_url: `${ctx.req.headers.origin || "https://mapit.skyveedrones.com"}/settings/subscription`,
           });
           return { portalUrl: session.url };
         } catch (error) {
@@ -1115,15 +1184,23 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
       const [row] = await db
-        .select({ stripeCustomerId: users.stripeCustomerId })
+        .select({
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          stripeCustomerId: users.stripeCustomerId,
+        })
         .from(users)
         .where(eq(users.id, ctx.user!.id))
         .limit(1);
-      if (!row?.stripeCustomerId) return { invoices: [] };
+      if (!row) return { invoices: [] };
+
       try {
         const stripe = await import("stripe").then(m => new m.default(process.env.STRIPE_SECRET_KEY || ""));
+        const stripeCustomerId = await resolveStripeCustomerId(stripe, db, row);
+        if (!stripeCustomerId) return { invoices: [] };
         const invoiceList = await stripe.invoices.list({
-          customer: row.stripeCustomerId,
+          customer: stripeCustomerId,
           limit: 24,
         });
         return {

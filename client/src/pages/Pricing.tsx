@@ -11,6 +11,11 @@ import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import {
+  closePendingBillingWindow,
+  navigateToBillingUrl,
+  openPendingBillingWindow,
+} from "@/lib/externalBillingWindow";
 import { toast } from "sonner";
 import { GlobalHamburgerHeader } from "@/components/GlobalHamburgerHeader";
 import { MunicipalBriefingForm } from "@/components/MunicipalBriefingForm";
@@ -168,24 +173,37 @@ export default function Pricing() {
     // Current plan — no-op
     if (tier.id === currentTierId) return;
 
+    const popup = openPendingBillingWindow();
     setLoadingTierId(tier.id);
     try {
       if (hasActiveSubscription) {
         // Active subscriber → Stripe Customer Portal to change plan
         const result = await createPortalSession.mutateAsync();
-        if (result.portalUrl) window.open(result.portalUrl, "_blank");
+        if (result.portalUrl) {
+          navigateToBillingUrl(popup, result.portalUrl);
+        } else {
+          closePendingBillingWindow(popup);
+          toast.error("Stripe did not return a billing portal link. Please try again.");
+        }
       } else {
         // No subscription → Stripe Checkout to start a plan
         const priceIds = TIER_PRICE_IDS[tier.id];
         if (!priceIds) {
+          closePendingBillingWindow(popup);
           toast.error("No price configured for this plan.");
           return;
         }
         const priceId = annual ? priceIds.annual : priceIds.monthly;
         const result = await createCheckoutSession.mutateAsync({ priceId, planId: tier.id });
-        if (result.checkoutUrl) window.open(result.checkoutUrl, "_blank");
+        if (result.checkoutUrl) {
+          navigateToBillingUrl(popup, result.checkoutUrl);
+        } else {
+          closePendingBillingWindow(popup);
+          toast.error("Stripe did not return a checkout link. Please try again.");
+        }
       }
     } catch {
+      closePendingBillingWindow(popup);
       toast.error("No active subscription found. Please select a plan to get started.");
     } finally {
       setLoadingTierId(null);
@@ -454,11 +472,18 @@ export default function Pricing() {
         <div className="text-center pb-12">
           <button
             onClick={async () => {
+              const popup = openPendingBillingWindow();
               setLoadingTierId("portal");
               try {
                 const result = await createPortalSession.mutateAsync();
-                if (result.portalUrl) window.open(result.portalUrl, "_blank");
+                if (result.portalUrl) {
+                  navigateToBillingUrl(popup, result.portalUrl);
+                } else {
+                  closePendingBillingWindow(popup);
+                  toast.error("Stripe did not return a billing portal link. Please try again.");
+                }
               } catch {
+                closePendingBillingWindow(popup);
                 toast.error("Failed to open billing portal.");
               } finally {
                 setLoadingTierId(null);
